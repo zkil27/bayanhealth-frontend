@@ -1,0 +1,539 @@
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/* Authoritative BayanHealth brand tokens (design export) — additive, kept
+   separate from the shadcn tokens below rather than merged into them. */
+@import "../styles/bayanhealth-tokens.css";
+/* @import '../styles/_variables.scss';
+@import '../styles/_keyframe-animations.scss'; */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-confirmed-foreground: var(--status-confirmed-foreground);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-foreground: var(--status-pending-foreground);
+  --color-status-active: var(--status-active);
+  --color-status-active-foreground: var(--status-active-foreground);
+  --color-status-completed: var(--status-completed);
+  --color-status-completed-foreground: var(--status-completed-foreground);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-foreground: var(--status-cancelled-foreground);
+  --color-status-rescheduled: var(--status-rescheduled);
+  --color-status-rescheduled-foreground: var(--status-rescheduled-foreground);
+
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-critical-foreground: var(--severity-critical-foreground);
+  --color-severity-high: var(--severity-high);
+  --color-severity-high-foreground: var(--severity-high-foreground);
+  --color-severity-moderate: var(--severity-moderate);
+  --color-severity-moderate-foreground: var(--severity-moderate-foreground);
+  --color-severity-stable: var(--severity-stable);
+  --color-severity-stable-foreground: var(--severity-stable-foreground);
+  --color-severity-observation: var(--severity-observation);
+  --color-severity-observation-foreground: var(--severity-observation-foreground);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+  /* Brand display font (MomoTrust Display, falling back to Inter — see
+     bayanhealth-tokens.css). No .ttf has been added to the repo yet, so this
+     currently renders as Inter; swapping the asset in later needs no
+     component changes. */
+  --font-display: var(--font-display);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+}
+
+:root {
+--background: oklch(100% 0.00011 271.152);
+--foreground: oklch(0.39 0.09 243.70);
+--card: oklch(0.99 0.00 84.40);
+--card-foreground: oklch(0.39 0.09 243.70);
+--popover: oklch(0.99 0.00 84.40);
+--popover-foreground: oklch(0.39 0.09 243.70);
+
+  --primary: oklch(0.6488 0.1193 176.7194);
+  --primary-foreground: oklch(0.2944 0.0733 244.4494);
+  --secondary: oklch(0.3901 0.0897 243.5902);
+  --secondary-foreground: oklch(1.0000 0 0);
+
+  --muted: oklch(0.9593 0.0062 75.4063);
+  --muted-foreground: oklch(0.5188 0.0453 243.1111);
+  --accent: oklch(0.9526 0.0058 84.5665);
+  --accent-foreground: oklch(0.2944 0.0733 244.4494);
+
+  --destructive: oklch(0.5298 0.1995 27.9010);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  --border: oklch(0.8600 0.0150 240);
+  --input: oklch(87.2% 0.01 258.338);
+  --ring: oklch(0.6208 0.1124 174.6398);
+
+  --chart-1: oklch(0.6488 0.1193 176.7194);
+  --chart-2: oklch(0.2944 0.0733 244.4494);
+  --chart-3: oklch(0.6495 0.2199 36.4948);
+  --chart-4: oklch(0.8292 0.1699 80.7774);
+  --chart-5: oklch(0.6019 0.1066 184.1028);
+
+  /*
+     The doctor sidebar is a fixed brand-navy chrome (per the D1 dashboard
+     design), not a theme-following surface. Pinned to the exact BayanHealth
+     brand tokens (bayanhealth-tokens.css) rather than the shadcn
+     --secondary/--primary approximations, since the design export is the
+     authoritative source and its navy/teal-500 don't quite equal them.
+  */
+  --sidebar: var(--surface-brand);
+  --sidebar-foreground: var(--text-on-brand);
+  --sidebar-primary: var(--teal-500);
+  --sidebar-primary-foreground: var(--navy-900);
+  --sidebar-accent: var(--teal-500);
+  --sidebar-accent-foreground: var(--navy-900);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: var(--teal-600);
+
+  /* 
+     Appointment status tokens
+     confirmed  = booked, upcoming
+     pending    = awaiting confirmation
+     active     = currently in teleconsult call
+     completed  = session finished (distinct green, not teal)
+     cancelled  = patient/doctor cancelled
+     rescheduled = moved to new slot
+  */
+  --status-confirmed: oklch(0.9400 0.0400 175);
+  --status-confirmed-foreground: oklch(0.3800 0.0900 175);
+  --status-pending: oklch(0.9600 0.0500 80);
+  --status-pending-foreground: oklch(0.4600 0.1100 60);
+  --status-active: oklch(0.9200 0.0300 243);
+  --status-active-foreground: oklch(0.2944 0.0733 244.4494);
+  --status-completed: oklch(0.9400 0.0600 145);
+  --status-completed-foreground: oklch(0.3600 0.1200 145);
+  --status-cancelled: oklch(0.9500 0.0400 25);
+  --status-cancelled-foreground: oklch(0.4200 0.1600 25);
+  --status-rescheduled: oklch(0.9400 0.0300 290);
+  --status-rescheduled-foreground: oklch(0.3800 0.1200 290);
+
+  /*
+     SOAP severity tokens — doctor portal only
+     critical > high > moderate > stable > observation
+  */
+  --severity-critical: oklch(0.9500 0.0400 25);
+  --severity-critical-foreground: oklch(0.3800 0.1800 25);
+  --severity-high: oklch(0.9600 0.0500 50);
+  --severity-high-foreground: oklch(0.4500 0.1300 50);
+  --severity-moderate: oklch(0.9600 0.0500 90);
+  --severity-moderate-foreground: oklch(0.5000 0.1100 80);
+  --severity-stable: oklch(0.9400 0.0600 145);
+  --severity-stable-foreground: oklch(0.3600 0.1200 145);
+  --severity-observation: oklch(0.9600 0.0040 240);
+  --severity-observation-foreground: oklch(0.4500 0.0500 240);
+
+  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-serif: Merriweather, ui-serif, serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+
+  --radius: 0.5rem;
+
+  --shadow-color: hsl(240 30% 25%);
+  --shadow-2xs: 0px 2px 6px 0px hsl(240 30% 25% / 0.05);
+  --shadow-xs:  0px 2px 6px 0px hsl(240 30% 25% / 0.07);
+  --shadow-sm:  0px 2px 8px 0px hsl(240 30% 25% / 0.09),  0px 1px 2px -1px hsl(240 30% 25% / 0.06);
+  --shadow:     0px 4px 10px 0px hsl(240 30% 25% / 0.10), 0px 2px 4px -1px hsl(240 30% 25% / 0.07);
+  --shadow-md:  0px 6px 14px 0px hsl(240 30% 25% / 0.11), 0px 3px 6px -2px hsl(240 30% 25% / 0.08);
+  --shadow-lg:  0px 10px 20px 0px hsl(240 30% 25% / 0.12), 0px 4px 8px -2px hsl(240 30% 25% / 0.09);
+  --shadow-xl:  0px 16px 30px 0px hsl(240 30% 25% / 0.13), 0px 8px 12px -4px hsl(240 30% 25% / 0.09);
+  --shadow-2xl: 0px 24px 48px 0px hsl(240 30% 25% / 0.22);
+
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+  --duration-exit: 150ms;
+  --duration-enter: 210ms;
+}
+
+.dark {
+--background: oklch(0.17 0.02 248.73);
+--foreground: oklch(0.93 0.01 255.51);
+--card: oklch(0.23 0.02 254.89);
+--card-foreground: oklch(0.93 0.01 255.51);
+--popover: oklch(0.23 0.02 254.89);
+--popover-foreground: oklch(0.93 0.01 255.51);
+--primary: oklch(0.53 0.09 175.87);
+--primary-foreground: oklch(0.97 0.02 95.92);
+--secondary: oklch(0.27 0.02 254.89);
+--secondary-foreground: oklch(0.71 0.04 256.79);
+--muted: oklch(0.23 0.02 254.89);
+--muted-foreground: oklch(0.71 0.04 256.79);
+--accent: oklch(0.23 0.02 254.89);
+--accent-foreground: oklch(0.93 0.01 255.51);
+--destructive: oklch(0.63 0.21 29.08);
+--border: oklch(0.28 0.02 254.18);
+--input: oklch(0.28 0.02 254.18);
+--ring: oklch(0.53 0.09 175.87);
+--chart-1: oklch(0.49 0.24 264.40);
+--chart-2: oklch(0.70 0.16 160.43);
+--chart-3: oklch(0.77 0.17 65.36);
+--chart-4: oklch(0.62 0.26 305.32);
+--chart-5: oklch(0.64 0.25 16.51);
+
+  --status-confirmed: oklch(0.2400 0.0600 175);
+  --status-confirmed-foreground: oklch(0.7500 0.1100 175);
+  --status-pending: oklch(0.2700 0.0600 70);
+  --status-pending-foreground: oklch(0.8200 0.1200 80);
+  --status-active: oklch(0.2400 0.0500 243);
+  --status-active-foreground: oklch(0.7800 0.0600 243);
+  --status-completed: oklch(0.2400 0.0700 145);
+  --status-completed-foreground: oklch(0.7600 0.1300 145);
+  --status-cancelled: oklch(0.2600 0.0700 25);
+  --status-cancelled-foreground: oklch(0.7800 0.1600 25);
+  --status-rescheduled: oklch(0.2500 0.0600 290);
+  --status-rescheduled-foreground: oklch(0.7700 0.1200 290);
+
+  --severity-critical: oklch(0.2600 0.0800 25);
+  --severity-critical-foreground: oklch(0.8000 0.1700 25);
+  --severity-high: oklch(0.2700 0.0700 50);
+  --severity-high-foreground: oklch(0.8200 0.1300 50);
+  --severity-moderate: oklch(0.2700 0.0650 85);
+  --severity-moderate-foreground: oklch(0.8300 0.1100 85);
+  --severity-stable: oklch(0.2400 0.0700 145);
+  --severity-stable-foreground: oklch(0.7600 0.1300 145);
+  --severity-observation: oklch(0.2500 0.0200 240);
+  --severity-observation-foreground: oklch(0.7000 0.0400 240);
+
+
+  --radius: 0.5rem;
+
+  --shadow-color: hsl(240 30% 5%);
+  --shadow-2xs: 0px 2px 6px 0px hsl(240 30% 5% / 0.18);
+  --shadow-xs:  0px 2px 6px 0px hsl(240 30% 5% / 0.22);
+  --shadow-sm:  0px 2px 8px 0px hsl(240 30% 5% / 0.26), 0px 1px 2px -1px hsl(240 30% 5% / 0.20);
+  --shadow:     0px 4px 10px 0px hsl(240 30% 5% / 0.28), 0px 2px 4px -1px hsl(240 30% 5% / 0.22);
+  --shadow-md:  0px 6px 14px 0px hsl(240 30% 5% / 0.30), 0px 3px 6px -2px hsl(240 30% 5% / 0.24);
+  --shadow-lg:  0px 10px 20px 0px hsl(240 30% 5% / 0.34), 0px 4px 8px -2px hsl(240 30% 5% / 0.26);
+  --shadow-xl:  0px 16px 30px 0px hsl(240 30% 5% / 0.38), 0px 8px 12px -4px hsl(240 30% 5% / 0.28);
+  --shadow-2xl: 0px 24px 48px 0px hsl(240 30% 5% / 0.55);
+
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground m-0 p-0;
+  }
+  html {
+    @apply font-sans overflow-x-hidden;
+  }
+}
+
+/* Woven "satin" page texture.
+
+   The brand herringbone (`/background-pattern.svg` — deep-teal shapes baked at
+   0.04 alpha) painted straight onto the cream page surface as the ground for the
+   landing page and both signed-in shells, so the product keeps one surface.
+
+   - Applied directly on the element, not a `::before` with negative `z-index`:
+     that combination reliably hides behind the opaque `<body>` background.
+   - A repeating tile at a small `background-size` so the weave stays fine
+     rather than blown up to viewport scale. The export is not a truly seamless
+     tile, so tile edges do technically exist — held below visibility by the
+     0.04 alpha; raising the alpha will start to reveal them.
+   - `background-attachment: local` ensures the pattern moves fluidly with
+     page and container scroll rather than staying stationary/pinned to the viewport.
+
+   Tune the SVG's group `opacity` and `background-size` together. */
+.bg-satin {
+  background-color: var(--surface-page);
+}
+
+/* Off-screen rendering and layout skipping for below-the-fold sections */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
+/* In-app Reduced Motion mode: disables transitions, animations, and smooth scroll for low-spec devices and a11y */
+.reduce-motion,
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Brand gradient helpers — the gradient itself lives in --gradient-brand
+   (bayanhealth-tokens.css). `.bg-gradient-brand` paints it as a fill;
+   `.text-gradient-brand` clips it to the glyphs, with a solid colour fallback
+   where background-clip: text is unsupported. */
+.bg-gradient-brand {
+  background-image: var(--gradient-brand);
+}
+.text-gradient-brand {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .text-gradient-brand {
+    color: var(--gradient-brand-end);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+@keyframes cursor-tap-ping {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.animate-cursor-tap-ping {
+  animation: cursor-tap-ping 0.4s ease-out forwards;
+}
+
+/*
+ * Care Recovery Roadmap (ECG journey). Every animation below changes paint
+ * only — opacity or a transform on a mask/pseudo-element — so none of them can
+ * move path coordinates, node positions, or surrounding layout.
+ */
+@keyframes ecg-idle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.6; }
+}
+.ecg-idle {
+  animation: ecg-idle 3.5s ease-in-out infinite;
+}
+
+/* SVG user units: the mask rect travels from x=-24 to past x=100. */
+@keyframes ecg-sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(130px); }
+}
+.ecg-sweep {
+  animation: ecg-sweep 2.4s linear infinite;
+}
+
+@keyframes journey-node-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.35); opacity: 0; }
+}
+/* The host must be positioned (the desktop node is `absolute`, the mobile icon
+   `relative`); it is not set here because unlayered CSS would beat Tailwind. */
+.journey-node-pulse::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid var(--surface-nav-accent);
+  pointer-events: none;
+  animation: journey-node-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes journey-flow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.journey-flow {
+  animation: journey-flow 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-idle,
+  .ecg-sweep,
+  .journey-flow,
+  .journey-node-pulse::before {
+    animation: none;
+  }
+  .ecg-idle { opacity: 0.5; }
+  /* Park the heartbeat highlight off the line rather than freezing it mid-way. */
+  .ecg-sweep { transform: translateX(-100px); }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-to-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-from-right {
+  animation: slide-from-right 0.3s ease-out;
+}
+
+.animate-slide-from-left {
+  animation: slide-to-left 0.3s ease-out;
+}
+
+  
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+::view-transition-old(.nav-forward) {
+  --slide-offset: -60px;
+  animation:
+    150ms ease-in both fade reverse,
+    400ms ease-in-out both slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 60px;
+  animation:
+    210ms ease-out 150ms both fade,
+    400ms ease-in-out both slide;
+}
+ 
+::view-transition-old(.nav-back) {
+  --slide-offset: 60px;
+  animation:
+    150ms ease-in both fade reverse,
+    400ms ease-in-out both slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -60px;
+  animation:
+    210ms ease-out 150ms both fade,
+    400ms ease-in-out both slide;
+}
+ 
+@keyframes slide {
+  from {
+    translate: var(--slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+@keyframes fade {
+  from {
+    filter: blur(3px);
+    opacity: 0;
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+
+.ProseMirror {
+  width: 100%;
+  word-break: break-word;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.ProseMirror p {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0;
+    overflow: visible;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+
+/* Hide page break markers on screen */
+.page-break {
+  display: none;
+}

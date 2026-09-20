@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-07-26T06:51:40.622Z",
+  "evidenceScope": ".next production JavaScript bundles",
+  "contractSource": "../../contracts/openapi.yaml",
+  "assessmentFirstCallFragments": [
+    "/assessment",
+    "/assessment/confirmation",
+    "/assessment/confirmations",
+    "/assessment/editable",
+    "/cancellations",
+    "/diagnosis-candidate-evaluations",
+    "/finalizations",
+    "/gate-tokens",
+    "/jobs/",
+    "/outputs/current",
+    "/outputs/history",
+    "/preview",
+    "/red-flag-acknowledgments",
+    "/releases",
+    "/selections"
+  ],
+  "retiredWritePatterns": [
+    "/v1/cds/soap",
+    "/v1/cds/patient-cards",
+    "/continue",
+    "approveCdsDraft",
+    "createConsultationDocument",
+    "updateConsultationDocument"
+  ],
+  "retiredWriteFindings": [],
+  "passed": true
+}

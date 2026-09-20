@@ -1,0 +1,457 @@
+/* BayanHealth Design System — portable token export (2026-08-13)
+   Colors, typography, radius / border / shadow / motion. Drop this one file into any project and
+   reference the semantic tokens via var(--token).
+   Teal = primary action. Gold = Soon/highlight, never a CTA. Red = emergency only.
+   Fonts: MomoTrust Display (display), Inter (body/UI), Caveat (script accent).
+
+   Copied verbatim from frontend/bayanhealth-tokens.css (design export) for the
+   doctor portal restyle. Kept separate from globals.css's shadcn tokens rather
+   than merged into them — this is the exact, authoritative brand palette (raw
+   ramps + semantic aliases), while --primary/--secondary/etc. remain the
+   shadcn/ui contract other components and the un-restyled portals still read.
+   The weave pattern URLs below are inert unless something references --weave.
+*/
+
+/* ============================================================
+   BayanHealth — Color tokens (aligned to the Figma mockup + its
+   Figma Variables). Base palette + light/dark semantic aliases.
+   Light: full-bleed cream page + off-white cards.
+   Dark: deep blue-black from the file's Dark Mode variables.
+   ============================================================ */
+
+:root {
+  /* ---- Brand palette (raw, do not use directly in UI) ---- */
+  --navy-900: #032a44;
+  --navy-800: #053a5b;
+  --navy-700: #074972;   /* Brand Navy — headings, links, authority (Figma text/primary) */
+  --navy-600: #135d8b;
+  --navy-500: #2a75a3;
+  --navy-400: #5a98be;
+  --navy-300: #97c0d8;
+  --navy-200: #c7deea;
+  --navy-100: #e5f0f7;
+
+  --teal-900: #0a4a3e;
+  --teal-800: #0f7a66;
+  --teal-700: #18a58c;   /* Brand Teal — primary CTA (Figma action/primary-default) */
+  --teal-600: #1eba9e;
+  --teal-500: #2dd4b5;   /* Figma dark-mode action */
+  --teal-400: #63e0c9;
+  --teal-300: #9cebdb;
+  --teal-200: #c8f4ea;
+  --teal-100: #e6faf5;
+
+  --cream-100: #f9f4dd;
+  --cream-200: #f3eac5;  /* Brand Cream — the page background (Figma bg/primary) */
+  --cream-300: #e5d9a8;
+  --offwhite: #fefdfb;   /* Card surface (Figma bg/surface) */
+
+  --gold-700: #c8971c;
+  --gold-600: #e6b332;   /* Soon badges, highlights — never a primary CTA */
+  --gold-400: #f0cd73;
+  --gold-100: #fdf4dc;
+
+  /* Violet — reserved exclusively for AI-authored content. It is deliberately
+     outside the brand ramp: navy, teal, gold and red already carry meanings
+     (authority, action, "soon", danger), and marking machine-authored text with
+     any of them would collide with a status a clinician reads for safety.
+     Violet says one thing only — "a model wrote this, you own it". */
+  --violet-800: #40317a;
+  --violet-700: #5b3fa8;
+  --violet-600: #6d4fc4;
+  --violet-400: #a78bfa;
+  --violet-200: #ddd2fb;
+  --violet-100: #f1ecfe;
+
+  --red-700: #9e3838;
+  --red-600: #b64545;    /* Emergency / blocked ONLY */
+  --red-400: #d98484;
+  --red-100: #f7e4e4;
+
+  /* ---- Neutrals ---- */
+  --white: #ffffff;
+  --ink-900: #1f1f1f;
+  --ink-800: #323232;    /* body text (Figma rgb(50,50,50)) */
+  --ink-700: #454c52;
+  --ink-600: #5a646b;
+  --ink-500: #75828a;
+  --ink-400: #98a5ad;
+  --ink-300: #b9c6ce;
+  --ink-200: #d1dde6;    /* card stroke (Figma rgb(209,221,230)) */
+  --ink-150: #dfe8ee;
+  --ink-100: #edf2f6;
+  --ink-050: #f7fafc;
+
+  /* =========================================================
+     SEMANTIC ALIASES — LIGHT (default)
+     ========================================================= */
+
+  /* Surfaces */
+  /* Page background is the lighter cream-100 rather than cream-200: at full
+     bleed the deeper cream read as a glaring yellow. cream-200 stays available
+     as --surface-warm for the quiet bands that still want a touch more warmth. */
+  --surface-page: var(--cream-100);
+  /* Signed-in dashboard ground. Deliberately NOT --surface-page: the cream is
+     the brand's public surface (landing, marketing) and stays put, while the
+     patient app runs on a cool near-white so white cards read as lifted rather
+     than as a slightly different yellow. Scoped to the patient shell. */
+  --surface-canvas: #f8faf9;
+  --surface-card: var(--offwhite);
+  --surface-raised: var(--white);
+  --surface-sunken: var(--cream-100);
+  --surface-warm: var(--cream-200);
+  --surface-warm-soft: var(--cream-100);
+  --surface-inverse: var(--teal-700);
+  /* Detached navigation island (patient + doctor shells). A very dark teal that
+     stays dark in both themes — the rail is a constant anchor, not a themed
+     surface — so it is defined here and not overridden under [data-theme=dark].
+     `--surface-nav-accent` is the active-item / brand-mark teal on that rail. */
+  --surface-nav: #0b3b43;
+  --surface-nav-accent: #14b8a6;
+  --surface-brand: var(--navy-700);
+  --surface-brand-soft: var(--navy-100);
+  --surface-accent-soft: var(--teal-100);
+
+  /* Text */
+  --text-heading: var(--navy-700);
+  --text-body: var(--ink-800);
+  --text-muted: var(--ink-600);
+  --text-subtle: var(--ink-400);
+  --text-on-brand: var(--white);
+  --text-on-accent: var(--white);
+  --text-inverse: var(--white);
+  --text-link: var(--navy-700);
+  --text-link-hover: var(--teal-700);
+
+  /* Borders / lines */
+  --border-subtle: var(--ink-150);
+  --border-default: var(--ink-200);
+  --border-strong: var(--ink-300);
+  --border-brand: var(--navy-700);
+  --border-focus: var(--teal-600);
+
+  /* Interactive — primary (teal pill, inset press shadow) */
+  --action-primary: var(--teal-700);
+  --action-primary-hover: var(--teal-600);
+  --action-primary-active: var(--teal-800);
+  --action-primary-text: var(--white);
+
+  /* Interactive — secondary (navy outline) */
+  --action-secondary-border: var(--navy-700);
+  --action-secondary-text: var(--navy-700);
+  --action-secondary-hover-surface: var(--navy-100);
+
+  /* Focus ring */
+  --focus-ring: var(--teal-600);
+  --focus-ring-offset: var(--surface-page);
+
+  /* Status — availability (text+icon, never color alone) */
+  --status-available-fg: var(--teal-800);
+  --status-available-bg: var(--teal-100);
+  --status-pilot-fg: var(--navy-700);
+  --status-pilot-bg: var(--navy-100);
+  --status-soon-fg: var(--gold-700);
+  --status-soon-bg: var(--gold-100);
+  --status-research-fg: var(--ink-600);
+  --status-research-bg: var(--ink-100);
+
+  /* Safety semantics */
+  --safe-fg: var(--teal-800);
+  --safe-bg: var(--teal-100);
+  --gray-fg: var(--ink-600);
+  --gray-bg: var(--ink-100);
+  --danger-fg: var(--red-700);
+  --danger-bg: var(--red-100);
+  --danger-border: var(--red-600);
+
+  /* AI provenance — machine-authored content a clinician must review and may
+     edit. Applied as a border and a label, never as the only signal. */
+  --ai-fg: var(--violet-700);
+  --ai-accent: var(--violet-600);
+  --ai-border: var(--violet-400);
+  --ai-bg: var(--violet-100);
+  --ai-bg-strong: var(--violet-200);
+
+  /* "You edited this" — once a physician amends an AI draft, the fill moves
+     from flat violet to the brand gradient (navy through teal, the same ramp
+     as --gradient-brand) at low opacity. Distinct from bare AI provenance
+     (still violet, untouched) and from a signed/released document (neutral
+     card chrome, once judgement is attested rather than just applied). */
+  --edited-fg: var(--teal-800);
+  --edited-border: var(--teal-600);
+  --edited-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gradient-brand-start) 10%, var(--surface-card)) 0%,
+    color-mix(in srgb, var(--gradient-brand-end) 10%, var(--surface-card)) 100%
+  );
+  --edited-bg-strong: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gradient-brand-start) 22%, var(--surface-card)) 0%,
+    color-mix(in srgb, var(--gradient-brand-end) 22%, var(--surface-card)) 100%
+  );
+
+  /* Patient dashboard widget accents.
+     Each names one widget family on the patient home, so recolouring a widget
+     is one edit here rather than a dozen at the call sites. All three sit at
+     the ~200 step of their ramp so the set reads as one system on the white
+     parent card behind them.
+
+     `--widget-care-*` rides the violet ramp but is NOT `--ai-*`: those carry
+     "a model wrote this" and are doctor-portal only — no patient surface uses
+     them, so the hue is free here and means "your care plan". */
+  --widget-profile-bg: var(--teal-200);
+  --widget-profile-border: var(--teal-600);
+  --widget-profile-fg: var(--teal-900);
+
+  --widget-meds-bg: var(--navy-200);
+  --widget-meds-border: var(--navy-400);
+  --widget-meds-fg: var(--navy-800);
+
+  --widget-care-bg: var(--violet-200);
+  --widget-care-border: var(--violet-400);
+  --widget-care-fg: var(--violet-800);
+
+  /* Accent highlight (gold) */
+  --highlight: var(--gold-600);
+  --highlight-soft: var(--gold-100);
+
+  /* Brand gradient — deep blue through blue-green, left to right. Reused across
+     marketing surfaces: headline accents, banners, bars. Adjust the stops here
+     and everything that references --gradient-brand follows. */
+  --gradient-brand-start: #104970;
+  --gradient-brand-mid: #1ca48b;
+  --gradient-brand-end: #2f9080;
+  --gradient-brand: linear-gradient(
+    90deg,
+    var(--gradient-brand-start) 0%,
+    var(--gradient-brand-mid) 50%,
+    var(--gradient-brand-end) 100%
+  );
+}
+
+/* =========================================================
+   SEMANTIC ALIASES — DARK (from the file's Dark Mode variables:
+   bg/primary #0B1117, bg/surface #161D26, action #2DD4B5,
+   text/primary #E1E7EF, text/on-action #F8F4E3)
+   ========================================================= */
+[data-theme="dark"] {
+  /* Surfaces */
+  --surface-page: #0b1117;
+  --surface-canvas: #0b1117;
+  --surface-card: #161d26;
+  --surface-raised: #1c2530;
+  --surface-sunken: #0e151c;
+  --surface-warm: #171d18;
+  --surface-warm-soft: #131a17;
+  --surface-inverse: #0f7a66;
+  --surface-brand: var(--navy-700);
+  --surface-brand-soft: #122c3d;
+  --surface-accent-soft: #11332c;
+
+  /* Text */
+  --text-heading: #f8f4e3;
+  --text-body: #e1e7ef;
+  --text-muted: #9aabb8;
+  --text-subtle: #6f8290;
+  --text-on-brand: var(--white);
+  --text-on-accent: #0b1117;
+  --text-inverse: var(--ink-900);
+  --text-link: var(--teal-500);
+  --text-link-hover: var(--teal-400);
+
+  /* Borders */
+  --border-subtle: #1f2a35;
+  --border-default: #2a3844;
+  --border-strong: #3d4f5e;
+  --border-brand: var(--teal-500);
+  --border-focus: var(--teal-400);
+
+  /* Primary action (Figma Dark Mode v2 teal) */
+  --action-primary: var(--teal-500);
+  --action-primary-hover: var(--teal-400);
+  --action-primary-active: var(--teal-600);
+  --action-primary-text: var(--white);
+
+  /* Secondary */
+  --action-secondary-border: var(--teal-500);
+  --action-secondary-text: var(--teal-400);
+  --action-secondary-hover-surface: #122c3d;
+
+  --focus-ring: var(--teal-400);
+  --focus-ring-offset: var(--surface-page);
+
+  /* Status */
+  --status-available-fg: var(--teal-300);
+  --status-available-bg: #11332c;
+  --status-pilot-fg: var(--navy-300);
+  --status-pilot-bg: #122c3d;
+  --status-soon-fg: var(--gold-400);
+  --status-soon-bg: #33290d;
+  --status-research-fg: var(--ink-300);
+  --status-research-bg: #1b2732;
+
+  --safe-fg: var(--teal-300);
+  --safe-bg: #11332c;
+  --gray-fg: var(--ink-300);
+  --gray-bg: #1b2732;
+  --danger-fg: #e79a9a;
+  --danger-bg: #3a1f1f;
+  --danger-border: var(--red-400);
+
+  --ai-fg: #c9b6ff;
+  --ai-accent: var(--violet-400);
+  --ai-border: var(--violet-600);
+  --ai-bg: #211a35;
+  --ai-bg-strong: #2c2247;
+
+  --edited-fg: var(--teal-300);
+  --edited-border: var(--teal-500);
+  --edited-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gradient-brand-start) 26%, var(--surface-card)) 0%,
+    color-mix(in srgb, var(--gradient-brand-end) 26%, var(--surface-card)) 100%
+  );
+  --edited-bg-strong: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gradient-brand-start) 40%, var(--surface-card)) 0%,
+    color-mix(in srgb, var(--gradient-brand-end) 40%, var(--surface-card)) 100%
+  );
+
+  --highlight: var(--gold-400);
+  --highlight-soft: #33290d;
+
+  /* Widget accents — the same three families, sunk to card-depth fills so the
+     tint reads without glowing against the dark page. */
+  --widget-profile-bg: #11332c;
+  --widget-profile-border: var(--teal-600);
+  --widget-profile-fg: var(--teal-300);
+
+  --widget-meds-bg: #122c3d;
+  --widget-meds-border: var(--navy-500);
+  --widget-meds-fg: var(--navy-300);
+
+  --widget-care-bg: #211a35;
+  --widget-care-border: var(--violet-600);
+  --widget-care-fg: #c9b6ff;
+}
+
+
+/* ============================================================
+   BayanHealth — Typography tokens
+   Display/brand = MomoTrust Display. Body/UI = Inter.
+   Italic Inter for short emphasis phrases only, never UI labels.
+   Mobile body min 16px; line length target 55–75 chars.
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-display: "MomoTrust Display", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-script: "Caveat", "Segoe Script", cursive;   /* short brand accents only, never UI */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Weights (Inter) */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Fluid type scale — clamp(min, fluid, max) mobile-first from 360px.
+     Display uses MomoTrust; text sizes use Inter. */
+  --text-display-1: clamp(2.75rem, 1.6rem + 5.1vw, 4.5rem);
+  --text-display-2: clamp(2.25rem, 1.5rem + 3.3vw, 3.5rem);
+  --text-h1: clamp(2rem, 1.5rem + 2.2vw, 2.75rem);
+  --text-h2: clamp(1.625rem, 1.3rem + 1.5vw, 2.125rem);
+  --text-h3: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+  --text-h4: clamp(1.125rem, 1.05rem + 0.35vw, 1.25rem);
+  --text-lead: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
+  --text-body-lg: 1.125rem;   /* 18 */
+  --text-body: 1rem;          /* 16 — mobile body minimum */
+  --text-body-sm: 0.9375rem;  /* 15 */
+  --text-caption: 0.8125rem;  /* 13 */
+  --text-overline: 0.75rem;   /* 12 */
+
+  /* Line heights */
+  --leading-display: 1.02;
+  --leading-heading: 1.12;
+  --leading-snug: 1.3;
+  --leading-body: 1.6;
+  --leading-relaxed: 1.75;
+
+  /* Letter spacing */
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.01em;
+  --tracking-normal: 0;
+  --tracking-overline: 0.08em;
+
+  /* Measure (line length) */
+  --measure: 68ch;
+  --measure-narrow: 46ch;
+}
+
+
+/* ============================================================
+   BayanHealth — Radius, shadow, border & motion tokens
+   Pill buttons; cards 16–20px radius; soft shadows.
+   ============================================================ */
+
+/*
+   ⚠️  `--radius-xs|sm|md|lg|xl` and `--shadow-xs|sm|md|lg` below are ALSO the
+   names behind Tailwind's built-in `rounded-*` / `shadow-*` utilities. This
+   file is imported unlayered (globals.css:7) while Tailwind's `@theme` emits
+   into `@layer theme`, and unlayered wins — so these values silently override
+   the framework defaults for the whole app, shadcn components and the doctor
+   portal included. Editing one of them moves every `rounded-lg` in the
+   codebase. Brand-only names (`--radius-card`, `--radius-canvas`,
+   `--radius-widget`, `--radius-pill`, `--shadow-card`, `--shadow-float`) are
+   the safe place to tune surface shape.
+*/
+:root {
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-widget: 18px;    /* tiles nested inside a card */
+  --radius-card: 26px;      /* cards (Figma: 22, softened for the dashboards) */
+  --radius-lg: 24px;
+  --radius-canvas: 28px;    /* outer page slabs and hero cards */
+  --radius-xl: 32px;
+  --radius-pill: 999px;     /* buttons, chips, badges */
+
+  /* Borders */
+  --bh-border-width: 1px;
+  --bh-border-width-strong: 1.5px;
+
+  /* Soft shadow system — light mode shadows are warm cream-tinted (Figma
+     rgba(219,210,168,0.25)); buttons carry an inset bottom press shadow. */
+  --shadow-xs: 0 1px 2px rgba(219, 210, 168, 0.35);
+  --shadow-sm: 0 2px 4px rgba(219, 210, 168, 0.3), 0 1px 2px rgba(120, 110, 80, 0.06);
+  --shadow-card: 0 6px 16px rgba(219, 210, 168, 0.25), 0 1px 3px rgba(120, 110, 80, 0.06);
+  --shadow-md: 0 10px 26px rgba(120, 110, 80, 0.14), 0 2px 6px rgba(120, 110, 80, 0.06);
+  --shadow-lg: 0 18px 42px rgba(120, 110, 80, 0.18), 0 4px 10px rgba(120, 110, 80, 0.07);
+  /* Diffuse, near-borderless lift for cards that float on the page ground
+     rather than sitting inside another card. Warm-tinted like the rest. */
+  --shadow-float: 0 8px 28px rgba(120, 110, 80, 0.10), 0 2px 8px rgba(120, 110, 80, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(24, 165, 140, 0.35);
+  --shadow-btn-inset: inset 0 -3.2px 0 0 rgba(0, 0, 0, 0.2);   /* pill CTA press edge (Figma) */
+
+  /* Rings */
+  --ring-focus: 0 0 0 3px var(--focus-ring);
+
+  /* Motion — calm, no bounces */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+}
+
+[data-theme="dark"] {
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 8px 28px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
