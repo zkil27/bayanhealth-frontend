@@ -45,7 +45,7 @@ const QUICK_SYMPTOMS = [
   { label: "Sakit ng Ulo", query: "sakit-ng-ulo" },
   { label: "Sakit ng Tiyan", query: "sakit-ng-tiyan" },
   { label: "Pangangati", query: "pangangati" },
-  { label: "Katawan", query: "sakit-ng-katawan" },
+  { label: "Sakit ng Katawan", query: "sakit-ng-katawan" },
 ] as const;
 
 /** 8-tile 4×2 Grab-inspired services grid with single scannable labels (zero truncation). */
@@ -183,164 +183,180 @@ export function PatientHome() {
     >
       {/* ----------------------------- 1. Top Bar: Search & Notification */}
       <header
-        ref={searchContainerRef}
         data-slot="patient-home-topbar"
-        className="relative z-30 w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]"
+        className="relative z-50 w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]"
       >
-        <div className="relative flex w-full items-center gap-2.5 px-4 py-3 sm:px-6 md:px-8">
-          <form
-            role="search"
-            onSubmit={handleSearchSubmit}
-            className="relative flex min-w-0 flex-1 items-center"
+        <div className="w-full px-4 py-3 sm:px-6 md:px-8 lg:pl-[18rem] lg:pr-8">
+          <div
+            ref={searchContainerRef}
+            className="relative flex w-full items-center gap-2.5"
           >
-            <Search
-              className="pointer-events-none absolute left-3.5 size-4 text-(--text-muted)"
-              aria-hidden
-            />
-            <input
-              ref={searchInputRef}
-              type="search"
-              enterKeyHint="search"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (!isSearchOpen) setIsSearchOpen(true);
-              }}
-              onFocus={() => setIsSearchOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setIsSearchOpen(false);
-                  searchInputRef.current?.blur();
-                }
-              }}
-              placeholder="Maghanap ng sintomas o doktor…"
-              role="combobox"
-              aria-expanded={isSearchOpen}
-              aria-haspopup="listbox"
-              aria-controls="patient-home-search-dropdown"
-              className="h-10 w-full rounded-(--radius-card) border border-(--border-default) bg-(--surface-card) pr-9 pl-10 text-[14px] text-(--text-heading) shadow-(--shadow-xs) placeholder:text-(--text-subtle) focus-visible:border-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            />
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  searchInputRef.current?.focus();
-                }}
-                aria-label="I-clear ang paghahanap"
-                className="absolute right-2.5 flex size-7 items-center justify-center rounded-full text-(--text-muted) hover:bg-(--surface-warm) hover:text-(--text-heading)"
-              >
-                <X className="size-3.5" />
-              </button>
-            ) : null}
-          </form>
-
-          <Link
-            href="/patient/health"
-            aria-label="Tingnan ang iyong mga abiso"
-            onClick={() => setIsSearchOpen(false)}
-            className="flex size-10 shrink-0 items-center justify-center rounded-(--radius-card) border border-white/25 bg-white/10 text-white shadow-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          >
-            <Bell className="size-5" />
-          </Link>
-
-          {/* Mobile-friendly Search & Quick Symptoms Dropdown */}
-          {isSearchOpen && (
-            <div
-              id="patient-home-search-dropdown"
-              data-slot="patient-home-search-dropdown"
-              className="absolute top-full left-4 right-4 z-50 mt-1.5 flex flex-col gap-2.5 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-xl sm:left-6 sm:right-6 md:left-8 md:right-8"
+            <form
+              role="search"
+              onSubmit={handleSearchSubmit}
+              className="relative flex min-w-0 flex-1 items-center"
             >
-              {searchQuery.trim() ? (
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSearchSubmit()}
-                    className="flex min-h-10 w-full items-center gap-2.5 rounded-(--radius-md) bg-(--surface-warm) px-3 py-2 text-left text-[13px] font-semibold text-(--action-primary) hover:bg-(--surface-accent-soft)"
-                  >
-                    <Search className="size-4 shrink-0" aria-hidden />
-                    <span className="truncate">
-                      Hanapin ang doktor: <strong className="font-bold">&ldquo;{searchQuery}&rdquo;</strong>
-                    </span>
-                  </button>
+              <Search
+                className="pointer-events-none absolute left-3.5 size-4 text-(--text-muted)"
+                aria-hidden
+              />
+              <input
+                ref={searchInputRef}
+                type="search"
+                enterKeyHint="search"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!isSearchOpen) setIsSearchOpen(true);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setIsSearchOpen(false);
+                    searchInputRef.current?.blur();
+                  }
+                }}
+                placeholder="Maghanap ng sintomas o doktor…"
+                role="combobox"
+                aria-expanded={isSearchOpen}
+                aria-haspopup="listbox"
+                aria-controls="patient-home-search-dropdown"
+                className="h-10 w-full rounded-(--radius-card) border border-(--border-default) bg-(--surface-card) pr-9 pl-10 text-[16px] sm:text-[14px] text-(--text-heading) shadow-(--shadow-xs) placeholder:text-(--text-subtle) focus-visible:border-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    searchInputRef.current?.focus();
+                  }}
+                  aria-label="I-clear ang paghahanap"
+                  className="absolute right-2.5 flex size-7 items-center justify-center rounded-full text-(--text-muted) hover:bg-(--surface-warm) hover:text-(--text-heading)"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
+            </form>
 
-                  <Link
-                    href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
-                    onClick={() => setIsSearchOpen(false)}
-                    className="flex min-h-10 items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[13px] font-medium text-(--text-heading) hover:bg-(--surface-warm)"
-                  >
-                    <Video className="size-4 shrink-0 text-(--status-available-fg)" aria-hidden />
-                    <span>Kumonsulta agad (On-Demand)</span>
-                  </Link>
+            <Link
+              href="/patient/health"
+              aria-label="Tingnan ang iyong mga abiso"
+              onClick={() => setIsSearchOpen(false)}
+              className="flex size-10 shrink-0 items-center justify-center rounded-(--radius-card) border border-white/25 bg-white/10 text-white shadow-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <Bell className="size-5" />
+            </Link>
 
-                  <div className="pt-1">
-                    <p className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wide">
-                      Mga kaugnay na sintomas
-                    </p>
-                    {filteredSymptoms.length > 0 ? (
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {filteredSymptoms.map(({ label, query }) => (
-                          <Link
-                            key={query}
-                            href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
-                            onClick={() => setIsSearchOpen(false)}
-                            className="inline-flex min-h-9 items-center rounded-(--radius-pill) border border-(--border-subtle) bg-(--surface-warm) px-3 py-1.5 text-[12.5px] font-semibold text-(--text-heading) hover:border-(--action-primary) hover:bg-(--surface-accent-soft) active:scale-95 transition-all"
-                          >
-                            <span>{label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-xs text-(--text-subtle)">
-                        Walang tiyak na sintomas na tumugma.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-(--text-muted) uppercase tracking-wide">
-                      <Stethoscope className="size-3.5 text-(--status-available-fg)" aria-hidden />
-                      Mabilisang Sintomas
-                    </span>
-                    <span className="text-[11px] text-(--text-subtle)">
-                      Pumili para mag-konsulta
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_SYMPTOMS.map(({ label, query }) => (
-                      <Link
-                        key={query}
-                        href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
-                        onClick={() => setIsSearchOpen(false)}
-                        className="inline-flex min-h-9 items-center rounded-(--radius-pill) border border-(--border-subtle) bg-(--surface-warm) px-3.5 py-1.5 text-[13px] font-semibold text-(--text-heading) shadow-(--shadow-xs) hover:border-(--action-primary) hover:bg-(--surface-accent-soft) active:scale-95 transition-all"
-                      >
-                        <span>{label}</span>
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="border-t border-(--border-subtle) pt-2">
-                    <Link
-                      href="/patient/booking/search"
-                      onClick={() => setIsSearchOpen(false)}
-                      className="flex min-h-9 items-center justify-between rounded-(--radius-md) px-2 py-1 text-[12.5px] font-medium text-(--text-heading) hover:bg-(--surface-warm) transition-colors"
+            {/* Mobile-friendly Search & Quick Symptoms Dropdown (spans full width including space below notification bell) */}
+            {isSearchOpen && (
+              <div
+                id="patient-home-search-dropdown"
+                data-slot="patient-home-search-dropdown"
+                className="absolute top-full left-0 right-0 z-50 mt-2 flex max-h-[calc(100vh-140px)] flex-col gap-3 overflow-y-auto rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-2xl transition-all"
+              >
+                {searchQuery.trim() ? (
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSearchSubmit()}
+                      className="flex min-h-11 w-full items-center gap-2.5 rounded-(--radius-md) bg-(--surface-warm) px-3 py-2.5 text-left text-[13px] font-semibold text-(--action-primary) hover:bg-(--surface-accent-soft) transition-colors"
                     >
-                      <span className="flex items-center gap-2">
-                        <Search className="size-3.5 text-(--text-muted)" aria-hidden />
-                        Tingnan ang lahat ng doktor
+                      <Search className="size-4 shrink-0" aria-hidden />
+                      <span className="truncate">
+                        Hanapin ang doktor: <strong className="font-bold underline decoration-(--action-primary)/40 decoration-2 underline-offset-2">&ldquo;{searchQuery}&rdquo;</strong>
                       </span>
-                      <ChevronRight className="size-3.5 text-(--text-muted)" aria-hidden />
+                    </button>
+
+                    <Link
+                      href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
+                      onClick={() => setIsSearchOpen(false)}
+                      className="flex min-h-11 items-center gap-2.5 rounded-(--radius-md) border border-(--border-subtle) px-3 py-2.5 text-[13px] font-semibold text-(--text-heading) hover:bg-(--surface-warm) transition-colors"
+                    >
+                      <Video className="size-4 shrink-0 text-(--status-available-fg)" aria-hidden />
+                      <span>Kumonsulta agad (On-Demand)</span>
                     </Link>
+
+                    <div className="pt-1">
+                      <p className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wide">
+                        Mga kaugnay na sintomas
+                      </p>
+                      {filteredSymptoms.length > 0 ? (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {filteredSymptoms.map(({ label, query }) => (
+                            <Link
+                              key={query}
+                              href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
+                              onClick={() => setIsSearchOpen(false)}
+                              className="group flex min-h-11 items-center justify-between rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-warm) px-3.5 py-2.5 text-[13.5px] font-semibold text-(--text-heading) shadow-(--shadow-xs) hover:border-(--action-primary) hover:bg-(--surface-accent-soft) hover:text-(--action-primary) active:scale-[0.99] transition-all"
+                            >
+                              <span>{label}</span>
+                              <ChevronRight className="size-4 text-(--text-muted) transition-colors group-hover:text-(--action-primary)" />
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-2 rounded-(--radius-md) bg-(--surface-warm)/60 p-3 text-center text-xs text-(--text-muted)">
+                          Walang tiyak na sintomas na tumugma para sa &ldquo;{searchQuery}&rdquo;.
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </>
-              )}
-            </div>
-          )}
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between gap-2 border-b border-(--border-subtle) pb-2">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-(--status-available-fg) uppercase">
+                        <Stethoscope className="size-3.5" aria-hidden />
+                        Mabilisang Sintomas
+                      </span>
+                      <span className="text-[11px] font-medium text-(--text-muted)">
+                        Pumili bago mag-konsulta
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      {QUICK_SYMPTOMS.map(({ label, query }) => (
+                        <Link
+                          key={query}
+                          href="/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult"
+                          onClick={() => setIsSearchOpen(false)}
+                          className="group flex min-h-11 items-center justify-between rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-warm) px-3.5 py-2.5 text-[13.5px] font-semibold text-(--text-heading) shadow-(--shadow-xs) hover:border-(--action-primary) hover:bg-(--surface-accent-soft) hover:text-(--action-primary) active:scale-[0.99] transition-all"
+                        >
+                          <span>{label}</span>
+                          <ChevronRight className="size-4 text-(--text-muted) transition-colors group-hover:text-(--action-primary)" />
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-(--border-subtle) pt-2">
+                      <Link
+                        href="/patient/booking/search"
+                        onClick={() => setIsSearchOpen(false)}
+                        className="flex min-h-11 items-center justify-between rounded-(--radius-md) px-3 py-2 text-[13px] font-semibold text-(--text-heading) hover:bg-(--surface-warm) hover:text-(--action-primary) transition-colors"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Search className="size-4 text-(--action-primary)" aria-hidden />
+                          Tingnan ang lahat ng doktor
+                        </span>
+                        <ChevronRight className="size-4 text-(--text-muted)" aria-hidden />
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Dimmed backdrop scrim when search is open */}
+      {isSearchOpen && (
+        <div
+          data-slot="patient-home-search-backdrop"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+          onClick={() => setIsSearchOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Main Home Content */}
       <div

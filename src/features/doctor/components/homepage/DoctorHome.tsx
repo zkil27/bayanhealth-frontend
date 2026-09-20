@@ -1,4 +1,3 @@
-import { patientPageClass } from "@/features/patient/components/PatientPage";
 
 import { ActiveEncounterCommandCenter } from "./ActiveEncounterCommandCenter";
 import { DoctorDutyCard } from "./DoctorDutyCard";
@@ -58,7 +57,7 @@ import { UpcomingTodayCard } from "./UpcomingTodayCard";
  */
 export function DoctorHome() {
   return (
-    <div className={patientPageClass("wide", "h-full min-h-0 gap-3.5 pt-1 pb-2 md:gap-3.5")}>
+    <div className="mx-auto flex h-full min-h-0 w-full min-w-0 max-w-lg flex-col gap-3.5 px-4 pt-1 pb-2 sm:px-6 md:max-w-none md:gap-3.5 md:px-8 lg:mx-0 lg:px-8">
       <div className="grid grid-cols-1 items-start gap-4 lg:flex-1 lg:grid-cols-12 lg:items-stretch">
         {/* -------------------------------------------------------- rail -- */}
         <div className="contents lg:col-span-4 lg:flex lg:h-full lg:flex-col lg:justify-between lg:gap-3">

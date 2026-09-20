@@ -12,7 +12,7 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
-import { BookingNavBar } from "../BookingNavBar";
+import { PatientPageHeader } from "@/features/patient/components/PatientPageHeader";
 import { FormSection } from "../FormSection";
 import { BookingServiceSelect } from "../BookingServiceSelect";
 import { BookingSummary } from "../BookingSummary";
@@ -115,20 +115,22 @@ export function DoctorBookingPage({
 
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto flex w-full max-w-2xl flex-col gap-y-1 pb-10 lg:pb-4"
-      >
-      {/*
-       * This screen is only ever reached from the doctor's own page
-       * (`/patient/booking/doctor/{doctorId}` → "Book appointment"), so the back
-       * control returns there — to the slot list the patient was just on —
-       * rather than defaulting to the booking directory and skipping a step.
-       */}
-      <BookingNavBar
-        header={"Booking Consultation"}
-        backHref={doctorId ? `/patient/booking/doctor/${doctorId}` : "/patient/booking"}
-      />
+      <div className="flex h-full min-h-0 w-full flex-col justify-start pb-4">
+        {/*
+         * This screen is only ever reached from the doctor's own page
+         * (`/patient/booking/doctor/{doctorId}` → "Book appointment"), so the back
+         * control returns there — to the slot list the patient was just on —
+         * rather than defaulting to the booking directory and skipping a step.
+         */}
+        <PatientPageHeader
+          title="Booking Consultation"
+          backHref={doctorId ? `/patient/booking/doctor/${doctorId}` : "/patient/booking"}
+        />
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mx-auto flex w-full max-w-2xl flex-col gap-y-1 pt-4 pb-10 md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-4"
+        >
 
         <div className="flex w-full flex-col items-center justify-center gap-4 p-4">
           <FieldGroup>
@@ -250,6 +252,7 @@ export function DoctorBookingPage({
           </div>
         </div>
       </form>
+      </div>
     </FormProvider>
   );
 }

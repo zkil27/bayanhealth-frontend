@@ -5,7 +5,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 
 import { AsyncView } from "@/components/async-view";
-import { BookingNavBar } from "@/features/booking/components/BookingNavBar";
+import { PatientPageHeader } from "@/features/patient/components/PatientPageHeader";
 import { BrandCtaButton, EmergencyNote } from "@/features/booking/components/BrandUI";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
@@ -77,20 +77,20 @@ function DoctorDetailContent({
   const availableSlots = selectableSlots(data.slots);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pb-8">
+    <div className="flex h-full min-h-0 w-full flex-col justify-start pb-8">
       {/*
        * Back to the directory, not to `/patient/booking` — that is the path chooser
        * now, and a patient who has drilled into a doctor came from the search
        * results and expects to land back among them.
        */}
-      <BookingNavBar
-        header={data.profile.fullName}
-        subtitle={data.profile.specialty ?? "Specialty not listed"}
+      <PatientPageHeader
+        title={data.profile.fullName}
         backHref="/patient/booking/search"
       />
 
       {/* Slots section */}
-      <div className="mx-4 flex flex-col gap-4 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 shadow-(--shadow-card) md:mx-2">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pt-4 pb-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none">
+        <div className="mx-4 flex flex-col gap-4 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 shadow-(--shadow-card) md:mx-0">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-[16px] font-bold tracking-[-0.01em] text-(--text-heading)">
             Available time slots
@@ -133,6 +133,7 @@ function DoctorDetailContent({
         )}
 
         <EmergencyNote />
+      </div>
       </div>
     </div>
   );

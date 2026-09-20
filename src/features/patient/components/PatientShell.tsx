@@ -17,12 +17,12 @@ export function PatientShell({ children, className }: PatientShellProps) {
   return (
     <QueryClientProviders>
       <div className="bg-satin relative flex min-h-screen w-full overflow-hidden p-0 text-(--text-body) lg:h-screen">
-        <aside className="relative z-30 hidden h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col justify-between rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-raised) p-5 text-(--text-body) shadow-lg lg:flex lg:my-3 lg:ml-4 lg:mr-0">
+        <aside className="fixed left-4 top-3 bottom-3 z-30 hidden w-60 flex-col justify-between rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-raised) p-5 text-(--text-body) shadow-lg lg:flex">
           <SidebarContent />
         </aside>
         <main
           className={cn(
-            "bg-satin relative z-10 flex min-w-0 flex-1 flex-col overflow-x-hidden p-0 m-0 pb-24 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pb-2",
+            "bg-satin relative z-10 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden p-0 m-0 pb-24 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pb-2",
             className,
           )}
         >

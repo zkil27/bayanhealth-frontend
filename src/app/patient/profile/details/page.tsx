@@ -14,10 +14,7 @@ import { ProfileSubPage } from "@/features/patient/components/profile/ProfileSub
  */
 export default function ProfileDetailsPage() {
   return (
-    <ProfileSubPage
-      title="Personal details"
-      subtitle="Your name is shared with the doctor you consult."
-    >
+    <ProfileSubPage title="Personal details">
       <ProfileContent />
     </ProfileSubPage>
   );

@@ -152,7 +152,6 @@ export function PatientHealthView() {
     >
       <PatientPageHeader
         title="My Health"
-        subtitle="Your health identity, medicines and full record — plus the Med Hub."
         action={
           searchable ? (
             <button

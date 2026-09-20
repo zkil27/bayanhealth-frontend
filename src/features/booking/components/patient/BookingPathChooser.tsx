@@ -79,10 +79,7 @@ export function BookingPathChooser() {
       data-slot="booking-path-chooser"
       className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
     >
-      <PatientPageHeader
-        title="Book a consultation"
-        subtitle={`Two ways to see a PRC-licensed doctor. Same ${fee} consultation fee — pick whichever suits you.`}
-      />
+      <PatientPageHeader title="Book a consultation" />
 
       <div className={patientPageClass("wide", "gap-4 pt-4")}>
         {/* Educational comparison strip from Figma O12 */}

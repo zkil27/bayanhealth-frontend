@@ -37,8 +37,8 @@ export function patientPageClass(
     // `wide` fills modern widescreen space, spanning across the full available
     // width beside the floating rail.
     width === "wide"
-      ? "md:max-w-none md:gap-6 lg:mx-0 lg:px-8"
-      : "md:max-w-2xl",
+      ? "md:max-w-none md:gap-6 lg:mx-0 lg:pl-[18rem] lg:pr-8"
+      : "md:max-w-2xl lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-[calc(42rem+18rem)]",
     extra,
   );
 }

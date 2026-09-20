@@ -125,7 +125,7 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
        * usable on a phone. The viewport subtraction clears the shell's own
        * chrome (breadcrumb on desktop, the floating nav bar on mobile).
        */
-      className="mx-auto flex h-[calc(100dvh-9rem)] min-h-[24rem] w-full max-w-lg flex-col px-4 pt-2 md:h-[calc(100dvh-8rem)] md:max-w-3xl md:px-8"
+      className="mx-auto flex h-[calc(100dvh-9rem)] min-h-[24rem] w-full max-w-lg flex-col px-4 pt-2 md:h-[calc(100dvh-8rem)] md:max-w-3xl md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-[calc(48rem+18rem)]"
     >
       <header className="flex shrink-0 items-center gap-3 pb-3">
         <Link

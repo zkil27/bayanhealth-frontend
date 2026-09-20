@@ -80,10 +80,7 @@ export function PatientChatList() {
       data-slot="patient-chat-list"
       className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
     >
-      <PatientPageHeader
-        title="Chat"
-        subtitle="Message the doctor on an active consultation, or read past conversations. Chat opens as soon as a doctor accepts your booking."
-      />
+      <PatientPageHeader title="Chat" />
 
       <div className={patientPageClass("narrow", "gap-4 pt-4")}>
         {isLoading ? (

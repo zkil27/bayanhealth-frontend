@@ -12,10 +12,7 @@ import { ProfileSubPage } from "@/features/patient/components/profile/ProfileSub
  */
 export default function DoctorPreferencesPage() {
   return (
-    <ProfileSubPage
-      title="Doctor preferences"
-      subtitle="Used to match you on Consult Now. Leave blank for no preference."
-    >
+    <ProfileSubPage title="Doctor preferences">
       <DoctorPreferencesContent />
     </ProfileSubPage>
   );

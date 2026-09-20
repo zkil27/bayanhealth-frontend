@@ -77,10 +77,7 @@ export function PatientProfileSettings() {
       data-slot="patient-profile-page"
       className="flex h-full min-h-0 w-full min-w-0 flex-col justify-start pb-4"
     >
-      <PatientPageHeader
-        title="Profile"
-        subtitle="Manage your personal details, allergies, and account preferences."
-      />
+      <PatientPageHeader title="Profile" />
       <section
         data-slot="patient-profile"
         className={patientPageClass("narrow", "gap-3.5 pt-4")}

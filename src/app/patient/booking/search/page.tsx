@@ -14,11 +14,10 @@ export default function Page() {
     <div className="flex h-full min-h-0 w-full flex-col justify-start pb-8">
       <PatientPageHeader
         title="Book for later"
-        subtitle="Search a doctor by name or specialty, then pick a slot from their calendar."
         backHref="/patient/booking"
       />
 
-      <section className="mx-auto flex w-full max-w-5xl flex-col gap-y-4 px-4 pt-4 pb-8 md:px-8">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-y-4 px-4 pt-4 pb-8 md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none">
         <OtherPathNote
           href="/patient/booking/createBooking?mode=on-demand"
           label="Need care now? Consult Now instead"

@@ -7,7 +7,6 @@ import { PatientPageHeader } from "@/features/patient/components/PatientPageHead
  */
 export function ProfileSubPage({
   title,
-  subtitle,
   children,
 }: {
   title: string;
@@ -18,10 +17,9 @@ export function ProfileSubPage({
     <div className="flex h-full min-h-0 w-full flex-col justify-start pb-4">
       <PatientPageHeader
         title={title}
-        subtitle={subtitle}
         backHref="/patient/profile"
       />
-      <section className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-4 pb-8 md:max-w-3xl md:px-8">
+      <section className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-4 pb-8 md:max-w-3xl md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-[calc(48rem+18rem)]">
         <div className="rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 shadow-(--shadow-card) md:p-6">
           {children}
         </div>

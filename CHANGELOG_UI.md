@@ -9,6 +9,60 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 *(New entries should be appended at the top)*
 
+### [2026-09-21] Patient UI: Search Dropdown Layout Modernization, Width Anchoring & Scrim Overlay
+
+- **Target Route / Surface**:
+  - `/patient` (Patient Home Top Bar & Quick Symptoms Dropdown)
+- **Files Modified**:
+  - `src/features/patient/components/homepage/PatientHome.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Full-Width Span Across Notification Area**: Wrapped the search form and notification Bell button within a shared `relative flex w-full items-center gap-2.5` container, anchoring the dropdown with `absolute top-full left-0 right-0 mt-2 z-50`. This allows the dropdown to expand across the full header width—taking up the space below both the search input and the notification Bell—giving patients a wide, balanced surface for quick symptoms and instant search actions on mobile and desktop.
+  - **Dimmed Scrim Backdrop**: Added a focused scrim backdrop (`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]`) when `isSearchOpen` is active. This eliminates visual clash with half-obscured hero content underneath and ensures tapping anywhere outside safely dismisses the search menu.
+  - **Structured Quick Symptoms Grid**: Replaced uneven `flex flex-wrap` chips with an ergonomic, responsive grid (`grid grid-cols-2 min-[410px]:grid-cols-3 gap-2`). On standard mobile viewports (e.g. 410px–440px like iPhone 16 Pro Max and above), symptoms render in 3 balanced columns across 2 rows; on compact phones below 410px, it gracefully folds into 2 equal-width columns.
+  - **Mobile Touch Ergonomics**: Increased interactive touch heights across symptom chips, search action buttons, and directory links to `min-h-11` (44px), meeting mobile accessibility and WCAG standards. Updated the search input to `text-[16px] sm:text-[14px]` to eliminate iOS Safari automatic viewport zooming on focus.
+  - **Clinical Taglish Terminology**: Updated the symptom label from the colloquial "Katawan" to the clinical Taglish standard "Sakit ng Katawan" (matching "Sakit ng Ulo" and "Sakit ng Tiyan").
+
+### [2026-09-21] Patient UI: Desktop Edge-to-Edge Green Bar Behind Sidebar Navigation & Subheader Removal
+
+- **Target Route / Surface**:
+  - All Patient UI surfaces: `/patient` (Home), `/patient/health` (My Health), `/patient/booking` (Consultation Chooser), `/patient/booking/search` (Find Doctor), `/patient/booking/doctor/[doctorId]`, `/patient/booking/createBooking`, `/patient/chat` (Chat), `/patient/profile` (Profile & Sub-pages), and `PatientShell`.
+- **Files Modified**:
+  - `src/features/patient/components/PatientShell.tsx`
+  - `src/features/patient/components/PatientPageHeader.tsx`
+  - `src/features/patient/components/homepage/PatientHome.tsx`
+  - `src/features/patient/components/PatientPage.tsx`
+  - `src/features/patient/components/health/PatientHealthView.tsx`
+  - `src/features/booking/components/patient/BookingPathChooser.tsx`
+  - `src/features/patient/components/chat/PatientChatList.tsx`
+  - `src/features/patient/components/profile/PatientProfileSettings.tsx`
+  - `src/features/patient/components/profile/ProfileSubPage.tsx`
+  - `src/app/patient/booking/search/page.tsx`
+  - `src/app/patient/booking/doctor/[doctorId]/page.tsx`
+  - `src/features/booking/components/patient/OnDemandBooking.tsx`
+  - `src/features/booking/components/doctor/DoctorBooking.tsx`
+  - `src/app/patient/booking/getBooking/[bookingId]/page.tsx`
+  - `src/features/patient/components/chat/PatientChatRoom.tsx`
+  - `src/app/patient/profile/details/page.tsx`
+  - `src/app/patient/profile/doctor-preferences/page.tsx`
+  - `src/features/doctor/components/homepage/DoctorHome.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Desktop Floating Sidebar & Seamless Behind-the-Navbar Green Top Bar**:
+    - Previously, `<aside>` in `PatientShell.tsx` was an in-flow flex sibling beside `<main>`, preventing `<main>` and its `<header>` from reaching `x = 0`. This caused the green bar on desktop to terminate abruptly at the right edge of the sidebar, leaving cream/satin gaps above and to the left of the sidebar.
+    - Repositioned `<aside>` as a fixed floating card on desktop (`fixed left-4 top-3 bottom-3 z-30 hidden w-60 lg:flex`) and allowed `<main>` to occupy full viewport width (`w-full flex-1`).
+    - The green top bar (`bg-(--teal-700)` in light mode, `dark:bg-[#0c1f1b]` in dark mode) now spans 100vw from `x = 0` to `x = 100vw` across the top of the desktop screen, passing seamlessly behind the floating sidebar card.
+    - Added desktop clearance (`lg:pl-[18rem] lg:pr-8`) to `PatientPageHeader`, `PatientHome` search container, and `patientPageClass` (wide and narrow variants) so titles, breadcrumbs, search inputs, buttons, and page cards sit 32px to the right of the 240px sidebar with zero collision.
+    - Decoupled `DoctorHome.tsx` from `patientPageClass` to ensure doctor portal multi-column desktop density and layout remain completely preserved.
+  - **Subheader Removal Across All Patient Headers**:
+    - Completely removed `{subtitle}` rendering from `PatientPageHeader.tsx`.
+    - Removed subheader text strings across all patient routes, specifically eliminating `"Your health identity, medicines and full record — plus the Med Hub."` from `/patient/health` and corresponding subtitles from `/patient/booking`, `/patient/chat`, `/patient/profile`, and subpages.
+  - **Replaced Legacy BookingNavBar with Unified PatientPageHeader**:
+    - Replaced obsolete `BookingNavBar` in `/patient/booking/doctor/[doctorId]`, `/patient/booking/createBooking?mode=on-demand`, and doctor appointment booking with `PatientPageHeader`.
+    - The entire patient booking funnel now shares the authoritative edge-to-edge Brand Teal top bar.
+- **Tokens & Components Used**:
+  - `--teal-700` (`#18a58c`), `PatientPageHeader`, `PatientShell`, `patientPageClass`.
+- **Upstream Porting Notes**:
+  - Pure layout and styling modernization; zero backend, API contract, or auth state modifications.
+
 ### [2026-09-21] Patient UI: Full-Bleed Edge-to-Edge Green Top Bar Across All Patient Pages (Zero Margin, Padding, or Border)
 
 - **Target Route / Surface**:

@@ -21,7 +21,6 @@ interface PatientPageHeaderProps {
  */
 export function PatientPageHeader({
   title,
-  subtitle: _subtitle,
   action,
   backHref,
   className,
@@ -34,7 +33,7 @@ export function PatientPageHeader({
         className,
       )}
     >
-      <div className="flex w-full flex-col gap-1 px-4 py-3 sm:px-6 md:px-8">
+      <div className="flex w-full flex-col gap-1 px-4 py-3 sm:px-6 md:px-8 lg:pl-[18rem] lg:pr-8">
         <PatientBreadcrumb variant="header" />
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">

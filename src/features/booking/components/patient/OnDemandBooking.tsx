@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, FormProvider } from "react-hook-form";
-import { BookingNavBar } from "../BookingNavBar";
 import { BookingServiceSelect } from "../BookingServiceSelect";
+import { PatientPageHeader } from "@/features/patient/components/PatientPageHeader";
 import { BookingSummary } from "../BookingSummary";
 import { BrandCtaButton, EmergencyNote } from "../BrandUI";
 import { ON_DEMAND_WAIT_ESTIMATE } from "../../constants/bookingConstants";
@@ -84,23 +84,16 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-6 px-4 py-3 lg:grid-cols-12"
-      >
-        <div className="lg:col-span-12">
-          <BookingNavBar
-            header="Konsulta Ngayon (Consult Now)"
-            subtitle="Walang appointment na kailangan. Unang available na lisensyadong doktor ang titingin sa'yo."
-            backHref="/patient/booking"
-            badge={
-              <span className="mb-1 inline-flex items-center gap-1.5 rounded-(--radius-pill) bg-(--surface-accent-soft) px-2.5 py-1 text-[12px] font-bold tracking-(--tracking-overline) text-(--status-available-fg) uppercase">
-                <Zap className="size-3.5" aria-hidden />
-                On-Demand Intake · Pinakamabilis
-              </span>
-            }
-          />
-        </div>
+      <div className="flex h-full min-h-0 w-full flex-col justify-start pb-4">
+        <PatientPageHeader
+          title="Konsulta Ngayon (Consult Now)"
+          backHref="/patient/booking"
+        />
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-6 px-4 py-4 md:px-8 lg:grid-cols-12 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none"
+        >
 
         {/* Left: clinical preferences. */}
         <div className={`${cardClass} space-y-4 lg:col-span-7`}>
@@ -170,6 +163,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
           <EmergencyNote />
         </div>
       </form>
+      </div>
     </FormProvider>
   );
 }
