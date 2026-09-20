@@ -69,7 +69,12 @@ export function SidebarContent() {
     <>
       {/* -------------------------------------------------- top: brand -- */}
       <div className="flex px-1 pt-1">
-        <AppLogo type="withText" width={164} height={33} />
+        <AppLogo
+          type="withText"
+          width={164}
+          height={33}
+          className="dark:brightness-0 dark:invert"
+        />
         <span className="sr-only">BayanHealth</span>
       </div>
 
@@ -150,7 +155,7 @@ export function SidebarContent() {
             >
               <span
                 className={cn(
-                  "absolute top-0.5 size-5 rounded-full bg-(--surface-card) shadow-sm transition-all",
+                  "absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-all",
                   isDark ? "left-[1.125rem]" : "left-0.5",
                 )}
               />

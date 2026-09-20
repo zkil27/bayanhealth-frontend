@@ -73,90 +73,105 @@ export function PatientProfileSettings() {
   ].filter(Boolean);
 
   return (
-    <section
-      data-slot="patient-profile"
-      className={patientPageClass("narrow", "gap-3.5")}
+    <div
+      data-slot="patient-profile-page"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col justify-start pb-4"
     >
-      <div className="flex flex-col items-center pt-4 pb-2">
-        <Avatar size={84}>{initialsOf(displayName)}</Avatar>
-        {isLoading ? (
-          <span className="mt-3 flex items-center gap-2 text-[15px] text-(--text-muted)">
-            <Spinner className="size-4" />
-            Loading your profile…
-          </span>
-        ) : (
-          <>
-            <p className="mt-3 text-[20px] font-bold tracking-[-0.01em] text-(--text-heading)">
-              {displayName || "Your profile"}
-            </p>
-            {email ? (
-              <p className="mt-0.5 text-[16px] text-(--text-muted)">{email}</p>
-            ) : null}
-          </>
-        )}
-      </div>
+      <PatientPageHeader
+        title="Profile"
+        subtitle="Manage your personal details, allergies, and account preferences."
+      />
+      <section
+        data-slot="patient-profile"
+        className={patientPageClass("narrow", "gap-3.5 pt-4")}
+      >
+        <div className="flex flex-col items-center pt-4 pb-2">
+          <Avatar size={84}>{initialsOf(displayName)}</Avatar>
+          {isLoading ? (
+            <span className="mt-3 flex items-center gap-2 text-[15px] text-(--text-muted)">
+              <Spinner className="size-4" />
+              Loading your profile…
+            </span>
+          ) : (
+            <>
+              <p className="mt-3 text-[20px] font-bold tracking-[-0.01em] text-(--text-heading)">
+                {displayName || "Your profile"}
+              </p>
+              {email ? (
+                <p className="mt-0.5 text-[16px] text-(--text-muted)">{email}</p>
+              ) : null}
+            </>
+          )}
+        </div>
 
-      <SettingsCard label="Your details">
-        <Row
-          icon={<User />}
-          label="Personal details"
-          href="/patient/profile/details"
-        />
-        <Row
-          icon={<TriangleAlert />}
-          label="Allergies"
-          href="/patient/profile/details"
-          trailing={
-            allergens.length > 0 ? (
-              <span className="flex flex-wrap justify-end gap-1">
-                {allergens.slice(0, 2).map((allergen) => (
-                  <Chip key={allergen} tone="danger">
-                    {allergen}
-                  </Chip>
-                ))}
-                {allergens.length > 2 ? (
-                  <Chip tone="neutral">+{allergens.length - 2}</Chip>
-                ) : null}
+        <SettingsCard label="Your details">
+          <Row
+            icon={<User />}
+            label="Personal details"
+            href="/patient/profile/details"
+          />
+          <Row
+            icon={<TriangleAlert />}
+            label="Allergies"
+            href="/patient/profile/details"
+            trailing={
+              allergens.length > 0 ? (
+                <span className="flex flex-wrap justify-end gap-1">
+                  {allergens.slice(0, 2).map((allergen) => (
+                    <Chip key={allergen} tone="danger">
+                      {allergen}
+                    </Chip>
+                  ))}
+                  {allergens.length > 2 ? (
+                    <Chip tone="neutral">+{allergens.length - 2}</Chip>
+                  ) : null}
+                </span>
+              ) : (
+                <span className="text-[14px] text-(--text-subtle)">Not set</span>
+              )
+            }
+          />
+          <Row
+            icon={<SlidersHorizontal />}
+            label="Doctor preferences"
+            href="/patient/profile/doctor-preferences"
+          />
+          <Row icon={<Phone />} label="Emergency contact" soon />
+          <Row icon={<Users />} label="Family members" soon />
+        </SettingsCard>
+
+        <SettingsCard label="Preferences">
+          <Row
+            icon={<Languages />}
+            label="Language"
+            soon
+            trailing={
+              <span className="text-[14px] text-(--text-subtle)">
+                English (US)
               </span>
-            ) : (
-              <span className="text-[14px] text-(--text-subtle)">Not set</span>
-            )
-          }
-        />
-        <Row
-          icon={<SlidersHorizontal />}
-          label="Doctor preferences"
-          href="/patient/profile/doctor-preferences"
-        />
-        <Row icon={<Phone />} label="Emergency contact" soon />
-        <Row icon={<Users />} label="Family members" soon />
-      </SettingsCard>
+            }
+          />
+          <DarkModeRow />
+          <Row
+            icon={<Lock />}
+            label="Privacy & data"
+            href="/privacy"
+          />
+          <Row icon={<Bell />} label="Reminders" soon />
+          <Row icon={<CircleHelp />} label="Help & support" soon />
+        </SettingsCard>
 
-      <SettingsCard label="Preferences">
-        <Row
-          icon={<Languages />}
-          label="Language"
-          soon
-          trailing={
-            <span className="text-[14px] text-(--text-muted)">English</span>
-          }
-        />
-        <DarkModeRow />
-        <Row icon={<Bell />} label="Email and in-app reminders" soon />
-        <Row icon={<Lock />} label="Privacy and data" href="/privacy" />
-      </SettingsCard>
-
-      <SettingsCard label="Support">
-        <Row icon={<CircleHelp />} label="Help and support" soon />
-        <Row
-          icon={<LogOut />}
-          label={pending ? "Signing out…" : "Sign out"}
-          danger
-          onClick={() => void signOut()}
-          disabled={pending}
-        />
-      </SettingsCard>
-    </section>
+        <SettingsCard label="Session">
+          <Row
+            icon={<LogOut />}
+            label={pending ? "Signing out…" : "Sign out"}
+            danger
+            onClick={() => void signOut()}
+            disabled={pending}
+          />
+        </SettingsCard>
+      </section>
+    </div>
   );
 }
 

@@ -35,9 +35,9 @@
   --teal-800: #0f7a66;
   --teal-700: #18a58c;   /* Brand Teal — primary CTA (Figma action/primary-default) */
   --teal-600: #1eba9e;
-  --teal-500: #2dd4b5;   /* Figma dark-mode action */
-  --teal-400: #63e0c9;
-  --teal-300: #9cebdb;
+  --teal-500: #20a38b;   /* Calmed clinical teal */
+  --teal-400: #3eb49e;   /* Calmed clinical sage-teal */
+  --teal-300: #62c7b4;   /* Gentle eucalyptus mint */
   --teal-200: #c8f4ea;
   --teal-100: #e6faf5;
 
@@ -234,6 +234,8 @@
    bg/primary #0B1117, bg/surface #161D26, action #2DD4B5,
    text/primary #E1E7EF, text/on-action #F8F4E3)
    ========================================================= */
+:root.dark,
+.dark,
 [data-theme="dark"] {
   /* Surfaces */
   --surface-page: #0b1117;
@@ -243,10 +245,10 @@
   --surface-sunken: #0e151c;
   --surface-warm: #171d18;
   --surface-warm-soft: #131a17;
-  --surface-inverse: #0f7a66;
+  --surface-inverse: #0d2822;
   --surface-brand: var(--navy-700);
   --surface-brand-soft: #122c3d;
-  --surface-accent-soft: #11332c;
+  --surface-accent-soft: #102a24;
 
   /* Text */
   --text-heading: #f8f4e3;
@@ -256,33 +258,33 @@
   --text-on-brand: var(--white);
   --text-on-accent: #0b1117;
   --text-inverse: var(--ink-900);
-  --text-link: var(--teal-500);
-  --text-link-hover: var(--teal-400);
+  --text-link: #3eb49e;
+  --text-link-hover: #5ec1ae;
 
   /* Borders */
   --border-subtle: #1f2a35;
   --border-default: #2a3844;
   --border-strong: #3d4f5e;
-  --border-brand: var(--teal-500);
-  --border-focus: var(--teal-400);
+  --border-brand: #18a58c;
+  --border-focus: #18a58c;
 
-  /* Primary action (Figma Dark Mode v2 teal) */
-  --action-primary: var(--teal-500);
-  --action-primary-hover: var(--teal-400);
-  --action-primary-active: var(--teal-600);
+  /* Primary action — authentic BayanHealth Brand Teal, calm, authoritative, non-neon */
+  --action-primary: #18a58c;
+  --action-primary-hover: #16937c;
+  --action-primary-active: #127a67;
   --action-primary-text: var(--white);
 
   /* Secondary */
-  --action-secondary-border: var(--teal-500);
-  --action-secondary-text: var(--teal-400);
-  --action-secondary-hover-surface: #122c3d;
+  --action-secondary-border: #18a58c;
+  --action-secondary-text: #3eb49e;
+  --action-secondary-hover-surface: #102a24;
 
-  --focus-ring: var(--teal-400);
+  --focus-ring: #18a58c;
   --focus-ring-offset: var(--surface-page);
 
   /* Status */
-  --status-available-fg: var(--teal-300);
-  --status-available-bg: #11332c;
+  --status-available-fg: #3eb49e;
+  --status-available-bg: #102a24;
   --status-pilot-fg: var(--navy-300);
   --status-pilot-bg: #122c3d;
   --status-soon-fg: var(--gold-400);
@@ -290,8 +292,8 @@
   --status-research-fg: var(--ink-300);
   --status-research-bg: #1b2732;
 
-  --safe-fg: var(--teal-300);
-  --safe-bg: #11332c;
+  --safe-fg: #3eb49e;
+  --safe-bg: #102a24;
   --gray-fg: var(--ink-300);
   --gray-bg: #1b2732;
   --danger-fg: #e79a9a;
@@ -304,8 +306,8 @@
   --ai-bg: #211a35;
   --ai-bg-strong: #2c2247;
 
-  --edited-fg: var(--teal-300);
-  --edited-border: var(--teal-500);
+  --edited-fg: #3eb49e;
+  --edited-border: #18a58c;
   --edited-bg: linear-gradient(
     135deg,
     color-mix(in srgb, var(--gradient-brand-start) 26%, var(--surface-card)) 0%,
@@ -322,9 +324,9 @@
 
   /* Widget accents — the same three families, sunk to card-depth fills so the
      tint reads without glowing against the dark page. */
-  --widget-profile-bg: #11332c;
-  --widget-profile-border: var(--teal-600);
-  --widget-profile-fg: var(--teal-300);
+  --widget-profile-bg: #102a24;
+  --widget-profile-border: #18a58c;
+  --widget-profile-fg: #3eb49e;
 
   --widget-meds-bg: #122c3d;
   --widget-meds-border: var(--navy-500);
@@ -447,6 +449,8 @@
   --dur-slow: 320ms;
 }
 
+:root.dark,
+.dark,
 [data-theme="dark"] {
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);

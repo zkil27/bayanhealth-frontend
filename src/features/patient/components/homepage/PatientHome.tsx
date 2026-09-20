@@ -185,9 +185,9 @@ export function PatientHome() {
       <header
         ref={searchContainerRef}
         data-slot="patient-home-topbar"
-        className="relative z-30 w-full border-b border-(--teal-800)/20 bg-(--teal-700) shadow-xs dark:border-(--teal-700)/30 dark:bg-(--teal-800)"
+        className="relative z-30 w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]"
       >
-        <div className="relative mx-auto flex w-full max-w-lg items-center gap-2.5 px-4 py-3 sm:px-6 md:max-w-none md:px-8 lg:px-8">
+        <div className="relative flex w-full items-center gap-2.5 px-4 py-3 sm:px-6 md:px-8">
           <form
             role="search"
             onSubmit={handleSearchSubmit}
@@ -214,6 +214,7 @@ export function PatientHome() {
                 }
               }}
               placeholder="Maghanap ng sintomas o doktor…"
+              role="combobox"
               aria-expanded={isSearchOpen}
               aria-haspopup="listbox"
               aria-controls="patient-home-search-dropdown"
@@ -449,18 +450,10 @@ export function PatientHome() {
               aria-label="Pang-araw-araw na payong pangkalusugan"
               className="flex flex-col gap-2.5"
             >
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-(--text-heading)">
-                  <HeartPulse className="size-4 text-(--status-available-fg)" aria-hidden />
-                  Para sa&apos;yo
-                </h2>
-                <Link
-                  href="/patient/health?tab=medhub"
-                  className="text-xs font-semibold text-(--action-primary) hover:underline"
-                >
-                  Tingnan lahat
-                </Link>
-              </div>
+              <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-(--text-heading)">
+                <HeartPulse className="size-4 text-(--status-available-fg)" aria-hidden />
+                Para sa&apos;yo
+              </h2>
 
               <Link
                 href="/patient/health?tab=medhub"

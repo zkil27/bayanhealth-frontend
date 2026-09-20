@@ -86,7 +86,7 @@ export function BookingPathChooser() {
 
       <div className={patientPageClass("wide", "gap-4 pt-4")}>
         {/* Educational comparison strip from Figma O12 */}
-        <div className="flex items-center gap-2.5 rounded-(--radius-md) border border-(--teal-100) bg-(--surface-accent-soft) p-3 text-[13px] text-(--status-available-fg)">
+        <div className="flex items-center gap-2.5 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[13px] text-(--status-available-fg)">
           <Zap className="size-4 shrink-0" aria-hidden />
           <span>
             <strong>Parehong daan, parehong presyo ({fee}) at parehong kalidad ng doktor</strong> — bilis lang ang pinagkaiba.

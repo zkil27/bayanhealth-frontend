@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PatientBreadcrumb } from "@/features/patient/components/Breadcrumb";
 
 interface PatientPageHeaderProps {
   title: string;
@@ -15,16 +16,12 @@ interface PatientPageHeaderProps {
  * Shared Patient Page Header with the brand green top bar.
  *
  * Renders the top green bar (`--teal-700`) across patient sub-pages
- * (My Health, Book, Chat, Profile) with high-contrast white typography:
- * - Green bar background: `bg-(--teal-700)` with `border-b border-(--teal-800)/20`.
- * - Header title in white: `text-white font-display font-bold`.
- * - Subtitle in soft white: `text-white/85`.
- * - Responsive layout: matches `patientPageClass` horizontal padding
- *   (`px-4 sm:px-6 md:px-8 lg:px-8`) for consistent alignment across all breakpoints.
+ * (My Health, Book, Chat, Profile) expanding all the way edge-to-edge
+ * with no outer padding, border, or margin.
  */
 export function PatientPageHeader({
   title,
-  subtitle,
+  subtitle: _subtitle,
   action,
   backHref,
   className,
@@ -33,11 +30,12 @@ export function PatientPageHeader({
     <header
       data-slot="patient-page-header"
       className={cn(
-        "w-full border-b border-(--teal-800)/20 bg-(--teal-700) shadow-xs dark:border-(--teal-700)/30 dark:bg-(--teal-800)",
+        "w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]",
         className,
       )}
     >
-      <div className="mx-auto flex w-full min-w-0 max-w-lg flex-col gap-1 px-4 py-3.5 sm:px-6 md:max-w-none md:px-8 lg:px-8">
+      <div className="flex w-full flex-col gap-1 px-4 py-3 sm:px-6 md:px-8">
+        <PatientBreadcrumb variant="header" />
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {backHref && (
@@ -55,11 +53,6 @@ export function PatientPageHeader({
           </div>
           {action && <div className="shrink-0">{action}</div>}
         </div>
-        {subtitle && (
-          <p className="text-[13px] leading-snug text-white/85 sm:text-[14px]">
-            {subtitle}
-          </p>
-        )}
       </div>
     </header>
   );

@@ -37,8 +37,8 @@ export function NavBar() {
     <nav
       aria-label="Patient navigation"
       className={cn(
-        "fixed inset-x-4 max-w-lg mx-auto bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 lg:hidden",
-        "flex h-16 items-center justify-around gap-1 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-raised) px-2 shadow-(--shadow-lg)",
+        "fixed inset-x-0 bottom-0 z-50 w-full lg:hidden",
+        "flex h-[calc(4rem+env(safe-area-inset-bottom,0px))] items-center justify-around gap-1 border-t border-(--border-subtle) bg-(--surface-raised) px-2 pb-[env(safe-area-inset-bottom,0px)] shadow-(--shadow-lg)",
       )}
     >
       {navItems.map((item) => {

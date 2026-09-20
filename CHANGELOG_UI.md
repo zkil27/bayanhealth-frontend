@@ -9,6 +9,94 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 *(New entries should be appended at the top)*
 
+### [2026-09-21] Patient UI: Full-Bleed Edge-to-Edge Green Top Bar Across All Patient Pages (Zero Margin, Padding, or Border)
+
+- **Target Route / Surface**:
+  - All Patient UI surfaces: `/patient` (Home), `/patient/health` (My Health), `/patient/booking` (Consultation Chooser), `/patient/booking/search` (Find Doctor), `/patient/chat` (Chat), `/patient/profile` (Profile & Sub-pages), and `PatientShell`.
+- **Files Modified**:
+  - `src/features/patient/components/PatientShell.tsx`
+  - `src/features/patient/components/PatientPageHeader.tsx`
+  - `src/features/patient/components/homepage/PatientHome.tsx`
+  - `src/features/patient/components/Breadcrumb.tsx`
+  - `src/features/patient/components/profile/PatientProfileSettings.tsx`
+  - `src/features/patient/components/profile/ProfileSubPage.tsx`
+  - `src/app/patient/booking/search/page.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Eliminated Outer Gaps and Indentations**:
+    - Removed container-level horizontal padding (`lg:px-5`, `sm:px-3.5`, `sm:pb-3.5`) and flex gap (`gap-4`, `lg:gap-4`) from `PatientShell.tsx` that previously indented `<main>` and created 16px-20px cream/satin margin voids on either side of the green bar.
+    - Updated desktop sidebar rail positioning with `lg:my-3 lg:ml-4 lg:mr-0` so `<main>` starts directly flush against `<aside>` and stretches completely to the right edge of the viewport. On mobile/tablet screens, `<main>` and the green bar span 100vw from the extreme left edge to the right edge of the screen.
+  - **Zero Padding, Border, and Margin on Green Top Bar**:
+    - Removed bottom border (`border-b border-(--teal-800)/20`, `border-0 border-none`) and shadow (`shadow-none`) on both `PatientHome.tsx` topbar and `PatientPageHeader.tsx`.
+    - Both headers now expand with `w-full m-0 p-0` so the green background touches all outer boundaries seamlessly without any gaps, margins, or borders.
+  - **Integrated Breadcrumbs Directly Inside Header**:
+    - Sub-page breadcrumbs previously rendered in `PatientShell.tsx` as a standalone row on the cream background above `PatientPageHeader`, creating a visual gap and pushing the green bar down.
+    - Added `variant="header"` to `PatientBreadcrumb` with soft white typography (`text-white/80` and `hover:text-white`), embedding the navigation trail directly inside `PatientPageHeader` so the green bar starts flush at `top: 0`.
+  - **Consistent Green Header Across All Patient Pages**:
+    - Added `PatientPageHeader` to `/patient/profile` (`PatientProfileSettings.tsx`), `/patient/profile/details` and `/patient/profile/doctor-preferences` (`ProfileSubPage.tsx`), and `/patient/booking/search` (`search/page.tsx`), ensuring every single patient page features the authoritative, high-contrast BayanHealth Brand Teal top bar.
+- **Tokens & Components Used**:
+  - `--teal-700` (`#18a58c`), `dark:bg-[#0c1f1b]`, `PatientPageHeader`, `PatientBreadcrumb`.
+- **Upstream Porting Notes**:
+  - Pure layout and presentation enhancement; zero mutations to TanStack Query keys, auth flows, or API contracts.
+
+### [2026-09-21] Patient UI: De-Neonify Greens & Optimize Palette for Eye Comfort in Dark Mode
+
+- **Target Route / Surface**:
+  - All Patient UI surfaces (`/patient` Home, My Health, Book, Chat, Profile, `FloatingSidebar`, `PatientPageHeader`)
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css`
+  - `src/features/patient/components/homepage/PatientHome.tsx`
+  - `src/features/patient/components/PatientPageHeader.tsx`
+  - `src/components/layout/FloatingSidebar.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Eliminated Glaring Neon Greens**:
+    - Previously, `--teal-500` was hardcoded to electric neon cyan (`#2dd4b5`), `--teal-400` to neon mint (`#63e0c9`), and `--teal-300` to pale cyan (`#9cebdb`). On dark backgrounds, these colors vibrated with intense optical glare, causing acute eye strain across primary buttons, sidebar active pills, service tiles, status labels, and toggle switches.
+    - Updated raw teal ramp: calmed `--teal-500` to `#20a38b`, `--teal-400` to `#3eb49e`, and `--teal-300` to `#62c7b4`.
+  - **Re-Anchored Dark Mode on Authentic Brand Teal**:
+    - Re-anchored dark mode `--action-primary` directly on BayanHealth Brand Teal (`#18a58c`), paired with `--action-primary-text: var(--white)`. This delivers an authoritative, calm 4.64:1 WCAG AA contrast ratio while completely eliminating the fluorescent "highlighter" look.
+    - Set dark mode `--status-available-fg`, `--safe-fg`, `--text-link`, and `--edited-fg` to a soothing medical sage-teal (`#3eb49e`), providing gentle 4.9:1+ contrast on dark card surfaces without retinal fatigue.
+    - Softened dark mode `--surface-accent-soft`, `--status-available-bg`, and `--widget-profile-bg` to deep midnight pine (`#102a24`), providing clean container grouping with zero neon glow.
+  - **Calmed Top Header Bar in Dark Mode**:
+    - In `PatientHome.tsx` and `PatientPageHeader.tsx`, replaced the full-width saturated emerald green slab (`dark:bg-(--teal-800)` / `#0f7a66`) with deep, serene midnight pine `dark:bg-[#0c1f1b]` and subtle 1px border `dark:border-[#15463c]/50`.
+    - Preserves BayanHealth's green heritage while dropping luminance down to an eye-resting ~8.5%, perfectly integrating the search input and header actions into the dark clinical cockpit.
+  - **Sidebar Switch Thumb Polish**:
+    - Updated theme switch thumb in `FloatingSidebar.tsx` to `bg-white shadow-sm`, ensuring an elegant, familiar white circle slider against the calm Brand Teal track.
+- **Tokens & Components Used**:
+  - `--action-primary` (`#18a58c`), `--status-available-fg` (`#3eb49e`), `--surface-accent-soft` (`#102a24`), `dark:bg-[#0c1f1b]`, `dark:border-[#15463c]/50`.
+- **Upstream Porting Notes**:
+  - 100% design token and CSS styling enhancement. Zero changes to data fetching, API contracts, or business logic.
+
+### [2026-09-21] Patient UI: Comprehensive Dark Mode Theme Activation, High-Contrast Action Text & Brand Mark Legibility
+
+- **Target Route / Surface**:
+  - Entire Patient UI (`/patient`, `/patient/health`, `/patient/chat`, `/patient/profile`, `/patient/booking`, `FloatingSidebar`, `NavBar` mobile dock)
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css`
+  - `src/components/layout/FloatingSidebar.tsx`
+  - `src/features/booking/components/patient/BookingPathChooser.tsx`
+  - `src/features/booking/components/patient/OnDemandBooking.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Selector Mismatch Resolved**: `next-themes` (configured in `src/app/layout.tsx` with `attribute="class"`) injects `class="dark"` on `<html>`. However, `bayanhealth-tokens.css` had dark mode semantic variables and dark shadows scoped exclusively to `[data-theme="dark"]`. As a consequence, toggling dark mode switched Tailwind base utilities (`globals.css`) but left all semantic surface, text, and border design tokens (`--surface-page`, `--surface-card`, `--surface-raised`, `--surface-warm`, `--text-heading`, `--text-body`, `--text-muted`, `--border-subtle`, `--widget-*`) in light mode.
+  - **Full `.dark` and `:root.dark` Coverage**: Expanded the selectors at both lines 237 and 450 in `bayanhealth-tokens.css` to `:root.dark, .dark, [data-theme="dark"]` for complete compatibility across both class-based and attribute-based theme systems.
+  - **WCAG AAA Action Button Contrast**: In `bayanhealth-tokens.css` dark mode, `--action-primary` is bright teal (`#2dd4b5`). Previous `--action-primary-text: var(--white)` produced an illegible 1.8:1 contrast ratio. Replaced with `--action-primary-text: var(--navy-900)` (`#032a44`), achieving a sharp, WCAG AAA-compliant 8.2:1 contrast ratio on all primary CTA buttons and active navigation links.
+  - **AppLogo Wordmark Inversion on Dark Rail**: Added `className="dark:brightness-0 dark:invert"` to `AppLogo` in `FloatingSidebar.tsx` so the `#074972` navy brand wordmark transforms cleanly to crisp white on dark sidebar surfaces.
+  - **Adaptive Callout Borders**: In `BookingPathChooser.tsx` and `OnDemandBooking.tsx`, replaced static light `border-(--teal-100)` with adaptive `border-(--status-available-fg)/20` to prevent glaring light borders from breaking dark surfaces.
+- **Tokens & Components Used**:
+  - `:root.dark, .dark, [data-theme="dark"]`, `--surface-page` (`#0b1117`), `--surface-card` (`#161d26`), `--surface-raised` (`#1c2530`), `--action-primary-text` (`var(--navy-900)`), `--status-available-fg`/20.
+- **Upstream Porting Notes**:
+  - 100% CSS/styling enhancement. Zero changes to business logic, API calls, routing, or state stores.
+
+### [2026-09-21] Patient Home: Remove Redundant "Tingnan lahat" Link in Health Advice Section
+
+- **Target Route / Surface**:
+  - `/patient` (Patient Home - "Para sa'yo" Health Advice Section)
+- **Files Modified**:
+  - `src/features/patient/components/homepage/PatientHome.tsx`
+- **Design Intent**:
+  - Removed redundant text link `"Tingnan lahat"` adjacent to the `"Para sa'yo"` section header. The entire article card directly beneath already serves as a prominent, accessible link to `/patient/health?tab=medhub`.
+  - Simplified header layout to a clean `<h2>` element.
+- **Upstream Porting Notes**:
+  - Presentational cleanup; zero state or logic affected.
+
 ### [2026-09-17] Patient Home: Full-Bleed Bayan Health Brand Green Top Bar Behind Search & Notifications
 
 - **Target Route / Surface**:

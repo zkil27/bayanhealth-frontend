@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * Desktop-only breadcrumb for patient-area sub-pages. Hidden below 1024px,
@@ -46,7 +47,11 @@ const SEGMENTS: Record<string, { label: string; href?: string }> = {
   getBooking: { label: "Booking" },
 };
 
-export function PatientBreadcrumb() {
+export function PatientBreadcrumb({
+  variant = "default",
+}: {
+  variant?: "default" | "header";
+} = {}) {
   const pathname = usePathname();
 
   // No breadcrumb on the patient home itself, nor on a booking detail, whose
@@ -67,6 +72,8 @@ export function PatientBreadcrumb() {
   const visible = trimmed.filter((segment) => segment !== "patient");
   if (visible.length === 0) return null;
 
+  const isHeader = variant === "header";
+
   const crumbs = visible.map((segment, index) => {
     const known = SEGMENTS[segment];
     const isLast = index === visible.length - 1;
@@ -83,24 +90,42 @@ export function PatientBreadcrumb() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="hidden w-full px-4 pt-3 pb-2 text-[13px] text-(--text-muted) lg:block"
+      className={cn(
+        "hidden w-full lg:block",
+        isHeader
+          ? "text-[12px] text-white/80"
+          : "px-4 pt-3 pb-2 text-[13px] text-(--text-muted)",
+      )}
     >
       <ol className="flex items-center gap-1">
         <li>
           <Link
             href="/patient"
-            className="transition-colors hover:text-(--text-link-hover)"
+            className={cn(
+              "transition-colors",
+              isHeader ? "hover:text-white" : "hover:text-(--text-link-hover)",
+            )}
           >
             Home
           </Link>
         </li>
         {crumbs.map((crumb) => (
           <li key={crumb.key} className="flex items-center gap-1">
-            <ChevronRight className="h-3 w-3 text-(--text-subtle)" />
+            <ChevronRight
+              className={cn(
+                "h-3 w-3",
+                isHeader ? "text-white/60" : "text-(--text-subtle)",
+              )}
+            />
             {crumb.href ? (
               <Link
                 href={crumb.href}
-                className="transition-colors hover:text-(--text-link-hover)"
+                className={cn(
+                  "transition-colors",
+                  isHeader
+                    ? "hover:text-white"
+                    : "hover:text-(--text-link-hover)",
+                )}
               >
                 {crumb.label}
               </Link>
@@ -109,7 +134,9 @@ export function PatientBreadcrumb() {
                 aria-current={crumb.isLast ? "page" : undefined}
                 className={
                   crumb.isLast
-                    ? "font-semibold text-(--text-heading)"
+                    ? isHeader
+                      ? "font-medium text-white"
+                      : "font-semibold text-(--text-heading)"
                     : undefined
                 }
               >

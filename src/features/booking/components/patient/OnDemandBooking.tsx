@@ -138,7 +138,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
           {/* What "on-demand" actually means, stated where the patient reads it
               before committing — the doctor sees the intake first. */}
-          <p className="rounded-(--radius-md) border border-(--teal-100) bg-(--surface-accent-soft) p-3 text-[12.5px] leading-[1.5] text-(--status-available-fg)">
+          <p className="rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[12.5px] leading-[1.5] text-(--status-available-fg)">
             <span className="font-semibold">⚡ {ON_DEMAND_WAIT_ESTIMATE}.</span>{" "}
             Susuriin muna ng doktor ang iyong profile at mga iniulat na sintomas bago ka papasukin sa consultation room.
           </p>
