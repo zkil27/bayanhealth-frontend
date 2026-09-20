@@ -88,8 +88,30 @@ npm run build
 
 ---
 
-## 🎨 UI Customization Guide
+## 🎨 UI Customization & Design System
 
 - **Design Tokens**: Defined in `src/styles/bayanhealth-tokens.css` (primary teals, warm cream canvas, brand navy, status accents).
 - **Tailwind Setup**: Uses Tailwind v4 configured in `src/app/globals.css`.
 - **Component Primitives**: Uses Radix/shadcn components inside `src/components/ui`. Add new primitives easily using `npx shadcn@latest add <component>`.
+- **UI Documentation Index**: Full catalog of all specifications, scenarios, and architecture guides is available in **[`docs/UI_INDEX.md`](./docs/UI_INDEX.md)**.
+
+---
+
+## 📚 Essential UI Design Documentation
+
+All necessary design guidelines, component specifications, and behavioral user journeys have been imported into this repository:
+
+| Document / Section | Location | Purpose |
+| :--- | :--- | :--- |
+| **UI/UX Agent Spec & Anti-Slop** | [`UI_UX_AGENT.md`](./UI_UX_AGENT.md) | Anti-AI slop manifesto, color palette, mobile/desktop ergonomics, accessibility |
+| **UI Handoff Manual** | [`UI_HANDOFF.md`](./UI_HANDOFF.md) | The Golden Rule of Porting (Visual Shell vs Data Plumbing) and AI prompts |
+| **Agent Operating Rules** | [`AGENTS.md`](./AGENTS.md) | High-level operational rules for AI coding assistants working on the UI |
+| **UI Changelog** | [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) | Running record of UI/UX improvements, layouts, and responsive fixes |
+| **Backend & Dev Outputs** | [`DEV_OUTPUTS.md`](./DEV_OUTPUTS.md) | Backend endpoints, Cognito IDs, DynamoDB tables, and `.env` setup |
+| **Feature Specifications** | [`docs/specs/`](./docs/specs/) | PRDs for landing page, dark mode, dashboard improvements, CDS gating, etc. |
+| **Behavioral Scenarios** | [`docs/scenarios/`](./docs/scenarios/) | Given-When-Then user flows for Auth, Booking, Consultation, and Onboarding |
+| **User Journey Diagrams** | [`docs/diagrams/`](./docs/diagrams/) | BDD Mermaid diagrams illustrating booking and consultation flows |
+| **Architecture Guides** | [`docs/architecture/`](./docs/architecture/) | Video rooms, Daily.co/Meet, AI Scribe, demo script, and API standards |
+| **Product Steering** | [`docs/steering/`](./docs/steering/) | High-level capabilities, tech stack, and structure conventions |
+| **Master UI Index** | [`docs/UI_INDEX.md`](./docs/UI_INDEX.md) | Central navigation hub for all frontend documentation |
+

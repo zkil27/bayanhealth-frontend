@@ -37,7 +37,7 @@ export function PatientPageHeader({
         className,
       )}
     >
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-1 px-4 py-3.5 sm:px-6 md:max-w-none md:px-8 lg:px-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-lg flex-col gap-1 px-4 py-3.5 sm:px-6 md:max-w-none md:px-8 lg:px-8">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {backHref && (

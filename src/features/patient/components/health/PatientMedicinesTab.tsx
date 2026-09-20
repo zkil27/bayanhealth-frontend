@@ -122,8 +122,8 @@ function MedicineRow({
   onView: () => void;
 }) {
   return (
-    <Card data-slot="patient-health-medicine" className="p-3.5">
-      <div className="flex items-start justify-between gap-3">
+    <Card data-slot="patient-health-medicine" className="p-3.5 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-bold text-(--text-heading)">
             {line.genericName}
@@ -142,7 +142,7 @@ function MedicineRow({
         <button
           type="button"
           onClick={onView}
-          className="shrink-0 rounded-(--radius-pill) border border-(--border-default) bg-(--surface-card) px-3 py-1.5 text-[12.5px] font-semibold text-(--text-heading) transition-colors hover:bg-(--action-secondary-hover-surface) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="inline-flex w-full items-center justify-center shrink-0 rounded-(--radius-pill) border border-(--border-default) bg-(--surface-card) px-3 py-1.5 text-[12.5px] font-semibold text-(--text-heading) transition-colors hover:bg-(--action-secondary-hover-surface) sm:w-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
           View prescription
         </button>

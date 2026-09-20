@@ -84,8 +84,8 @@ export function CarePlanPanel({ booking }: { booking?: BookingListItem }) {
           account shows several of these at once, and a column of centred
           dashed boxes reads as breakage rather than as an empty record. */}
       {noConsult ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 rounded-(--radius-widget) border border-dashed border-(--widget-care-border)/45 px-3 py-2.5">
-          <div className="flex min-w-0 flex-1 basis-44 items-center gap-2">
+        <div className="flex flex-col gap-2 rounded-(--radius-widget) border border-dashed border-(--widget-care-border)/45 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <TriangleAlert
               strokeWidth={1.5}
               aria-hidden
@@ -97,34 +97,34 @@ export function CarePlanPanel({ booking }: { booking?: BookingListItem }) {
           </div>
           <Link
             href="/patient/health"
-            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) hover:text-(--text-link-hover)"
+            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) transition-colors hover:text-(--text-link-hover)"
           >
             Health record
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
       ) : awaitingRelease ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 rounded-(--radius-widget) border border-dashed border-(--widget-care-border)/45 px-3 py-2.5">
-          <p className="min-w-0 flex-1 basis-44 text-[13px] leading-[1.4] text-(--text-muted)">
+        <div className="flex flex-col gap-2 rounded-(--radius-widget) border border-dashed border-(--widget-care-border)/45 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-1.5">
+          <p className="min-w-0 flex-1 text-[13px] leading-[1.4] text-(--text-muted)">
             Your doctor hasn&apos;t published guidance for your last visit yet.
           </p>
           <Link
             href={`/patient/booking/getBooking/${encodeURIComponent(booking!.bookingId)}`}
-            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) hover:text-(--text-link-hover)"
+            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) transition-colors hover:text-(--text-link-hover)"
           >
             Open consultation
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
       ) : education ? (
-        <div className="flex flex-1 flex-col gap-3">
+        <div className="flex flex-1 flex-col gap-3 min-w-0">
           <div className="min-w-0">
             <p className="text-[12px] font-semibold text-(--widget-care-fg)/80">
               From {doctorLabel}
               {" · "}
               {formatReleasedAt(education.releasedAt)}
             </p>
-            <p className="mt-0.5 text-[14.5px] leading-[1.3] font-bold text-(--text-heading)">
+            <p className="mt-0.5 text-[14.5px] leading-[1.3] font-bold text-(--text-heading) break-words">
               {education.payload.title}
             </p>
           </div>

@@ -467,8 +467,8 @@ export function SegmentedTabs<Id extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        "-mx-4 flex gap-1.5 overflow-x-auto rounded-(--radius-pill) bg-(--surface-warm) sm:mx-0",
-        size === "sm" ? "p-1" : "p-1.5",
+        "flex w-full min-w-0 gap-1 overflow-x-auto rounded-(--radius-pill) bg-(--surface-warm) sm:gap-1.5",
+        size === "sm" ? "p-1" : "p-1 sm:p-1.5",
         className,
       )}
       style={{ scrollbarWidth: "none" }}
@@ -483,17 +483,17 @@ export function SegmentedTabs<Id extends string>({
             aria-selected={isActive}
             onClick={() => onChange(id)}
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-(--radius-pill) whitespace-nowrap transition-colors sm:flex-1",
+              "flex flex-1 min-w-0 items-center justify-center rounded-(--radius-pill) transition-colors",
               focusRing,
               size === "sm"
-                ? "px-3 py-1.5 text-[13.5px]"
-                : "px-3.5 py-2 text-[14.5px]",
+                ? "px-2 py-1.5 text-[12.5px] sm:px-3 sm:text-[13.5px]"
+                : "px-2.5 py-1.5 text-[13px] sm:px-3.5 sm:py-2 sm:text-[14.5px]",
               isActive
                 ? "bg-(--surface-card) font-bold text-(--text-heading) shadow-(--shadow-xs)"
                 : "font-semibold text-(--text-muted) hover:text-(--text-heading)",
             )}
           >
-            {label}
+            <span className="truncate">{label}</span>
           </button>
         );
       })}

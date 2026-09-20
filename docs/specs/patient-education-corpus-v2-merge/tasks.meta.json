@@ -1,0 +1,1237 @@
+{
+  "pbtResults": {
+    "7.3 Run `freeze` and record the scoped freeze proof": {
+      "status": "passed",
+      "lastRunTimestamp": 1787664205036
+    },
+    "19.3 Property tests for the label/identifier divergence and the change-set confinement": {
+      "status": "passed",
+      "lastRunTimestamp": 1787684411475
+    }
+  },
+  "executionHistory": {
+    "1.1 Create the tool skeleton, checkout-relative paths, and the paragraph walk with both guards": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656445849
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656469938
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656657403
+      }
+    ],
+    "1.2 Implement card segmentation, the four hard correlation signals, and the reported title signal": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656445978
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656665162
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787657537610
+      }
+    ],
+    "1.3 Implement the Section_Mapping transcription, the placeholder line filter, and the red-flag join": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446051
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787657543237
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787658374067
+      }
+    ],
+    "1.4 Write generated-input unit checks for the two pure helpers": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446138
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787658384924
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659836512
+      }
+    ],
+    "1.5 Implement the `extract` subcommand, the correlation report, and the pre-transcription rule scan": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446210
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787658386032
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659837425
+      }
+    ],
+    "2.1 Run the rule scan against the mapped-only V2 text and record the result": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446284
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659844574
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659998899
+      }
+    ],
+    "2.2 Run and review the correlation report": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446370
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659845346
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659999977
+      }
+    ],
+    "2.3 Capture the validation-report baseline before any tracked file is modified": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446455
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659846247
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787660001105
+      }
+    ],
+    "3.1 Replace the hardcoded sandbox output path with script-directory resolution and a frozen-artifact guard": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446558
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656471483
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656658311
+      }
+    ],
+    "4.1 Implement `apply` mode with its write-refusal preconditions": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446637
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787660009581
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787660734690
+      }
+    ],
+    "4.2 Run `apply` and review the resulting diff": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446702
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787660740322
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787661003076
+      }
+    ],
+    "5.1 Implement `verify` mode": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446768
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787661011014
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662452268
+      }
+    ],
+    "5.2 Run `verify` and record the exhaustive result": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446861
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662459107
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662568868
+      }
+    ],
+    "6. Checkpoint - transcription verified before any artifact is regenerated": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656446991
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662586275
+      }
+    ],
+    "7.1 Implement `freeze` mode": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447081
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662595534
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664134879
+      }
+    ],
+    "7.2 Run the build from two working directories and confirm the validator outcome": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447172
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662596570
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664135867
+      }
+    ],
+    "7.3 Run `freeze` and record the scoped freeze proof": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447268
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664142726
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666576852
+      }
+    ],
+    "7.4 Diff the regenerated validation report against the pre-modification baseline capture": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447353
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664143886
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666579342
+      }
+    ],
+    "7.5 Confirm build idempotence and location independence by hash": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447435
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664144856
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666575822
+      }
+    ],
+    "7.6 Run the sandboxed mutation tests against the gate": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447517
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787664145673
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666577974
+      }
+    ],
+    "8.1 Add the V2 revision section to `architecture/PATIENT_EDUCATION_CORPUS_SCHEMA.md`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447609
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666586335
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666716903
+      }
+    ],
+    "8.2 Add the V2 provenance paragraph to the `architecture/corpus_data.py` module docstring": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447739
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666587623
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666717917
+      }
+    ],
+    "8.3 Update the `architecture/build_corpus.py` docstring and header text": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447824
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666588206
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666719556
+      }
+    ],
+    "8.4 Record the three follow-ups as documentation only, without fixing them": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656447933
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666726240
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666903419
+      }
+    ],
+    "9.1 Review `git diff --name-only` against the allowed file list": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448033
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666911908
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667049744
+      }
+    ],
+    "10. Checkpoint - the corpus definition of done in one readable state": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448132
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667064302
+      }
+    ],
+    "11.1 Failing-test-first reproduction: the corpus-backed deterministic template does not validate today": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448219
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667071340
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667675369
+      }
+    ],
+    "11.2 Failing-test-first reproduction: 2 of 24 shipped articles fail the medication content guard": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448291
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667682122
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787668787204
+      }
+    ],
+    "11.3 Record the explicit acknowledgement of design decision 6.7(a) — hard gate before task 12": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448366
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787668801060
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670312857
+      }
+    ],
+    "12.1 Export `PATIENT_EDUCATION_SECTION_HEADINGS` and add the corpus-grounded prompt shape with its selection in `buildMessages`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448489
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670320602
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670517149
+      }
+    ],
+    "12.2 Add `ProtectedOutputValidationContext` and the optional third parameter on `validateProtectedOutputPayload`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448592
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670525957
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670841594
+      }
+    ],
+    "12.3 Split the shape check into `validateProviderEducationShape` and `validateCorpusEducationShape` with per-origin key sets": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448692
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670848159
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787671475347
+      }
+    ],
+    "12.4 Implement `spliceCorpusEducation` and wire the provider branch through it": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448767
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787671481981
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787671837899
+      }
+    ],
+    "12.5 Implement `assertCorpusOwnedFieldsUnchanged`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448846
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787671844247
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787672149546
+      }
+    ],
+    "12.6 Scope the medication scan to model-authored text and add the section-outcome counter": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656448926
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787672156478
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673674857
+      }
+    ],
+    "12.7 Wire `backend/src/lib/cds/protected-generation.ts`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449012
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673682805
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673888398
+      }
+    ],
+    "13.1 Build the two generators and extend `PAYLOADS.patient_education`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449125
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673897214
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787674662115
+      }
+    ],
+    "13.2 Property tests for the composition rule": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449233
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787674671403
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675066516
+      }
+    ],
+    "13.3 Cross-path equality test": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449306
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675075353
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675240763
+      }
+    ],
+    "13.4 Negative cases": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449396
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675247099
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675422648
+      }
+    ],
+    "13.5 Two-argument regression for the no-article path": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449477
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675429448
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675683092
+      }
+    ],
+    "13.6 Section-6 defect regressions": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449567
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675690181
+      }
+    ],
+    "13.7 Alias-set stability check in `patient-education.test.ts`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449651
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673896320
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787674663087
+      }
+    ],
+    "13.8 Released-artifact immutability check in `released-patient-education.test.ts`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449728
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787674672146
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787675067926
+      }
+    ],
+    "13.9 Stubbed-client dry-run assertion": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449812
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787676147022
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679586483
+      }
+    ],
+    "14.1 Update the two tokens in the remediation string at line 207": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656449918
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667072177
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667674492
+      }
+    ],
+    "15.1 `npm run typecheck`, `npm run lint`, and `npm test` from `backend/`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450008
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679592944
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679737349
+      }
+    ],
+    "16.1 Derived alias-set equality — repository-only, no AWS call": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450099
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679744550
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679808887
+      }
+    ],
+    "16.2 The `--dry-run` pass — no authorization required": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450192
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679818883
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787680079097
+      }
+    ],
+    "16.3 HARD STOP — point-of-action authorization check before any write": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450276
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787680878213
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787680887846
+      }
+    ],
+    "16.4 The write pass — runs only against the 16.3 authorization": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450357
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787680893092
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787682714659
+      }
+    ],
+    "16.5 Read-back verification — read-only, after the write pass": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450436
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787682720138
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787682971213
+      }
+    ],
+    "17.1 Add the \"From artifact to screen\" section to `architecture/PATIENT_EDUCATION_CORPUS_SCHEMA.md`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656450574
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787682977530
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683086250
+      }
+    ],
+    "17.2 Add the released-education immutability note to the same document": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451224
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683092445
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683165316
+      }
+    ],
+    "18.1 Assert the change set against the full allowed and forbidden lists": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451303
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683172466
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683310160
+      }
+    ],
+    "18.2 State the four-part definition of done in one readable place": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451385
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683315661
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683443894
+      }
+    ],
+    "19.1 Change the two rendered register strings and the doc comments in `PatientEducationCard.tsx`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451466
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683450838
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683741950
+      }
+    ],
+    "19.2 Retarget the label assertions in `PatientEducationCard.test.tsx` and add the two new register cases": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451547
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683451776
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683742935
+      }
+    ],
+    "19.3 Property tests for the label/identifier divergence and the change-set confinement": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451639
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683748807
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684449169
+      }
+    ],
+    "19.4 Run the frontend gate": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451754
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684454362
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684743841
+      }
+    ],
+    "20.1 Append `ADR-20260824-01` to `architecture/DECISIONS.md`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451841
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684751285
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684923143
+      }
+    ],
+    "20.2 Add the cross-reference note to ADR-20260804-01's `Status` line only": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451914
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684929464
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684998064
+      }
+    ],
+    "20.3 Add the register section to `architecture/PATIENT_EDUCATION_CORPUS_SCHEMA.md`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656451999
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685003947
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685132398
+      }
+    ],
+    "20.4 Assert the governance change set is exactly two edits": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656452086
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685138715
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685655754
+      }
+    ],
+    "21.1 Assert that no third register entered by any route, and that the contract's register vocabulary is unchanged": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656452161
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685661720
+      },
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685901034
+      }
+    ],
+    "3. Make `architecture/build_corpus.py` version-aware and checkout-relative": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787656658441
+      }
+    ],
+    "1. Build the extraction tool `architecture/v2_corpus_tool.py`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787659837495
+      }
+    ],
+    "2. Run the pre-modification scan and correlation review (no tracked file is modified in this task)": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787660001209
+      }
+    ],
+    "4. Apply the 120-literal transcription to `architecture/corpus_data.py`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787661003205
+      }
+    ],
+    "5. Verify the transcription byte-for-byte against the docx": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787662568964
+      }
+    ],
+    "7. Regenerate the v2 artifacts and prove the freeze": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666579431
+      }
+    ],
+    "8. Documentation edits": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787666903531
+      }
+    ],
+    "9. Confirm the scope boundary of the corpus change set": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667049825
+      }
+    ],
+    "14. Fix the stale v1 remediation hint in `backend/src/tools/cds-demo-readiness.ts`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787667674584
+      }
+    ],
+    "11. Reproduce the two live defects before writing any Splice implementation code": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787670312982
+      }
+    ],
+    "12. Implement the Splice in `backend/src/lib/cds/protected-output-adapters.ts`": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787673888511
+      }
+    ],
+    "13. Vitest coverage for the Splice": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679586602
+      }
+    ],
+    "15. Run the backend gate": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787679737517
+      }
+    ],
+    "16. Authorization-gated `dev` corpus ingest": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787682971450
+      }
+    ],
+    "17. Documentation for the expanded scope": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683165525
+      }
+    ],
+    "18. Scope-boundary review of the corpus-plus-Splice change set, and the four-part definition of done": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787683444162
+      }
+    ],
+    "19. Correct the patient-facing register label": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787684744010
+      }
+    ],
+    "20. Record the register clarification in governance and the schema document": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685655909
+      }
+    ],
+    "21. Final register-scope assertion": [
+      {
+        "executionId": "fd267a84-cb4b-4ec3-99d9-84d0f35c1ae0",
+        "chatSessionId": "sess_928ce71f-a04e-45d1-ac2f-7c0d8af77486",
+        "timestamp": 1787685901368
+      }
+    ]
+  }
+}

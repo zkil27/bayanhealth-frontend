@@ -133,26 +133,25 @@ export function HomePanel({
         */
         <div
           data-slot={`${slot}-empty`}
-          className="flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-(--radius-widget) border border-dashed border-(--border-default) px-3 py-2.5"
+          className="flex flex-col gap-2 rounded-(--radius-widget) border border-dashed border-(--border-default) px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-2.5 sm:gap-y-1"
         >
-          {emptyIcon ? (
-            <span
-              aria-hidden
-              className="shrink-0 text-(--text-subtle) [&_svg]:size-4"
-            >
-              {emptyIcon}
-            </span>
-          ) : null}
-          {/* `basis-40` + `flex-1`: in a wide column the line and its action
-              share one row, but in the narrow rail the action wraps to its own
-              line instead of crushing the sentence into four. */}
-          <p className="min-w-0 flex-1 basis-40 text-[13px] leading-[1.4] text-(--text-muted)">
-            {emptyLine}
-          </p>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {emptyIcon ? (
+              <span
+                aria-hidden
+                className="shrink-0 text-(--text-subtle) [&_svg]:size-4"
+              >
+                {emptyIcon}
+              </span>
+            ) : null}
+            <p className="min-w-0 text-[13px] leading-[1.4] text-(--text-muted)">
+              {emptyLine}
+            </p>
+          </div>
           {emptyHref && emptyLinkLabel ? (
             <Link
               href={emptyHref}
-              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) hover:text-(--text-link-hover)"
+              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-(--text-heading) transition-colors hover:text-(--text-link-hover)"
             >
               {emptyLinkLabel}
               <ArrowRight className="size-3.5" />
@@ -171,7 +170,7 @@ export function HomePanel({
     return (
       <Card
         variant="floating"
-        className={cn("flex h-full flex-col p-5", cardHoverClass, className)}
+        className={cn("flex h-full min-w-0 flex-col p-4 sm:p-5", cardHoverClass, className)}
       >
         {body}
       </Card>

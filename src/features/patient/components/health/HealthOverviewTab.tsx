@@ -80,14 +80,14 @@ export function HealthOverviewTab() {
   return (
     <div
       data-slot="patient-health-overview"
-      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]"
+      className="grid w-full min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
         <HealthIdentityCard profile={profile} isLoading={profileLoading} />
         <NextFollowUpCard followUps={followUpsQuery.data} />
         <CarePlanPanel booking={latestCompleted} />
       </div>
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
         <MedicinesSummaryCard medications={medicationsQuery.data} isLoading={medicationsQuery.isPending} />
         <DailyTipCard />
       </div>
@@ -144,14 +144,14 @@ function HealthIdentityCard({
     <Card data-slot="patient-health-identity" className="p-4 sm:p-5">
       <SectionHeading tone="accent">Health identity</SectionHeading>
       {isLoading ? (
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-hidden>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-2 xl:grid-cols-4" aria-hidden>
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-14 animate-pulse rounded-(--radius-sm) bg-(--gray-bg)" />
           ))}
         </div>
       ) : (
         <>
-          <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricStat label="Age" value={age} unit={age !== undefined ? "yrs" : undefined} />
             <MetricStat label="Blood type" value={bloodType} />
             <MetricStat label="Height" value={height} unit={height !== undefined ? "cm" : undefined} />
@@ -189,11 +189,11 @@ function NextFollowUpCard({ followUps }: { followUps?: FollowUpRecommendation[] 
       <SectionHeading tone="accent">Next follow-up</SectionHeading>
       <div className="mt-3 flex items-start gap-3 rounded-(--radius-widget) border border-(--status-soon-bg) bg-(--status-soon-bg)/40 px-3.5 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-bold text-(--text-heading)">
+          <p className="text-[14.5px] font-bold text-(--text-heading) break-words">
             {formatTargetDate(next.targetDate)}
           </p>
           {next.reason ? (
-            <p className="mt-0.5 text-[13px] leading-[1.4] text-(--text-muted)">{next.reason}</p>
+            <p className="mt-0.5 text-[13px] leading-[1.4] text-(--text-muted) break-words">{next.reason}</p>
           ) : null}
         </div>
       </div>
@@ -223,8 +223,8 @@ function MedicinesSummaryCard({
 
   return (
     <Card data-slot="patient-health-medicines-summary" className="p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-2">
-        <SectionHeading tone="accent" as="h3">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <SectionHeading tone="accent" as="h3" className="truncate">
           Prescribed
         </SectionHeading>
         <SeeAllLink href="/patient/health?tab=medicines" label="All medicines" />
@@ -245,7 +245,7 @@ function MedicinesSummaryCard({
           {top.map((line, index) => (
             <li
               key={`${line.consultationId}-${line.genericName}-${index}`}
-              className="rounded-(--radius-widget) border border-(--border-subtle) bg-(--surface-card) px-3 py-2.5"
+              className="min-w-0 rounded-(--radius-widget) border border-(--border-subtle) bg-(--surface-card) px-3 py-2.5"
             >
               <p className="truncate text-[13.5px] font-bold text-(--text-heading)">
                 {line.genericName}

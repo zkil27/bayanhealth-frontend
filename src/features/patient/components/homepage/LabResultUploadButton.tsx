@@ -75,7 +75,7 @@ export function LabResultUploadButton({
         aria-busy={upload.isPending}
         // 44px minimum touch target (was `min-h-9`/36px) with a 12px
         // horizontal negative margin match so the visible pill doesn't shift.
-        className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-pill) border border-(--action-primary) px-3 text-[12.5px] font-bold text-(--status-available-fg) transition-colors duration-200 ease-in-out hover:bg-(--surface-accent-soft) disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="mt-1.5 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-pill) border border-(--action-primary) px-3 text-[12.5px] font-bold text-(--status-available-fg) transition-colors duration-200 ease-in-out hover:bg-(--surface-accent-soft) disabled:opacity-60 sm:mt-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         {upload.isPending ? (
           <Loader2 aria-hidden className="size-3.5 animate-spin" />

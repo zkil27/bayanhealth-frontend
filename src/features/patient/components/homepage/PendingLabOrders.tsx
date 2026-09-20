@@ -58,20 +58,24 @@ export function PendingLabOrders() {
 
 function LabOrderRow({ order }: { order: LabOrder }) {
   return (
-    <li className="rounded-(--radius-md) border border-(--widget-care-border)/25 bg-(--surface-card) px-3 py-2.5">
-      <p className="text-[13.5px] font-bold text-(--text-heading)">
-        {order.testName}
-      </p>
-      <p className="mt-0.5 text-[12px] text-(--text-subtle)">
-        Ordered {formatDate(order.orderedAt)}
-      </p>
+    <li className="flex flex-col gap-2 rounded-(--radius-md) border border-(--widget-care-border)/25 bg-(--surface-card) px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13.5px] font-bold text-(--text-heading)">
+          {order.testName}
+        </p>
+        <p className="mt-0.5 text-[12px] text-(--text-subtle)">
+          Ordered {formatDate(order.orderedAt)}
+        </p>
+      </div>
 
       {order.status === "under_review" ? (
-        <p className="mt-1.5 text-[12.5px] font-semibold text-(--status-available-fg)">
+        <p className="text-[12.5px] font-semibold text-(--status-available-fg) sm:shrink-0">
           Result uploaded · under review
         </p>
       ) : (
-        <LabResultUploadButton order={order} />
+        <div className="shrink-0">
+          <LabResultUploadButton order={order} />
+        </div>
       )}
     </li>
   );

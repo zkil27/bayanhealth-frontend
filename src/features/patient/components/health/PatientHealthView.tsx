@@ -148,7 +148,7 @@ export function PatientHealthView() {
   return (
     <div
       data-slot="patient-health"
-      className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col justify-start pb-4"
     >
       <PatientPageHeader
         title="My Health"

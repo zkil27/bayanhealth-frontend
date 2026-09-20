@@ -397,15 +397,20 @@ function ConsultationRow({
               </IconBadge>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-bold text-(--text-heading)">{doctorLabel}</p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[14px] text-(--text-muted)">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[14px] font-bold text-(--text-heading) sm:text-[15px]">{doctorLabel}</p>
+                <Chip tone={chipTone} icon={StatusIcon ? <StatusIcon /> : undefined} className="inline-flex shrink-0 text-[11px] py-0 px-2 sm:hidden">
+                  {status.label}
+                </Chip>
+              </div>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-(--text-muted) sm:text-[14px]">
                 <CalendarClock className="size-3.5 shrink-0" />
                 <span className="truncate">
                   {formatServiceType(booking.serviceType)} · {formatConsultationDateTime(booking.scheduledAt)}
                 </span>
               </p>
             </div>
-            <Chip tone={chipTone} icon={StatusIcon ? <StatusIcon /> : undefined} className="shrink-0">
+            <Chip tone={chipTone} icon={StatusIcon ? <StatusIcon /> : undefined} className="hidden shrink-0 sm:inline-flex">
               {status.label}
             </Chip>
             <ChevronDown
