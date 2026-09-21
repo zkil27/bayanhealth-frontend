@@ -57,7 +57,7 @@ type SignInErrorState =
   | null;
 
 const inputClass =
-  "w-full rounded-2xl border border-(--border-default) bg-(--surface-card) py-3 pr-4 pl-10 text-base sm:text-[15px] text-(--text-heading) outline-none transition-colors placeholder:text-(--text-subtle) focus:border-(--action-primary) focus:ring-2 focus:ring-(--focus-ring)/30";
+  "w-full h-12 rounded-xl border border-(--border-default) bg-(--surface-card) pr-4 pl-10 text-base sm:text-sm text-(--text-heading) outline-none transition-colors placeholder:text-(--text-subtle) focus:border-(--action-primary) focus:ring-2 focus:ring-(--focus-ring)/30";
 
 export function SignInForm() {
   const router = useRouter();
@@ -149,11 +149,11 @@ export function SignInForm() {
       noValidate
     >
       <div>
-        <h1 className="font-display text-2xl font-black tracking-tight text-(--text-heading)">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-(--text-heading)">
           Welcome Back
         </h1>
         <p className="mt-1 text-sm text-(--text-muted)">
-          Sign in with your email and password to access your portal.
+          Sign in to access your portal.
         </p>
       </div>
 
@@ -234,8 +234,8 @@ export function SignInForm() {
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-semibold text-(--text-body)">
-          Email address
+        <span className="text-sm font-semibold text-(--text-heading)">
+          Email
         </span>
         <span className="relative flex items-center">
           <Mail className="pointer-events-none absolute left-3.5 size-4 text-(--text-subtle)" />
@@ -245,7 +245,7 @@ export function SignInForm() {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            placeholder="maria.delacruz@gmail.com"
+            placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -255,14 +255,14 @@ export function SignInForm() {
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-semibold text-(--text-body)">
+        <span className="text-sm font-semibold text-(--text-heading)">
           Password
         </span>
         <span className="relative flex items-center">
           <Lock className="pointer-events-none absolute left-3.5 size-4 text-(--text-subtle)" />
           <input
             type={showPassword ? "text" : "password"}
-            placeholder="Enter your password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"

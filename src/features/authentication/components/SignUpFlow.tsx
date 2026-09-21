@@ -46,6 +46,10 @@ export function SignUpFlow() {
   }, [step]);
 
   const handleContinue = async () => {
+    if (step === 1 && role === "doctor") {
+      router.push("/signIn");
+      return;
+    }
     setSubmissionError(null);
     try {
       const handoff = await handleNext();
@@ -76,9 +80,9 @@ export function SignUpFlow() {
 
   const stepTitle = ["Choose Your Role", "Create Account", "Complete Profile", "Confirm & Submit"][step - 1] ?? "";
   const stepDescription = [
-    "Select whether you are a patient or doctor.",
-    "Create your login credentials.",
-    "Profile details remain local and are not submitted with account creation.",
+    "Choose whether you are a patient or doctor.",
+    "Enter your email and password.",
+    "Profile details are saved locally on your device.",
     "Account creation submits only your email, password, and selected role.",
   ][step - 1] ?? "";
 
@@ -92,13 +96,15 @@ export function SignUpFlow() {
         <div className="shrink-0 flex flex-col gap-1.5 pt-0.5 pb-1">
           <SignupProgress step={step} role={role} />
 
-          <div className="text-center pt-0.5 pb-0.5">
-            <h2 className="text-base sm:text-lg font-bold text-(--text-heading) leading-tight tracking-tight">
+          <div className="text-center pt-1 pb-0.5">
+            <h2 className="text-xl sm:text-2xl font-bold text-(--text-heading) leading-tight tracking-tight">
               {stepTitle}
             </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground leading-normal">
-              {stepDescription}
-            </p>
+            {stepDescription && (
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-normal">
+                {stepDescription}
+              </p>
+            )}
           </div>
 
           {submissionError && (
@@ -108,42 +114,48 @@ export function SignUpFlow() {
           )}
         </div>
 
-        {/* Content Area: Centered, flexible, scrollable if height constrained */}
-        <div className="flex-1 flex flex-col justify-center min-h-0 overflow-y-auto px-0.5 py-1">
+        {/* Content Area: Centered, flexible, strictly non-scrollable */}
+        <div className="flex-1 flex flex-col justify-center min-h-0 overflow-hidden px-0.5 py-1">
           <AnimatedSwitcher direction={direction} key={step}>
-            <div className="w-full">{renderStep()}</div>
+            <div className="w-full my-auto">{renderStep()}</div>
           </AnimatedSwitcher>
         </div>
 
         {/* Ergonomic Thumb Zone Action Bar & Sign-In Link */}
-        <div className="shrink-0 pt-2.5 sm:pt-3 border-t border-(--border-subtle) mt-auto">
-          <div className="flex items-center justify-between gap-3 w-full">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={isFirstStep || isSubmitting}
-              className={cn(
-                brandButtonClass({
+        <div className="shrink-0 pt-3 sm:pt-3.5 border-t border-(--border-subtle) mt-auto">
+          <div
+            className={cn(
+              "flex items-center gap-3 w-full",
+              isFirstStep ? "justify-center" : "justify-between",
+            )}
+          >
+            {!isFirstStep && (
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className={brandButtonClass({
                   variant: "ghost",
                   size: "sm",
                   className:
                     "h-12 px-5 text-sm font-semibold select-none active:scale-[0.98] border border-(--border-subtle)",
-                }),
-                isFirstStep && "invisible pointer-events-none",
-              )}
-            >
-              <ArrowLeft className="mr-1.5 size-4" />
-              Back
-            </button>
+                })}
+              >
+                <ArrowLeft className="mr-1.5 size-4" />
+                Back
+              </button>
+            )}
 
             <button
               type="button"
               onClick={handleContinue}
-              disabled={isSubmitting || !isValid}
+              disabled={isSubmitting || (step === 1 ? !role : !isValid)}
               className={brandButtonClass({
                 size: "sm",
-                className:
-                  "h-12 px-8 text-sm font-bold select-none active:scale-[0.98] shadow-sm flex-1 sm:flex-initial",
+                className: cn(
+                  "h-12 text-sm font-bold select-none active:scale-[0.98] shadow-sm",
+                  isFirstStep ? "w-full" : "flex-1 sm:flex-initial px-8",
+                ),
               })}
             >
               {isSubmitting ? (
@@ -165,7 +177,7 @@ export function SignUpFlow() {
             </button>
           </div>
 
-          <div className="mt-2.5 pt-0.5 text-center">
+          <div className="mt-2 pt-0.5 text-center">
             <p className="text-xs text-(--text-muted)">
               Already have an account?{" "}
               <Link

@@ -94,7 +94,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
   const isDoctor = role === "doctor";
 
   return (
-    <FieldGroup className="flex flex-col gap-2.5 py-0.5">
+    <FieldGroup className="flex flex-col gap-3.5 sm:gap-4 py-1">
       {isPatient && (
         <>
           {/* Full Name */}
@@ -102,8 +102,8 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             name="fullName"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel htmlFor={field.name} className="text-xs font-semibold text-foreground">
+              <Field data-invalid={fieldState.invalid} className="gap-2">
+                <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
                   Full Name
                 </FieldLabel>
                 <div className="relative flex items-center">
@@ -115,7 +115,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
                     disabled={isSubmitting}
                     placeholder="Juan Dela Cruz"
                     aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
+                    className="h-11 sm:h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
                   />
                 </div>
                 {fieldState.invalid && (
@@ -130,8 +130,8 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             name="dateOfBirth"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
+              <Field data-invalid={fieldState.invalid} className="gap-2">
+                <FieldLabel className="text-sm font-semibold text-foreground">
                   Date of Birth
                 </FieldLabel>
                 <DateOfBirthBottomPicker
@@ -152,8 +152,8 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             name="address"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel htmlFor={field.name} className="text-xs font-semibold text-foreground">
+              <Field data-invalid={fieldState.invalid} className="gap-2">
+                <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
                   Address
                 </FieldLabel>
                 <div className="relative flex items-center">
@@ -165,7 +165,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
                     disabled={isSubmitting}
                     placeholder="123 Street, City, Province"
                     aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
+                    className="h-11 sm:h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
                   />
                 </div>
                 {fieldState.invalid && (
@@ -175,21 +175,21 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             )}
           />
 
-          {/* Preferred Communication Method (Generous 48px touch targets) */}
+          {/* Preferred Communication Method */}
           <Controller
             name="preferredCommunicationApp"
             control={control}
             render={({ fieldState }) => (
-              <Field data-invalid={!!fieldState.invalid} className="gap-1">
+              <Field data-invalid={!!fieldState.invalid} className="gap-2">
                 <div className="flex items-center justify-between">
-                  <FieldLabel className="text-xs font-semibold text-foreground">
+                  <FieldLabel className="text-sm font-semibold text-foreground">
                     Preferred Contact
                   </FieldLabel>
                   <span className="text-[11px] text-muted-foreground">
                     Where doctor contacts you
                   </span>
                 </div>
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full">
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2 w-full">
                   {Object.entries(communicationPreferences).map(
                     ([key, value]) => {
                       const isChecked = communicationApps.includes(key);
@@ -197,7 +197,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
                         <Label
                           key={key}
                           className={cn(
-                            "flex h-12 flex-col items-center justify-center gap-1 cursor-pointer rounded-xl border px-1 py-1 text-center transition-all select-none active:scale-[0.98]",
+                            "flex h-11 sm:h-12 flex-col items-center justify-center gap-1 cursor-pointer rounded-xl border px-1 py-1 text-center transition-all select-none active:scale-[0.98]",
                             isChecked
                               ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs ring-1 ring-primary"
                               : "border-input bg-card text-foreground hover:bg-muted active:bg-muted/80",
@@ -225,7 +225,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
                           >
                             {value.icon}
                           </span>
-                          <span className="text-[11px] leading-none font-medium truncate w-full px-0.5">
+                          <span className="text-[10px] sm:text-[11px] leading-none font-medium truncate w-full px-0.5">
                             {value.name}
                           </span>
                         </Label>
@@ -240,51 +240,54 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             )}
           />
 
-          {/* Preferred Name Call */}
-          <Controller
-            name="preferredNameCall"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel htmlFor={field.name} className="text-xs font-semibold text-foreground">
-                  Call Me (Nickname)
-                </FieldLabel>
-                <div className="relative flex items-center">
-                  <Smile className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value || ""}
-                    disabled={isSubmitting}
-                    placeholder="How should we call you?"
-                    aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
-                  />
-                </div>
-                {fieldState.invalid && (
-                  <AnimatedFieldError error={fieldState.error} />
-                )}
-              </Field>
-            )}
-          />
+          {/* Nickname & Pronoun 2-Column Row (Saves full-width row to prevent vertical scrolling) */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
+            {/* Preferred Name Call */}
+            <Controller
+              name="preferredNameCall"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground truncate">
+                    Call Me <span className="font-normal text-muted-foreground text-xs">(Nickname)</span>
+                  </FieldLabel>
+                  <div className="relative flex items-center">
+                    <Smile className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+                    <Input
+                      {...field}
+                      id={field.name}
+                      value={field.value || ""}
+                      disabled={isSubmitting}
+                      placeholder="Nickname"
+                      aria-invalid={fieldState.invalid}
+                      className="h-11 sm:h-12 pl-9 text-[15px] sm:text-sm rounded-xl"
+                    />
+                  </div>
+                  {fieldState.invalid && (
+                    <AnimatedFieldError error={fieldState.error} />
+                  )}
+                </Field>
+              )}
+            />
 
-          {/* Pronouns: Custom Mobile Bottom Sheet Modal */}
-          <Controller
-            name="preferredPronoun"
-            control={control}
-            render={({ field }) => (
-              <Field className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
-                  Pronouns <span className="font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <PronounBottomPicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                />
-              </Field>
-            )}
-          />
+            {/* Pronouns */}
+            <Controller
+              name="preferredPronoun"
+              control={control}
+              render={({ field }) => (
+                <Field className="gap-2">
+                  <FieldLabel className="text-sm font-semibold text-foreground truncate">
+                    Pronouns <span className="font-normal text-muted-foreground text-xs">(optional)</span>
+                  </FieldLabel>
+                  <PronounBottomPicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+              )}
+            />
+          </div>
         </>
       )}
 
@@ -295,8 +298,8 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             name="fullName"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel htmlFor={field.name} className="text-xs font-semibold text-foreground">
+              <Field data-invalid={fieldState.invalid} className="gap-2">
+                <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
                   Full Name
                 </FieldLabel>
                 <div className="relative flex items-center">
@@ -308,7 +311,7 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
                     disabled={isSubmitting}
                     placeholder="Dr. Juan Dela Cruz"
                     aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
+                    className="h-11 sm:h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
                   />
                 </div>
                 {fieldState.invalid && (
@@ -318,101 +321,103 @@ export function SignUpProfile({ role, isSubmitting }: SignUpProfileProps) {
             )}
           />
 
-          {/* Specialization: Custom Mobile Bottom Sheet Modal */}
-          <Controller
-            name="specialization"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
-                  Specialization
-                </FieldLabel>
-                <SpecializationBottomPicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  hasError={fieldState.invalid}
-                />
-                {fieldState.invalid && (
-                  <AnimatedFieldError error={fieldState.error} />
-                )}
-              </Field>
-            )}
-          />
+          {/* Specialization & Sub-Specialization 2-Column Row */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
+            <Controller
+              name="specialization"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel className="text-sm font-semibold text-foreground truncate">
+                    Specialization
+                  </FieldLabel>
+                  <SpecializationBottomPicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    hasError={fieldState.invalid}
+                  />
+                  {fieldState.invalid && (
+                    <AnimatedFieldError error={fieldState.error} />
+                  )}
+                </Field>
+              )}
+            />
 
-          {/* Sub-Specialization */}
-          <Controller
-            name="subSpecialization"
-            control={control}
-            render={({ field }) => (
-              <Field className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
-                  Sub-Specialization <span className="font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <Input
-                  {...field}
-                  value={field.value || ""}
-                  disabled={isSubmitting}
-                  placeholder="e.g., Pediatric"
-                  className="h-12 text-[16px] sm:text-sm rounded-xl"
-                />
-              </Field>
-            )}
-          />
-
-          {/* Clinic Name */}
-          <Controller
-            name="clinicName"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
-                  Clinic Name <span className="font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <div className="relative flex items-center">
-                  <Building2 className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
+            <Controller
+              name="subSpecialization"
+              control={control}
+              render={({ field }) => (
+                <Field className="gap-2">
+                  <FieldLabel className="text-sm font-semibold text-foreground truncate">
+                    Sub-Specialty <span className="font-normal text-muted-foreground text-xs">(opt)</span>
+                  </FieldLabel>
                   <Input
                     {...field}
                     value={field.value || ""}
                     disabled={isSubmitting}
-                    placeholder="HealthFirst Clinic"
-                    aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
+                    placeholder="e.g. Pediatric"
+                    className="h-11 sm:h-12 text-[15px] sm:text-sm rounded-xl"
                   />
-                </div>
-                {fieldState.invalid && (
-                  <AnimatedFieldError error={fieldState.error} />
-                )}
-              </Field>
-            )}
-          />
+                </Field>
+              )}
+            />
+          </div>
 
-          {/* Clinic Address */}
-          <Controller
-            name="clinicAddress"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1">
-                <FieldLabel className="text-xs font-semibold text-foreground">
-                  Clinic Address <span className="font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <div className="relative flex items-center">
-                  <MapPin className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
-                  <Input
-                    {...field}
-                    value={field.value || ""}
-                    disabled={isSubmitting}
-                    placeholder="456 Medical Plaza, City"
-                    aria-invalid={fieldState.invalid}
-                    className="h-12 pl-10 text-[16px] sm:text-sm rounded-xl"
-                  />
-                </div>
-                {fieldState.invalid && (
-                  <AnimatedFieldError error={fieldState.error} />
-                )}
-              </Field>
-            )}
-          />
+          {/* Clinic Name & Clinic Address 2-Column Row */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
+            <Controller
+              name="clinicName"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel className="text-sm font-semibold text-foreground truncate">
+                    Clinic Name <span className="font-normal text-muted-foreground text-xs">(opt)</span>
+                  </FieldLabel>
+                  <div className="relative flex items-center">
+                    <Building2 className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+                    <Input
+                      {...field}
+                      value={field.value || ""}
+                      disabled={isSubmitting}
+                      placeholder="HealthFirst Clinic"
+                      aria-invalid={fieldState.invalid}
+                      className="h-11 sm:h-12 pl-9 text-[15px] sm:text-sm rounded-xl"
+                    />
+                  </div>
+                  {fieldState.invalid && (
+                    <AnimatedFieldError error={fieldState.error} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="clinicAddress"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel className="text-sm font-semibold text-foreground truncate">
+                    Clinic Address <span className="font-normal text-muted-foreground text-xs">(opt)</span>
+                  </FieldLabel>
+                  <div className="relative flex items-center">
+                    <MapPin className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+                    <Input
+                      {...field}
+                      value={field.value || ""}
+                      disabled={isSubmitting}
+                      placeholder="456 Medical Plaza"
+                      aria-invalid={fieldState.invalid}
+                      className="h-11 sm:h-12 pl-9 text-[15px] sm:text-sm rounded-xl"
+                    />
+                  </div>
+                  {fieldState.invalid && (
+                    <AnimatedFieldError error={fieldState.error} />
+                  )}
+                </Field>
+              )}
+            />
+          </div>
 
           {/* KYC Note */}
           <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-[11px] text-muted-foreground">

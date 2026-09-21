@@ -18,19 +18,19 @@ export function SignUpConfirm({ role, isSubmitting }: SignUpConfirmProps) {
   const userData = useFormData();
 
   return (
-    <div className="flex flex-col gap-2.5 py-0.5">
+    <div className="flex flex-col gap-3.5 sm:gap-4 py-1">
       <Controller
         control={control}
         name="acceptedTerms"
         render={({ field, fieldState }) => (
-          <Field className="gap-1">
+          <Field className="gap-1.5">
             <SignUpTermsAndConditions {...field} role={role} disabled={isSubmitting} />
             {fieldState.invalid && <AnimatedFieldError error={fieldState.error} />}
           </Field>
         )}
       />
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-muted/60 p-3 text-xs">
+      <section className="flex flex-col gap-2.5 rounded-2xl border border-border bg-muted/60 p-3.5 sm:p-4 text-xs">
         <div className="flex items-center justify-between border-b border-border/60 pb-2">
           <span className="font-semibold text-foreground">Registration Summary</span>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary capitalize">

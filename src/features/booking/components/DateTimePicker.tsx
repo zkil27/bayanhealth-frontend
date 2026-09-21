@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   Clock,
   ChevronLeft,
+  ChevronDown,
   LucideIcon,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -80,6 +81,7 @@ interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  triggerClassName?: string;
   required?: boolean;
   minDate?: Date;
   maxDate?: Date;
@@ -483,6 +485,7 @@ export function DatePicker({
   placeholder = "Select date",
   disabled = false,
   className,
+  triggerClassName,
   minDate = new Date("1900-01-01"),
   maxDate = new Date(),
   error,
@@ -525,18 +528,23 @@ export function DatePicker({
       variant="outline"
       disabled={disabled}
       className={cn(
-        "w-full justify-start border-border pl-3 text-left font-normal",
+        "h-12 w-full justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-sm sm:text-base font-medium text-(--text-body) hover:bg-(--surface-canvas) shadow-xs",
         !parsedDate && "text-muted-foreground",
-        error && "border-red-500 focus:ring-red-500",
+        error && "border-(--danger-fg) focus:ring-(--danger-fg)",
+        triggerClassName,
       )}
     >
-      {Icon && <Icon className="mr-2 size-4 shrink-0 text-muted-foreground" />}
-      {/* `parsedDate` is guaranteed valid, so date-fns `format` cannot throw. */}
-      {isValidDate(parsedDate) ? (
-        format(parsedDate, "PPP")
-      ) : (
-        <span>{placeholder}</span>
-      )}
+      <div className="flex items-center gap-2 min-w-0">
+        {Icon && <Icon className="size-4.5 shrink-0 text-(--action-primary)" />}
+        <span className="truncate">
+          {isValidDate(parsedDate) ? (
+            format(parsedDate, "PPP")
+          ) : (
+            <span>{placeholder}</span>
+          )}
+        </span>
+      </div>
+      <ChevronDown className="size-4 shrink-0 text-muted-foreground ml-1" />
     </Button>
   );
 

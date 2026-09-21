@@ -65,12 +65,29 @@ export function BookingWizard({ booking }: BookingWizardProps) {
   };
 
   const serviceLabel = getBookingServiceLabel(booking.serviceRequested);
+  const isActivelyFillingIntake = activeIdx === 0 && !isReview;
+
   return (
-    <div className="flex w-full flex-col gap-4 select-none">
+    <div
+      className={cn(
+        "flex w-full flex-col select-none",
+        isActivelyFillingIntake ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "gap-4",
+      )}
+    >
       <h2 className="sr-only">Booking tracker</h2>
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:rounded-[18px] lg:border lg:border-(--border-subtle) lg:bg-(--surface-card) lg:p-5 lg:shadow-(--shadow-card)">
+      <div
+        className={cn(
+          "flex flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8",
+          isActivelyFillingIntake ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "gap-4 lg:items-start",
+        )}
+      >
+        <aside
+          className={cn(
+            "flex flex-col gap-4 lg:sticky lg:top-6 lg:rounded-[18px] lg:border lg:border-(--border-subtle) lg:bg-(--surface-card) lg:p-5 lg:shadow-(--shadow-card)",
+            isActivelyFillingIntake ? "hidden lg:flex" : "",
+          )}
+        >
           <div className="mx-2 flex flex-wrap items-center gap-x-3 gap-y-1 lg:mx-0 lg:flex-col lg:items-start lg:gap-y-2">
             <span className="flex w-fit items-center gap-1.5 rounded-full bg-(--surface-brand) px-3.5 py-1.5 text-[13px] font-bold text-white">
               <Video className="size-3.5" />
@@ -92,8 +109,8 @@ export function BookingWizard({ booking }: BookingWizardProps) {
             "w-full border border-(--border-subtle) bg-(--surface-card) shadow-(--shadow-card)",
             // The editable intake is its own fixed-height sheet with pinned
             // header and footer, so it supplies its own padding.
-            activeIdx === 0 && !isReview
-              ? "overflow-hidden rounded-(--radius-xl)"
+            isActivelyFillingIntake
+              ? "flex-1 min-h-0 flex flex-col overflow-hidden rounded-(--radius-xl)"
               : "rounded-[18px] p-4 lg:p-6",
           )}
         >
@@ -111,11 +128,12 @@ export function BookingWizard({ booking }: BookingWizardProps) {
             </div>
           )}
 
-          <div className="relative w-full">
+          <div className={cn("relative w-full", isActivelyFillingIntake && "flex-1 min-h-0 flex flex-col overflow-hidden")}>
             <div
               className={cn(
                 "transition-all duration-500 ease-in-out",
                 "animate-in fade-in slide-in-from-right-4",
+                isActivelyFillingIntake && "flex-1 min-h-0 flex flex-col overflow-hidden",
               )}
               key={activeIdx}
             >

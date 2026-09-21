@@ -42,6 +42,123 @@ export function ChipButton({
 }
 
 /**
+ * Mobile-first structured condition tile designed for balanced 2-column or 3-column
+ * intake grids. Replaces ragged variable-width chips with equal-dimension,
+ * high-affordance selectable cards.
+ */
+export function ConditionTile({
+  selected,
+  disabled,
+  onClick,
+  children,
+  className,
+}: {
+  selected: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "group relative flex min-h-[44px] w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-xs font-medium transition-all sm:min-h-11 sm:text-[13px]",
+        FOCUS,
+        "disabled:cursor-not-allowed disabled:opacity-40",
+        selected
+          ? "border-(--surface-nav-accent) bg-(--safe-bg) font-bold text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
+          : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:border-(--border-strong) hover:bg-(--surface-canvas)",
+        className,
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors",
+          selected
+            ? "border-transparent bg-(--surface-nav-accent) text-white"
+            : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
+        )}
+      >
+        {selected ? <Check className="size-3 stroke-[3]" /> : null}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{children}</span>
+    </button>
+  );
+}
+
+/**
+ * Mobile-first dual/multi ChoiceCard. Provides high visual affordance with clear
+ * 1px solid borders, visible radio indicator circle, and explicit touch states
+ * so options are unmistakably interactive.
+ */
+export function ChoiceCard({
+  selected,
+  disabled,
+  onClick,
+  title,
+  description,
+  className,
+}: {
+  selected: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  title: ReactNode;
+  description?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "group relative flex min-h-[52px] w-full items-center gap-3 rounded-xl border p-3 text-left transition-all sm:min-h-[56px]",
+        FOCUS,
+        "disabled:cursor-not-allowed disabled:opacity-45",
+        selected
+          ? "border-(--surface-nav-accent) bg-(--safe-bg)/60 text-(--text-heading) shadow-xs ring-1 ring-(--surface-nav-accent)"
+          : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:border-(--border-strong) hover:bg-(--surface-canvas)",
+        className,
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+          selected
+            ? "border-(--surface-nav-accent) bg-(--surface-nav-accent) text-white"
+            : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
+        )}
+      >
+        {selected ? <span className="size-2 rounded-full bg-white" /> : null}
+      </span>
+      <div className="min-w-0 flex-1">
+        <span
+          className={cn(
+            "block text-xs sm:text-[13px]",
+            selected ? "font-bold text-(--text-heading)" : "font-medium text-(--text-body)",
+          )}
+        >
+          {title}
+        </span>
+        {description ? (
+          <span className="mt-0.5 block text-[11px] text-(--text-muted) sm:text-xs">
+            {description}
+          </span>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+/**
  * Two-option segmented control (e.g. "No" / "Yes"). The selected button uses
  * the same green as selected chips and "no allergies/conditions" assertions,
  * so all selection patterns read the same across the form.
@@ -51,17 +168,23 @@ export function SegmentedToggle<T extends string>({
   value,
   options,
   onChange,
+  className,
 }: {
   label: string;
   value: T | undefined;
   options: readonly { value: T; label: ReactNode }[];
   onChange: (value: T) => void;
+  className?: string;
 }) {
   return (
     <div
       role="radiogroup"
       aria-label={label}
-      className="inline-flex flex-wrap rounded-xl bg-(--gray-bg) p-1 text-xs"
+      className={cn(
+        "grid w-full rounded-xl border border-(--border-subtle) bg-(--surface-canvas) p-1 text-xs sm:inline-grid sm:w-auto",
+        options.length === 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-4",
+        className,
+      )}
     >
       {options.map((option) => {
         const selected = value === option.value;
@@ -73,10 +196,10 @@ export function SegmentedToggle<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "min-h-11 rounded-lg px-3.5 transition-all sm:min-h-9",
+              "flex min-h-11 items-center justify-center rounded-lg px-3.5 text-center text-xs font-semibold transition-all sm:min-h-9",
               FOCUS,
               selected
-                ? "bg-(--safe-bg) font-bold text-(--safe-fg) shadow-sm"
+                ? "bg-(--safe-bg) font-bold text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
                 : "font-medium text-(--text-muted) hover:text-(--text-body)",
             )}
           >

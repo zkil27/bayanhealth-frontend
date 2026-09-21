@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Check, Circle, LockKeyhole, TriangleAlert } from "lucide-react";
+import { Check, Circle, LockKeyhole, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormProvider,
@@ -323,25 +323,31 @@ export function AuthenticatedIntakeForm({
       <form
         onSubmit={(event) => event.preventDefault()}
         data-slot="intake-sheet"
-        className="flex h-[calc(100dvh-7rem)] min-h-[28rem] flex-col overflow-hidden lg:h-[calc(100dvh-8rem)]"
+        className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden"
       >
-        <header className="shrink-0 border-b border-(--border-subtle) px-5 pt-5 pb-4 sm:px-8">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <span className="inline-block rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
+        <header className="shrink-0 border-b border-(--border-subtle) px-4 py-2.5 sm:px-8 sm:py-3.5">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="inline-flex items-center rounded-lg bg-(--surface-accent-soft) px-2.5 py-1 text-xs font-bold tracking-wider text-(--status-available-fg) uppercase">
                 Step {currentStep + 1} of {STEPS.length}
               </span>
-              <h1 ref={headingRef} tabIndex={-1} className="mt-1 truncate text-lg font-bold text-(--text-heading) outline-none">
+              <h1 ref={headingRef} tabIndex={-1} className="truncate text-base sm:text-lg font-bold text-(--text-heading) outline-none">
                 {STEPS[currentStep].title}
               </h1>
             </div>
+            {/* Clinical Trust Badge */}
+            <div className="flex items-center gap-1.5 rounded-lg border border-(--teal-200) bg-(--teal-100)/60 px-2.5 py-1 text-xs font-semibold text-(--teal-800) shrink-0">
+              <ShieldCheck className="size-4 text-(--teal-700)" />
+              <span className="hidden xs:inline">Encrypted & Autosaved</span>
+              <span className="xs:hidden">Autosaved</span>
+            </div>
           </div>
-          <div className="mt-3 h-1 overflow-hidden rounded-full bg-(--gray-bg) xl:hidden" aria-hidden>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
             <div className="h-full rounded-full bg-(--action-primary) transition-[width] duration-300" style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav aria-label="Intake steps" className="hidden w-56 shrink-0 overflow-y-auto border-r border-(--border-subtle) p-4 xl:block">
             <ol className="space-y-2">
               {STEPS.map((step, index) => {
@@ -373,9 +379,8 @@ export function AuthenticatedIntakeForm({
           <main
             ref={scrollBodyRef}
             data-slot="intake-scroll-body"
-            className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable] sm:px-8"
+            className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:px-8 sm:py-5"
           >
-            <p className="mb-6 text-sm text-muted-foreground">Your answers are saved securely when you continue.</p>
             {currentStep === 0 ? <AboutYouSection profile={profile} /> : null}
             {currentStep === 1 ? <MedicalHistoryStep /> : null}
             {currentStep === 2 ? (

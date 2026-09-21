@@ -65,10 +65,10 @@ export const useSignUpStore = create<SignUpStore>()(
 
       setRole: (role) => {
         if (!isSignUpRole(role)) {
-          set(createDefaultState());
+          set((state) => ({ ...state, role: null }));
           return;
         }
-        set({ ...createDefaultState(), role, step: 2 });
+        set((state) => ({ ...state, role }));
       },
 
       setStep: (step) => set({ step }),

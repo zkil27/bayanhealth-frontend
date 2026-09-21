@@ -18,6 +18,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { NONE_OPTION } from "@/features/booking/constants/bookingConstants";
+import { CustomBottomModal } from "@/components/ui/custom-bottom-modal";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 export interface DropdownOption {
@@ -125,6 +127,8 @@ export function MultiSelectDropdown({
     onChange([...withoutNone, trimmed.charAt(0).toUpperCase() + trimmed.slice(1)]);
   };
 
+  const isMobile = useIsMobile();
+
   // The trigger doubles as the value display: selected entries render as
   // removable chips inside the same box a plain text field would use, rather
   // than a separate tray underneath it.
@@ -132,10 +136,12 @@ export function MultiSelectDropdown({
     <div
       role="combobox"
       aria-expanded={open}
+      aria-controls="multiselect-options-list"
       aria-label={label}
       tabIndex={0}
+      onClick={() => setOpen(true)}
       className={cn(
-        "flex min-h-11 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-(--radius-sm) border bg-(--surface-card) px-2.5 py-1.5 text-sm transition-colors",
+        "flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-xl border bg-(--surface-card) px-3.5 py-2 text-sm sm:text-base font-medium transition-colors overflow-hidden shadow-xs",
         "hover:bg-(--surface-canvas) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
         styles.trigger,
       )}
@@ -162,81 +168,195 @@ export function MultiSelectDropdown({
           </Chip>
         ))
       ) : (
-        <span className="truncate py-1 text-(--text-muted)">{placeholder}</span>
+        <span className="truncate py-0.5 text-(--text-muted)">{placeholder}</span>
       )}
-      <ChevronsUpDown aria-hidden className="ml-auto size-4 shrink-0 self-center opacity-50" />
+      <ChevronsUpDown aria-hidden className="ml-auto size-4.5 shrink-0 self-center opacity-60" />
     </div>
   );
 
+  const filteredPresets = React.useMemo(() => {
+    if (!inputValue.trim()) return presets;
+    const query = inputValue.toLowerCase().trim();
+    return presets.filter((p) => p.label.toLowerCase().includes(query));
+  }, [presets, inputValue]);
+
   return (
     <Field>
-      <FieldLabel className={cn("flex items-center gap-1.5", styles.label)}>
+      <FieldLabel className={cn("flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-(--text-heading) mb-1.5 [&_svg]:size-4.5", styles.label)}>
         {icon} {label}
       </FieldLabel>
-      <FieldContent className="space-y-1.5">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger nativeButton={false} render={triggerContent} />
-          <PopoverContent align="start" className="w-(--anchor-width) min-w-64 p-0">
-            <Command className="w-full">
-              <CommandInput
-                placeholder={searchPlaceholder}
-                value={inputValue}
-                onValueChange={setInputValue}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && inputValue.trim()) {
-                    event.preventDefault();
-                    addCustom();
-                  }
-                }}
-              />
-              <CommandList>
-                <CommandEmpty className="p-2">
+      <FieldContent className="space-y-2">
+        {isMobile ? (
+          <>
+            {triggerContent}
+            <CustomBottomModal
+              open={open}
+              onOpenChange={setOpen}
+              title={label}
+              description="Tap to select or deselect"
+            >
+              <div className="space-y-3 pb-2">
+                {/* Search / Add Input */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && inputValue.trim()) {
+                        event.preventDefault();
+                        addCustom();
+                      }
+                    }}
+                    className="h-11 w-full rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-sm text-(--text-body) placeholder:text-(--text-muted) focus:border-(--action-primary) focus:outline-none"
+                  />
+                  {inputValue.trim() && (
+                    <button
+                      type="button"
+                      onClick={addCustom}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-(--surface-accent-soft) px-2.5 py-1 text-xs font-bold text-(--action-primary)"
+                    >
+                      Add
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected Chips Preview */}
+                {safeValue.length > 0 && !isNone && (
+                  <div className="flex flex-wrap gap-1.5 py-1">
+                    {safeValue.map((item) => (
+                      <Chip
+                        key={item}
+                        className={styles.chip}
+                        hoverClassName={styles.chipHover}
+                        removeLabel={`Remove ${labelFor(item)}`}
+                        onRemove={() => toggle(item)}
+                      >
+                        {labelFor(item)}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+
+                {/* Options List */}
+                <div className="max-h-[50dvh] space-y-1.5 overflow-y-auto pr-0.5">
+                  {/* None Option */}
                   <button
                     type="button"
-                    onClick={addCustom}
-                    className="w-full rounded-(--radius-xs) px-2 py-2 text-left text-xs font-semibold text-(--text-link) hover:bg-(--surface-canvas)"
+                    onClick={() => toggle(NONE_OPTION)}
+                    className={cn(
+                      "flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border p-3 text-left text-sm transition-all",
+                      isNone
+                        ? "border-(--action-primary) bg-(--teal-100) font-semibold text-(--teal-800)"
+                        : "border-(--border-subtle) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                    )}
                   >
-                    Add &quot;{inputValue}&quot;
+                    <span>{noneLabel}</span>
+                    {isNone && <Check className="size-4 text-(--action-primary) shrink-0" />}
                   </button>
-                </CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value={NONE_OPTION}
-                    onSelect={() => toggle(NONE_OPTION)}
-                    className="flex cursor-pointer items-center justify-between"
-                  >
-                    <span className={isNone ? "font-medium text-(--status-available-fg)" : ""}>
-                      {noneLabel}
-                    </span>
-                    {isNone ? <Check className="size-4 text-(--status-available-fg)" /> : null}
-                  </CommandItem>
-                </CommandGroup>
-                <CommandGroup heading={presetHeading}>
-                  {presets.map((preset) => {
+
+                  {/* Preset Options */}
+                  <span className="block pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-(--text-subtle)">
+                    {presetHeading}
+                  </span>
+                  {filteredPresets.map((preset) => {
                     const checked = safeValue.includes(preset.value);
                     return (
-                      <CommandItem
+                      <button
                         key={preset.value}
-                        value={preset.value}
-                        keywords={[preset.label]}
-                        onSelect={() => toggle(preset.value)}
-                        className="flex cursor-pointer items-center justify-between"
+                        type="button"
+                        onClick={() => toggle(preset.value)}
+                        className={cn(
+                          "flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border p-3 text-left text-sm transition-all",
+                          checked
+                            ? "border-(--action-primary) bg-(--teal-100) font-semibold text-(--teal-800)"
+                            : "border-(--border-subtle) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                        )}
                       >
-                        <span className={checked ? cn("font-medium", styles.check) : ""}>
-                          {preset.label}
-                        </span>
-                        {checked ? <Check className={cn("size-4", styles.check)} /> : null}
-                      </CommandItem>
+                        <span>{preset.label}</span>
+                        {checked && <Check className="size-4 text-(--action-primary) shrink-0" />}
+                      </button>
                     );
                   })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                </div>
+
+                {/* Done Button */}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
+                >
+                  Done
+                </button>
+              </div>
+            </CustomBottomModal>
+          </>
+        ) : (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger nativeButton={false} render={triggerContent} />
+            <PopoverContent align="start" className="w-(--anchor-width) min-w-64 p-0">
+              <Command className="w-full">
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  value={inputValue}
+                  onValueChange={setInputValue}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && inputValue.trim()) {
+                      event.preventDefault();
+                      addCustom();
+                    }
+                  }}
+                />
+                <CommandList>
+                  <CommandEmpty className="p-2">
+                    <button
+                      type="button"
+                      onClick={addCustom}
+                      className="w-full rounded-(--radius-xs) px-2 py-2 text-left text-xs font-semibold text-(--text-link) hover:bg-(--surface-canvas)"
+                    >
+                      Add &quot;{inputValue}&quot;
+                    </button>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      value={NONE_OPTION}
+                      onSelect={() => toggle(NONE_OPTION)}
+                      className="flex cursor-pointer items-center justify-between"
+                    >
+                      <span className={isNone ? "font-medium text-(--status-available-fg)" : ""}>
+                        {noneLabel}
+                      </span>
+                      {isNone ? <Check className="size-4 text-(--status-available-fg)" /> : null}
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandGroup heading={presetHeading}>
+                    {presets.map((preset) => {
+                      const checked = safeValue.includes(preset.value);
+                      return (
+                        <CommandItem
+                          key={preset.value}
+                          value={preset.value}
+                          keywords={[preset.label]}
+                          onSelect={() => toggle(preset.value)}
+                          className="flex cursor-pointer items-center justify-between"
+                        >
+                          <span className={checked ? cn("font-medium", styles.check) : ""}>
+                            {preset.label}
+                          </span>
+                          {checked ? <Check className={cn("size-4", styles.check)} /> : null}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        )}
 
         {!isNone && safeValue.length === 0 && emptyHint ? (
-          <p className="px-1 text-xs text-(--text-muted) italic">{emptyHint}</p>
+          <p className="px-1 text-xs sm:text-[13px] text-(--text-muted) italic leading-relaxed">{emptyHint}</p>
         ) : null}
       </FieldContent>
     </Field>
@@ -259,7 +379,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "inline-flex animate-in items-center gap-1 rounded-(--radius-pill) py-1 pr-1 pl-2.5 text-xs font-semibold shadow-sm duration-150 fade-in-50 zoom-in-95",
+        "inline-flex animate-in items-center gap-1.5 rounded-lg py-1 pr-1.5 pl-2.5 text-xs sm:text-sm font-semibold shadow-xs duration-150 fade-in-50 zoom-in-95",
         className,
       )}
     >
@@ -278,7 +398,7 @@ function Chip({
           hoverClassName,
         )}
       >
-        <X className="size-3" />
+        <X className="size-3.5" />
       </button>
     </span>
   );

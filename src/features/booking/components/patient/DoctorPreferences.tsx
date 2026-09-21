@@ -11,9 +11,8 @@ interface DoctorPreferencesProps {
   readOnly?: boolean;
   data?: DoctorPreferencesType;
   /**
-   * Lay each preference out as a single horizontal row (label left, pills
-   * flowing right) rather than a stacked label-over-pills block. Used by the
-   * on-demand intake screen, where vertical room is scarce.
+   * Use tighter vertical spacing (gap-1.5) for the on-demand intake screen,
+   * keeping labels and pills uniformly stacked and aligned across rows.
    */
   compact?: boolean;
 }
@@ -32,11 +31,9 @@ export function DoctorPreferences({
   }
 
   const rowClass = compact
-    ? "flex flex-wrap items-center gap-x-3 gap-y-2"
+    ? "flex flex-col gap-1.5"
     : "flex flex-col gap-2";
-  const labelClass = compact
-    ? cn(fieldLabel, "w-24 shrink-0")
-    : fieldLabel;
+  const labelClass = fieldLabel;
 
   return (
     <div className={cn("flex flex-col", compact ? "gap-3" : "gap-4")}>

@@ -1,7 +1,19 @@
 "use client";
 
-import { Activity, Droplet, HeartPulse, Phone, Siren, Thermometer, TriangleAlert } from "lucide-react";
+import {
+  Activity,
+  Check,
+  ChevronDown,
+  Droplet,
+  HeartPulse,
+  Phone,
+  Siren,
+  Thermometer,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 import { useState } from "react";
+import { CustomBottomModal } from "@/components/ui/custom-bottom-modal";
 import {
   Controller,
   type FieldPath,
@@ -249,6 +261,7 @@ function EmergencyActions({ onRetract }: { onRetract: () => void }) {
 function MainConcern() {
   const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
   const tags = (useWatch({ control, name: "requestDetails.complaintTags" as FieldPath<DynamicIntakeFormValues> }) ?? []) as ComplaintTag[];
+  const [symptomsModalOpen, setSymptomsModalOpen] = useState(false);
   const opts = { shouldDirty: true, shouldValidate: true } as const;
 
   const toggle = (tag: ComplaintTag) => {
@@ -259,7 +272,7 @@ function MainConcern() {
   };
 
   return (
-    <section className="space-y-6 border-t border-(--border-subtle) pt-6">
+    <section className="space-y-5 border-t border-(--border-subtle) pt-5">
       <Controller
         name={"requestDetails.chiefComplaint" as FieldPath<DynamicIntakeFormValues>}
         control={control}
@@ -277,31 +290,127 @@ function MainConcern() {
               value={typeof field.value === "string" ? field.value : ""}
               aria-describedby="chief-complaint-hint"
               aria-invalid={fieldState.invalid || undefined}
-              className="min-h-[90px] w-full rounded-2xl border border-(--border-default) bg-(--surface-raised) p-3.5 text-sm text-(--text-body) outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)"
+              className="min-h-[85px] w-full rounded-2xl border border-(--border-default) bg-(--surface-raised) p-3 text-sm text-(--text-body) outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)"
             />
             {fieldState.error ? <p className="text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
           </div>
         )}
       />
 
-      <fieldset className="space-y-4">
-        <legend className="mb-1">
-          <BlockLabel>Related symptoms</BlockLabel>
-          <span className="text-[11px] text-(--text-subtle)">Optional · select all that apply</span>
-        </legend>
-        {SYMPTOM_GROUPS.map((group) => (
-          <div key={group.title} role="group" aria-label={group.title} className="space-y-2">
-            <p className="text-[11px] font-semibold text-(--text-muted)">{group.title}</p>
-            <div className="flex flex-wrap gap-2">
-              {group.tags.map(([value, label]) => (
-                <ChipButton key={value} selected={tags.includes(value)} onClick={() => toggle(value)} className="sm:py-1.5">
-                  {label}
-                </ChipButton>
-              ))}
-            </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-0.5">
+          <div>
+            <BlockLabel>Related symptoms</BlockLabel>
+            <span className="text-[11px] text-(--text-subtle)">Optional · select all that apply</span>
           </div>
-        ))}
-      </fieldset>
+          {tags.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setValue("requestDetails.complaintTags" as FieldPath<DynamicIntakeFormValues>, [] as never, opts)}
+              className="text-[11px] font-semibold text-(--danger-fg) hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+
+        {/* High-Affordance Trigger Button */}
+        <button
+          type="button"
+          onClick={() => setSymptomsModalOpen(true)}
+          className={cn(
+            "flex h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3 text-left text-xs sm:text-sm transition-colors hover:bg-(--surface-canvas)",
+            "focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--focus-ring)/30 outline-none",
+          )}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="size-4 shrink-0 text-(--action-primary)" />
+            <span className={cn("truncate font-medium", tags.length === 0 ? "text-muted-foreground" : "text-(--text-heading)")}>
+              {tags.length === 0
+                ? "Select related symptoms..."
+                : `${tags.length} symptom${tags.length > 1 ? "s" : ""} selected`}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {tags.length > 0 && (
+              <span className="rounded-full bg-(--teal-100) px-2 py-0.5 text-[10px] font-bold text-(--teal-800)">
+                {tags.length}
+              </span>
+            )}
+            <ChevronDown className="size-4 text-muted-foreground" />
+          </div>
+        </button>
+
+        {/* Selected Symptoms Chips display */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-(--surface-nav-accent) bg-(--safe-bg) px-2.5 py-1 text-xs font-semibold text-(--safe-fg)"
+              >
+                <Check className="size-3 text-(--surface-nav-accent)" />
+                <span>{complaintTagLabel(tag)}</span>
+                <button
+                  type="button"
+                  onClick={() => toggle(tag)}
+                  className="rounded p-0.5 hover:bg-(--safe-fg)/10 cursor-pointer"
+                  aria-label={`Remove ${complaintTagLabel(tag)}`}
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Symmetrical Aligned Mobile Modal */}
+        <CustomBottomModal
+          open={symptomsModalOpen}
+          onOpenChange={setSymptomsModalOpen}
+          title="Related Symptoms"
+          description="Select all symptoms that apply to your visit"
+        >
+          <div className="space-y-4 pb-2 max-h-[60vh] overflow-y-auto px-0.5">
+            {SYMPTOM_GROUPS.map((group) => (
+              <div key={group.title} className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                  {group.title}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.tags.map(([value, label]) => {
+                    const selected = tags.includes(value);
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => toggle(value)}
+                        className={cn(
+                          "flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98]",
+                          selected
+                            ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
+                            : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                        )}
+                      >
+                        <span className="truncate mr-1">{label}</span>
+                        {selected && <Check className="size-3.5 shrink-0 text-(--surface-nav-accent)" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setSymptomsModalOpen(false)}
+              className="mt-3 flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
+            >
+              Done {tags.length > 0 ? `(${tags.length} selected)` : ""}
+            </button>
+          </div>
+        </CustomBottomModal>
+      </div>
 
       <Reveal open={tags.includes("fever")} className="-mt-6">
         <Controller

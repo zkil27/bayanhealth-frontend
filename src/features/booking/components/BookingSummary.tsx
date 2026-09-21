@@ -76,18 +76,18 @@ export function BookingSummary() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 border-t border-(--border-subtle) bg-(--surface-sunken) p-3 text-center text-[11px] text-(--text-muted)">
+      <div className="grid grid-cols-3 gap-2 border-t border-(--border-subtle) bg-(--surface-accent-soft)/50 p-3 text-center text-[11px]">
         <div className="flex flex-col items-center gap-1">
           <Shield className="size-3.5 text-(--status-available-fg)" />
-          <span>Secure payment</span>
+          <span className="font-medium text-(--text-body)">Secure payment</span>
         </div>
         <div className="flex flex-col items-center gap-1 border-x border-(--border-subtle)">
           <CreditCard className="size-3.5 text-(--text-subtle)" />
-          <span>Pay after intake</span>
+          <span className="font-medium text-(--text-body)">Pay after intake</span>
         </div>
         <div className="flex flex-col items-center gap-1">
           <CheckCircle className="size-3.5 text-(--status-available-fg)" />
-          <span>Free cancellation</span>
+          <span className="font-medium text-(--text-body)">Free cancellation</span>
         </div>
       </div>
     </div>

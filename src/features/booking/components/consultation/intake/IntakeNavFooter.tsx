@@ -59,10 +59,10 @@ export function IntakeNavFooter({
       data-slot="intake-nav-footer"
       className={cn(
         placement === "pinned"
-          ? "z-10 shrink-0 border-t border-(--border-subtle) bg-(--surface-card)/95 px-5 py-4 backdrop-blur-sm sm:px-8"
+          ? "sticky bottom-0 z-30 shrink-0 border-t border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-sm sm:px-8 sm:py-3"
           : cn(
               "fixed inset-x-0 bottom-0 z-30 border-t border-(--border-subtle) bg-(--surface-card) px-4 py-3 shadow-(--shadow-md)",
-              "lg:static lg:z-auto lg:mt-8 lg:px-0 lg:pt-5 lg:pb-0 lg:shadow-none",
+              "lg:sticky lg:bottom-0 lg:z-30 lg:mt-0 lg:px-6 lg:py-3",
             ),
         className,
       )}
@@ -80,13 +80,13 @@ export function IntakeNavFooter({
             onClick={onBack}
             disabled={pending}
             className={cn(
-              "inline-flex min-h-11 min-w-11 items-center gap-2 rounded-(--radius-pill) border border-(--border-default) bg-(--surface-card) px-4 text-sm font-semibold text-(--text-body)",
+              "inline-flex min-h-12 min-w-12 items-center gap-2 rounded-xl border border-(--border-default) bg-(--surface-card) px-4 sm:px-5 text-sm sm:text-base font-semibold text-(--text-body)",
               "transition-colors hover:border-(--border-strong) hover:bg-(--action-secondary-hover-surface)",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >
-            <ArrowLeft aria-hidden className="size-4 shrink-0" />
+            <ArrowLeft aria-hidden className="size-4.5 shrink-0" />
             <span className="sm:hidden">Back</span>
             <span className="hidden sm:inline">Back to {backTo}</span>
           </button>
@@ -100,17 +100,17 @@ export function IntakeNavFooter({
           disabled={pending || blocked}
           aria-busy={pending || undefined}
           aria-describedby={blockedReason ? reasonId : undefined}
-          className="min-h-11 w-auto px-5 text-[15px]"
+          className="min-h-12 sm:min-h-12.5 w-auto px-6 text-sm sm:text-base font-bold shadow-sm active:scale-[0.98]"
         >
           {pending ? (
             <>
-              <Spinner aria-label={pendingLabel} className="size-4" />
+              <Spinner aria-label={pendingLabel} className="size-4.5" />
               {pendingLabel}
             </>
           ) : isFinal ? (
             <>
               {finalLabel}
-              <Send aria-hidden className="size-4" />
+              <Send aria-hidden className="size-4.5" />
             </>
           ) : (
             <>
@@ -118,7 +118,7 @@ export function IntakeNavFooter({
               <span className="hidden sm:inline">
                 {continueTo ? `Continue to ${continueTo}` : "Continue"}
               </span>
-              <ArrowRight aria-hidden className="size-4" />
+              <ArrowRight aria-hidden className="size-4.5" />
             </>
           )}
         </BrandCtaButton>

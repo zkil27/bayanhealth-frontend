@@ -9,6 +9,487 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 *(New entries should be appended at the top)*
 
+### [2026-09-21] Authentication: Single Continuous Line Progress Bar
+
+- **Target Route / Surface**:
+  - `/signUp` (Sign-Up wizard header progress stepper across all steps)
+- **Files Modified**:
+  - `src/features/authentication/components/SignUpProgress.tsx`
+- **Design Intent & Problem Solved**:
+  - **Replaced Segmented Dashes with a Single Line**:
+    - Replaced the 4 separated progress dashes (`gap-1.5` segments) with a single continuous, rounded track (`bg-muted`) and smooth fill line (`bg-primary`).
+    - Calculates completion percentage directly from the active step (`(step / 4) * 100%`) with smooth CSS easing transitions (`transition-all duration-300 ease-out`).
+    - Produces a sleek, unified, and modern linear progress experience matching standard design systems.
+- **Anti-AI Slop Quality Compliance**:
+  - Clean brand tokens (`bg-muted`, `bg-primary`), seamless animations, zero broken dash clutter.
+- **Upstream Porting Notes**:
+  - Pure visual styling update in `SignUpProgress.tsx`; props and step logic remain untouched.
+
+### [2026-09-21] Authentication: Expanded Container Dimensions & High White-Space Field Breathing Room
+
+- **Target Route / Surface**:
+  - `/signUp` (all steps: Role Selection, Credentials, Profile, Confirmation)
+  - `/signIn`
+- **Files Modified**:
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+  - `src/features/authentication/components/forms/SignUpCredentials.tsx`
+  - `src/features/authentication/components/forms/SignUpConfirm.tsx`
+  - `src/features/authentication/components/forms/SignUpRoleSelection.tsx`
+- **Design Intent & Problem Solved**:
+  - **Unclipped Labels & Generous White Space**:
+    - Previously, container height of 570px was too tight for Step 3, causing "Full Name" label to be partially clipped by `overflow-hidden` at the top, and bottom inputs to press directly against the navigation action bar.
+    - Expanded `AuthBox` container height to `h-[660px] sm:h-[685px] max-h-[calc(100dvh-2.5rem)]` with `px-5 py-4.5 sm:px-6 sm:py-5` padding, capitalizing on the ample vertical space available on mobile and desktop viewports.
+    - Increased inter-field spacing across all form steps:
+      - `SignUpProfile.tsx`: `gap-3.5 sm:gap-4` between field rows, `gap-2` between labels and inputs, and `gap-3 sm:gap-3.5` for 2-column nickname/pronoun and doctor rows.
+      - `SignUpCredentials.tsx`: `gap-4 sm:gap-4.5` between fields and `gap-2` between labels and inputs.
+      - `SignUpRoleSelection.tsx`: `min-h-[125px] sm:min-h-[135px]` with `p-4 sm:p-5 rounded-2xl` and `gap-3 sm:gap-4`.
+      - `SignUpConfirm.tsx`: `gap-3.5 sm:gap-4` with `p-3.5 sm:p-4 rounded-2xl` registration summary.
+    - **Zero-Scroll Guarantee**: The content area fits comfortably with ~30px of vertical headroom, completely eliminating clipping and maintaining zero inner or outer scrollbars.
+- **Anti-AI Slop Quality Compliance**:
+  - Elegant spatial breathing room, crisp 1px solid borders, no awkward clipping or scroll slop, strict adherence to BayanHealth typography hierarchy.
+- **Upstream Porting Notes**:
+  - Pure visual styling and spatial layout improvements.
+
+### [2026-09-21] Patient Consultation Intake: "Who is this for?" Tile Card Redesign & Truncation Fix
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Consultation Intake Wizard, Step 1: "Who is this for?")
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Text Truncation (`Depen...`)**:
+    - Previously, horizontal card layout placed the icon, title, subtitle, and badge in a single crowded horizontal row. In a 2-column grid on mobile viewports, the "SOON" badge and icon consumed over 65% of available width, truncating "Dependent" into "Depen..." and compressing "Family member".
+    - Restructured cards into an ergonomic vertical tile layout:
+      - **Top Row**: Form icon (`User` / `Users`) framed in a soft rounded container (`size-8 sm:size-9`) on the left, paired with the active status indicator (`Check` circle on "Myself", "Soon" badge on "Dependent") on the right.
+      - **Bottom Row**: Full-width title ("Myself" / "Dependent") and subtitle ("Account owner" / "Family member") with zero truncation, tight leading, and crisp typography.
+    - Symmetrical height (`min-h-[84px] sm:min-h-[92px]`), comfortable touch targets, and balanced visual parity between active and disabled states.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid and dashed borders, brand teal active state (`--teal-100`, `--action-primary`), senior-friendly legibility, zero truncation slop.
+- **Upstream Porting Notes**:
+  - Pure presentation improvement in `PersonDataSection.tsx`; form values (`field.value`, `forWhom`) remain untouched.
+
+### [2026-09-21] Authentication Sign-Up: Full-Width Step 1 Next Action & Balanced Navigation Bar
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 1: Role Selection action bar)
+- **Files Modified**:
+  - `src/features/authentication/components/SignUpFlow.tsx`
+- **Design Intent & Problem Solved**:
+  - **Full-Width Primary Action on First Step**:
+    - Previously, the Back button on Step 1 was hidden using `invisible pointer-events-none`. Because `invisible` preserves layout space in flex containers, the Next CTA button was lopsided and pushed to the right side of the card.
+    - Conditionally omitted the Back button when `isFirstStep` is true, and updated the Next CTA to occupy the full width of the card (`w-full h-12`).
+    - Maintained standard bookended `justify-between` navigation (Back on left, Next/Complete on right) for subsequent steps (2, 3, and 4).
+- **Anti-AI Slop Quality Compliance**:
+  - Balanced visual symmetry, ergonomic mobile thumb-zone alignment (48px touch target), crisp border and token-driven brand styling.
+- **Upstream Porting Notes**:
+  - Pure layout fix in `SignUpFlow.tsx`; no changes to wizard state, schemas, or submission logic.
+
+
+
+### [2026-09-21] Authentication: Zero-Scroll Sign-Up Wizard & Balanced Multi-Column Field Ergonomics
+
+- **Target Route / Surface**:
+  - `/signUp` (Sign-Up Wizard, all steps including Step 3 Profile Completion)
+  - `/signIn`
+- **Files Modified**:
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+  - `src/features/authentication/components/forms/SignUpBottomPickers.tsx`
+  - `src/features/authentication/components/forms/SignUpCredentials.tsx`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Outer and Inner Scrollbars ("Avoid Making It Scrollable")**:
+    - Previously, container height was set to `710px–730px`, which exceeded laptop and mobile viewport heights and triggered browser or card scrollbars.
+    - Stacked 6 full-width fields vertically in Step 3, taking over ~510px for the inputs alone.
+    - Grouped **Call Me (Nickname)** and **Pronouns (optional)** side-by-side into a balanced 2-column row (`grid grid-cols-2 gap-2.5 sm:gap-3`), saving ~70px of vertical space.
+    - Similarly grouped Doctor profile fields (Specialization + Sub-Specialization, Clinic Name + Clinic Address) into 2-column rows for clinical desktop density.
+    - Calibrated `AuthBox` container to `h-[570px] sm:h-[595px] max-h-[calc(100dvh-4.5rem)]` with `overflow-hidden`, maintaining an identical, consistent container footprint across all steps without any jumping or scrollbars.
+    - Set `overflow-hidden` on `SignUpFlow`'s content wrapper, strictly preventing scrollbars.
+    - Standardized input touch heights to `h-11 sm:h-12` (44px on mobile, 48px on sm/desktop) across credentials, profile fields, picker triggers, and action buttons.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid borders, intentional spatial hierarchy, consistent container aspect ratio, clean Lucide iconography, zero scroll clipping.
+- **Upstream Porting Notes**:
+  - Pure layout and styling changes; all form keys, Zod schemas, and wizard step handling remain untouched.
+
+### [2026-09-21] Patient Consultation Intake: Mobile-First Gender Bottom Sheet Modal Replacement
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Consultation Intake Wizard, Step 1: "About You")
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Desktop Popover on Mobile**:
+    - Replaced the desktop-centric Radix UI `<Select>` popover for "Sex at birth" (`genderAtBirth`) with a mobile-first `GenderPicker` powered by `CustomBottomModal`.
+    - Standard floating dropdown menus float awkwardly below inputs on phones with tiny, hard-to-tap items (32px) and no thumb-zone ergonomics.
+    - Upgraded to a comfortable bottom drawer sheet featuring:
+      - Large `h-14 sm:h-15` (56px-60px) touch targets for "Male", "Female", and "Prefer Not To Say".
+      - Clear visual active states with teal tint (`bg-(--teal-100)`), active brand border, and Lucide `Check` icons.
+      - Prominent full-width "Cancel" dismiss button at the bottom.
+      - Aligns consistency with `BloodTypePicker`, `PronounBottomPicker`, and `DateOfBirthBottomPicker`.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid borders, brand teal active state (`--teal-100`, `--teal-800`), clinical typography, zero generic floating menu slop.
+- **Upstream Porting Notes**:
+  - Pure UI replacement of `<Select>` with `GenderPicker`; keeps `field.onChange` and `genderAtBirth` string values completely unchanged.
+
+### [2026-09-21] Patient Consultation Intake: Senior-Friendly UI Ergonomics & High-Accessibility Form Scaling
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Consultation Intake Wizard, Step 1: "About You")
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+  - `src/features/booking/components/DateTimePicker.tsx`
+  - `src/features/booking/components/consultation/intake/MultiSelectDropdown.tsx`
+  - `src/features/booking/components/consultation/intake/IntakeNavFooter.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+- **Design Intent & Problem Solved**:
+  - **Senior-Friendly Large Touch Targets (>= 48px to 64px)**:
+    - Expanded "Who is this for?" radio cards from `h-11` (44px) to `h-14 sm:h-16` (56px-64px), with `size-9 sm:size-10` icon containers and `size-5` Lucide vector icons (`User`, `Users`).
+    - Standardized all input and picker heights (`DatePicker`, `SelectTrigger`, `Input` for weight/height, `BloodTypePicker`, `MultiSelectDropdown`) to `h-12 sm:h-12.5` (48px-50px) for effortless, tremor-tolerant tapping.
+    - Scaled navigation buttons in `IntakeNavFooter` to `min-h-12 sm:min-h-12.5` with generous padding (`px-6`) and larger typography.
+  - **Legible, High-Contrast Typography (No More Microscopic All-Caps)**:
+    - Replaced unreadable `text-[10px]` all-caps labels with clear `text-xs sm:text-sm font-semibold text-(--text-heading)`.
+    - Increased input, placeholder, and option font sizes to `text-sm sm:text-base` (15-16px, which also prevents automatic browser zoom on iOS).
+    - Upgraded section legends and step title headers (`text-base sm:text-lg font-bold`).
+  - **Balanced Vertical Spacing & Card Padding**:
+    - Expanded inner card padding to `p-3.5 sm:p-5` with `space-y-3.5 sm:space-y-4` spacing, naturally utilizing the screen height and removing empty white space awkwardness.
+- **Anti-AI Slop Quality Compliance**:
+  - Clean 1px solid borders (`border-(--border-default)`), warm surface card styling (`bg-(--surface-card)`), and clinical Lucide vector icons (`Droplet`, `Calendar`, `User`, `Weight`, `Ruler`, `Check`, `ChevronDown`). Zero AI glowing strokes or neon SaaS effects.
+- **Upstream Porting Notes**:
+  - Preserved all react-hook-form bindings (`personalDetails.dateOfBirth`, `genderAtBirth`, `weight`, `height`, `bloodType`, `allergens`, `diet`), schemas, and validation logic intact.
+
+### [2026-09-21] Authentication Sign-Up: Increased Field Spacing, Expanded Container & Zero-Scroll Layout
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 3: "Complete Profile" and overall Sign-Up container)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+- **Design Intent & Problem Solved**:
+  - **Spacious Field Spacing & Enlarged Typography**:
+    - Increased the vertical gap between fields from cramped `gap-2` to generous `gap-3.5 sm:gap-4` with `gap-1.5` internal field padding, eliminating the cramped feel.
+    - Scaled up all field labels to `text-sm font-semibold text-foreground` (14px) for high accessibility and visual consistency across steps.
+  - **Zero-Scroll Fit & Expanded Consistent Container**:
+    - Expanded the unified card container height from `600px` to `h-[710px] max-h-[calc(100dvh-2rem)] sm:h-[730px]`.
+    - Streamlined the Step 3 description to a single concise line (`"Profile details are saved locally on your device."`), saving vertical space.
+    - Enabled all 6 profile fields (Full Name, Date of Birth, Address, Preferred Contact, Nickname, and Pronouns) to fit comfortably on screen simultaneously with zero truncation.
+    - Added CSS scrollbar suppression (`[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`) to prevent unsightly browser scrollbar tracks from appearing.
+- **Anti-AI Slop Quality Compliance**:
+  - Spacious breathing room, consistent spatial geometry across steps, and zero visual clutter.
+- **Upstream Porting Notes**:
+  - Form validation, field bindings, and handoff flows are 100% preserved.
+
+### [2026-09-21] Patient Profile: Removed Month Numbers in Date of Birth Picker
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 3: "Complete Profile" Date of Birth bottom sheet modal)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpBottomPickers.tsx`
+- **Design Intent & Problem Solved**:
+  - **Clean Month Typography**:
+    - Removed redundant numeric prefixes/suffixes (e.g. `(08)`, `(09)`) from the Month scroll column items.
+    - Standardized month options to clean 3-letter month labels (`Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`, `Sep`, `Oct`, `Nov`, `Dec`), streamlining visual hierarchy and eliminating clutter.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp typography, consistent spacing, and zero redundant text elements.
+- **Upstream Porting Notes**:
+  - Value emission format remains `YYYY-MM-DD`.
+
+### [2026-09-21] Patient Intake: Permanently Visible Non-Scrollable Action Buttons & Strict Flex Isolation
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (All Intake Steps: About You, Medical History, Concern & Safety, Pain Assessment, Review & Consent)
+- **Files Modified**:
+  - `src/features/booking/components/consultation/intake/IntakeNavFooter.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+  - `src/features/booking/components/consultation/BookingWizard.tsx`
+  - `src/features/booking/components/patient/PatientBookingDetail.tsx`
+  - `src/app/patient/booking/getBooking/[bookingId]/page.tsx`
+- **Design Intent & Problem Solved**:
+  - **Permanently Anchored & Always-Showing CTA Buttons**:
+    - Upgraded `IntakeNavFooter`'s pinned placement to `sticky bottom-0 z-30 shrink-0 border-t border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-sm sm:px-8 sm:py-3`.
+    - Buttons ("Back" and "Continue" / "Submit") are permanently locked and anchored at the bottom of the visible intake card across all device viewports.
+    - The action bar NEVER scrolls off screen, is never hidden behind the mobile bottom navigation bar (`NavBar`), and never requires the patient to scroll through the form to find or press it.
+  - **Strict Flexbox Containment & Zero Container Overflow**:
+    - Removed conflicting `h-full` properties across nested flex children in `BookingWizard` and `AuthenticatedIntakeForm`. Previously, `h-full` forced flex-1 children to match 100% of their parent's height while ignoring siblings (`BookingContextBar` and headers), pushing the bottom buttons ~50px below the viewport edge.
+    - Replaced with `flex-1 min-h-0 flex flex-col overflow-hidden` so that intermediate wrappers absorb the exact remaining vertical space.
+    - Isolated the scrollable section in `AuthenticatedIntakeForm` with `<div className="flex min-h-0 flex-1 overflow-hidden">`, strictly constraining vertical scrolling to `<main ref={scrollBodyRef}>` while the header and footer remain static.
+  - **Zero Outer Window Scrolling**:
+    - Added `overflow-hidden` to `BookingDetailPage` (`page.tsx`) and `flex-1 min-h-0 w-full` to `PatientBookingDetail`, guaranteeing that the outer page/window never shows double scrollbars.
+- **Anti-AI Slop Quality Compliance**:
+  - Solid 1px borders, opaque card surface backdrop, standard Lucide vector icons (`ArrowLeft`, `ArrowRight`, `Send`), and WCAG AA $\ge 44\text{px}$ touch targets.
+- **Upstream Porting Notes**:
+  - Pure layout, CSS geometry, and spatial hierarchy modernization. Zero business logic, validation rules, or API contracts altered.
+
+### [2026-09-21] Authentication Sign-Up: Consistent Card Container Sizing & Anti-Jank Stability
+
+- **Target Route / Surface**:
+  - `/signUp` (All 4 Steps: Choose Role, Create Account, Complete Profile, Confirm & Submit)
+- **Files Modified**:
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+- **Design Intent & Problem Solved**:
+  - **Locked Consistent Card Container Dimensions**:
+    - Previously, the signup card height was content-driven (`h-auto`), causing severe visual jumping between steps (collapsing to ~350px on Step 4 and expanding to ~620px on Step 3).
+    - Standardized the signup card container to a consistent height (`h-[600px] max-h-[calc(100dvh-5rem)] sm:h-[620px]`) across all 4 steps.
+    - Pinned the step progress and title at the top, and pinned the thumb-friendly action bar (`Back` / `Next`) and sign-in link at the exact same bottom position on every step.
+  - **Anti-Clipping Centered Content**:
+    - Switched the step content wrapper from `justify-center` on the scroll parent to `my-auto` on the child wrapper, preventing tall forms (Step 3) from having their top inputs clipped while keeping shorter steps (Step 1 & Step 4) perfectly vertically centered.
+    - Calibrated Step 3 profile field gaps (`gap-2 sm:gap-2.5`) to comfortably accommodate all 6 inputs without forced overflow.
+- **Anti-AI Slop Quality Compliance**:
+  - Fixed-dimension spatial stability, zero layout shifts, crisp 1px borders, and ergonomic thumb zone constancy.
+- **Upstream Porting Notes**:
+  - Form state, wizard step navigation, and validation handlers are completely preserved.
+
+### [2026-09-21] Patient Profile: Mobile-Friendly Date of Birth Touch Column Picker
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 3: "Complete Profile" for Patient registration)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpBottomPickers.tsx`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Native Browser `<select>` Dropdown Popups**:
+    - Replaced raw HTML `<select>` dropdowns for Month, Day, and Year that opened unstyled, oversized browser menu overlays that covered the mobile viewport.
+    - Built a dedicated, self-contained 3-column scrollable touch wheel picker inside the `CustomBottomModal`.
+    - Integrated smooth auto-scrolling with `scrollIntoView({ block: 'center' })` to automatically center the user's selected date upon opening.
+    - Dynamically calculated `daysInMonth` based on the selected year and month (including leap year validation) and automatically clamped invalid days.
+  - **Live Preview & Clinical Age Badge**:
+    - Added a real-time header preview displaying the formatted date alongside a clinical age calculation badge (e.g. `30 years old`).
+    - Standardized touch target buttons to tactile 36px-40px sizes with active brand teal states (`bg-primary text-primary-foreground font-bold shadow-xs`).
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid borders, semantic tokens, zero gradient stroke glows, and clean Lucide SVG icons.
+- **Upstream Porting Notes**:
+  - Emits `YYYY-MM-DD` string format matching existing API contracts and form schemas.
+
+### [2026-09-21] Authentication Sign-Up: Fixed Role Selection Auto-Advance Behavior
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 1: "Choose Your Role")
+- **Files Modified**:
+  - `src/features/authentication/stores/useSignUpStore.ts`
+  - `src/features/authentication/components/forms/SignUpRoleSelection.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/hooks/useSignUpWizard.ts`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Instant Auto-Advance on Card Click**:
+    - Previously, clicking a role card ("Patient" or "Doctor") immediately executed `setRole`, which forced `step: 2` in the Zustand store, abruptly bypassing the "Next" button.
+    - Updated `setRole` to update only the selected `role` state without modifying `step`.
+    - Clicking a role card now highlights and selects the card with active brand teal styling while keeping the user on Step 1.
+    - Enabled the prominent bottom "Next ->" button upon role selection, allowing the user to explicitly and deliberately advance to Step 2 ("Create Account").
+- **Upstream Porting Notes**:
+  - Store contracts, form validation schemas, and handoff flows are preserved.
+
+### [2026-09-21] Patient Intake: Related Symptoms Mobile Modal & Aligned Symmetrical Toggles
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Intake Step 3: "Current Concern & Safety")
+- **Files Modified**:
+  - `src/features/booking/components/consultation/intake/ConcernSafetyStep.tsx`
+  - `src/features/booking/components/consultation/intake/IntakeChoice.tsx`
+- **Design Intent & Problem Solved**:
+  - **Related Symptoms Mobile Bottom Modal (`CustomBottomModal`)**:
+    - Replaced the wall of 17 jagged, unaligned chips with a sleek high-affordance trigger field (`Activity` icon, selection count badge, and dropdown indicator).
+    - When tapped, slides up `CustomBottomModal` categorizing all 17 symptoms into balanced, symmetrical 2-column grids (`grid grid-cols-2 gap-2`) with tactile 48px touch targets, active brand teal rings, and clear checkmarks.
+    - Selected symptoms render as dismissible tag chips beneath the trigger on the main form, saving ~250px of vertical space.
+  - **Symmetrical 50/50 Home Vitals Radio Toggle (`SegmentedToggle`)**:
+    - Upgraded `SegmentedToggle` from an uneven inline-flex container with empty trailing whitespace to a balanced `grid grid-cols-2 w-full` layout.
+    - "No vitals taken" and "+ Log vitals" now span equal 50% halves across the full mobile card width with centered typography and active state rings.
+- **Anti-AI Slop Quality Compliance**:
+  - Maintained crisp 1px solid borders, BayanHealth Brand Navy and Teal tokens, Lucide SVG vector icons, and zero floating glowing gradients.
+- **Upstream Porting Notes**:
+  - Form state bindings (`requestDetails.complaintTags`) and validation are identical. Zero backend schema changes.
+
+### [2026-09-21] Patient Intake: Full-Width Layout Restoration for Blood Type & Allergies
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Intake Step 1: "About You")
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+- **Design Intent & Problem Solved**:
+  - **Full-Width Row Restoration**:
+    - Disbanded the cramped 2-column pairing of Blood Type and Allergies & Intolerances.
+    - Restored **Blood Type** to a clean, full-width row with comfortable tactile affordance.
+    - Restored **Allergies & Intolerances** to a full-width row, eliminating label wrapping, text truncation (`Search or add alle...`), and helper text squishing.
+    - Kept standard vitals (DOB & Sex, Weight & Height) in balanced 2-column pairings while allowing complex clinical selectors full breathing room.
+    - Configured `intake-scroll-body` with `overflow-y-auto` and hidden scrollbars to prevent any visual scrollbar while safely accommodating varied mobile screen ratios.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid borders, clean typography, full-width readability, zero truncation slop.
+- **Upstream Porting Notes**:
+  - Layout-only change. Form bindings and schemas remain identical.
+
+### [2026-09-21] Authentication: Simplified Layout, Enlarged Typography & Conditional Password Requirements
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 2: "Create Account" credentials step)
+  - `/signIn` (Patient & Doctor Sign In)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpCredentials.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/components/forms/SignInForm.tsx`
+- **Design Intent & Problem Solved**:
+  - **Conditional Password Requirement Display**:
+    - Replaced the hardcoded, static helper text beneath the password field with a reactive conditional check (`!isPasswordPassing`).
+    - When the password is empty or in-progress, clear guidance is provided; as soon as the password satisfies the standard (10+ characters, uppercase, lowercase, numbers), the helper text automatically disappears, eliminating visual clutter.
+    - Added dynamic warning color (`text-amber-600 dark:text-amber-400`) while typing an incomplete password and calm muted styling when idle.
+  - **Simplified Copy & Reduced Cognitive Clutter**:
+    - Shortened form labels from verbose "Email Address" to concise "Email".
+    - Streamlined subtitles and descriptions across both Sign-Up and Sign-In forms to eliminate redundant characters and align with modern design patterns (Clerk, Stripe, Linear).
+  - **Enlarged Typography & Mobile Touch Targets**:
+    - Scaled step titles up to prominent `text-xl sm:text-2xl font-bold tracking-tight`.
+    - Enlarged input field labels from small `text-xs` (12px) to accessible, legible `text-sm font-semibold` (14px).
+    - Standardized all input heights to ergonomic 48px touch targets (`h-12 rounded-xl`), adhering strictly to patient-first accessibility guidelines.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp 1px solid borders, semantic tokens, and clean SVG vector icons without glowing gradients.
+- **Upstream Porting Notes**:
+  - Form field names, Zod schemas, validation bindings, and Cognito auth handlers are 100% preserved.
+
+### [2026-09-21] Patient Intake: Elimination of Double-Scroll & Zero-Scroll Fit Across All Screens
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking/[bookingId]` (Patient Consultation Intake Wizard)
+- **Files Modified**:
+  - `src/features/patient/components/PatientShell.tsx`
+  - `src/app/patient/booking/getBooking/[bookingId]/page.tsx`
+  - `src/features/booking/components/patient/PatientBookingDetail.tsx`
+  - `src/features/booking/components/consultation/BookingWizard.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+  - `src/features/booking/components/consultation/intake/IntakeNavFooter.tsx`
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+  - `src/features/booking/components/consultation/intake/MultiSelectDropdown.tsx`
+- **Design Intent & Problem Solved**:
+  - **Zero Outer Window Scroll**:
+    - Locked `PatientShell` outer wrapper to `h-[100dvh] max-h-[100dvh] w-full overflow-hidden`, completely preventing the browser window and body from scrolling on all device viewports.
+    - Removed redundant `pb-24` from `<main>` in `PatientShell` which previously forced an artificial 96px scroll overflow.
+    - Streamlined `BookingDetailPage` to `flex h-full min-h-0 w-full flex-1 flex-col` and stripped out the hardcoded `pb-10` and redundant nested wrappers.
+    - Calibrated `PatientBookingDetail` when `isIntake === true` to precisely fill the available viewport above the fixed navigation bar (`h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))]` on mobile, `lg:h-[calc(100dvh-1.5rem)]` on desktop) with `overflow-hidden`.
+  - **Zero Inner Form Scroll**:
+    - Changed `AuthenticatedIntakeForm`'s body from `overflow-y-auto` to `overflow-hidden`.
+    - Compacted Step 1 "About You" personal vitals rows to crisp `h-9 sm:h-10` input heights with `text-[10px] sm:text-[11px]` labels, fitting the entire section within ~290px of vertical space.
+    - Tightened `BookingContextBar` back button (`size-9 sm:size-10`) and padding (`py-1 sm:py-2`), and refined `IntakeNavFooter` pinned padding (`px-3.5 py-2`) and button height (`min-h-10 sm:min-h-11`).
+    - Entire intake screen fits within 100% of the screen height on small phones (e.g. iPhone SE 667px), medium phones, tablets, and desktop cockpits with zero scrolling.
+- **Anti-AI Slop Quality Compliance**:
+  - Crisp solid 1px borders, zero floating gradient glows, standard Lucide vector icons, and strict adherence to BayanHealth brand tokens.
+- **Upstream Porting Notes**:
+  - Pure layout, CSS geometry, and styling changes. Zero form logic, validation, or schema alterations.
+
+### [2026-09-21] Authentication Sign-Up Flow: Direct Redirection to Doctor Sign-In on Role Selection
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 1: "Choose Your Role" role selection screen)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpRoleSelection.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+- **Design Intent & Problem Solved**:
+  - **Instant Doctor Sign-In Navigation**:
+    - When clicking the "Doctor" role card on Step 1, the user is immediately redirected to the Sign-In page (`/signIn`) rather than requiring them to select the card and subsequently click "Next" through the patient sign-up wizard.
+    - Added fallback guard in `handleContinue` to route to `/signIn` if a doctor role is active on Step 1.
+    - Preserves Patient account registration onboarding workflow while smoothly channeling clinical professionals to the unified authentication portal.
+- **Anti-AI Slop Quality Compliance**:
+  - Immediate responsive interaction with no layout shift or unnecessary interstitial spinners.
+  - Clinical authority maintained through standard Lucide icons (`Stethoscope`, `HeartPulse`) and solid surface borders.
+- **Upstream Porting Notes**:
+  - Pure client router navigation via `next/navigation`'s `useRouter().push("/signIn")`. No backend, API, or contract alterations.
+
+### [2026-09-21] Authentication Sign-Up Profile: Preferred Contact Grid Layout Symmetrical Alignment
+
+- **Target Route / Surface**:
+  - `/signUp` (Step 3: "Complete Profile" for Patient / Doctor registration)
+- **Files Modified**:
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+- **Design Intent & Problem Solved**:
+  - **Symmetrical 5-Column Grid Alignment**:
+    - Replaced `grid-cols-4` with `grid-cols-5` so that all 5 communication preferences (SMS, Email, Messenger, WhatsApp, Viber) are laid out evenly across a single unified row instead of leaving Viber orphaned alone on an uneven second row.
+    - Adjusted typography with responsive font sizing (`text-[10px] sm:text-[11px] leading-none`) and centered layout so all labels fit cleanly within 48px tactile touch targets.
+- **Anti-AI Slop Quality Compliance**:
+  - Maintained crisp 1px solid border states, primary active ring accents, and clinical vector icons.
+- **Upstream Porting Notes**:
+  - Form validation bindings and `preferredCommunicationApp` array schema are unchanged.
+
+### [2026-09-21] Patient Intake: Medical History Symmetrical Grid & Clickable Choice Cards Redesign
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking?id=...` & `/patient/booking/...` (Patient Consultation Intake Wizard, Step 2: "Medical History")
+- **Files Modified**:
+  - `src/features/booking/components/consultation/intake/IntakeChoice.tsx`
+  - `src/features/booking/components/consultation/intake/MedicalHistoryStep.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+- **Design Intent & Problem Solved**:
+  - **Balanced, Symmetrical 2-Column Conditions Grid (`ConditionTile`)**:
+    - Replaced the ragged, uneven `flex flex-wrap gap-2` tag cloud with a structured, equal-width 2-column mobile grid (`grid grid-cols-2 sm:grid-cols-3 gap-2`).
+    - Standardized all 12 condition tiles to identical height and width with left-aligned clinical typography and explicit checkmark indicators.
+    - Aligned "Other condition (please specify)" as a full-width item spanning both columns at the base of the grid with smooth progressive disclosure for the specify input.
+    - Upgraded "No pre-existing medical conditions" into a prominent, high-affordance hero selection card with clear mutual exclusivity against condition selections.
+  - **High-Affordance Interactive Choice Cards (`ChoiceCard`)**:
+    - Replaced ambiguous, low-contrast `SegmentedToggle` controls for "Current medications" and "Prior surgeries" with tactile, explicit `ChoiceCard` pairs (`grid grid-cols-1 sm:grid-cols-2 gap-2.5`).
+    - Added crisp 1px solid borders, visible radio indicator circles with filled active states, clear primary titles, and descriptive helper labels.
+    - Provided minimum 48px touch targets adhering to mobile ergonomics and WCAG AA guidelines.
+  - **Zero-Scroll Mobile Layout Optimization**:
+    - Tightened vertical spacing and section margins (`space-y-6`) so the medical history questions fit into the mobile viewport.
+    - Fixed the card height calculation (`max-h-[calc(100dvh-13.5rem)]`) to ensure the pinned action footer (`Back` & `Continue`) remains completely above the fixed mobile bottom navigation bar (`NavBar`), eliminating nested scrollbars and cutoffs.
+- **Anti-AI Slop Quality Compliance**:
+  - Pure BayanHealth brand tokens (`--surface-nav-accent`, `--safe-bg`, `--safe-fg`, `--border-default`, `--surface-card`).
+  - Zero gradient stroke AI glows, zero platform emojis; only accessible SVG vector icons (`Check`).
+- **Upstream Porting Notes**:
+  - Form field bindings (`personalDetails.structuredMedicalHistory.knownConditions`, `noneReported`, `other`, `currentMedications`, `details`) and validation rules are 100% preserved.
+
+### [2026-09-21] Patient Intake: Zero-Scroll Single-Screen Modernization & Mobile Bottom Sheet Drawers
+
+- **Target Route / Surface**:
+  - `/patient/booking/getBooking?id=...` & `/patient/booking/...` (Patient Teleconsult & Consultation Intake Wizard, Step 1: "About You")
+  - Multi-Select pickers across all intake steps (Allergies & Intolerances, Dietary Preferences)
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx`
+  - `src/features/booking/components/consultation/intake/MultiSelectDropdown.tsx`
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx`
+  - `src/features/booking/components/consultation/intake/IntakeNavFooter.tsx`
+- **Design Intent & Mobile-First Root Cause Fix**:
+  - **Zero-Scroll Single-Screen Mobile Architecture**:
+    - Eliminated nested scrollbars and viewport collision with the patient shell's fixed bottom navigation bar (`max-h-[calc(100dvh-13.5rem)]`). The entire intake sheet, header, fields, and pinned `Back`/`Continue` footer fit cleanly within the viewport on mobile without requiring vertical scrolling.
+    - Removed outdated blog-style colored underline beneath "About You" and the detached floating trust text.
+    - Embedded a clinical trust micro-pill (`ShieldCheck` · "Encrypted & Autosaved") directly into the header row.
+  - **Mobile Bottom Sheet Drawers (`CustomBottomModal` / `Drawer`) for Pickers**:
+    - **Blood Type Bottom Picker**: Built a dedicated `BloodTypePicker` with an accessible 44px trigger button displaying the `Droplet` icon. Tapping opens a slide-up `CustomBottomModal` displaying 8 large, tactile 48px options (`A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-`) in a clean grid with active checkmark feedback.
+    - **Allergies & Dietary Multi-Select Mobile Drawer**: Replaced the desktop popover with a responsive `CustomBottomModal` on mobile (`useIsMobile`). Features search input, active chip tags, prominent "None" toggle, 48px preset rows with checkmarks, and a thumb-friendly "Done" CTA button.
+  - **High-Density Clinical Vitals & Demographic Layout**:
+    - **Patient Selector ("Who is this for?")**: Replaced the oversized 96px cards with a sleek, compact 2-column segmented selector (`h-12`). "Myself" features an active border (`border-(--action-primary)`), soft teal tint (`bg-(--teal-100)/25`), circular avatar icon, and checkmark. "Dependent" displays a dashed border and gold "Soon" badge (`--gold-100` / `--gold-700`).
+    - **Paired 2-Column Vitals Grid**: Paired Date of Birth (compact `CalendarIcon` picker, replacing casual `Cake`) with Sex at birth (compact segmented control with calm active state); paired Weight and Height side-by-side with semantic red asterisks (`text-(--danger-fg)`); paired Blood Type and Allergies side-by-side.
+    - Eliminated the awkward `Cog` (gear) and `Apple` dividers in favor of clean section headers with crisp 1px solid borders.
+- **Tokens & Components Used**:
+  - `CustomBottomModal`, `Drawer`, `bg-(--surface-card)`, `border-(--border-subtle)`, `--teal-700` (`#18a58c`), `--teal-100`, `--navy-700` (`#074972`), `--gold-100`, `--gold-700`, `--danger-fg`.
+- **Anti-AI Slop Quality Compliance**:
+  - 100% free of one-sided glowing stroke gradients, purple/cyan neon blobs, or meaningless AI badges.
+  - Zero platform emojis used; clean vector Lucide icons (`CalendarIcon`, `User`, `Users`, `Weight`, `Ruler`, `Droplet`, `ShieldCheck`, `Check`, `ChevronDown`).
+  - Strict compliance with Brand Navy, Teal, and Warm Cream palette.
+- **Upstream Porting Notes**:
+  - Zero business logic, schema, or API mutation changes. All React Hook Form bindings (`name`, `prefix`, `setValue`) remain 100% preserved.
+
+- **Target Route / Surface**:
+  - `/signUp` (Pronoun Picker, Date of Birth Picker, Doctor Specialization Picker, Terms and Conditions)
+  - Reusable modal primitive `CustomBottomModal`
+- **Files Modified**:
+  - `src/components/ui/custom-bottom-modal.tsx`
+  - `src/features/authentication/components/forms/SignUpBottomPickers.tsx`
+  - `src/components/blocks/legal/SignUpTermsAndCondition.tsx`
+- **Design Intent & Reference Alignment**:
+  - **Standard Mobile Modal Component Integration**:
+    - Replaced the custom bottom sheet implementation in `CustomBottomModal` with the official BayanHealth `Drawer` (`src/components/ui/drawer.tsx`).
+    - Standardized container geometry to a floating card inset from screen edges (`m-(--drawer-inset,0px)` with `--drawer-inset: --spacing(2)` / 8px margin), rounded on all 4 corners (`rounded-[min(var(--radius-4xl),24px)]`), with subtle shadow and `DrawerOverlay` backdrop blur.
+    - Removed extraneous drag handles, close 'X' buttons, and top border dividers to provide the clean, centered visual hierarchy established in `BookingServiceSelect`.
+  - **Consistent Selection Option Cards**:
+    - Updated `PronounBottomPicker` and `SpecializationBottomPicker` list options to strictly match the reference:
+      - Active item: `bg-(--teal-100) ring-1 ring-(--action-primary)` with label and icon in `text-(--teal-800)`.
+      - Inactive item: `hover:bg-(--action-secondary-hover-surface)` with `text-foreground` and `text-(--text-muted)`.
+      - Removed redundant radio check circle badges in favor of full card selection state.
+  - **Responsive Terms & Conditions Modal**:
+    - Modernized `SignUpTermsAndConditions` to be responsive: on mobile (`useIsMobile`), renders as the floating standard `Drawer` with centered header, scrollable body, and sticky bottom action buttons (`DrawerFooter`); on desktop, retains the standard centered `Dialog`.
+- **Tokens & Primitives Used**:
+  - `Drawer`, `DrawerContent`, `DrawerHeader`, `DrawerTitle`, `DrawerDescription`, `DrawerFooter`, `bg-(--teal-100)`, `ring-(--action-primary)`, `text-(--teal-800)`, `text-(--navy-700)`.
+- **Upstream Porting Notes**:
+  - Zero modifications to validation schemas, API calls, or form submission logic. Pure visual/spatial standardization.
+
 ### [2026-09-21] Authentication: Full-Screen Mobile-First Layout Unification & Seamless Thumb Zone Docking
 
 - **Target Route / Surface**:

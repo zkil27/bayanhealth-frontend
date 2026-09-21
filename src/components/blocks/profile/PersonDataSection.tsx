@@ -1,8 +1,18 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormContext, Controller } from "react-hook-form";
-import { User, Users, Ruler, Weight, Apple, Cog, Cake, Droplet } from "lucide-react";
+import {
+  User,
+  Users,
+  Ruler,
+  Weight,
+  Droplet,
+  Calendar as CalendarIcon,
+  Check,
+  ChevronDown,
+} from "lucide-react";
+import { CustomBottomModal } from "@/components/ui/custom-bottom-modal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,7 +33,6 @@ import {
 } from "@/features/booking/schemas/intakeSchema";
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -33,11 +42,6 @@ import { FormSection } from "../../../features/booking/components/FormSection";
 import { AnimatedFieldError } from "@/components/blocks/AnimatedFieldErrorWrapper";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/tiptap-utils";
-
-const PATIENT_OPTIONS = [
-  { value: "self" as const, icon: User, label: "Myself" },
-  { value: "other" as const, icon: Users, label: "Coming Soon" },
-] as const;
 
 const GENDER_OPTIONS = ["male", "female", "prefer not to say"] as const;
 
@@ -51,6 +55,163 @@ const BLOOD_TYPE_OPTIONS = [
   "O+",
   "O-",
 ] as const;
+
+interface BloodTypePickerProps {
+  value?: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+function BloodTypePicker({ value, onChange, disabled }: BloodTypePickerProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        className={cn(
+          "flex h-12 sm:h-12.5 w-full cursor-pointer items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-sm sm:text-base font-medium transition-colors active:scale-[0.99] shadow-xs",
+          "hover:bg-(--surface-canvas) focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--focus-ring)/30 outline-none",
+          disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Droplet className="size-4.5 shrink-0 text-(--action-primary)" />
+          <span
+            className={cn(
+              "text-sm sm:text-base font-medium truncate",
+              !value && "text-muted-foreground",
+            )}
+          >
+            {value ? `${value} Type` : "Select blood"}
+          </span>
+        </div>
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground ml-1" />
+      </button>
+
+      <CustomBottomModal
+        open={open}
+        onOpenChange={setOpen}
+        title="Select Blood Type"
+        description="Choose your ABO and Rh blood group"
+      >
+        <div className="space-y-3.5 pb-2">
+          <div className="grid grid-cols-4 gap-2.5 sm:gap-3 py-1">
+            {BLOOD_TYPE_OPTIONS.map((type) => {
+              const isSelected = value === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => {
+                    onChange(type);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex h-14 sm:h-15 flex-col items-center justify-center rounded-xl border text-base font-bold transition-all active:scale-[0.96] cursor-pointer",
+                    isSelected
+                      ? "border-(--action-primary) bg-(--teal-100) text-(--teal-800) shadow-xs ring-1 ring-(--action-primary)"
+                      : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                  )}
+                >
+                  <span>{type}</span>
+                  {isSelected && <Check className="size-3.5 text-(--action-primary) mt-0.5" />}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-sm sm:text-base font-medium text-(--text-body) hover:bg-(--surface-canvas)"
+          >
+            Cancel
+          </button>
+        </div>
+      </CustomBottomModal>
+    </>
+  );
+}
+
+interface GenderPickerProps {
+  value?: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+function GenderPicker({ value, onChange, disabled }: GenderPickerProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        className={cn(
+          "flex h-12 sm:h-12.5 w-full cursor-pointer items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-sm sm:text-base font-medium transition-colors active:scale-[0.99] shadow-xs",
+          "hover:bg-(--surface-canvas) focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--focus-ring)/30 outline-none",
+          disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
+        <span
+          className={cn(
+            "text-sm sm:text-base font-medium capitalize truncate",
+            !value && "text-muted-foreground",
+          )}
+        >
+          {value || "Select sex"}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground ml-1" />
+      </button>
+
+      <CustomBottomModal
+        open={open}
+        onOpenChange={setOpen}
+        title="Select Sex at Birth"
+        description="Choose your biological sex assigned at birth"
+      >
+        <div className="space-y-2 pb-2">
+          {GENDER_OPTIONS.map((option) => {
+            const isSelected = value?.toLowerCase() === option.toLowerCase();
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  onChange(option);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex h-14 sm:h-15 w-full items-center justify-between rounded-xl border px-4 text-base font-semibold capitalize transition-all active:scale-[0.98] cursor-pointer",
+                  isSelected
+                    ? "border-(--action-primary) bg-(--teal-100) text-(--teal-800) shadow-xs ring-1 ring-(--action-primary)"
+                    : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                )}
+              >
+                <span>{option}</span>
+                {isSelected && (
+                  <Check className="size-5 text-(--action-primary)" />
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-sm sm:text-base font-medium text-(--text-body) hover:bg-(--surface-canvas) mt-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </CustomBottomModal>
+    </>
+  );
+}
 
 const WEIGHT_HEIGHT_OPTIONS = [
   {
@@ -211,17 +372,17 @@ export function PersonDataSection({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <FieldSet>
+    <div className="flex flex-col gap-4 sm:gap-5">
+      <FieldSet className="space-y-2">
         {mode == "booking" && (
-          <>
-            <FieldLegend className="text-lg font-semibold">
+          <div className="flex items-center justify-between px-0.5 pb-0.5">
+            <FieldLegend className="text-sm sm:text-base font-bold text-(--text-heading) tracking-tight">
               Who is this for?
             </FieldLegend>
-            <FieldDescription className="mb-4 text-xs text-muted-foreground">
-              Select the patient
-            </FieldDescription>
-          </>
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+              Select patient
+            </span>
+          </div>
         )}
 
         <FieldGroup>
@@ -230,36 +391,70 @@ export function PersonDataSection({
             control={control}
             render={({ field }) => (
               <Field>
-                {" "}
                 <RadioGroup
                   onValueChange={field.onChange}
                   value={field.value ?? "self"}
-                  className="grid grid-cols-2 gap-3"
+                  className="grid grid-cols-2 gap-2.5 sm:gap-3"
                 >
-                  {PATIENT_OPTIONS.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <Label
-                        key={option.value}
-                        htmlFor={`for-whom-${option.value}`}
+                  <Label
+                    htmlFor="for-whom-self"
+                    className={cn(
+                      "group relative flex flex-col justify-between rounded-2xl border p-3 sm:p-3.5 transition-all active:scale-[0.99] select-none cursor-pointer min-h-[84px] sm:min-h-[92px]",
+                      (field.value ?? "self") === "self"
+                        ? "border-(--action-primary) bg-(--teal-100)/25 ring-1 ring-(--action-primary)/40 shadow-xs"
+                        : "border-(--border-default) bg-(--surface-card) hover:bg-(--surface-canvas)",
+                    )}
+                  >
+                    <RadioGroupItem
+                      value="self"
+                      id="for-whom-self"
+                      className="sr-only"
+                    />
+                    <div className="flex items-center justify-between w-full">
+                      <div
                         className={cn(
-                          "group relative flex h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-border bg-card p-4 transition-all hover:border-border hover:shadow-sm has-checked:translate-y-1 has-checked:border-primary has-checked:bg-primary has-checked:shadow-lg",
-                          option.value == "other" && "opacity-30 cursor-default",
+                          "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+                          (field.value ?? "self") === "self"
+                            ? "bg-(--teal-100) text-(--teal-800)"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`for-whom-${option.value}`}
-                          className="absolute opacity-0"
-                          disabled={option.value == "other"}
-                        />
-                        <Icon className="size-6 text-muted-foreground transition-colors group-has-checked:text-primary-foreground" />
-                        <span className="text-sm font-medium text-secondary transition-colors group-has-checked:text-primary-foreground">
-                          {option.label}
-                        </span>
-                      </Label>
-                    );
-                  })}
+                        <User className="size-4 sm:size-4.5" />
+                      </div>
+                      {(field.value ?? "self") === "self" ? (
+                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-(--action-primary) text-white">
+                          <Check className="size-3.5" strokeWidth={3} />
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="w-full mt-2 sm:mt-2.5">
+                      <span className="block text-sm sm:text-base font-bold text-(--text-heading) leading-tight">
+                        Myself
+                      </span>
+                      <span className="block text-xs text-muted-foreground leading-tight mt-0.5">
+                        Account owner
+                      </span>
+                    </div>
+                  </Label>
+
+                  <div className="relative flex flex-col justify-between rounded-2xl border border-dashed border-(--border-default) bg-(--ink-050)/50 p-3 sm:p-3.5 opacity-60 select-none cursor-not-allowed min-h-[84px] sm:min-h-[92px]">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                        <Users className="size-4 sm:size-4.5" />
+                      </div>
+                      <span className="shrink-0 rounded-md bg-(--gold-100) px-1.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-(--gold-700)">
+                        Soon
+                      </span>
+                    </div>
+                    <div className="w-full mt-2 sm:mt-2.5">
+                      <span className="block text-sm sm:text-base font-medium text-muted-foreground leading-tight">
+                        Dependent
+                      </span>
+                      <span className="block text-xs text-muted-foreground leading-tight mt-0.5">
+                        Family member
+                      </span>
+                    </div>
+                  </div>
                 </RadioGroup>
               </Field>
             )}
@@ -436,16 +631,27 @@ export function PersonDataSection({
       )}
 
       {forWhom === "self" || (forWhom === "other" && hasValidRelationship) ? (
-        <>
-          <FieldSet>
-            <FieldGroup>
-              <FormSection icon={<Cog className="size-4" />} title="Profile" />
+        <div className="space-y-2 pt-0.5">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-sm sm:text-base font-bold text-(--text-heading) tracking-tight">
+              Personal Details & Vitals
+            </span>
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+              Clinical record
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-(--border-default) bg-(--surface-card) p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 shadow-sm">
+            {/* Row 1: Date of Birth & Sex at birth */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Controller
                 name={`${prefix}dateOfBirth`}
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel>Date of Birth</FieldLabel>
+                    <FieldLabel className="text-xs sm:text-sm font-semibold text-(--text-heading) mb-1.5 flex items-center gap-1">
+                      Date of Birth <span className="text-(--danger-fg)">*</span>
+                    </FieldLabel>
                     <DatePicker
                       date={field.value}
                       onDateChange={(date) =>
@@ -453,7 +659,8 @@ export function PersonDataSection({
                       }
                       minDate={new Date("1900-01-01")}
                       maxDate={new Date()}
-                      icon={Cake}
+                      icon={CalendarIcon}
+                      triggerClassName="h-12 sm:h-12.5 text-sm sm:text-base font-medium"
                     />
                     {fieldState.invalid && (
                       <AnimatedFieldError error={fieldState.error} />
@@ -461,107 +668,89 @@ export function PersonDataSection({
                   </Field>
                 )}
               />
+
               <Controller
                 name={`${prefix}genderAtBirth`}
                 control={control}
                 render={({ field }) => (
                   <Field>
-                    <FieldLabel>Sex at birth</FieldLabel>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="grid grid-cols-3 gap-3"
-                    >
-                      {GENDER_OPTIONS.map((option) => (
-                        <Label
-                          key={option}
-                          htmlFor={`gender-${option.replace(/\s/g, "-")}`}
-                          className="group relative flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-border bg-card py-3 text-center transition-all hover:border-border hover:shadow-sm has-checked:translate-y-1 has-checked:border-primary has-checked:bg-primary has-checked:shadow-lg"
-                        >
-                          <RadioGroupItem
-                            value={option}
-                            id={`gender-${option.replace(/\s/g, "-")}`}
-                            className="absolute opacity-0"
-                          />
-                          <span className="text-xs font-medium text-secondary capitalize transition-colors group-has-checked:text-primary-foreground">
-                            {option}
-                          </span>
-                        </Label>
-                      ))}
-                    </RadioGroup>
+                    <FieldLabel className="text-xs sm:text-sm font-semibold text-(--text-heading) mb-1.5 flex items-center gap-1">
+                      Sex at birth <span className="text-(--danger-fg)">*</span>
+                    </FieldLabel>
+                    <GenderPicker
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      disabled={readOnly}
+                    />
                   </Field>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                {WEIGHT_HEIGHT_OPTIONS.map((field) => {
-                  const Icon = field.icon;
-                  return (
-                    <Controller
-                      key={field.name}
-                      name={`${prefix}${field.name}`}
-                      control={control}
-                      render={({ field: controllerField, fieldState }) => (
-                        <Field>
-                          <FieldLabel>
-                            {field.label}
-                            <span className="text-orange-500">*</span>
-                          </FieldLabel>
-                          <div className="relative">
-                            <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type="number"
-                              step={field.step}
-                              placeholder={field.placeholder}
-                              className={`pl-10 ${fieldState.error ? "border-orange-500 focus:ring-orange-500" : ""}`}
-                              value={controllerField.value || ""}
-                              onChange={controllerField.onChange}
-                              onBlur={controllerField.onBlur}
-                              disabled={readOnly}
-                            />
-                          </div>
-                          {fieldState.invalid && (
-                            <AnimatedFieldError error={fieldState.error} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  );
-                })}
-              </div>
+            </div>
+
+            {/* Row 2: Weight & Height */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {WEIGHT_HEIGHT_OPTIONS.map((fieldItem) => {
+                const Icon = fieldItem.icon;
+                return (
+                  <Controller
+                    key={fieldItem.name}
+                    name={`${prefix}${fieldItem.name}`}
+                    control={control}
+                    render={({ field: controllerField, fieldState }) => (
+                      <Field>
+                        <FieldLabel className="text-xs sm:text-sm font-semibold text-(--text-heading) mb-1.5 flex items-center gap-1">
+                          {fieldItem.label} <span className="text-(--danger-fg)">*</span>
+                        </FieldLabel>
+                        <div className="relative">
+                          <Icon className="absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            step={fieldItem.step}
+                            placeholder={fieldItem.placeholder}
+                            className={cn(
+                              "h-12 sm:h-12.5 rounded-xl pl-10 pr-3.5 text-sm sm:text-base font-medium text-(--text-heading) bg-(--surface-card) shadow-xs placeholder:text-muted-foreground/70",
+                              fieldState.error
+                                ? "border-(--danger-fg) focus:ring-(--danger-fg)"
+                                : "border-(--border-default) focus:border-(--action-primary) focus:ring-1 focus:ring-(--action-primary)",
+                            )}
+                            value={controllerField.value || ""}
+                            onChange={controllerField.onChange}
+                            onBlur={controllerField.onBlur}
+                            disabled={readOnly}
+                          />
+                        </div>
+                        {fieldState.invalid && (
+                          <AnimatedFieldError error={fieldState.error} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Row 3: Blood Type */}
+            <div>
               <Controller
                 name={`${prefix}bloodType`}
                 control={control}
                 render={({ field }) => (
                   <Field>
-                    <FieldLabel>Blood type</FieldLabel>
-                    <Select
+                    <FieldLabel className="text-xs sm:text-sm font-semibold text-(--text-heading) mb-1.5 block">
+                      Blood type
+                    </FieldLabel>
+                    <BloodTypePicker
                       value={field.value || ""}
-                      onValueChange={field.onChange}
+                      onChange={field.onChange}
                       disabled={readOnly}
-                    >
-                      <SelectTrigger className="w-full bg-background">
-                        <span className="flex items-center gap-2">
-                          <Droplet className="size-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select blood type" />
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BLOOD_TYPE_OPTIONS.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </Field>
                 )}
               />
-            </FieldGroup>
-          </FieldSet>
+            </div>
 
-          <FieldSet>
-            <FieldGroup>
-              <FormSection icon={<Apple className="size-4" />} title="Health" />{" "}
+            {/* Row 4: Allergies & Intolerances */}
+            <div>
               <Controller
                 name={`${prefix}allergens`}
                 control={control}
@@ -572,6 +761,10 @@ export function PersonDataSection({
                   />
                 )}
               />
+            </div>
+
+            {/* Row 5: Dietary Preferences */}
+            <div>
               <Controller
                 name={`${prefix}diet`}
                 control={control}
@@ -582,9 +775,9 @@ export function PersonDataSection({
                   />
                 )}
               />
-            </FieldGroup>
-          </FieldSet>
-        </>
+            </div>
+          </div>
+        </div>
       ) : (
         <span className="text-center font-mono font-semibold text-primary">
           {" "}

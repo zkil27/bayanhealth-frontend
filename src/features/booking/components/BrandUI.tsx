@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { EMERGENCY_DISCLAIMER } from "../constants/bookingConstants";
@@ -63,7 +63,6 @@ export function TogglePill({
       )}
       {...props}
     >
-      {selected && <Check className="size-3.5" aria-hidden />}
       {icon}
       {children}
     </button>

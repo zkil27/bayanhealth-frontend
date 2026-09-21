@@ -224,8 +224,18 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         ? { kind: "resolved", doctor: doctorQuery.data }
         : { kind: "undisclosed" };
   const wizardBooking = toWizardBooking(booking, intakeGate, doctorResolution);
+  const isIntake = wizardBooking?.step === "intake";
+
   return (
-    <div className="flex flex-col gap-4" data-slot="patient-booking-detail">
+    <div
+      className={cn(
+        "flex flex-1 min-h-0 w-full flex-col select-none",
+        isIntake
+          ? "h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100dvh-1.5rem)] lg:max-h-[calc(100dvh-1.5rem)] overflow-hidden gap-1.5 sm:gap-2"
+          : "gap-4 pb-20 lg:pb-4",
+      )}
+      data-slot="patient-booking-detail"
+    >
       <BookingContextBar
         bookingId={booking.bookingId}
         context={
@@ -477,19 +487,19 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
   return (
     <header
       data-slot="booking-context-bar"
-      className="flex w-full items-center justify-between gap-3 border-b border-(--border-subtle) pt-1 pb-3"
+      className="flex w-full shrink-0 items-center justify-between gap-2.5 border-b border-(--border-subtle) py-1 sm:py-2"
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
         <Link
           href="/patient/health"
           aria-label={intake ? "Exit intake" : "Back to Health"}
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-muted) shadow-sm transition-colors hover:bg-(--surface-canvas) hover:text-(--text-heading) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-muted) shadow-sm transition-colors hover:bg-(--surface-canvas) hover:text-(--text-heading) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
           <ArrowLeft aria-hidden className="size-4" />
         </Link>
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="truncate text-sm font-bold text-(--text-heading)">{title}</h1>
+            <h1 className="truncate text-sm sm:text-base font-bold text-(--text-heading)">{title}</h1>
             {intake ? (
               <span className="shrink-0 rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
                 Draft

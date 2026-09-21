@@ -115,7 +115,7 @@ export function useSignUpWizard() {
 
   const validateStep = async (currentStep: number): Promise<boolean> => {
     if (currentStep === 1) {
-      const selectedRole = methods.getValues("role");
+      const selectedRole = methods.getValues("role") || role;
       if (!isSignUpRole(selectedRole)) {
         methods.setError("role", {
           type: "manual",
@@ -123,7 +123,8 @@ export function useSignUpWizard() {
         });
         return false;
       }
-      return methods.trigger("role");
+      methods.setValue("role", selectedRole);
+      return true;
     }
 
     if ((currentStep === 3 || currentStep === 4) && !isSignUpRole(role)) {
