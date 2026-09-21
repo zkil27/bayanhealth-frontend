@@ -9,6 +9,64 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 *(New entries should be appended at the top)*
 
+### [2026-09-21] Authentication: Full-Screen Mobile-First Layout Unification & Seamless Thumb Zone Docking
+
+- **Target Route / Surface**:
+  - `/signUp` and `/signIn` (All steps: Role Selection, Credentials, Profile, Confirm & Submit)
+- **Files Modified**:
+  - `src/app/(auth)/layout.tsx`
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+- **Design Intent & Root Cause Fix**:
+  - **Eliminated Floating Card & Detached Bottom Bar Clash**:
+    - Previously on mobile, a floating desktop card hovered over a cream (`bg-satin`) background while navigation buttons were pinned to `fixed bottom-0`. This created an unsightly beige gap between the card and the bottom bar, and misplaced the "Already have an account? Sign in" link *above* the buttons with a massive artificial white void (`pb-20` / `pb-16`).
+    - **Unified Mobile Canvas**: On mobile (`< sm`), the layout now spans the full viewport (`bg-(--surface-card) border-0 rounded-none h-dvh max-h-dvh flex flex-col justify-between overflow-hidden`), creating a seamless, native app feel. On desktop (`>= sm`), it remains an elegant centered cockpit card on warm `bg-satin`.
+  - **Integrated Mobile App Header**:
+    - Replaced the standalone detached desktop header with an integrated mobile bar (`sm:hidden flex items-center justify-between w-full px-4 pt-3 pb-1.5`) housing the BayanHealth logo and an accessible `ModeToggle` theme switch. Desktop maintains its centered logo above the card and top-corner header.
+  - **Seamlessly Docked Thumb Zone Navigation**:
+    - Integrated Back, Next / Complete buttons, and "Already have an account? Sign in" directly into the bottom of the flex container (`shrink-0 pt-2.5 sm:pt-3 border-t border-(--border-subtle) mt-auto`).
+    - Zero disconnected gaps, zero beige strips, and zero artificial padding voids.
+    - Content area uses `flex-1 min-h-0 overflow-y-auto` so content never overflows on small screens while staying 100% single-page on standard mobile displays.
+- **Tokens & Components Used**:
+  - `bg-(--surface-card)`, `bg-satin`, `border-(--border-subtle)`, `AppLogo`, `ModeToggle`, `brandButtonClass`.
+- **Upstream Porting Notes**:
+  - Zero API or logic changes; purely layout, spatial hierarchy, and mobile viewport ergonomics.
+
+### [2026-09-21] Authentication: Mobile Bottom Sheet Modals for Dropdowns & Fixed Thumb Zone Navigation Bar
+
+- **Target Route / Surface**:
+  - `/signUp` (Role Selection, Account Credentials, Complete Profile, Confirm & Submit)
+- **Files Modified / Added**:
+  - `src/components/ui/custom-bottom-modal.tsx` [NEW]
+  - `src/features/authentication/components/forms/SignUpBottomPickers.tsx` [NEW]
+  - `src/app/(auth)/layout.tsx`
+  - `src/features/authentication/components/AuthBox.tsx`
+  - `src/features/authentication/components/SignUp.tsx`
+  - `src/features/authentication/components/SignUpProgress.tsx`
+  - `src/features/authentication/components/SignUpFlow.tsx`
+  - `src/features/authentication/components/forms/SignUpRoleSelection.tsx`
+  - `src/features/authentication/components/forms/SignUpCredentials.tsx`
+  - `src/features/authentication/components/forms/SignUpProfile.tsx`
+  - `src/features/authentication/components/forms/SignUpConfirm.tsx`
+- **Design Intent & Mobile-First Root Cause Fix**:
+  - **Custom Modals That Appear from the Bottom (Bottom Sheet Pickers)**:
+    - Built a reusable, accessible `CustomBottomModal` (`fixed inset-x-0 bottom-0 z-50 rounded-t-[28px]`) with smooth bottom slide-up animation (`slide-in-from-bottom duration-250`), dimmed scrim backdrop (`bg-black/50 backdrop-blur-xs`), and drag handle pill indicator.
+    - **Pronoun Picker**: Replaced the narrow desktop select with `PronounBottomPicker`. Tapping the `h-12` trigger smoothly slides up a custom bottom modal with generous 56px rows (`He / Him`, `She / Her`, `They / Them`, `Prefer not to say`) featuring clinical contextual descriptions and radio checkmarks.
+    - **Date of Birth Picker**: Replaced the monthly calendar popover with `DateOfBirthBottomPicker`. Tapping the `h-12` trigger slides up a custom bottom modal with 3 large thumb-friendly column pickers (Month, Day, Year), instant date preview badge, and a primary "Confirm Date" CTA.
+    - **Doctor Specialization Picker**: Replaced the narrow select with `SpecializationBottomPicker`. Slides up a custom bottom modal with a thumb-accessible search input (`h-11`) and a smooth scrollable list of 37 specializations with 48px row heights.
+  - **Thumb Zone Navigation Bar (Next & Back)**:
+    - Pinned the navigation bar to the bottom of the viewport on mobile (`fixed bottom-0 inset-x-0 z-40 bg-(--surface-card)/95 backdrop-blur-md border-t border-(--border-subtle) px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]`).
+    - Anchors both Back and Next/Complete buttons directly within natural thumb reach, requiring zero reaching into the upper or middle screen areas.
+    - Both buttons upgraded to `h-12` (48px) with `active:scale-[0.98]` tactile compression.
+    - Added `pb-20 sm:pb-0` bottom clearance to form content and footer to prevent any element from colliding with the thumb bar.
+  - **Single-Page Non-Scrollable Fit**:
+    - Constrained `AuthLayout` to `h-dvh max-h-dvh overflow-hidden` and vertically centered the card (`min-h-0 items-center justify-center`).
+    - All inputs set to `h-12` with `text-[16px]` to prevent automatic iOS Safari viewport zooming.
+- **Tokens & Components Used**:
+  - `--teal-700` (`#18a58c`), `border-(--border-subtle)`, `bg-(--surface-card)`, `shadow-(--shadow-card)`, `Button`, `Input`, `CustomBottomModal`.
+- **Upstream Porting Notes**:
+  - Zero business logic, Cognito handler, Zod schema, or React Hook Form registration changes. All bindings remain 100% stable.
+
 ### [2026-09-21] Patient UI: Search Dropdown Layout Modernization, Width Anchoring & Scrim Overlay
 
 - **Target Route / Surface**:

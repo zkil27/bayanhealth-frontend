@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-satin relative flex min-h-dvh flex-col overflow-y-auto">
+    <div className="relative flex h-dvh max-h-dvh w-full flex-col overflow-hidden bg-(--surface-card) sm:bg-satin">
       {/*
         Decorative brand shapes, peeking off the edges — purely presentational.
         Hidden below `sm`: there is no room to keep them clear of the card's
@@ -25,8 +25,12 @@ export default function AuthLayout({
         className="pointer-events-none absolute -right-12 -bottom-16 hidden size-48 rounded-full bg-(--action-primary) sm:block"
       />
 
-      <AppHeader className="border-transparent bg-transparent backdrop-blur-none" />
-      <div className="relative flex w-full flex-1 flex-col justify-end sm:justify-center items-center px-0 sm:px-4 pb-0 sm:py-10">
+      {/* Desktop header with theme toggle */}
+      <div className="hidden sm:block shrink-0">
+        <AppHeader className="border-transparent bg-transparent backdrop-blur-none py-2 px-6" />
+      </div>
+
+      <div className="relative flex w-full flex-1 flex-col items-center sm:justify-center min-h-0 sm:px-4 sm:py-3 overflow-hidden">
         {children}
       </div>
     </div>

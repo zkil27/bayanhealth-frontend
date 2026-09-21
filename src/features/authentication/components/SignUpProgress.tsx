@@ -8,24 +8,26 @@ export function SignupProgress({
   role: SignUpRole | null;
 }) {
   return (
-    <div className="flex w-full flex-col text-sm font-medium">
-      <p className="text-xs capitalize text-muted-foreground">{role}</p>
-      <div className="flex flex-col gap-2">
-        <span className="text-foreground">Step {step} of 4</span>
-        <div className="flex w-full gap-1.5">
-          {[1, 2, 3, 4].map((currentStep) => (
-            <div
-              key={currentStep}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                currentStep === step
-                  ? "w-1/2 bg-primary"
-                  : currentStep < step
-                    ? "w-1/5 bg-primary/50"
-                    : "w-1/5 bg-muted"
-              }`}
-            />
-          ))}
-        </div>
+    <div className="flex w-full flex-col gap-1.5 text-xs">
+      <div className="flex items-center justify-between font-medium">
+        <span className="capitalize text-muted-foreground">
+          {role ? `${role} Account` : "New Account"}
+        </span>
+        <span className="font-semibold text-foreground">Step {step} of 4</span>
+      </div>
+      <div className="flex w-full gap-1.5">
+        {[1, 2, 3, 4].map((currentStep) => (
+          <div
+            key={currentStep}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+              currentStep === step
+                ? "bg-primary"
+                : currentStep < step
+                  ? "bg-primary/50"
+                  : "bg-muted"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
