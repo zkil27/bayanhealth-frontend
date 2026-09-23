@@ -1,13 +1,26 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { CircleAlert, Lock, PenLine, Save, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import {
+  AlertCircle,
+  BadgeCheck,
+  CheckCircle2,
+  CircleAlert,
+  FileText,
+  Lock,
+  PenLine,
+  Save,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
@@ -32,24 +45,180 @@ import {
 
 const BIO_MAX = 1000;
 
+function getDoctorInitials(name?: string): string {
+  if (!name) return "MD";
+  const clean = name.replace(/^Dr\.\s*/i, "").trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "MD";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 /**
- * The doctor's own Profile — formerly "Verification".
+ * Doctor Identity & Status Cockpit (Left Column).
  *
- * Verification was one page that did one thing: upload a licence and wait. It
- * was the only doctor-owned account surface in the product, so a doctor had
- * nowhere to correct their phone number, write a word about their practice, or
- * set up the signature the consultation workspace asks for on every document
- * they sign. Credentials are now one section of a profile rather than the whole
- * of it.
- *
- * What is editable depends on verification status, and says so on the field
- * rather than in a paragraph: full name and licence number are the evidence a
- * moderator reviewed, so from `pending` onward they are shown locked. The server
- * enforces the same rule — this is the explanation, not the enforcement.
+ * Provides persistent situational awareness of the clinician's verification
+ * health, PRC license, consultation signature status, and quick navigation.
+ */
+function DoctorIdentitySummaryCard({
+  profile,
+  activeTab,
+  onSelectTab,
+}: {
+  profile: DoctorProfile;
+  activeTab: string;
+  onSelectTab: (tab: string) => void;
+}) {
+  const pill = statusPill(profile.verificationStatus);
+  const isApproved = profile.verificationStatus === "approved";
+  const initials = getDoctorInitials(profile.fullName);
+
+  return (
+    <div className={cn(cardClass, "gap-4")}>
+      {/* Clinician Profile Avatar & Name */}
+      <div className="flex items-start gap-3.5">
+        <div className="flex size-13 shrink-0 items-center justify-center rounded-2xl bg-(--surface-nav) font-display text-base font-bold text-white shadow-xs">
+          {initials}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center gap-1.5">
+            <h2 className="truncate font-display text-base font-bold text-(--text-heading)">
+              {profile.fullName || "Doctor"}
+            </h2>
+            {isApproved ? (
+              <BadgeCheck className="size-4 shrink-0 text-(--status-available-fg)" />
+            ) : null}
+          </div>
+          <span className="truncate text-xs font-medium text-(--text-muted)">
+            {profile.specialty || "General Practice"}
+          </span>
+          <div className="mt-1.5">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold",
+                pill.className,
+              )}
+            >
+              {pill.icon}
+              {pill.label}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Clinical Credentials Snapshot */}
+      <div className="flex flex-col gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft) p-3 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="text-(--text-muted)">PRC License</span>
+          <span className="font-mono font-semibold text-(--text-heading)">
+            {profile.licenseNumber || "—"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between border-t border-(--border-subtle) pt-2">
+          <span className="text-(--text-muted)">Consult Signature</span>
+          {profile.signature ? (
+            <span className="inline-flex items-center gap-1 font-medium text-(--status-available-fg)">
+              <CheckCircle2 className="size-3.5" /> On File
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSelectTab("signature")}
+              className="inline-flex items-center gap-1 font-semibold text-(--status-soon-fg) hover:underline"
+            >
+              <AlertCircle className="size-3.5" /> Setup needed
+            </button>
+          )}
+        </div>
+        <div className="flex items-center justify-between border-t border-(--border-subtle) pt-2">
+          <span className="text-(--text-muted)">On-Demand Consults</span>
+          <span
+            className={cn(
+              "font-medium",
+              profile.onDemandAvailable
+                ? "text-(--status-available-fg)"
+                : "text-(--text-muted)",
+            )}
+          >
+            {profile.onDemandAvailable ? "Available" : "Offline"}
+          </span>
+        </div>
+      </div>
+
+      {/* Fast Navigation Shortcut List */}
+      <nav aria-label="Profile navigation" className="flex flex-col gap-1 border-t border-(--border-subtle) pt-3">
+        <span className="mb-1 text-[11px] font-bold uppercase tracking-wider text-(--text-subtle)">
+          Workspace Sections
+        </span>
+        <button
+          type="button"
+          onClick={() => onSelectTab("details")}
+          className={cn(
+            "flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition-colors text-left",
+            activeTab === "details"
+              ? "bg-(--surface-nav) text-white font-semibold"
+              : "text-(--text-body) hover:bg-(--surface-warm-soft)",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <UserRound className="size-3.5" /> Practice Details
+          </span>
+          <span className="text-[11px] opacity-75">Edit</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectTab("signature")}
+          className={cn(
+            "flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition-colors text-left",
+            activeTab === "signature"
+              ? "bg-(--surface-nav) text-white font-semibold"
+              : "text-(--text-body) hover:bg-(--surface-warm-soft)",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <PenLine className="size-3.5" /> Clinical Signature
+          </span>
+          <span className="text-[11px] opacity-75">
+            {profile.signature ? "Active" : "Pending"}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectTab("credentials")}
+          className={cn(
+            "flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition-colors text-left",
+            activeTab === "credentials"
+              ? "bg-(--surface-nav) text-white font-semibold"
+              : "text-(--text-body) hover:bg-(--surface-warm-soft)",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <FileText className="size-3.5" /> Credentials &amp; KYC
+          </span>
+          <span className="text-[11px] opacity-75">{pill.label}</span>
+        </button>
+      </nav>
+
+      {/* Clinical Guidance Footnote */}
+      <div className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/60 p-3 text-[11px] leading-relaxed text-(--text-subtle)">
+        <p className="flex items-start gap-1.5">
+          <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-(--action-primary)" />
+          <span>
+            Verified credentials are kept on file in compliance with PRC &amp; DOH Philippine Telehealth practice guidelines.
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The doctor's own Profile & Clinical Cockpit.
  */
 export function DoctorProfileView() {
   const idToken = useAuthStore((s) => s.session?.idToken ?? null);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>("details");
   const reload = useCallback(() => setRefreshNonce((n) => n + 1), []);
 
   const fetcher = useCallback(
@@ -62,30 +231,85 @@ export function DoctorProfileView() {
   return (
     <AsyncView<DoctorKycBundle> fetcher={fetcher} deps={[idToken, refreshNonce]}>
       {(bundle) => (
-        <div data-slot="doctor-profile" className="flex w-full flex-col gap-5">
-          <header className="flex max-w-2xl flex-col gap-1">
-            <h1 className="font-display text-2xl font-bold text-(--text-heading)">Profile</h1>
+        <div data-slot="doctor-profile" className="flex w-full flex-col gap-6">
+          <header className="flex flex-col gap-1">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-(--text-heading) md:text-3xl">
+              Profile &amp; Credentials
+            </h1>
             <p className="text-[15px] text-(--text-muted)">
-              Your details, your biography, the signature you sign consultations with, and
-              your credentialing documents.
+              Manage your clinical practitioner details, digital prescription signature, and credentialing documents.
             </p>
           </header>
 
-          <ProfileDetailsSection
-            idToken={idToken ?? ""}
-            profile={bundle.profile}
-            onSaved={reload}
-          />
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+            {/* Left Master Column: Physician Cockpit Sidebar */}
+            <aside className="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-6">
+              <DoctorIdentitySummaryCard
+                profile={bundle.profile}
+                activeTab={activeTab}
+                onSelectTab={setActiveTab}
+              />
+            </aside>
 
-          <SignatureSection idToken={idToken ?? ""} profile={bundle.profile} onSaved={reload} />
+            {/* Right Detail Column: Focused Workspaces */}
+            <main className="lg:col-span-8 xl:col-span-8">
+              <Tabs
+                value={activeTab}
+                onValueChange={(val) => setActiveTab(val as string)}
+                className="flex w-full flex-col gap-4"
+              >
+                <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-2xl border border-(--border-subtle) bg-(--surface-warm-soft) p-1.5">
+                  <TabsTrigger
+                    value="details"
+                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
+                  >
+                    <UserRound className="size-4 shrink-0" />
+                    <span>Practice Info</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="signature"
+                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
+                  >
+                    <PenLine className="size-4 shrink-0" />
+                    <span>Signature</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="credentials"
+                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
+                  >
+                    <FileText className="size-4 shrink-0" />
+                    <span>Credentials</span>
+                  </TabsTrigger>
+                </TabsList>
 
-          <section className={cardClass}>
-            <DoctorCredentialsSection
-              idToken={idToken ?? ""}
-              bundle={bundle}
-              onChanged={reload}
-            />
-          </section>
+                <TabsContent value="details">
+                  <ProfileDetailsSection
+                    idToken={idToken ?? ""}
+                    profile={bundle.profile}
+                    onSaved={reload}
+                  />
+                </TabsContent>
+
+                <TabsContent value="signature">
+                  <SignatureSection
+                    idToken={idToken ?? ""}
+                    profile={bundle.profile}
+                    onSaved={reload}
+                  />
+                </TabsContent>
+
+                <TabsContent value="credentials">
+                  <section className={cardClass}>
+                    <DoctorCredentialsSection
+                      idToken={idToken ?? ""}
+                      bundle={bundle}
+                      onChanged={reload}
+                    />
+                  </section>
+                </TabsContent>
+              </Tabs>
+            </main>
+          </div>
         </div>
       )}
     </AsyncView>
@@ -126,7 +350,6 @@ function ProfileDetailsSection({
 }) {
   const identityLocked =
     profile.verificationStatus === "pending" || profile.verificationStatus === "approved";
-  const pill = statusPill(profile.verificationStatus);
 
   const [fullName, setFullName] = useState(profile.fullName);
   const [licenseNumber, setLicenseNumber] = useState(profile.licenseNumber);
@@ -178,20 +401,14 @@ function ProfileDetailsSection({
 
   return (
     <section data-slot="profile-details" className={cardClass}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col gap-1 border-b border-(--border-subtle) pb-3">
         <div className="flex items-center gap-2">
           <UserRound className="size-5 text-(--text-heading)" />
-          <h2 className="text-lg font-bold text-(--text-heading)">Your details</h2>
+          <h2 className="text-base font-bold text-(--text-heading)">Practice &amp; Personal Details</h2>
         </div>
-        <span
-          className={cn(
-            "flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold",
-            pill.className,
-          )}
-        >
-          {pill.icon}
-          {pill.label}
-        </span>
+        <p className="text-xs text-(--text-muted)">
+          Public information shown on your clinical profile and booking details.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -336,23 +553,27 @@ function SignatureSection({
 
   return (
     <section data-slot="profile-signature" className={cardClass}>
-      <div className="flex items-center gap-2">
-        <PenLine className="size-5 text-(--text-heading)" />
-        <h2 className="text-lg font-bold text-(--text-heading)">Signature</h2>
+      <div className="flex flex-col gap-1 border-b border-(--border-subtle) pb-3">
+        <div className="flex items-center gap-2">
+          <PenLine className="size-5 text-(--text-heading)" />
+          <h2 className="text-base font-bold text-(--text-heading)">Clinical Digital Signature</h2>
+        </div>
+        <p className="text-xs text-(--text-muted)">
+          Draw your signature specimen once. Signing a prescription, medical certificate, or treatment plan
+          then becomes a single confirmation instead of redrawing every time.
+        </p>
       </div>
-      <p className="text-[15px] text-(--text-muted)">
-        Draw your signature once. Signing a prescription, certificate or plan then becomes a
-        single confirmation instead of drawing it again on every document.
-      </p>
 
       {profile.signature ? (
         <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-(--border-subtle) bg-(--surface-warm-soft) px-4 py-3">
-          <SignaturePreview strokes={profile.signature.strokes} className="h-14" />
+          <div className="flex items-center justify-center rounded-lg border border-(--border-subtle) bg-white p-2">
+            <SignaturePreview strokes={profile.signature.strokes} className="h-12 max-w-[220px]" />
+          </div>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-[15px] font-bold text-(--text-heading)">
               {profile.signature.signerName}
             </span>
-            <span className="text-sm text-(--text-muted)">
+            <span className="text-xs text-(--text-muted)">
               Saved {new Date(profile.signature.updatedAt).toLocaleDateString()}
             </span>
           </div>

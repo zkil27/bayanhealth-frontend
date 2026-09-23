@@ -150,6 +150,7 @@ export function DeliverablesDeck({
   busy,
   generating,
   specimen,
+  defaultSignerName,
   canRegenerate,
   onAmend,
   onFinalize,
@@ -162,6 +163,7 @@ export function DeliverablesDeck({
   busy: boolean;
   generating: ReadonlySet<CdsProtectedOutputType>;
   specimen?: DoctorSignatureSpecimen | undefined;
+  defaultSignerName?: string;
   canRegenerate: boolean;
   onAmend: (artifact: CdsProtectedArtifact, payload: CdsProtectedArtifactPayload) => Promise<void>;
   onFinalize: (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => Promise<void>;
@@ -366,6 +368,7 @@ export function DeliverablesDeck({
               busy={busy}
               regenerating={generating.has(current.outputType)}
               specimen={specimen}
+              defaultSignerName={defaultSignerName}
               canRegenerate={canRegenerate}
               onAmend={(payload) => onAmend(current.artifact!, payload)}
               onFinalize={(signature) => onFinalize(current.artifact!, signature)}

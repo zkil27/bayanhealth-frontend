@@ -126,8 +126,9 @@ function PlanEditor({
   return (
     <div className="flex flex-col gap-4">
       <TextAreaField
-        label="Summary"
+        label="Clinical summary"
         value={payload.summary}
+        placeholder="Outline overall clinical management, diagnostic impressions, and treatment rationale..."
         maxLength={4000}
         rows={3}
         disabled={disabled}
@@ -136,6 +137,7 @@ function PlanEditor({
       <StringListField
         label="Goals"
         items={payload.goals}
+        placeholder="e.g. Symptom relief of productive cough"
         max={20}
         maxLength={500}
         disabled={disabled}
@@ -143,8 +145,9 @@ function PlanEditor({
         onChange={(goals) => patch({ goals })}
       />
       <StringListField
-        label="Interventions"
+        label="Interventions & orders"
         items={payload.interventions}
+        placeholder="e.g. Increased fluid intake (2-3L/day)"
         max={30}
         maxLength={1000}
         disabled={disabled}
@@ -152,8 +155,9 @@ function PlanEditor({
         onChange={(interventions) => patch({ interventions })}
       />
       <TextAreaField
-        label="Follow-up"
+        label="Follow-up & precautions"
         value={payload.followUp}
+        placeholder="e.g. Follow-up in 3-5 days if fever persists or cough worsens."
         maxLength={2000}
         rows={2}
         disabled={disabled}
@@ -619,9 +623,9 @@ function PatientEducationEditor({
 
 function FieldLabel({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
   return (
-    <span className="text-xs font-bold tracking-wide text-(--text-subtle) uppercase">
+    <span className="text-xs font-semibold text-(--text-heading) flex items-center gap-1.5">
       {children}
-      {optional ? <span className="ml-1.5 font-normal normal-case">(optional)</span> : null}
+      {optional ? <span className="text-[11px] font-normal text-(--text-muted)">(optional)</span> : null}
     </span>
   );
 }
@@ -635,6 +639,7 @@ function TextField({
   type,
   mono,
   hint,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -644,16 +649,21 @@ function TextField({
   type?: string;
   mono?: boolean;
   hint?: string;
+  placeholder?: string;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <FieldLabel>{label}</FieldLabel>
       <Input
         type={type}
         value={value}
         maxLength={maxLength}
         disabled={disabled}
-        className={cn("rounded-[10px]", mono && "font-mono")}
+        placeholder={placeholder}
+        className={cn(
+          "h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3.5 text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20",
+          mono && "font-mono",
+        )}
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <span className="text-xs text-(--text-subtle)">{hint}</span> : null}
@@ -666,10 +676,11 @@ function TextAreaField({
   value,
   onChange,
   maxLength,
-  rows,
+  rows = 3,
   disabled,
   optional,
   hint,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -679,16 +690,18 @@ function TextAreaField({
   disabled?: boolean;
   optional?: boolean;
   hint?: string;
+  placeholder?: string;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <FieldLabel optional={optional}>{label}</FieldLabel>
       <Textarea
         value={value}
         rows={rows}
         maxLength={maxLength}
         disabled={disabled}
-        className="rounded-[10px]"
+        placeholder={placeholder}
+        className="min-h-20 w-full rounded-[12px] border border-(--border-default) bg-white dark:bg-(--surface-card) p-3.5 text-sm leading-relaxed text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20 resize-y"
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <span className="text-xs text-(--text-subtle)">{hint}</span> : null}
@@ -706,18 +719,13 @@ function PriorityField({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <FieldLabel>Priority</FieldLabel>
-      {/*
-        A native select rather than a custom listbox: two closed options with no
-        search, no async load, and a value the schema constrains to exactly
-        these strings.
-      */}
       <select
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value === "urgent" ? "urgent" : "routine")}
-        className="h-9 rounded-[10px] border border-(--border-subtle) bg-(--surface-card) px-3 text-sm text-(--text-body) disabled:opacity-50"
+        className="h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3 text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
       >
         <option value="routine">Routine</option>
         <option value="urgent">Urgent</option>
@@ -739,6 +747,7 @@ function StringListField({
   maxLength,
   disabled,
   addLabel,
+  placeholder,
 }: {
   label: string;
   items: string[];
@@ -747,29 +756,43 @@ function StringListField({
   maxLength: number;
   disabled?: boolean;
   addLabel: string;
+  placeholder?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <FieldLabel>{label}</FieldLabel>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <FieldLabel>{label}</FieldLabel>
+        <span className="text-[11px] text-(--text-muted)">
+          {items.length} of {max} max
+        </span>
+      </div>
       <ul className="flex flex-col gap-2">
         {items.map((item, index) => (
-          <li key={index} className="flex items-start gap-2">
-            <Textarea
-              value={item}
-              rows={1}
-              maxLength={maxLength}
-              disabled={disabled}
-              aria-label={`${label} ${index + 1}`}
-              className="min-h-9 flex-1 rounded-[10px]"
-              onChange={(event) =>
-                onChange(items.map((existing, i) => (i === index ? event.target.value : existing)))
-              }
-            />
+          <li key={index} className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--surface-brand-soft) text-[11px] font-bold text-(--navy-800) dark:text-(--navy-200)"
+            >
+              {index + 1}
+            </span>
+            <div className="relative min-w-0 flex-1">
+              <Input
+                value={item}
+                maxLength={maxLength}
+                disabled={disabled}
+                placeholder={placeholder ?? `Enter ${label.toLowerCase()}...`}
+                aria-label={`${label} ${index + 1}`}
+                className="h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3.5 text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20"
+                onChange={(event) =>
+                  onChange(items.map((existing, i) => (i === index ? event.target.value : existing)))
+                }
+              />
+            </div>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="mt-0.5 shrink-0 rounded-full text-(--text-subtle) hover:text-(--danger-fg)"
+              className="size-9 shrink-0 rounded-lg text-(--text-muted) transition-colors hover:bg-(--danger-bg) hover:text-(--danger-fg)"
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
               disabled={disabled || items.length <= 1}
               onClick={() => onChange(items.filter((_, i) => i !== index))}
@@ -783,11 +806,11 @@ function StringListField({
         type="button"
         variant="outline"
         size="sm"
-        className="self-start rounded-full"
+        className="self-start rounded-full border-dashed border-(--teal-700)/40 bg-white/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
         disabled={disabled || items.length >= max}
         onClick={() => onChange([...items, ""])}
       >
-        <Plus className="size-4" /> {addLabel}
+        <Plus className="mr-1 size-3.5" /> {addLabel}
       </Button>
     </div>
   );
@@ -814,20 +837,25 @@ function RepeatingGroup({
 }) {
   void min;
   return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="text-xs font-bold tracking-wide text-(--text-subtle) uppercase">
-        {legend}
-      </legend>
+    <fieldset className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <legend className="text-xs font-semibold text-(--text-heading)">
+          {legend}
+        </legend>
+        <span className="text-[11px] text-(--text-muted)">
+          {count} of {max} max
+        </span>
+      </div>
       {children}
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="self-start rounded-full"
+        className="self-start rounded-full border-dashed border-(--teal-700)/40 bg-white/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
         disabled={disabled || count >= max}
         onClick={onAdd}
       >
-        <Plus className="size-4" /> {addLabel}
+        <Plus className="mr-1 size-3.5" /> {addLabel}
       </Button>
     </fieldset>
   );
@@ -847,14 +875,14 @@ function GroupItem({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[12px] border border-(--border-subtle) bg-(--surface-card) p-3">
-      <div className="flex items-center gap-2">
-        <p className="min-w-0 flex-1 truncate text-sm font-bold text-(--text-heading)">{title}</p>
+    <div className="flex flex-col gap-3 rounded-[14px] border border-(--border-default) bg-(--surface-card) p-4 shadow-2xs">
+      <div className="flex items-center gap-2 border-b border-(--border-subtle) pb-2">
+        <p className="min-w-0 flex-1 truncate text-xs font-bold text-(--text-heading)">{title}</p>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="shrink-0 rounded-full text-(--text-subtle) hover:text-(--danger-fg)"
+          className="size-8 shrink-0 rounded-lg text-(--text-muted) transition-colors hover:bg-(--danger-bg) hover:text-(--danger-fg)"
           aria-label={`Remove ${title}`}
           disabled={disabled || !removable}
           onClick={onRemove}

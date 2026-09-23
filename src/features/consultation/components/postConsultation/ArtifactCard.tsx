@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  FileSignature,
   PenLine,
   RefreshCw,
   Send,
@@ -333,7 +334,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-3 p-4">
-        <p className="text-xs font-medium text-(--ink-600)">
+        <p className="text-xs font-medium text-(--text-muted)">
           Assessment v{artifact.assessmentVersion} · revision {artifact.artifactRevision}
           {artifact.physicianEditedAt ? (
             <> · edited {new Date(artifact.physicianEditedAt).toLocaleTimeString()}</>
@@ -368,14 +369,23 @@ export function ArtifactCard(props: ArtifactCardProps) {
         {editing ? (
           <div
             className={cn(
-              "rounded-[12px] border p-3",
+              "rounded-[16px] border p-4 shadow-xs",
               embedded
-                ? "border-(--border-subtle) bg-(--surface-warm-soft)"
+                ? "border-(--teal-600)/30 bg-(--surface-warm-soft)/70"
                 : provenance === "edited"
                   ? "border-(--edited-border) bg-(--edited-bg-strong)"
                   : "border-(--ai-border) bg-(--ai-bg-strong)",
             )}
           >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-(--border-subtle) pb-3">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
+                <PenLine className="size-3.5 text-(--action-primary)" />
+                Editing draft — modify fields directly below
+              </span>
+              <span className="text-[11px] font-medium text-(--text-muted)">
+                Click any field to type · Press &ldquo;Save changes&rdquo; below when done
+              </span>
+            </div>
             <ArtifactPayloadEditor
               outputType={artifact.outputType}
               payload={draft}
@@ -485,21 +495,23 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 if (!open) closeSignDialog();
               }}
             >
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Sign {label}?</DialogTitle>
-                  <DialogDescription>
-                    This records your final clinical review. Once signed,{" "}
-                    <strong className="text-(--text-heading)">
-                      you will no longer be able to edit {label.toLowerCase()}
-                    </strong>{" "}
-                    — to change anything afterward you will need to draft a new version.
-                    {visibility.detail} The patient still cannot see this until you release
-                    it, which stays a separate step.
+              <DialogContent className="sm:max-w-md rounded-[20px] border border-(--border-subtle) bg-(--surface-card) p-5 shadow-xl">
+                <DialogHeader className="gap-1.5 pb-1">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--surface-brand-soft) text-(--navy-800) dark:text-(--navy-200)">
+                      <FileSignature className="size-4.5" />
+                    </span>
+                    <DialogTitle className="text-base font-bold text-(--text-heading)">
+                      Sign {label}
+                    </DialogTitle>
+                  </div>
+                  <DialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+                    Confirm your clinical review to finalize and lock this {label.toLowerCase()}. Releasing to the patient or records remains a separate step.
                   </DialogDescription>
                 </DialogHeader>
 
                 <SignOffFields
+                  label={label}
                   specimen={props.specimen}
                   drawn={drawn}
                   onDrawn={setDrawn}
@@ -509,7 +521,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
                   onAttested={setAttested}
                 />
 
-                <DialogFooter>
+                <DialogFooter className="-mx-5 -mb-5 mt-2 flex-row items-center justify-end gap-2 rounded-b-[20px] border-t border-(--border-subtle) bg-(--surface-warm-soft)/60 px-5 py-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -521,12 +533,12 @@ export function ArtifactCard(props: ArtifactCardProps) {
                   </Button>
                   <Button
                     type="button"
-                    className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
+                    className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover) px-5"
                     disabled={!canSign || submitting}
                     onClick={sign}
                   >
                     {submitting ? <Spinner className="size-4" /> : <PenLine className="size-4" />}
-                    {hasSpecimen ? `Sign as ${props.specimen!.signerName}` : "Sign and lock"}
+                    {hasSpecimen ? `Sign as ${props.specimen!.signerName}` : "Sign & lock"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -707,6 +719,7 @@ function HoldToReleaseButton({
  * signature on file, or draw one when there isn't one yet.
  */
 function SignOffFields({
+  label,
   specimen,
   drawn,
   onDrawn,
@@ -715,6 +728,7 @@ function SignOffFields({
   attested,
   onAttested,
 }: {
+  label: string;
   specimen?: DoctorSignatureSpecimen | undefined;
   drawn: CdsSignaturePoint[][];
   onDrawn: (strokes: CdsSignaturePoint[][]) => void;
@@ -727,61 +741,88 @@ function SignOffFields({
   const hasSpecimen = (specimen?.strokes.length ?? 0) > 0;
 
   return (
-    <div data-slot="artifact-sign-off" className="flex flex-col gap-3">
-      <label className="flex items-start gap-2 text-sm text-(--text-body)">
+    <div data-slot="artifact-sign-off" className="flex flex-col gap-3.5">
+      {/* Interactive Attestation Card */}
+      <div
+        role="checkbox"
+        aria-checked={attested}
+        tabIndex={0}
+        onClick={() => onAttested(!attested)}
+        onKeyDown={(event) => {
+          if (event.key === " " || event.key === "Enter") {
+            event.preventDefault();
+            onAttested(!attested);
+          }
+        }}
+        className={cn(
+          "flex items-start gap-3 rounded-[14px] border p-3.5 cursor-pointer transition-all select-none",
+          attested
+            ? "border-(--teal-600) bg-(--surface-accent-soft)/60 shadow-2xs"
+            : "border-(--border-subtle) bg-(--surface-warm-soft)/50 hover:border-(--border-default)",
+        )}
+      >
         <input
           type="checkbox"
           checked={attested}
-          className="mt-0.5"
           onChange={(event) => onAttested(event.target.checked)}
+          onClick={(event) => event.stopPropagation()}
+          className="mt-0.5 size-4 rounded accent-(--action-primary) cursor-pointer"
         />
-        I reviewed this document against the confirmed Assessment and the current clinical
-        record, and I understand I will not be able to edit it after signing.
-      </label>
+        <div className="flex flex-col text-xs leading-relaxed">
+          <span className="font-semibold text-(--text-heading)">
+            Clinical Review &amp; Attestation
+          </span>
+          <span className="text-(--text-muted)">
+            I have reviewed this {label.toLowerCase()} and attest to its clinical accuracy against the confirmed assessment and medical record.
+          </span>
+        </div>
+      </div>
 
       {hasSpecimen ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-[12px] border border-(--border-subtle) bg-(--surface-warm-soft) px-3 py-2">
-          <SignaturePreview strokes={specimen!.strokes} />
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-bold text-(--text-heading)">
-              {specimen!.signerName}
-            </span>
-            <span className="text-xs text-(--text-muted)">Signature on file</span>
+        <div className="flex items-center justify-between gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-28 shrink-0 rounded-lg border border-(--border-subtle) bg-white p-1 flex items-center justify-center">
+              <SignaturePreview strokes={specimen!.strokes} />
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-xs font-bold text-(--text-heading)">
+                {specimen!.signerName}
+              </span>
+              <span className="flex items-center gap-1 text-[11px] font-medium text-(--teal-800)">
+                <CheckCircle2 className="size-3 text-(--status-available-fg)" />
+                Signature on file
+              </span>
+            </div>
           </div>
           <Link
             href="/doctor/profile"
-            className="ml-auto text-xs font-medium text-(--action-primary) underline-offset-2 hover:underline"
+            className="shrink-0 text-xs font-semibold text-(--action-primary) hover:underline"
           >
             Change
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-2 rounded-[12px] border border-(--border-subtle) p-3">
-          <p className="text-sm text-(--text-body)">
-            You have no signature on file. Draw one to sign this document, or{" "}
+        <div className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <label htmlFor="signer-name-field" className="text-xs font-semibold text-(--text-heading)">
+              Signer Legal Name
+            </label>
             <Link
               href="/doctor/profile"
-              className="font-medium text-(--action-primary) underline-offset-2 hover:underline"
+              className="text-[11px] font-medium text-(--action-primary) hover:underline"
             >
-              save one to your profile
-            </Link>{" "}
-            so you never draw it again.
-          </p>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-(--text-body)">Signer name</span>
-            <Input
-              value={signerName}
-              maxLength={120}
-              className="rounded-[10px]"
-              onChange={(event) => onSignerName(event.target.value)}
-            />
-          </label>
+              Save permanent signature in profile →
+            </Link>
+          </div>
+          <Input
+            id="signer-name-field"
+            placeholder="e.g. Dr. Maria Santos, MD"
+            value={signerName}
+            maxLength={120}
+            className="h-9 rounded-[10px] text-xs"
+            onChange={(event) => onSignerName(event.target.value)}
+          />
           <SignaturePadDialog onSave={onDrawn} />
-          {drawn.length === 0 ? (
-            <p className="text-xs text-(--text-subtle)">
-              Draw above, then press save on the pad before signing.
-            </p>
-          ) : null}
         </div>
       )}
     </div>

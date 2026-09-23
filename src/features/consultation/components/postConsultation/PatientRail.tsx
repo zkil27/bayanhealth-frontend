@@ -33,18 +33,18 @@ export function PatientRail({
           type="button"
           variant="ghost"
           size="sm"
-          className="size-8 p-0 rounded-lg text-(--text-muted) hover:text-(--navy-900) hover:bg-(--surface-warm-soft)"
+          className="size-8 p-0 rounded-lg text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-warm-soft)"
           onClick={onToggleCollapse}
           title="Expand patient intake"
           aria-label="Expand patient intake"
         >
           <PanelLeftOpen className="size-4.5" />
         </Button>
-        <span className="flex size-7 items-center justify-center rounded-md bg-(--surface-brand-soft) text-(--teal-800)">
+        <span className="flex size-7 items-center justify-center rounded-md bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
           <FileText className="size-4" />
         </span>
         <span
-          className="text-[11px] font-bold text-(--ink-600) tracking-wider uppercase [writing-mode:vertical-lr] rotate-180"
+          className="text-[11px] font-bold text-(--text-muted) tracking-wider uppercase [writing-mode:vertical-lr] rotate-180"
         >
           Intake
         </span>
@@ -67,11 +67,11 @@ export function PatientRail({
       <div className="flex items-center justify-between border-b border-(--border-subtle) bg-(--surface-warm-soft)/60 px-3.5 py-2.5">
         <div className="flex items-center gap-2">
           <FileText className="size-4 text-(--teal-700)" />
-          <h2 className="text-xs font-bold text-(--navy-900)">Patient Intake</h2>
+          <h2 className="text-xs font-bold text-(--text-heading)">Patient Intake</h2>
           {intake ? (
             <Badge
               variant="outline"
-              className="gap-1 border-(--border-default) px-1.5 py-0 text-[10px] font-semibold text-(--ink-700) capitalize"
+              className="gap-1 border-(--border-default) px-1.5 py-0 text-[10px] font-semibold text-(--text-muted) capitalize"
             >
               <ClipboardCheck className="size-2.5 text-(--teal-700)" /> {intake.status}
             </Badge>
@@ -82,7 +82,7 @@ export function PatientRail({
             type="button"
             variant="ghost"
             size="sm"
-            className="size-7 p-0 rounded-lg text-(--text-muted) hover:text-(--navy-900) hover:bg-(--surface-warm-soft)"
+            className="size-7 p-0 rounded-lg text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-warm-soft)"
             onClick={onToggleCollapse}
             title="Collapse intake rail"
             aria-label="Collapse intake rail"

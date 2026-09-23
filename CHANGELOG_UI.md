@@ -7,6 +7,90 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
+### [2026-09-23] Post-Consultation: Plan & Deliverables Editor Input Affordances, Readability & Visual Typing Contrast
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[consultationId]` (Edit Draft mode on Plan, Prescription, and deliverables)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadEditor.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Solved Low Typing Affordance & "Non-Typable" Appearance**:
+    - Previously, editable textareas rendered with `bg-transparent` inside the warm cream container, blending completely into the background and appearing like flat static text boxes rather than interactive, typable input fields. Single-line list items (Goals, Interventions) displayed unwanted browser textarea resize grabbers.
+    - Upgraded all editor input primitives (`TextField`, `TextAreaField`, `StringListField`, `GroupItem`) to crisp white typing surfaces (`bg-white`), solid 1px borders (`border-(--border-default)`), subtle depth (`shadow-2xs`), and responsive focus rings (`focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20`).
+  - **High-Density Structured List Inputs (`StringListField`)**:
+    - Replaced single-line textareas with high-contrast `<Input>` fields, adding numbered pill badges (`1`, `2`, `3`) on the left to clearly establish structured list hierarchy.
+    - Added contextual guide placeholders (`"e.g. Symptom relief of productive cough"`, `"e.g. Increased fluid intake (2-3L/day)"`).
+    - Standardized clean delete buttons (`size-9 rounded-lg hover:bg-(--danger-bg)`) and dashed outline add buttons (`+ Add goal`, `+ Add intervention`).
+  - **Modernized Clinical Section Labels**:
+    - Replaced faint, all-caps uppercase labels (`SUMMARY`, `GOALS`, `INTERVENTIONS`, `FOLLOW-UP`) with high-authority sentence-case typography (`Clinical summary`, `Clinical goals`, `Interventions & orders`, `Follow-up & precautions`).
+  - **Contextual Edit Mode Header**:
+    - Added a clear editing banner at the top of the editing container inside `ArtifactCard` (*"Editing draft — modify fields directly below"* / *"Click any field to type · Press 'Save changes' below when done"*), immediately signaling interactive editing state.
+
+---
+
+### [2026-09-23] Post-Consultation: Sign & Lock Modal Overhaul, Auto-Saving Signature Pad & Clinical Attestation
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[consultationId]` (Sign Document modal for Plan, Prescription, Medical Certificate, etc.)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SignatureField.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Defensive Wordy Explanations & Typos**:
+    - Replaced the dense, rambling 6-line paragraph containing confusing system architecture copy ("The patient has no screen for this one, so releasing it changes your record but shows them nothing...") with a clear, calm clinical description: *"Confirm your clinical review to finalize and lock this document. Releasing to the patient or records remains a separate step."*
+  - **Auto-Saving Signature Canvas (Eliminated Confusing Save-on-Pad Friction)**:
+    - Previously, drawing a signature did not update the modal state until the physician discovered and pressed a tiny, unlabelled floppy disk icon on the canvas toolbar. The main "Sign and lock" button remained disabled with the confusing micro-text *"Draw above, then press save on the pad before signing."*
+    - Upgraded `SignaturePadDialog` with automatic stroke commitment on `pointerup`, seamlessly capturing the signature as the doctor draws.
+    - Added an authentic clinical prescription pad baseline (dashed line with `✕` guide), stroke smoothing in BayanHealth Navy `#074972`, a live `"Signature captured"` indicator, and a clear `"Clear & redraw"` action.
+  - **Interactive Clinical Attestation Card**:
+    - Replaced the unstyled browser checkbox and long text block with an interactive clinical attestation card featuring clear typography, subtle hover states, and warm teal active styling.
+  - **Profile Name Pre-fill & Verified Credential Card**:
+    - Wired `defaultSignerName` from `doctorProfile` through `DeliverablesDeck` to prefill the signer name automatically when no saved signature exists.
+    - Polished the "Signature on file" state with a clear verified badge, signature stroke thumbnail, and direct profile link.
+
+---
+
+### [2026-09-23] Post-Consultation Workspace: Decluttering, Information Architecture & Plan Deck Unification
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[consultationId]` (and demo / history post-consult views)
+- **Files Modified**:
+  - `src/features/doctor/lib/api/bookingIntake.ts` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientDetails.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadView.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/workspacePhase.ts` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Solved Severe Center-Column Crowding & Stacking**:
+    - Previously, the center column stacked 8 vertical sections totaling ~1,530px in height (over 1.7x desktop viewport height), burying deliverables beneath multiple full-page scrolls and requiring constant scrolling to view and sign prescriptions.
+    - Unified the clinical `Plan` as the premier first tab inside the `DeliverablesDeck` rather than as a disconnected, standalone card above it. This eliminated duplicate footers (signing, amending, releasing) and cut center column vertical bulk by over 50%.
+  - **Fixed "NKDA" False-Alarm Emergency Alert**:
+    - Previously, "No known drug allergies (NKDA)" triggered 3 prominent red emergency alert banners and cards because the parser only checked for the literal string `"none"`.
+    - Added comprehensive regex negation detection (`isNegativeAllergy`) covering `nkda`, `nka`, `none`, `no known`, `denied`, and `negative`.
+    - Calmly renders NKDA as neutral grey clinical text in `PatientDetails` and `ClinicalAlerts` while reserving high-contrast red warning styling strictly for actual anaphylactic/active drug allergies.
+  - **Unified High-Density SOAP Intake Strip**:
+    - Replaced two bulky, vertically-stacked ~120px Subjective & Objective cards with a single compact, horizontal clinical intake strip (S: Chief complaint + verbatim quote | O: Vitals tiles).
+    - Reduced vertical footprint from 240px to ~70px while maintaining instant visibility of key patient complaints and vitals readings.
+  - **Collapsible Patient Intake Rail**:
+    - Added an intuitive expand/collapse toggle to `PatientRail` with a sleek 3.5rem (56px) collapsed icon strip, allowing doctors to reclaim horizontal space on clinical laptops and focus entirely on documentation and deliverables.
+  - **Card Flattening & Clinical Typography Modernization**:
+    - Removed nested cards and heavy inner container borders inside `ArtifactPayloadView` and `PatientDetails`.
+    - Replaced shouting all-caps tracking headers (`GOALS`, `INTERVENTIONS`, `FOLLOW-UP & RED FLAGS`, `SYMPTOMS REVIEW`, `SAFETY SCREEN`) with clean, sentence-case, high-authority clinical typography.
+  - **Action Affordance & Defensive Copy Cleanup**:
+    - Replaced defensive, wordy instructional paragraphs (`"Signing locks the content..."`, `"Press and hold for 2 seconds to release..."`, `"Nothing is drafted until you confirm this Assessment..."`) with self-explanatory button states (`Sign & lock`, `Release to patient`), explicit visual states (`✓ Signed · Ready to release`), and clean feedback.
+    - Removed persistent "Choose an output to draft..." guidance banner once drafting is already open.
+  - **Accurate Deliverables Deck & Rail Counts**:
+    - Fixed `railBadgeLabel` and deck ordering so doctors see true counts (`3 released`, `2 to review`, `1 to draft`) instead of misleading `"0 unlocked"` when all deliverables are drafted.
+
+---
+
 ### [2026-09-23] Consultation Room: Proportional Height Distribution & Void Elimination in Patient Intake
 
 - **Target Route / Surface**:

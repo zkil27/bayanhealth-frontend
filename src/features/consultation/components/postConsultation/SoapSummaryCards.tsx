@@ -48,24 +48,24 @@ export function SoapSummaryCards({
       <div className="flex min-w-0 flex-1 items-start gap-2.5">
         <span
           aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
         >
           S
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-(--navy-900)">Subjective</span>
-            <span className="text-[10px] font-semibold text-(--ink-500)">(Chief complaint)</span>
+            <span className="text-xs font-bold text-(--text-heading)">Subjective</span>
+            <span className="text-[10px] font-semibold text-(--text-muted)">(Chief complaint)</span>
           </div>
           {intake === undefined ? (
-            <p className="mt-0.5 text-xs text-(--ink-500)">Loading intake…</p>
+            <p className="mt-0.5 text-xs text-(--text-muted)">Loading intake…</p>
           ) : !purpose?.chiefComplaint?.trim() ? (
-            <p className="mt-0.5 text-xs text-(--ink-500)">No chief complaint submitted</p>
+            <p className="mt-0.5 text-xs text-(--text-muted)">No chief complaint submitted</p>
           ) : (
-            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-(--navy-900)">
+            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-(--text-heading)">
               {purpose.chiefComplaint}
               {purpose.patientVerbatim?.trim() ? (
-                <span className="ml-1 font-normal text-(--ink-600) italic">
+                <span className="ml-1 font-normal text-(--text-muted) italic">
                   &ldquo;{purpose.patientVerbatim}&rdquo;
                 </span>
               ) : null}
@@ -78,17 +78,17 @@ export function SoapSummaryCards({
       <div className="flex min-w-0 flex-1 items-start gap-2.5 md:pl-3">
         <span
           aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
         >
           O
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-(--navy-900)">Objective</span>
-            <span className="text-[10px] font-semibold text-(--ink-500)">(Vitals)</span>
+            <span className="text-xs font-bold text-(--text-heading)">Objective</span>
+            <span className="text-[10px] font-semibold text-(--text-muted)">(Vitals)</span>
           </div>
           {intake === undefined ? (
-            <p className="mt-0.5 text-xs text-(--ink-500)">Loading vitals…</p>
+            <p className="mt-0.5 text-xs text-(--text-muted)">Loading vitals…</p>
           ) : hasVitals ? (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {VITALS.map((vital) => {
@@ -106,7 +106,7 @@ export function SoapSummaryCards({
               })}
             </div>
           ) : (
-            <p className="mt-0.5 text-xs text-(--ink-500)">No vitals recorded for this consultation</p>
+            <p className="mt-0.5 text-xs text-(--text-muted)">No vitals recorded for this consultation</p>
           )}
         </div>
       </div>
@@ -134,12 +134,12 @@ function SummaryCard({
       <div className="flex items-center gap-2">
         <span
           aria-hidden
-          className="flex size-5.5 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
+          className="flex size-5.5 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
         >
           {letter}
         </span>
         <h3 className="text-sm font-bold text-(--text-heading)">{title}</h3>
-        <span className="ml-auto rounded-md bg-(--ink-100) px-2 py-0.5 text-[11px] font-semibold text-(--ink-600)">
+        <span className="ml-auto rounded-md bg-(--surface-warm-soft) px-2 py-0.5 text-[11px] font-semibold text-(--text-muted)">
           Intake record
         </span>
       </div>
