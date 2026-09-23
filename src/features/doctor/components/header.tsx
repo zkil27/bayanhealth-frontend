@@ -41,14 +41,15 @@ export function DoctorHeader() {
     year: "numeric",
   });
 
-  // The dashboard, calendar, consults (history), and profile tabs do not render
+  // The dashboard, calendar, consults (history), profile, and chat tabs do not render
   // this banner: they manage their own identity cards / titles, and the
   // sidebar carries the theme toggle and navigation controls.
   if (
     pathname === "/doctor" ||
     pathname.startsWith("/doctor/schedule") ||
     pathname.startsWith("/doctor/history") ||
-    pathname.startsWith("/doctor/profile")
+    pathname.startsWith("/doctor/profile") ||
+    pathname.startsWith("/doctor/chat")
   ) {
     return null;
   }

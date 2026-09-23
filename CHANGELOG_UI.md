@@ -7,6 +7,23 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
+### [2026-09-23] Doctor Navigation & Chat: Header Greeting Suppression & Navigation Activation
+
+- **Target Route / Surface**:
+  - `/doctor/chat` (Doctor Clinical Chat & Messages)
+  - Global Navigation (`FloatingSidebar.tsx`, `NavBar.tsx`, `nav-items.ts`, `header.tsx`)
+- **Files Modified**:
+  - `src/components/layout/nav-items.ts` [MODIFIED]
+  - `src/features/doctor/components/header.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Suppressed Redundant "Kumusta" Greeting on Doctor Chat**:
+    - `DoctorHeader` automatically hid on `/doctor`, `/doctor/schedule`, `/doctor/history`, and `/doctor/profile`, but was still rendering on `/doctor/chat`, consuming vertical space with a redundant "Kumusta, Dr. Tester" greeting.
+    - Updated `DoctorHeader` route exclusion filter to include `/doctor/chat`, freeing up full vertical viewport height for the clinical communication space.
+  - **Un-gated Chat Destination in Navigation**:
+    - Removed `comingSoon: true` flag from both `PATIENT_NAV` and `DOCTOR_NAV` in `nav-items.ts`, turning Chat into a live, interactive link.
+
+---
+
 ### [2026-09-23] Doctor Suite: Clinician Demo Mode, Navigation Bar & Clinical Evaluation Guide
 
 - **Target Route / Surface**:
