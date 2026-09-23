@@ -60,10 +60,12 @@ import {
 export function PatientChatRoom({ bookingId }: { bookingId: string }) {
   const idToken = useAuthStore((s) => s.session?.idToken ?? null);
 
+  const isDemo = bookingId === "demo" || bookingId === "preview";
+
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId, idToken],
     queryFn: () => fetchBookingDetail(idToken ?? "", bookingId),
-    enabled: !!idToken,
+    enabled: !!idToken && !isDemo,
     staleTime: 1000 * 60,
     retry: false,
     throwOnError: false,
@@ -73,7 +75,7 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
   const doctorQuery = useQuery({
     queryKey: ["doctor-public-profile", doctorId, idToken],
     queryFn: () => fetchDoctorPublicProfile(doctorId, idToken ?? ""),
-    enabled: !!idToken && doctorId.length > 0,
+    enabled: !!idToken && doctorId.length > 0 && !isDemo,
     staleTime: 1000 * 60 * 10,
     retry: false,
     throwOnError: false,
@@ -81,14 +83,15 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
 
   // Read-only once the booking is terminal (ADR-20260909-01): the backend
   // still allows the read on `completed`/`cancelled`, but never the write, so
-  // the composer below is hidden rather than left to fail on submit. Undefined
-  // while `bookingQuery` is loading is deliberately treated as "not yet
-  // read-only" — the composer briefly renders and `send()` still goes through
-  // the real gate, which is the same experience as any other in-flight read.
+  // the composer below is hidden rather than left to fail on submit.
   const bookingStatus = bookingQuery.data?.status;
   const isReadOnly = !isChatWritable(bookingStatus);
 
-  const chat = useConsultationChat({ bookingId, readOnly: isReadOnly });
+  const chat = useConsultationChat({
+    bookingId,
+    readOnly: isReadOnly,
+    enabled: isDemo || !bookingQuery.isLoading,
+  });
 
   // Seed the composer from a step-specific link (e.g. the Care Recovery
   // Roadmap's "Ask about this"), never sending on the patient's behalf. The

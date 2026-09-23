@@ -37,10 +37,12 @@ import { fetchBookingDetail } from "@/features/booking/lib/api/bookingDetail";
 export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
   const idToken = useIdToken();
 
+  const isDemo = bookingId === "demo" || bookingId === "preview";
+
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId, idToken],
     queryFn: () => fetchBookingDetail(idToken ?? "", bookingId),
-    enabled: !!idToken,
+    enabled: !!idToken && !isDemo,
     staleTime: 1000 * 60,
     retry: false,
     throwOnError: false,
@@ -52,7 +54,11 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
   const bookingStatus = bookingQuery.data?.status;
   const isReadOnly = bookingStatus === "completed" || bookingStatus === "cancelled";
 
-  const chat = useConsultationChat({ bookingId, readOnly: isReadOnly });
+  const chat = useConsultationChat({
+    bookingId,
+    readOnly: isReadOnly,
+    enabled: isDemo || !bookingQuery.isLoading,
+  });
 
   const patientRef = shortRef(bookingId);
   const patientLabel = `Ref ${patientRef}`;

@@ -7,6 +7,28 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
+### [2026-09-23] Doctor & Patient Chat: Fix Consultation Chat Loading Race Condition on Closed/Terminal Bookings
+
+- **Target Route / Surface**:
+  - `/doctor/chat/[bookingId]` (Doctor Consultation Room & History)
+  - `/patient/chat/[bookingId]` (Patient Consultation Room & History)
+  - `useConsultationChat` Hook (`src/features/consultation/hooks/useConsultationChat.ts`)
+- **Files Modified**:
+  - `src/features/consultation/hooks/useConsultationChat.ts` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatRoom.tsx` [MODIFIED]
+  - `src/features/patient/components/chat/PatientChatRoom.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Indefinite "Loading conversation…" Hang on Terminal Consultations**:
+    - Previously, when loading a completed consultation (e.g. `/doctor/chat/bk_...`), the room rendered the banner *"This consultation has ended..."*, but the message history area remained perpetually stuck on *"Loading conversation…"*.
+    - **Root Cause**: `useConsultationChat` previously locked execution on initial mount (`[]` dependencies with `startedRef.current = true`). Because `bookingQuery` is asynchronous, `readOnly` was evaluated as `false` on initial mount, causing the hook to bypass the fast REST HTTP history loader (`loadHistoryOnly`) and eagerly attempt a realtime WebSocket connection. For terminal consultations without an active live session, the WebSocket connection timed out (10s window) or failed, and the hook never adapted once `bookingQuery` resolved `status: "completed"`.
+    - **Fix Applied**:
+      1. Added `enabled` option to `useConsultationChat` and wired `DoctorChatRoom` / `PatientChatRoom` to pass `enabled: isDemo || !bookingQuery.isLoading`.
+      2. Added dynamic `readOnly` history mode effect in `useConsultationChat`: as soon as `readOnly` is recognized, any in-flight WebSocket attempt is immediately aborted/closed, transport safely switches to `"http"`, and message history is fetched once via `hydrateFromHttp()` with guaranteed `setIsLoading(false)` cleanup.
+      3. Added defensive `(list?.messages ?? [])` handling and try-finally error recovery so hydration never leaves the UI in a perpetual spinner state.
+      4. Bypassed `bookingQuery` network execution for demo fixtures (`demo` and `preview`).
+
+---
+
 ### [2026-09-23] Doctor Navigation & Chat: Header Greeting Suppression & Navigation Activation
 
 - **Target Route / Surface**:

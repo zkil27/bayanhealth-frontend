@@ -1,6 +1,7 @@
 import type { OnDemandRequest } from "./api/requestPool";
 import type { patientBoardInfo } from "../types/bookingBoard.types";
 import type { ReadyToStartItem } from "./readyToStart";
+import type { DoctorKycBundle } from "./api/kyc";
 
 /**
  * High-fidelity clinical mock datasets representing authentic Philippine
@@ -27,6 +28,58 @@ export const DEMO_DOCTOR_PROFILE: DemoDoctorProfile = {
   ptrNumber: "PTR #8821940",
   s2Number: "S2 #9912048",
   onDemandAvailable: true,
+};
+
+export const DEMO_DOCTOR_KYC_BUNDLE: DoctorKycBundle = {
+  profile: {
+    doctorId: "demo-doc-01",
+    fullName: "Dr. Angela Reyes, MD",
+    licenseNumber: "PRC #0148922",
+    specialty: "Internal Medicine & Adult Tele-Triage",
+    subspecialty: "Cardiometabolic & Primary Care",
+    phoneNumber: "+63 917 892 4012",
+    bio: "Board-certified internist with 12+ years of experience in tertiary hospital and telemedicine practice across Metro Manila. Specializing in adult acute care, hypertension, and primary triage.",
+    onDemandAvailable: true,
+    verificationStatus: "approved",
+    signature: {
+      signerName: "Dr. Angela Reyes, MD",
+      strokes: [
+        [
+          { x: 0.15, y: 0.5 },
+          { x: 0.25, y: 0.25 },
+          { x: 0.35, y: 0.6 },
+          { x: 0.55, y: 0.3 },
+          { x: 0.8, y: 0.5 },
+        ],
+        [
+          { x: 0.2, y: 0.45 },
+          { x: 0.85, y: 0.4 },
+        ],
+      ],
+    },
+  },
+  documents: [
+    {
+      documentId: "demo-doc-prc",
+      doctorId: "demo-doc-01",
+      documentType: "professional_license",
+      contentType: "image/png",
+      status: "uploaded",
+      uploadedAt: "2026-08-15T08:30:00.000Z",
+      createdAt: "2026-08-15T08:30:00.000Z",
+      updatedAt: "2026-08-15T08:30:00.000Z",
+    },
+    {
+      documentId: "demo-doc-ptr",
+      doctorId: "demo-doc-01",
+      documentType: "supporting_document",
+      contentType: "application/pdf",
+      status: "uploaded",
+      uploadedAt: "2026-08-15T08:35:00.000Z",
+      createdAt: "2026-08-15T08:35:00.000Z",
+      updatedAt: "2026-08-15T08:35:00.000Z",
+    },
+  ],
 };
 
 export const DEMO_SHIFT_METRICS = {

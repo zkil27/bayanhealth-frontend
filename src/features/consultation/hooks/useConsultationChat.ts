@@ -107,6 +107,8 @@ interface UseConsultationChatArgs {
    * closed conversation has nothing left to arrive.
    */
   readOnly?: boolean;
+  /** Whether the chat transport should connect. Defaults to true. */
+  enabled?: boolean;
 }
 
 /**
@@ -131,6 +133,7 @@ export function useConsultationChat({
   bookingId,
   deps,
   readOnly = false,
+  enabled = true,
 }: UseConsultationChatArgs): UseConsultationChat {
   const idToken = useAuthStore((s) => s.session?.idToken ?? null);
   const myUserId = useAuthStore((s) => s.session?.userId ?? null);
@@ -206,7 +209,7 @@ export function useConsultationChat({
     try {
       const list = await listBookingMessages(bookingId, idToken);
       upsertMessages(
-        list.messages.map((m) => ({ ...m, isOwn: m.senderId === myUserId })),
+        (list?.messages ?? []).map((m) => ({ ...m, isOwn: m.senderId === myUserId })),
       );
     } catch (err) {
       // A hydrate failure must not crash the view; surface a soft indication.
@@ -221,8 +224,11 @@ export function useConsultationChat({
     setTransportSafe("http");
     closeSocket();
     setIsLoading(true);
-    await hydrateFromHttp();
-    setIsLoading(false);
+    try {
+      await hydrateFromHttp();
+    } finally {
+      setIsLoading(false);
+    }
   }, [closeSocket, hydrateFromHttp, setTransportSafe]);
 
   const sendOverHttp = useCallback(
@@ -253,75 +259,92 @@ export function useConsultationChat({
     [bookingId, idToken, myUserId, upsertMessages],
   );
 
-  // Establish the realtime transport on mount, with a bounded connect window.
+  // Establish read-only history mode (ADR-20260909-01).
   //
-  // Read-only history skips this entirely: a terminal booking never has a live
-  // session for the socket to attach to, so attempting the connect would only
-  // spend a `ws-token` call and the full connect window before falling back to
-  // exactly where this starts anyway.
+  // For a `completed`/`cancelled` booking: the backend's write route stays
+  // closed for those statuses, and a live session — the only thing the
+  // WebSocket has anything to attach to — cannot exist on a terminal
+  // booking. Skipped instead: transport goes straight to `http`, history is
+  // fetched once, and polling is skipped too since a closed conversation
+  // has nothing left to arrive.
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
+    if (!enabled || !readOnly || bookingId === "demo" || bookingId === "preview") return;
 
-    if (bookingId === "demo" || bookingId === "preview") {
-      async function loadDemo() {
-        setTransportSafe("ws");
-        upsertMessages([
-          {
-            messageId: "demo-msg-1",
-            sessionId: "demo",
-            consultationId: "demo",
-            bookingId,
-            senderId: "patient-demo",
-            senderRole: "patient",
-            messageType: "text",
-            content: "Good day, Doc! I have been having a slight headache since yesterday afternoon.",
-            createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-            isOwn: myRole === "patient",
-          },
-          {
-            messageId: "demo-msg-2",
-            sessionId: "demo",
-            consultationId: "demo",
-            bookingId,
-            senderId: "doctor-demo",
-            senderRole: "doctor",
-            messageType: "text",
-            content: "Hello Maria. Thank you for reaching out. Are you experiencing any nausea, fever, or visual sensitivity?",
-            createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-            isOwn: myRole === "doctor",
-          },
-          {
-            messageId: "demo-msg-3",
-            sessionId: "demo",
-            consultationId: "demo",
-            bookingId,
-            senderId: "patient-demo",
-            senderRole: "patient",
-            messageType: "text",
-            content: "No fever Doc, just feeling a bit fatigued and throbbing behind the eyes.",
-            createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-            isOwn: myRole === "patient",
-          },
-        ]);
+    closeSocket();
+    setTransportSafe("http");
+
+    if (!idToken) return;
+
+    let cancelled = false;
+    setIsLoading(true);
+    void hydrateFromHttp().finally(() => {
+      if (!cancelled) {
         setIsLoading(false);
       }
-      void loadDemo();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, readOnly, bookingId, idToken, closeSocket, setTransportSafe, hydrateFromHttp]);
+
+  // Establish the realtime transport for live consultations.
+  useEffect(() => {
+    if (!enabled) return;
+
+    if (bookingId === "demo" || bookingId === "preview") {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      setTransportSafe("ws");
+      upsertMessages([
+        {
+          messageId: "demo-msg-1",
+          sessionId: "demo",
+          consultationId: "demo",
+          bookingId,
+          senderId: "patient-demo",
+          senderRole: "patient",
+          messageType: "text",
+          content: "Good day, Doc! I have been having a slight headache since yesterday afternoon.",
+          createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+          isOwn: myRole === "patient",
+        },
+        {
+          messageId: "demo-msg-2",
+          sessionId: "demo",
+          consultationId: "demo",
+          bookingId,
+          senderId: "doctor-demo",
+          senderRole: "doctor",
+          messageType: "text",
+          content: "Hello Maria. Thank you for reaching out. Are you experiencing any nausea, fever, or visual sensitivity?",
+          createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+          isOwn: myRole === "doctor",
+        },
+        {
+          messageId: "demo-msg-3",
+          sessionId: "demo",
+          consultationId: "demo",
+          bookingId,
+          senderId: "patient-demo",
+          senderRole: "patient",
+          messageType: "text",
+          content: "No fever Doc, just feeling a bit fatigued and throbbing behind the eyes.",
+          createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+          isOwn: myRole === "patient",
+        },
+      ]);
+      setIsLoading(false);
       return;
     }
 
     if (readOnly) {
-      // Mirrors the shape of `connect()`/`fallbackToHttp()` below: state
-      // updates happen inside an async function invoked via `void`, not
-      // directly in the effect body.
-      async function loadHistoryOnly() {
-        setTransportSafe("http");
-        await hydrateFromHttp();
-        setIsLoading(false);
-      }
-      void loadHistoryOnly();
+      // Handled by the readOnly effect above.
       return;
     }
+
+    if (startedRef.current) return;
+    startedRef.current = true;
 
     const connectTimeoutMs = deps?.connectTimeoutMs ?? CHAT_CONNECT_TIMEOUT_MS;
     const socketFactory = deps?.socketFactory ?? defaultChatSocketFactory;
@@ -355,7 +378,7 @@ export function useConsultationChat({
 
       // 10s connect window: a socket that does not open in time falls back.
       connectTimerRef.current = setTimeout(() => {
-        if (transportRef.current !== "ws") {
+        if (transportRef.current !== "ws" && transportRef.current !== "http") {
           void fallbackToHttp();
         }
       }, connectTimeoutMs);
@@ -364,6 +387,14 @@ export function useConsultationChat({
         if (connectTimerRef.current) {
           clearTimeout(connectTimerRef.current);
           connectTimerRef.current = null;
+        }
+        if (transportRef.current === "http") {
+          try {
+            socket.close();
+          } catch {
+            /* ignore */
+          }
+          return;
         }
         setTransportSafe("ws");
         // Hydrate existing history once; live messages arrive via the socket.
@@ -379,10 +410,10 @@ export function useConsultationChat({
       };
 
       socket.onerror = () => {
-        if (transportRef.current !== "ws") void fallbackToHttp();
+        if (transportRef.current !== "ws" && transportRef.current !== "http") void fallbackToHttp();
       };
       socket.onclose = () => {
-        if (transportRef.current !== "ws") void fallbackToHttp();
+        if (transportRef.current !== "ws" && transportRef.current !== "http") void fallbackToHttp();
       };
     }
 
@@ -392,8 +423,21 @@ export function useConsultationChat({
       cancelled = true;
       closeSocket();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    enabled,
+    readOnly,
+    bookingId,
+    idToken,
+    myRole,
+    myUserId,
+    deps?.connectTimeoutMs,
+    deps?.socketFactory,
+    closeSocket,
+    fallbackToHttp,
+    hydrateFromHttp,
+    setTransportSafe,
+    upsertMessages,
+  ]);
 
   // Keep the HTTP transport current.
   //
