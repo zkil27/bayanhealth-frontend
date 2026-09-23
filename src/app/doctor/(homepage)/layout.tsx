@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { SidebarContent } from "@/components/layout/FloatingSidebar";
 import { DoctorHeader } from "@/features/doctor/components/header";
+import { ClinicianDemoBar } from "@/components/layout/ClinicianDemoBar";
 import { QueryClientProviders } from "@/components/blocks/Providers";
 import Loading from "./loading";
 
@@ -36,6 +37,7 @@ export default function DoctorLayout({
           <SidebarContent />
         </aside>
         <main className="bg-satin relative flex min-w-0 flex-1 flex-col overflow-x-hidden lg:h-full lg:min-h-0 lg:overflow-y-auto">
+          <ClinicianDemoBar />
           <DoctorHeader />
           <Suspense fallback={<Loading />}>{children}</Suspense>
         </main>

@@ -176,10 +176,10 @@ export function DeliverablesDeck({
         data-slot="deliverables-deck-empty"
         className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-(--border-subtle) bg-(--surface-card) p-8 text-center"
       >
-        <span className="flex size-10 items-center justify-center rounded-full bg-(--surface-brand-soft) text-(--teal-800)">
+        <span className="flex size-10 items-center justify-center rounded-full bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
           <ClipboardList className="size-5" />
         </span>
-        <h3 className="mt-2 text-sm font-bold text-(--navy-900)">No documents drafted yet</h3>
+        <h3 className="mt-2 text-sm font-bold text-(--text-heading)">No documents drafted yet</h3>
         <p className="mt-1 max-w-sm text-xs text-(--text-muted)">
           Select a document from Protected tools on the right (such as Plan or Prescription) to begin drafting.
         </p>
@@ -238,8 +238,8 @@ export function DeliverablesDeck({
         can drop its header entirely and its body can stay the plain white
         the unified card calls for.
       */}
-      <div className="overflow-hidden rounded-[18px] border border-(--status-available-fg)/40 bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]">
-        <div className="flex items-end gap-2 border-b border-(--status-available-fg)/25 bg-(--status-available-bg)/40 px-2 pt-2">
+      <div className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs">
+        <div className="flex items-end gap-2 border-b border-(--border-subtle) bg-(--surface-warm-soft)/40 px-2 pt-2">
           {/*
             A horizontal, scrollable strip rather than a wrapping row: with
             seven possible documents a wrapping strip reflows the whole panel
@@ -274,7 +274,7 @@ export function DeliverablesDeck({
                   className={cn(
                     "relative flex shrink-0 items-center gap-2 rounded-t-lg border px-3.5 py-2 text-sm transition-colors",
                     selected
-                      ? "z-10 -mb-px border-(--status-available-fg)/40 border-b-0 bg-(--surface-card) font-bold text-(--text-heading)"
+                      ? "z-10 -mb-px border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading)"
                       : "border-transparent text-(--text-muted) hover:text-(--text-heading)",
                   )}
                 >

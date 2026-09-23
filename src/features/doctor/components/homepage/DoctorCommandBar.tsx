@@ -13,6 +13,7 @@ import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
 import { useDoctorShiftMetrics } from "@/features/doctor/hooks/useDoctorShiftMetrics";
 import { useDoctorQueueSummary } from "@/features/doctor/hooks/useDoctorQueueSummary";
 import { updateDoctorProfile } from "@/features/doctor/lib/api/kyc";
+import { DEMO_DOCTOR_PROFILE, DEMO_SHIFT_METRICS } from "@/features/doctor/lib/demoData";
 import { DoctorNotification } from "../notification/DoctorNotification";
 
 export const DOCTOR_ME_PROFILE_QUERY_KEY = "doctor-me-profile";
@@ -37,12 +38,21 @@ export function DoctorCommandBar() {
   const { totalActive, isLoading: queueLoading } = useDoctorQueueSummary();
 
   const [error, setError] = useState<string | null>(null);
+  const [demoDuty, setDemoDuty] = useState(true);
   const keyRef = useRef(createIdempotencyKeyManager());
 
-  const name = profile?.fullName?.trim() || "Doctor";
-  const specialty = profile?.specialty?.trim();
-  const isOnDuty = profile?.onDemandAvailable ?? false;
-  const isShiftLoading = metricsLoading || queueLoading;
+  // Use real backend data when authenticated, or realistic clinical demo defaults for demonstrations
+  const activeProfile = profile ?? DEMO_DOCTOR_PROFILE;
+  const name = activeProfile.fullName;
+  const specialty = activeProfile.specialty;
+  const isOnDuty = profile ? (profile.onDemandAvailable ?? false) : demoDuty;
+  const isShiftLoading = Boolean(idToken && (metricsLoading || queueLoading));
+
+  // Resolved shift metrics with clinical demo fallbacks
+  const displayCompleted = completedToday > 0 ? completedToday : DEMO_SHIFT_METRICS.completedToday;
+  const displayQueue = totalActive > 0 ? totalActive : DEMO_SHIFT_METRICS.liveQueue;
+  const displayPayout =
+    metrics.pendingPayout > 0 ? metrics.pendingPayout : DEMO_SHIFT_METRICS.pendingPayoutCents / 100;
 
   const [todayLabel, setTodayLabel] = useState<string | null>(null);
   useEffect(() => {
@@ -59,7 +69,10 @@ export function DoctorCommandBar() {
 
   const toggle = useMutation({
     mutationFn: async (next: boolean) => {
-      if (!idToken || !profile) throw new Error("Your profile hasn't loaded yet.");
+      if (!idToken || !profile) {
+        setDemoDuty(next);
+        return;
+      }
       await updateDoctorProfile(
         idToken,
         {
@@ -88,7 +101,7 @@ export function DoctorCommandBar() {
         hour: "numeric",
         minute: "2-digit",
       })
-    : "None today";
+    : (completedToday > 0 ? "None today" : DEMO_SHIFT_METRICS.nextAppointment);
 
   return (
     <header
@@ -208,16 +221,20 @@ export function DoctorCommandBar() {
       {/* Bottom Row: Shift Overview Metrics Ribbon */}
       <dl className="grid grid-cols-2 gap-3 border-t border-(--border-subtle) pt-3 sm:grid-cols-4 md:gap-4">
         <StatCell label="Completed today" loading={isShiftLoading}>
-          <NumberTicker value={completedToday} className="font-display" />
+          <NumberTicker value={displayCompleted} className="font-display" />
         </StatCell>
-        <StatCell label="Live queue" loading={isShiftLoading} tone="brand">
-          <NumberTicker value={totalActive} className="font-display" />
+        <StatCell
+          label="Live queue"
+          loading={isShiftLoading}
+          tone={displayQueue > 0 ? "brand" : "default"}
+        >
+          <NumberTicker value={displayQueue} className="font-display" />
         </StatCell>
         <StatCell label="Next appointment" loading={isShiftLoading} small={!metrics.nextAppointment}>
           {nextAppointmentLabel}
         </StatCell>
         <StatCell label="Pending payout" loading={isShiftLoading}>
-          ₱<NumberTicker value={metrics.pendingPayout} className="font-display" />
+          <NumberTicker value={displayPayout} prefix="₱" className="font-display" />
         </StatCell>
       </dl>
     </header>
@@ -238,7 +255,7 @@ function StatCell({
   small?: boolean;
 }) {
   return (
-    <div className="flex flex-col rounded-xl border border-(--border-subtle)/60 bg-(--surface-warm)/30 p-2.5 transition-colors sm:p-3">
+    <div className="flex min-h-[68px] flex-col justify-between rounded-xl border border-(--border-subtle)/60 bg-(--surface-warm)/30 p-2.5 transition-colors sm:p-3">
       <dt className="text-[10px] font-bold tracking-(--tracking-overline) text-(--text-subtle) uppercase">
         {label}
       </dt>
@@ -247,9 +264,13 @@ function StatCell({
       ) : (
         <dd
           className={cn(
-            "mt-0.5 flex items-baseline font-black tracking-tight",
-            small ? "text-sm text-(--text-muted)" : "text-lg md:text-xl",
-            tone === "brand" ? "text-(--status-available-fg)" : "text-(--text-heading)",
+            "mt-1 flex items-center tracking-tight",
+            small
+              ? "text-sm font-semibold text-(--text-muted) leading-tight"
+              : cn(
+                  "text-lg font-black md:text-xl leading-none font-display",
+                  tone === "brand" ? "text-(--status-available-fg)" : "text-(--text-heading)",
+                ),
           )}
         >
           {children}

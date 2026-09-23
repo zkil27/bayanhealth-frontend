@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Spinner } from "@/components/ui/spinner";
+import { PostConsultationSkeleton } from "./PostConsultationSkeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ArtifactCard, type ArtifactSignatureInput } from "./ArtifactCard";
@@ -987,16 +988,22 @@ export function AssessmentFirstWorkspace({
     });
 
   if (!assessment) {
-    return (
-      <section aria-busy="true" className="m-4 flex items-center gap-2 rounded-xl border p-6">
-        <Spinner className="size-4" /> Loading this consultation…
-        {error ? (
-          <p role="alert" className="text-destructive">
-            {error}
-          </p>
-        ) : null}
-      </section>
-    );
+    if (error) {
+      return (
+        <section
+          role="alert"
+          aria-live="assertive"
+          className="m-4 flex flex-col gap-2 rounded-2xl border border-(--danger-border) bg-(--danger-bg) p-6 text-(--danger-fg) sm:m-6"
+        >
+          <div className="flex items-center gap-2 text-base font-bold">
+            <ShieldAlert className="size-5 shrink-0" />
+            Unable to load consultation
+          </div>
+          <p className="text-sm font-medium">{error}</p>
+        </section>
+      );
+    }
+    return <PostConsultationSkeleton />;
   }
 
   // Which of the five designed post-consult states this consultation is in. All
@@ -1299,7 +1306,7 @@ export function AssessmentFirstWorkspace({
 
           {Object.values(jobs).length ? (
             <section
-              className="rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+              className="rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs"
               aria-labelledby="jobs-heading"
             >
               <h2 id="jobs-heading" className="text-[15px] font-bold text-(--text-heading)">
@@ -1346,7 +1353,7 @@ export function AssessmentFirstWorkspace({
           {assessment.confirmed || history.length > 0 ? (
             <details
               data-slot="artifact-history"
-              className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+              className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
             >
               <summary className="flex cursor-pointer items-center gap-2 px-4 py-3.5 text-[15px] font-bold text-(--text-heading)">
                 <History className="size-4.5 shrink-0 text-(--text-muted)" />
@@ -1562,7 +1569,7 @@ function AssessmentCard({
   return (
     <section
       data-slot="assessment-card"
-      className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+      className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
       aria-labelledby="assessment-heading"
     >
       <div className="flex flex-wrap items-center gap-2 border-b border-(--border-subtle) px-4 py-3.5">

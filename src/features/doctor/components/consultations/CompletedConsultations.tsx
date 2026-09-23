@@ -186,7 +186,7 @@ export function CompletedConsultations() {
 
   return (
     <div
-      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
       data-slot="completed-consultations"
     >
       {/* ------------------------------------------- panel header bar -- */}

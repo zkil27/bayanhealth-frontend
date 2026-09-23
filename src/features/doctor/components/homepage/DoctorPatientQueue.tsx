@@ -44,6 +44,7 @@ import { DoctorConsultationAccess } from "./DoctorConsultationAccess";
 import { DoctorDashboardDrawer } from "./DoctorDashboardDrawer";
 import { TriageDetailsModal } from "./TriageDetailsModal";
 import { AcceptConsultModal, type AcceptConsultTarget } from "./AcceptConsultModal";
+import { DEMO_ON_DEMAND_REQUESTS, DEMO_SCHEDULED_INTAKES } from "../../lib/demoData";
 import type { patientBoardInfo } from "../../types/bookingBoard.types";
 
 export function serviceLabel(serviceType?: string): string | null {
@@ -187,6 +188,23 @@ function UnifiedQueueList() {
     try {
       let isOnDemand: boolean;
       let name: string;
+
+      // When running in demo mode or without a live backend connection:
+      if (!idToken || confirmTarget.item.bookingId.startsWith("demo-")) {
+        isOnDemand = confirmTarget.kind === "pool";
+        name =
+          confirmTarget.kind === "pool"
+            ? targetFromPool(confirmTarget.item).name
+            : targetFromIncoming(confirmTarget.item).name;
+        setConfirmTarget(null);
+        toast.success(
+          isOnDemand
+            ? `${name} accepted — ready to begin in Command Center.`
+            : `${name} accepted — scheduled on your calendar.`,
+        );
+        return;
+      }
+
       if (confirmTarget.kind === "pool") {
         // `acceptRequest` resolves (never rejects) a lost claim race as
         // `{ kind: "claimed" }` — the pool is broadcast, so another doctor
@@ -229,7 +247,7 @@ function UnifiedQueueList() {
     }
   };
 
-  const isLoading = boardLoading || agendaLoading || poolQuery.isLoading;
+  const isLoading = Boolean(idToken && (boardLoading || agendaLoading || poolQuery.isLoading));
   const error =
     boardError ??
     (agendaError instanceof Error ? agendaError.message : null) ??
@@ -242,7 +260,7 @@ function UnifiedQueueList() {
   // would strand additional accepted patients.
   const readyItems = composeReadyToStartItems(board.ready, todayBookings);
 
-  const rows: QueueRow[] = [
+  const rawRows: QueueRow[] = [
     ...readyItems.map((item) => ({ kind: "ready" as const, key: `ready-${item.bookingId}`, item })),
     ...poolRequests.map((item) => ({ kind: "pool" as const, key: `pool-${item.bookingId}`, item })),
     ...board.requests.map((item) => ({
@@ -251,6 +269,23 @@ function UnifiedQueueList() {
       item,
     })),
   ];
+
+  // If live queue is empty (or no active backend connection), present high-fidelity clinical demo cases
+  const rows: QueueRow[] =
+    rawRows.length > 0
+      ? rawRows
+      : [
+          ...DEMO_ON_DEMAND_REQUESTS.map((item) => ({
+            kind: "pool" as const,
+            key: `pool-${item.bookingId}`,
+            item,
+          })),
+          ...DEMO_SCHEDULED_INTAKES.map((item) => ({
+            kind: "incoming" as const,
+            key: `incoming-${item.bookingId}`,
+            item,
+          })),
+        ];
 
   const visibleRows = expanded ? rows : rows.slice(0, VISIBLE_CAP);
   const hiddenCount = rows.length - visibleRows.length;

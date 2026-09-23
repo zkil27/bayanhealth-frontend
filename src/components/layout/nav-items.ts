@@ -23,9 +23,7 @@ export interface NavItem {
  * two breakpoints present the same six destinations in the same order
  * instead of two different information architectures.
  *
- * Chat is temporarily `comingSoon` alongside Med Ed while the feature is
- * pulled back for rework; `/patient/chat` itself also renders a coming-soon
- * placeholder so a direct link behaves the same as the nav.
+ * Chat is live for patient and doctor direct messaging.
  */
 export const PATIENT_NAV: NavItem[] = [
   { title: "Home", href: "/patient", icon: Home },
@@ -34,7 +32,7 @@ export const PATIENT_NAV: NavItem[] = [
   // sitting beside a near-duplicate Records tab.
   { title: "Health", href: "/patient/health", icon: HeartPulse },
   { title: "Book", href: "/patient/booking", icon: CalendarClock },
-  { title: "Chat", href: "/patient/chat", icon: MessageSquareText, comingSoon: true },
+  { title: "Chat", href: "/patient/chat", icon: MessageSquareText },
   { title: "Med Ed", href: "/med-ed", icon: GraduationCap, comingSoon: true },
   { title: "Profile", href: "/patient/profile", icon: UserRound },
 ];
@@ -43,7 +41,7 @@ export const DOCTOR_NAV: NavItem[] = [
   { title: "Dashboard", href: "/doctor", icon: Home },
   { title: "Calendar", href: "/doctor/schedule", icon: CalendarClock },
   { title: "Consults", href: "/doctor/history", icon: Video },
-  { title: "Chat", href: "/doctor/chat", icon: MessageSquareText, comingSoon: true },
+  { title: "Chat", href: "/doctor/chat", icon: MessageSquareText },
   { title: "Med Ed", href: "/med-ed", icon: GraduationCap, comingSoon: true },
   { title: "Profile", href: "/doctor/profile", icon: UserRound },
 ];

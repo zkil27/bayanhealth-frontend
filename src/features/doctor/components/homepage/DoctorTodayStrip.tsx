@@ -115,7 +115,7 @@ export function DoctorTodayStrip({
 
           <StripItem icon={<PhilippinePeso className="size-5" />} label="Pending payout">
             <span className="flex items-center font-display text-lg font-bold text-(--text-heading)">
-              ₱<NumberTicker value={metrics.pendingPayout} className="font-display" />
+              <NumberTicker value={metrics.pendingPayout} prefix="₱" className="font-display" />
             </span>
           </StripItem>
         </div>
@@ -134,7 +134,7 @@ function StripItem({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="flex-row items-center gap-3 rounded-[18px] border-(--border-subtle) bg-(--surface-card) p-4 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]">
+    <Card className="flex-row items-center gap-3 rounded-[18px] border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--surface-accent-soft) text-(--status-available-fg)">
         {icon}
       </div>
@@ -155,7 +155,7 @@ function formatTimeOfDay(iso: string): string {
 
 function StripItemSkeleton() {
   return (
-    <Card className="flex-row items-center gap-3 rounded-[18px] border-(--border-subtle) bg-(--surface-card) p-4 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]">
+    <Card className="flex-row items-center gap-3 rounded-[18px] border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
       <Skeleton className="size-10 shrink-0 rounded-xl" />
       <CardContent className="flex flex-col gap-1.5 p-0">
         <Skeleton className="h-5 w-16" />

@@ -2,14 +2,14 @@ import { cn } from "@/lib/utils";
 
 interface NumberTickerProps {
   value: number;
+  prefix?: React.ReactNode;
   className?: string;
 }
 
 // A primitive number ticker animation for real time changing of numbers
 // example: Doctor's pending intake boards current total intakes that is constantly changing
 
-
-export function NumberTicker({ value, className }: NumberTickerProps) {
+export function NumberTicker({ value, prefix, className }: NumberTickerProps) {
   // Grouped thousands, so a peso total reads "48,200" rather than "48200".
   // Separators fall through the non-digit branch below and render as static
   // characters, so they cost the roll animation nothing. Counts under a
@@ -19,10 +19,15 @@ export function NumberTicker({ value, className }: NumberTickerProps) {
   return (
     <span
       className={cn(
-        "inline-flex overflow-hidden font-mono select-none h-[1.5em] items-center text-current",
+        "inline-flex items-center select-none font-mono tracking-normal text-current",
         className
       )}
     >
+      {prefix ? (
+        <span className="mr-0.5 select-none font-sans font-bold opacity-85">
+          {prefix}
+        </span>
+      ) : null}
       {digits.map((char, idx) => {
         const isNumber = !isNaN(Number(char)) && char !== " ";
         const digit = isNumber ? Number(char) : 0;

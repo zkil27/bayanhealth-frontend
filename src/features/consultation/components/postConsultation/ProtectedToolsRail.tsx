@@ -103,7 +103,7 @@ export function ProtectedToolsRail({
           <Lock
             className={cn(
               "size-4 shrink-0",
-              railState === "relocked" ? "text-(--status-soon-fg)" : "text-(--ink-500)",
+              railState === "relocked" ? "text-(--status-soon-fg)" : "text-(--text-muted)",
             )}
           />
         )}
@@ -111,7 +111,7 @@ export function ProtectedToolsRail({
           id="protected-tools-heading"
           className={cn(
             "text-[15px] font-bold",
-            railState === "unlocked" && "text-(--navy-900)",
+            railState === "unlocked" && "text-(--text-heading)",
             railState === "blocked" && "text-(--danger-fg)",
             railState === "relocked" && "text-(--status-soon-fg)",
             railState === "locked" && "text-(--text-heading)",
@@ -123,10 +123,10 @@ export function ProtectedToolsRail({
           data-slot="protected-tools-badge"
           className={cn(
             "ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold",
-            railState === "unlocked" && "bg-(--surface-accent-soft) text-(--teal-800)",
+            railState === "unlocked" && "bg-(--surface-accent-soft) text-(--teal-800) dark:text-(--teal-300)",
             railState === "blocked" && "bg-(--surface-card) text-(--danger-fg)",
             railState === "relocked" && "bg-(--surface-card) text-(--status-soon-fg)",
-            railState === "locked" && "bg-(--surface-card) text-(--ink-600)",
+            railState === "locked" && "bg-(--surface-card) text-(--text-muted)",
           )}
         >
           {badgeLabel}
@@ -236,7 +236,7 @@ function ToolRowItem({
         <span
           className={cn(
             "truncate text-[15px] font-bold",
-            interactive ? "text-(--navy-900)" : "text-(--ink-500)",
+            interactive ? "text-(--text-heading)" : "text-(--text-muted)",
           )}
         >
           {row.label}
@@ -247,8 +247,8 @@ function ToolRowItem({
             generating
               ? "text-(--ai-fg)"
               : row.status === "stale" || row.status === "coming_soon"
-                ? "font-semibold text-(--gold-700)"
-                : "font-medium text-(--ink-600)",
+                ? "font-semibold text-(--status-soon-fg)"
+                : "font-medium text-(--text-muted)",
           )}
         >
           {generating ? "Drafting…" : row.detail}
@@ -258,7 +258,7 @@ function ToolRowItem({
         {generating ? null : row.status === "released" ? (
           <CheckCircle2 className="size-4 text-(--status-available-fg)" />
         ) : interactive || row.status === "coming_soon" ? null : (
-          <Lock className="size-3.5 text-(--ink-400)" />
+          <Lock className="size-3.5 text-(--text-subtle)" />
         )}
       </span>
     </>

@@ -357,6 +357,14 @@
   --widget-care-bg: #211a35;
   --widget-care-border: var(--violet-600);
   --widget-care-fg: #c9b6ff;
+
+  /* Inverted shadows — dark mode uses subtle neutral/black shadows, eliminating cream glows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 

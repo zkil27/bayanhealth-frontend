@@ -208,7 +208,7 @@ export function AvailabilityPopover({
                   className={cn(
                     "flex-1 rounded-full px-2 py-1 text-xs font-bold transition-colors",
                     selected
-                      ? "bg-(--surface-card) text-(--text-heading) shadow-[0_1px_2px_rgba(219,210,168,0.4)]"
+                      ? "bg-(--surface-card) text-(--text-heading) shadow-2xs"
                       : "text-(--text-muted) hover:text-(--text-heading)",
                   )}
                 >

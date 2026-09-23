@@ -93,7 +93,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export const cardClass =
-  "flex flex-col gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-5 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]";
+  "flex flex-col gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-5 shadow-xs";
 
 export const pillButtonClass =
   "rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)";

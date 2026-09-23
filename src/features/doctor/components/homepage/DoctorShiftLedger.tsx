@@ -66,14 +66,14 @@ export function DoctorShiftLedger() {
         <Stat label="Completed today" loading={loading}>
           <NumberTicker value={completedToday} className="font-display" />
         </Stat>
-        <Stat label="Live queue" loading={loading} tone="brand">
+        <Stat label="Live queue" loading={loading} tone={totalActive > 0 ? "brand" : "default"}>
           <NumberTicker value={totalActive} className="font-display" />
         </Stat>
         <Stat label="Next appointment" loading={loading} small={!metrics.nextAppointment}>
           {nextAppointmentLabel}
         </Stat>
         <Stat label="Pending payout" loading={loading}>
-          ₱<NumberTicker value={metrics.pendingPayout} className="font-display" />
+          <NumberTicker value={metrics.pendingPayout} prefix="₱" className="font-display" />
         </Stat>
       </dl>
     </section>
@@ -104,9 +104,13 @@ function Stat({
       ) : (
         <dd
           className={cn(
-            "flex items-baseline font-black",
-            small ? "text-[15px] text-(--text-muted)" : "text-xl",
-            tone === "brand" ? "text-(--status-available-fg)" : "text-(--text-heading)",
+            "flex items-center tracking-tight",
+            small
+              ? "text-[15px] font-semibold text-(--text-muted) leading-tight"
+              : cn(
+                  "text-xl font-black font-display",
+                  tone === "brand" ? "text-(--status-available-fg)" : "text-(--text-heading)",
+                ),
           )}
         >
           {children}

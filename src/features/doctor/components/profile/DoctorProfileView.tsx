@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
@@ -252,62 +251,88 @@ export function DoctorProfileView() {
             </aside>
 
             {/* Right Detail Column: Focused Workspaces */}
-            <main className="lg:col-span-8 xl:col-span-8">
-              <Tabs
-                value={activeTab}
-                onValueChange={(val) => setActiveTab(val as string)}
-                className="flex w-full flex-col gap-4"
+            <main className="flex flex-col gap-4 lg:col-span-8 xl:col-span-8">
+              {/* Clinical Segmented Tab Bar */}
+              <div
+                role="tablist"
+                aria-label="Profile Workspaces"
+                className="grid w-full grid-cols-3 gap-1.5 rounded-2xl border border-(--border-subtle) bg-(--surface-warm-soft) p-1.5 shadow-2xs"
               >
-                <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-2xl border border-(--border-subtle) bg-(--surface-warm-soft) p-1.5">
-                  <TabsTrigger
-                    value="details"
-                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
-                  >
-                    <UserRound className="size-4 shrink-0" />
-                    <span>Practice Info</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="signature"
-                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
-                  >
-                    <PenLine className="size-4 shrink-0" />
-                    <span>Signature</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="credentials"
-                    className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--text-heading) data-active:shadow-2xs transition-all sm:text-sm"
-                  >
-                    <FileText className="size-4 shrink-0" />
-                    <span>Credentials</span>
-                  </TabsTrigger>
-                </TabsList>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === "details"}
+                  onClick={() => setActiveTab("details")}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    activeTab === "details"
+                      ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
+                      : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
+                  )}
+                >
+                  <UserRound className={cn("size-4 shrink-0", activeTab === "details" ? "text-(--surface-nav)" : "text-(--text-muted)")} />
+                  <span>Practice Info</span>
+                </button>
 
-                <TabsContent value="details">
-                  <ProfileDetailsSection
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === "signature"}
+                  onClick={() => setActiveTab("signature")}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    activeTab === "signature"
+                      ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
+                      : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
+                  )}
+                >
+                  <PenLine className={cn("size-4 shrink-0", activeTab === "signature" ? "text-(--surface-nav)" : "text-(--text-muted)")} />
+                  <span>Signature</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === "credentials"}
+                  onClick={() => setActiveTab("credentials")}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    activeTab === "credentials"
+                      ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
+                      : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
+                  )}
+                >
+                  <FileText className={cn("size-4 shrink-0", activeTab === "credentials" ? "text-(--surface-nav)" : "text-(--text-muted)")} />
+                  <span>Credentials</span>
+                </button>
+              </div>
+
+              {/* Workspace Panels (Preserving Draft Form State) */}
+              <div className={activeTab === "details" ? "block" : "hidden"}>
+                <ProfileDetailsSection
+                  idToken={idToken ?? ""}
+                  profile={bundle.profile}
+                  onSaved={reload}
+                />
+              </div>
+
+              <div className={activeTab === "signature" ? "block" : "hidden"}>
+                <SignatureSection
+                  idToken={idToken ?? ""}
+                  profile={bundle.profile}
+                  onSaved={reload}
+                />
+              </div>
+
+              <div className={activeTab === "credentials" ? "block" : "hidden"}>
+                <section className={cardClass}>
+                  <DoctorCredentialsSection
                     idToken={idToken ?? ""}
-                    profile={bundle.profile}
-                    onSaved={reload}
+                    bundle={bundle}
+                    onChanged={reload}
                   />
-                </TabsContent>
-
-                <TabsContent value="signature">
-                  <SignatureSection
-                    idToken={idToken ?? ""}
-                    profile={bundle.profile}
-                    onSaved={reload}
-                  />
-                </TabsContent>
-
-                <TabsContent value="credentials">
-                  <section className={cardClass}>
-                    <DoctorCredentialsSection
-                      idToken={idToken ?? ""}
-                      bundle={bundle}
-                      onChanged={reload}
-                    />
-                  </section>
-                </TabsContent>
-              </Tabs>
+                </section>
+              </div>
             </main>
           </div>
         </div>

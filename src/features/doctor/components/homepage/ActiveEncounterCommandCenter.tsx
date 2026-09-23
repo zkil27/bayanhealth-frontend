@@ -5,6 +5,7 @@ import { ArrowRight, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
+import { DEMO_ACTIVE_ENCOUNTER } from "@/features/doctor/lib/demoData";
 import { useActiveEncounter } from "../../hooks/useActiveEncounter";
 import { NoShowControl, serviceLabel } from "./DoctorPatientQueue";
 
@@ -44,9 +45,12 @@ import { NoShowControl, serviceLabel } from "./DoctorPatientQueue";
  * started, and ends.
  */
 export function ActiveEncounterCommandCenter() {
-  const { item: active } = useActiveEncounter();
+  const { item: rawActive } = useActiveEncounter();
   const { profile } = useMyDoctorProfile();
-  const isOnDuty = profile?.onDemandAvailable ?? false;
+  const isOnDuty = profile ? (profile.onDemandAvailable ?? false) : true;
+
+  // Use live active item if available; otherwise use DEMO_ACTIVE_ENCOUNTER for visiting clinicians
+  const active = rawActive ?? DEMO_ACTIVE_ENCOUNTER;
   const isLive = active?.isInProgress ?? false;
 
   if (!active) {
@@ -133,7 +137,11 @@ export function ActiveEncounterCommandCenter() {
       <div className="flex items-center gap-2 self-end sm:self-center">
         {!isLive ? <NoShowControl item={active} /> : null}
         <Link
-          href={`/consultation/room/${encodeURIComponent(active.bookingId)}`}
+          href={
+            active.bookingId === "demo-active-encounter"
+              ? "/consultation/room/demo"
+              : `/consultation/room/${encodeURIComponent(active.bookingId)}`
+          }
           data-slot="command-center-return-link"
           className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-(--teal-500) px-4 py-2.5 text-xs font-bold text-(--surface-brand) shadow-sm transition-colors hover:bg-(--teal-400) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >

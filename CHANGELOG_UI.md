@@ -7,6 +7,229 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
+### [2026-09-23] Doctor Suite: Clinician Demo Mode, Navigation Bar & Clinical Evaluation Guide
+
+- **Target Route / Surface**:
+  - `/doctor` (Doctor Clinical Flight Deck & Triage Station)
+  - `/doctor/schedule` & `/doctor/history` (Practice Management & Past Charts)
+  - Global Doctor Shell Layout (`src/app/doctor/(homepage)/layout.tsx`)
+  - Documentation Index (`docs/DOCTOR_UI_DEMO_GUIDE.md`)
+- **Files Modified / Created**:
+  - `src/features/doctor/lib/demoData.ts` [NEW]
+  - `src/components/layout/ClinicianDemoBar.tsx` [NEW]
+  - `docs/DOCTOR_UI_DEMO_GUIDE.md` [NEW]
+  - `src/app/doctor/(homepage)/layout.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/ActiveEncounterCommandCenter.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorRecentConsultations.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Zero-Friction Clinician Demo Mode**:
+    - Previously, when browsing `/doctor` without active AWS Cognito credentials or a populated database, all cards rendered in empty / zero states ("No patients waiting", "No active consultation", "0 completed today"). For doctor demonstrations, this made it impossible for visiting physicians to assess ergonomics, information density, and clinical decision flows.
+    - Added high-fidelity clinical demo fixtures in `src/features/doctor/lib/demoData.ts` representing authentic Philippine primary and urgent care cases:
+      - **Sofia Hernandez (7yo F)**: Urgent pediatric URI with high-grade fever (38.8°C), barking nocturnal cough, and maternal triage answers.
+      - **Manuel Tan (34yo M)**: Acute gastroenteritis with 5 diarrhea episodes, dehydration check, and penicillin allergy alert.
+      - **Ramon Dela Cruz (52yo M)**: Scheduled routine follow-up for T2DM & Stage 1 HTN (BP 142/88) with maintenance refill request.
+      - **Maria Santos (28yo F)**: Active consultation in room for allergic rhinitis flare-up, linking directly to `/consultation/room/demo`.
+      - **Dr. Angela Reyes, MD**: Internal Medicine & Tele-Triage clinician identity with realistic shift metrics (4 completed today, 3 in queue, ₱3,400.00 pending payout).
+  - **Mounted Clinician Demo Navigation Bar**:
+    - Created `ClinicianDemoBar.tsx` and mounted it at the top of the doctor shell. Provides 1-click jump links between Flight Deck (`/doctor`), Teleconsult Room (`/consultation/room/demo`), Post-Consult CDS (`/doctor/post-consultation/id?consultationId=demo&bookingId=demo`), Schedule (`/doctor/schedule`), and Route Index (`/admin/routes`).
+  - **Physician Evaluation & Feedback Rubric (`docs/DOCTOR_UI_DEMO_GUIDE.md`)**:
+    - Authored a comprehensive 15-minute presentation script and structured evaluation questionnaire covering 4 pillars: Information Architecture & Triage Speed, Documentation Burden (Dual-Rail vs Tabs), Clinical Safety & Error Prevention (Allergies), and Philippine Regulatory Fit (PRC, PTR, S2, PhilHealth).
+  - **Anti-AI Slop & Design Standards**:
+    - Uses crisp 1px borders (`border-(--border-subtle)`), Brand Navy (`#074972`), and Bayan Teal (`#18a58c`).
+    - Clean vector Lucide SVG icons (`Stethoscope`, `LayoutDashboard`, `Video`, `FileSignature`, `Calendar`, `Compass`); strictly zero platform emojis or neon glows.
+
+---
+
+### [2026-09-23] Consultation & Post-Consultation: High-Fidelity Clinical Skeleton Loader Overhaul
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/id?consultationId=...&bookingId=...` (Post-Consultation CDS Workspace)
+  - `/doctor/post-consultation/[consultationId]` (All post-consultation dynamic routes)
+  - `/consultation/room` & `/doctor/room/[bookingId]` (Active Video Consultation Room)
+- **Files Modified / Created**:
+  - `src/features/consultation/components/postConsultation/PostConsultationSkeleton.tsx` [NEW]
+  - `src/features/consultation/components/session/ConsultationRoomSkeleton.tsx` [NEW]
+  - `src/app/doctor/post-consultation/id/loading.tsx` [NEW]
+  - `src/app/doctor/post-consultation/loading.tsx` [NEW]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/components/ui/skeleton.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Replaced Bare Spinner & "Loading" Text with Clinical Skeleton**:
+    - Previously, during consultation data hydration (`!assessment`), `AssessmentFirstWorkspace` rendered a lonely, jarring inline box with `<Spinner className="size-4" /> Loading this consultation…` (the word loading with a gear). This triggered severe cumulative layout shift (CLS) once the 3-column workspace loaded.
+    - Designed and implemented `PostConsultationSkeleton`, a high-fidelity, accessible skeleton that accurately mirrors the complete post-consultation layout:
+      - **Header**: Stethoscope avatar circle, consultation ID & title, status badge pill, and stepper indicator (`Review` → `Assess` → `Deliver`) with divider bars and action button placeholder.
+      - **Left Rail**: "Patient Intake" rail header, intake demographics card with dashed border, and patient metadata placeholders (Chief Complaint, Vitals, History).
+      - **Center Workspace**:
+        - SOAP Summary cards: 2-column grid with "Subjective" and "Objective" badge headers and clinical content line placeholders.
+        - Confirmed Assessment card: Diagnosis title skeleton, status badge, and "Revise" button skeleton.
+        - Deliverables & Documentation Deck: Large canvas area with document icon and draft placeholder.
+        - Care Continuity: Follow-up recommendation date picker input, reason textarea, and save action button.
+        - Authorized Artifact History: Expandable accordion header with history icon and counter pill.
+      - **Right Rail**: "Protected tools" rail with item cards for Plan, Prescription, Medical certificate (with lock icon), Lab request, Imaging request, Patient education, and the primary "Finish documentation" CTA button.
+  - **In-Session Consultation Room Skeleton**:
+    - Upgraded `ConsultationRoom.tsx` to replace the centered spinner panel with `ConsultationRoomSkeleton`, featuring the session header and dual-pane clinical stage (video viewport on the left, clinical companion suite with intake and chat stream on the right).
+  - **Next.js Route Streaming Boundaries**:
+    - Added `src/app/doctor/post-consultation/id/loading.tsx` and `src/app/doctor/post-consultation/loading.tsx` to provide immediate, instant loading states during Next.js server streaming and page transitions.
+  - **Accessibility & Motion Standards**:
+    - Wrapped all skeletons with `aria-busy="true"` and descriptive `aria-label`.
+    - Enhanced `src/components/ui/skeleton.tsx` with `motion-reduce:animate-none` for users with motion sensitivity.
+    - Semantic tokens used throughout (`bg-(--surface-card)`, `border-(--border-subtle)`, `bg-(--surface-warm-soft)`, `bg-(--action-primary)/25`). No hardcoded hex values or AI slop glowing gradients.
+
+---
+
+### [2026-09-23] Navigation: Chat Destination Activated for Patient & Doctor Portals
+
+- **Target Route / Surface**:
+  - Global Navigation (`FloatingSidebar.tsx`, `NavBar.tsx`, `nav-items.ts`)
+  - Target routes: `/doctor/chat`, `/patient/chat`
+- **Files Modified**:
+  - `src/components/layout/nav-items.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Un-gated Chat in Primary Navigation**:
+    - Previously, both `PATIENT_NAV` and `DOCTOR_NAV` marked `Chat` with `comingSoon: true`, rendering an inert, non-interactive "Soon" badge with `cursor-not-allowed` on the desktop floating sidebar and filtering it out of the patient mobile bottom bar.
+    - Removed `comingSoon: true` flag on both navigation tables to make the destination fully clickable and interactive.
+    - Enables direct navigation to the conversation lists (`/doctor/chat` and `/patient/chat`) and conversation rooms (`/doctor/chat/[bookingId]` and `/patient/chat/[bookingId]`), preparing the surfaces for UI overhaul and ergonomics polish.
+
+---
+
+### [2026-09-23] Doctor Dashboard: Shift Overview Metrics Ribbon Typography & Consistency Fix
+
+- **Target Route / Surface**:
+  - `/doctor` (Doctor Homepage Shift Overview Metrics Ribbon)
+- **Files Modified**:
+  - `src/components/primitives/NumberTicker.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorShiftLedger.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorTodayStrip.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Fixed Currency Symbol Baseline Mismatch & Negative Tracking Collision**:
+    - Previously, `₱` was rendered as a raw sibling string alongside `<NumberTicker>` inside a flex container with `tracking-tight` and `items-baseline`. Because `NumberTicker` renders with `inline-flex overflow-hidden`, browser baseline rules aligned the ticker's bottom margin edge against the font baseline, while negative tracking pulled the leading zero directly into the peso symbol (`₱0` overlapping collision).
+    - Upgraded `NumberTicker` to support an integrated `prefix` prop with consistent inline-flex centering, dedicated spacing (`mr-0.5`), and robust baseline stability.
+  - **Resolved Tone & Color Inconsistency**:
+    - Previously, `Live queue` hardcoded `tone="brand"` (vivid teal green) even when the queue was `0`, creating a jarring color clash with `Completed today` and `Pending payout` (which rendered Navy `0`).
+    - Made `tone` condition-aware (`totalActive > 0 ? "brand" : "default"`), ensuring a calm, unified neutral Navy palette when idle and lighting up brand teal only when patients are waiting in queue.
+  - **Standardized Card Geometry & Baseline Alignment**:
+    - Fixed specificity conflict where `text-(--text-heading)` overrode `small`'s `text-(--text-muted)` on "None today".
+    - Added `min-h-[68px] justify-between` to `StatCell` and centered `flex items-center` on `<dd>` to guarantee identical card heights and vertical alignment across all four metrics.
+
+---
+
+### [2026-09-23] Post-Consultation & Doctor Portal: Anti-AI Slop Glow Removal & Crisp 1px Border Standardization
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[consultationId]` (Deliverables Deck, Assessment Card, Care Continuity, Artifact History)
+  - `/doctor/schedule`, `/doctor/history`, `/doctor/profile`
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/doctor/components/kyc/DoctorKycView.tsx` [MODIFIED]
+  - `src/features/doctor/components/consultations/CompletedConsultations.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/AvailabilityPopover.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/DoctorScheduleView.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorTodayStrip.tsx` [MODIFIED]
+  - `src/styles/bayanhealth-tokens.css` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Glowing Neon Strokes & SaaS Outlines**:
+    - The `DeliverablesDeck` card previously used a bright teal/cyan stroke (`border border-(--status-available-fg)/40`), a tinted teal header (`bg-(--status-available-bg)/40`), and a teal active tab border (`border-(--status-available-fg)/40`), which created a strong glowing cyan SaaS aesthetic in dark mode.
+    - Replaced with crisp 1px solid neutral borders (`border-(--border-subtle)`), calm warm surfaces (`bg-(--surface-card)` / `bg-(--surface-warm-soft)/40`), and standardized neutral active tab borders.
+  - **Eliminated Cream/Gold Halo Shadows (`rgba(219,210,168,0.25)`)**:
+    - Removed hardcoded 16px blur cream-tinted drop shadows (`shadow-[0_6px_16px_rgba(219,210,168,0.25),...]`) across all clinical cards, replacing them with standard crisp `shadow-xs` / `shadow-2xs`.
+    - Added dark-mode shadow overrides in `bayanhealth-tokens.css` under `:root.dark, .dark, [data-theme="dark"]` (`--shadow-xs`, `--shadow-sm`, `--shadow-card`, `--shadow-md`, `--shadow-lg`, `--shadow-float`) using neutral black alphas (`rgba(0, 0, 0, ...)`), permanently preventing warm cream shadows from bleeding as a glow into dark mode cards.
+  - **Embedded Artifact Card Cleanup**:
+    - Removed `border-(--teal-600)/30` in embedded edit mode in `ArtifactCard.tsx`, harmonizing with `border-(--border-subtle)`.
+- **Anti-AI Slop Enforcement**:
+  - Strictly adheres to Rule 2: Zero cyan/neon SaaS glows, zero one-sided gradient strokes, 100% crisp 1px solid borders and authentic BayanHealth clinical authority.
+
+---
+
+### [2026-09-23] Doctor Profile: Clinical Tab Bar Ergonomics & Overflow Fix
+
+- **Target Route / Surface**:
+  - `/doctor/profile` (Doctor Profile Workspace Tabs)
+- **Files Modified**:
+  - `src/features/doctor/components/profile/DoctorProfileView.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Fixed Tab List Height Clipping & Pill Overflow**:
+    - Previously, Base UI's `<TabsList>` enforced a rigid `h-8` (32px) constraint with default absolute pseudo-elements, causing the active tab pill to visibly overflow and intersect the outer rounded border.
+    - Replaced with a custom, high-durability segmented tab bar (`role="tablist"` / `role="tab"`).
+    - Designed with proper padding (`p-1.5`), responsive pill geometry (`py-2 px-3`), crisp 1px solid border (`border-(--border-subtle)`), and warm background tint (`bg-(--surface-warm-soft)`).
+    - Kept form draft state persistent across tab switches via `hidden`/`block` panel rendering so clinicians do not lose uncommitted edits when navigating.
+
+---
+
+### [2026-09-23] Post-Consultation: Comprehensive Dark Mode Readability & Contrast Overhaul
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[consultationId]` (Entire Post-Consultation Doctor Workspace & Modals in Dark Mode)
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadView.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadEditor.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientDetails.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ProtectedToolsRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Diagnosed Dark Mode Contrast Failure**:
+    - In dark mode (`:root.dark, .dark, [data-theme="dark"]`), raw color variables (`--navy-900: #032a44;`, `--navy-800: #053a5b;`, `--ink-800: #323232;`, `--ink-700: #454c52;`, etc.) remained dark tones from the light palette definition.
+    - Components across the post-consultation workspace directly utilizing raw utilities like `text-(--navy-900)`, `text-(--navy-800)`, `text-(--ink-700)`, and `text-(--ink-800)` rendered dark blue and black text against dark charcoal card surfaces (`#161D26`), resulting in an illegible contrast ratio (~1.05:1).
+  - **Two-Pillar Solution**:
+    1. **Global Fail-Safe Token Inversions (`bayanhealth-tokens.css`)**:
+       - Added high-contrast inverted mappings under `:root.dark, .dark, [data-theme="dark"]` for `--navy-900` (`#f8f4e3`), `--navy-800` (`#e8ecf2`), `--navy-700` (`#97c0d8`), `--ink-900` (`#f8f4e3`), `--ink-800` (`#e1e7ef`), `--ink-700` (`#c5d0db`), `--ink-600` (`#9aabb8`), `--ink-500` (`#7e91a0`), and `--teal-800` (`#3eb49e`).
+       - Explicitly anchored `--surface-brand: #0e3753;` so inverted brand text tokens do not distort dark brand surfaces.
+    2. **Component-Scoped Semantic Token Migration**:
+       - **SOAP Intake Strip (`SoapSummaryCards.tsx`)**: Replaced raw navy and ink text tokens with semantic `text-(--text-heading)` and `text-(--text-muted)`.
+       - **Document Renderers (`ArtifactPayloadView.tsx`)**: Replaced hardcoded ink and navy tokens in `PlanView`, `Field`, `Prose`, `Bullets`, and `Pair` with semantic `text-(--text-heading)`, `text-(--text-body)`, and `text-(--text-muted)`.
+       - **Deliverables & Document Editor (`ArtifactPayloadEditor.tsx`)**: Added `dark:bg-(--surface-card)` to all typing surfaces (`TextField`, `TextAreaField`, `StringListField`, `GroupItem`); converted `FieldLabel`, `RepeatingGroup`, and group titles to `text-(--text-heading)`.
+       - **Assessment Workspace & Banners (`AssessmentFirstWorkspace.tsx`)**: Upgraded confirmed assessment summary, guidance instruction strip, alert dialog titles/descriptions, and documentation warning pills to semantic text tokens.
+       - **Patient Rail & Details (`PatientRail.tsx`, `PatientDetails.tsx`)**: Replaced raw tokens on symptoms review, pain rating badges, red-flag screening, reproductive health, and intake collapse controls with semantic tokens.
+       - **Protected Tools Rail (`ProtectedToolsRail.tsx`)**: Switched tool item labels, locked state indicators, and status badges to `text-(--text-heading)`, `text-(--text-muted)`, and `text-(--status-soon-fg)`.
+       - **Workspace Header (`WorkspaceChrome.tsx`)**: Updated patient identifier and metadata subtitles to `text-(--text-muted)`.
+- **Anti-AI Slop & Accessibility Verification**:
+  - Restored WCAG AAA / AA contrast ratios (> 7:1 for headings, > 4.5:1 for body copy) across all dark mode clinical surfaces.
+  - Zero glowing neon cyan/purple SaaS gradients; crisp 1px solid borders (`border-(--border-subtle)` / `border-(--border-default)`); authentic BayanHealth clinical authority maintained.
+
+---
+
+### [2026-09-23] Doctor Profile & Settings: Two-Column Master / Detail Clinical Cockpit & Tabbed Workspaces
+
+- **Target Route / Surface**:
+  - `/doctor/profile` (Doctor Profile, Signature Management, and Credentialing / KYC Verification)
+- **Files Modified**:
+  - `src/app/doctor/(homepage)/profile/page.tsx` [MODIFIED]
+  - `src/features/doctor/components/profile/DoctorProfileView.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Monolithic Single-Column Vertical Stack**:
+    - Previously, the profile page stacked three heavy cards (`Your details`, `Signature`, and `Credentials`) vertically in a `max-w-4xl` column, creating vast empty space on wide displays while forcing excessive scrolling.
+    - Expanded page container width to `max-w-6xl w-full` and reorganized the layout into an asymmetric **Two-Column Master / Detail Clinical Cockpit** (`grid-cols-1 lg:grid-cols-12`).
+  - **Master Column: Doctor Identity & Status Cockpit (`lg:col-span-4`)**:
+    - Introduced a sticky summary card providing instant situational awareness:
+      - Doctor monogram avatar badge, verified checkmark, and full name.
+      - PRC License and verification status badge (`Approved`, `Pending review`, etc.).
+      - Clinical credentials snapshot (PRC License, signature status with quick alert link if missing, and On-Demand availability status).
+      - Quick workspace section shortcuts synchronized with the active tab.
+      - Regulatory reassurance note referencing Philippine PRC & DOH telehealth practice guidelines.
+  - **Detail Column: Focused Tabbed Workspaces (`lg:col-span-8`)**:
+    - Integrated high-density segmented tabs using `@base-ui/react/tabs`:
+      - **Practice Info**: Clean layout for public clinical profile, locked credentials with explanatory lock hints, specialty, phone, bio textarea with character counter, and dirty-aware save button.
+      - **Clinical Signature**: Reusable digital specimen signing workspace with framed signature preview, remove/replace controls, and drawing pad.
+      - **Credentials & KYC**: Dedicated compliance view for uploading professional license and supporting documents, previewing uploaded files, and submitting for review.
+  - **Platform Ergonomics & Anti-AI Slop Enforcement**:
+    - Crisp 1px solid borders (`border-(--border-subtle)`), warm card surfaces (`bg-(--surface-card)`, `bg-(--surface-warm-soft)`), and Bayan Navy/Teal accents.
+    - Zero platform emojis; exclusively intentional `lucide-react` vector icons.
+    - Seamless responsive collapse to a single column on tablet/mobile screens with >= 48px touch targets.
+
+---
+
 ### [2026-09-23] Post-Consultation: Plan & Deliverables Editor Input Affordances, Readability & Visual Typing Contrast
 
 - **Target Route / Surface**:

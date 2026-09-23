@@ -577,7 +577,7 @@ export function DoctorScheduleView() {
                 scrolling region so they never scroll away from the content
                 they're framing.
               */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)] sm:p-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-xs sm:p-4">
                 <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
                   <div className="min-h-0 flex-1 overflow-auto">
                     <div style={{ minWidth: view === "day" ? 0 : 760 }}>

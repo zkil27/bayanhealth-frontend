@@ -26,7 +26,7 @@ export function CareContinuityPanel({
     <section
       data-slot="care-continuity-panel"
       aria-labelledby="care-continuity-heading"
-      className="rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+      className="rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs"
     >
       <h2
         id="care-continuity-heading"

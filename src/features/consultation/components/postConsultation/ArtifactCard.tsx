@@ -371,7 +371,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
             className={cn(
               "rounded-[16px] border p-4 shadow-xs",
               embedded
-                ? "border-(--teal-600)/30 bg-(--surface-warm-soft)/70"
+                ? "border-(--border-subtle) bg-(--surface-warm-soft)/50"
                 : provenance === "edited"
                   ? "border-(--edited-border) bg-(--edited-bg-strong)"
                   : "border-(--ai-border) bg-(--ai-bg-strong)",

@@ -187,7 +187,7 @@ export function WorkspaceHeader({
           <h1 className="truncate font-display text-lg font-bold text-(--text-heading)">
             {heading}
           </h1>
-          <p className="truncate text-xs font-semibold text-(--ink-600)">
+          <p className="truncate text-xs font-semibold text-(--text-muted)">
             {name ? identityParts.join(" · ") : `#${consultationId}`}
           </p>
         </div>

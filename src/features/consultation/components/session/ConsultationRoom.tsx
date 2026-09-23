@@ -30,6 +30,7 @@ import { useStartConsultation } from "@/features/doctor/hooks/useStartConsultati
 import { ConsultationVideo } from "@/features/media/components/ConsultationVideo";
 import { PatientCompanionSuite } from "@/components/consultation/PatientCompanionSuite";
 import { DoctorClinicalCompanionSuite } from "@/components/consultation/DoctorClinicalCompanionSuite";
+import { ConsultationRoomSkeleton } from "./ConsultationRoomSkeleton";
 import { formatDoctorName } from "@/lib/utils";
 
 import {
@@ -143,17 +144,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   };
 
   if (stateQuery.isLoading && !isDemo) {
-    return (
-      <CenteredRoomPanel>
-        <div
-          data-slot="consultation-room-loading"
-          className="flex min-h-40 items-center justify-center gap-2 rounded-3xl border border-slate-200/70 bg-(--surface-card) p-6 text-sm text-slate-500 shadow-xs"
-        >
-          <Spinner className="size-4" />
-          Opening consultation…
-        </div>
-      </CenteredRoomPanel>
-    );
+    return <ConsultationRoomSkeleton />;
   }
 
   if (stateQuery.error && !isDemo) {
