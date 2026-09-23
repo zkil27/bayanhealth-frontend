@@ -71,6 +71,57 @@ async function command<T>(
 }
 
 export async function getAssessment(consultationId: string, token: string): Promise<CdsAssessment> {
+  if (consultationId === "demo" || consultationId === "demo-consult") {
+    return {
+      consultationId: "demo",
+      confirmationState: "confirmed",
+      editableDiagnosis: "Acute Bronchitis (J20.9)",
+      editableAssessmentRevision: 1,
+      editableAssessmentDigest: "demo-digest",
+      assessmentVersion: 1,
+      assignmentRevision: 1,
+      clinicalInputRevision: 1,
+      clinicalInputSourceFence: 1,
+      gateRevision: 1,
+      policyActivationRevision: 1,
+      lockReasons: [],
+      allowedOutputTypes: [
+        "plan",
+        "prescription",
+        "lab_request",
+        "imaging_request",
+        "medical_certificate",
+        "patient_education",
+      ],
+      confirmed: {
+        diagnosis: "Acute Bronchitis (J20.9)",
+        confirmedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+        physicianActorId: "demo-doctor",
+        source: "manual_entry",
+        catalogVersion: "v1",
+        generationEligibility: {
+          capability: "full_solver",
+          eligibleOutputTypes: [
+            "plan",
+            "prescription",
+            "lab_request",
+            "imaging_request",
+            "medical_certificate",
+            "patient_education",
+          ],
+          digest: "demo-digest",
+        },
+        confirmedAssessmentDigest: "demo-digest",
+        confirmedEditableAssessmentDigest: "demo-digest",
+        confirmedEditableAssessmentRevision: 1,
+        assessmentVersion: 1,
+      },
+      editable: {
+        draftDiagnosis: "Acute Bronchitis (J20.9)",
+        updatedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+      },
+    } as unknown as CdsAssessment;
+  }
   requireToken(token);
   return (await api.request<CdsAssessment>(`${consultationPath(consultationId)}/assessment`, token, {
     method: "GET",
@@ -174,6 +225,12 @@ export async function issueGateToken(
   token: string,
   request: CdsGateTokenIssueRequest,
 ): Promise<CdsGateTokenIssueResult> {
+  if (consultationId === "demo" || consultationId === "demo-consult") {
+    return {
+      gateToken: "demo-gate-token",
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+    } as unknown as CdsGateTokenIssueResult;
+  }
   return (await command<CdsGateTokenIssueResult>(`${consultationPath(consultationId)}/gate-tokens`, token, "POST", request)).data;
 }
 
@@ -204,6 +261,107 @@ export async function generateProtectedOutput(
 }
 
 export async function getCurrentOutputs(consultationId: string, token: string): Promise<CdsCurrentOutputs> {
+  if (consultationId === "demo" || consultationId === "demo-consult") {
+    return {
+      outputs: [
+        {
+          artifactId: "demo-art-plan",
+          outputType: "plan",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            summary: "Supportive care, hydration, and short-term bronchodilator therapy for acute bronchitis.",
+            goals: ["Symptom relief of productive cough", "Prevention of secondary bacterial infection"],
+            interventions: ["Increased fluid intake (2-3L/day)", "Steam inhalation prn", "Adequate rest"],
+            followUp: "Follow-up in 3-5 days if fever persists or cough worsens.",
+          },
+        },
+        {
+          artifactId: "demo-art-rx",
+          outputType: "prescription",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            medications: [
+              {
+                genericName: "Salbutamol",
+                dose: "2mg",
+                route: "Oral",
+                frequency: "Every 8 hours as needed",
+                duration: "5 days",
+                instructions: "Take with or after meals",
+              },
+              {
+                genericName: "Paracetamol",
+                dose: "500mg",
+                route: "Oral",
+                frequency: "Every 4 to 6 hours as needed",
+                duration: "3 days",
+                instructions: "Do not exceed 4g in 24 hours",
+              },
+            ],
+          },
+        },
+        {
+          artifactId: "demo-art-lab",
+          outputType: "lab_request",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            tests: [
+              {
+                testName: "Complete Blood Count (CBC) with Platelet Count",
+                rationale: "Evaluate leukocytosis / acute infectious process",
+                priority: "routine",
+              },
+            ],
+          },
+        },
+        {
+          artifactId: "demo-art-imaging",
+          outputType: "imaging_request",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            studies: [
+              {
+                studyName: "Chest X-Ray PA/Lateral",
+                bodyRegion: "Chest",
+                rationale: "Rule out pneumonia / lower respiratory consolidation",
+                priority: "routine",
+              },
+            ],
+          },
+        },
+        {
+          artifactId: "demo-art-medcert",
+          outputType: "medical_certificate",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            statement: "Excused from physical work duties for 3 days from date of examination.",
+            validFrom: "2026-09-23",
+            validThrough: "2026-09-26",
+          },
+        },
+      ],
+    } as unknown as CdsCurrentOutputs;
+  }
   requireToken(token);
   return (await api.request<CdsCurrentOutputs>(`${consultationPath(consultationId)}/outputs/current`, token, {
     method: "GET", correlationId: newCorrelationId(), cache: "no-store",
@@ -215,6 +373,9 @@ export async function getOutputHistory(
   token: string,
   cursor?: string,
 ): Promise<CursorPage<CdsOutputHistory>> {
+  if (consultationId === "demo" || consultationId === "demo-consult") {
+    return { data: { outputs: [] } as unknown as CdsOutputHistory, hasMore: false };
+  }
   requireToken(token);
   const query = new URLSearchParams({ limit: "20" });
   if (cursor) query.set("cursor", cursor);

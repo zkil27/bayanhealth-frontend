@@ -84,26 +84,26 @@ export function ProtectedToolsRail({
       data-slot="protected-tools-rail"
       data-rail-state={railState}
       aria-labelledby="protected-tools-heading"
-      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
     >
       <div
         className={cn(
-          "flex items-center gap-2 px-4 py-3.5",
-          railState === "unlocked" && "bg-(--status-available-bg)",
+          "flex items-center gap-2 border-b border-(--border-subtle) px-4 py-3",
+          railState === "unlocked" && "bg-(--surface-warm-soft)/60",
           railState === "blocked" && "bg-(--danger-bg)",
           railState === "relocked" && "bg-(--status-soon-bg)",
-          railState === "locked" && "bg-(--surface-warm-soft)",
+          railState === "locked" && "bg-(--surface-warm-soft)/60",
         )}
       >
         {railState === "unlocked" ? (
-          <Unlock className="size-4.5 shrink-0 text-(--status-available-fg)" />
+          <Unlock className="size-4 shrink-0 text-(--teal-700)" />
         ) : railState === "blocked" ? (
-          <ShieldAlert className="size-4.5 shrink-0 text-(--danger-fg)" />
+          <ShieldAlert className="size-4 shrink-0 text-(--danger-fg)" />
         ) : (
           <Lock
             className={cn(
-              "size-4.5 shrink-0",
-              railState === "relocked" ? "text-(--status-soon-fg)" : "text-(--text-muted)",
+              "size-4 shrink-0",
+              railState === "relocked" ? "text-(--status-soon-fg)" : "text-(--ink-500)",
             )}
           />
         )}
@@ -111,7 +111,7 @@ export function ProtectedToolsRail({
           id="protected-tools-heading"
           className={cn(
             "text-[15px] font-bold",
-            railState === "unlocked" && "text-(--status-available-fg)",
+            railState === "unlocked" && "text-(--navy-900)",
             railState === "blocked" && "text-(--danger-fg)",
             railState === "relocked" && "text-(--status-soon-fg)",
             railState === "locked" && "text-(--text-heading)",
@@ -123,10 +123,10 @@ export function ProtectedToolsRail({
           data-slot="protected-tools-badge"
           className={cn(
             "ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold",
-            railState === "unlocked" && "bg-(--surface-card) text-(--status-available-fg)",
+            railState === "unlocked" && "bg-(--surface-accent-soft) text-(--teal-800)",
             railState === "blocked" && "bg-(--surface-card) text-(--danger-fg)",
             railState === "relocked" && "bg-(--surface-card) text-(--status-soon-fg)",
-            railState === "locked" && "bg-(--surface-card) text-(--text-muted)",
+            railState === "locked" && "bg-(--surface-card) text-(--ink-600)",
           )}
         >
           {badgeLabel}
@@ -236,19 +236,19 @@ function ToolRowItem({
         <span
           className={cn(
             "truncate text-[15px] font-bold",
-            interactive ? "text-(--text-heading)" : "text-(--text-subtle)",
+            interactive ? "text-(--navy-900)" : "text-(--ink-500)",
           )}
         >
           {row.label}
         </span>
         <span
           className={cn(
-            "truncate text-sm",
+            "truncate text-xs",
             generating
               ? "text-(--ai-fg)"
               : row.status === "stale" || row.status === "coming_soon"
-                ? "text-(--status-soon-fg)"
-                : "text-(--text-muted)",
+                ? "font-semibold text-(--gold-700)"
+                : "font-medium text-(--ink-600)",
           )}
         >
           {generating ? "Drafting…" : row.detail}
@@ -258,7 +258,7 @@ function ToolRowItem({
         {generating ? null : row.status === "released" ? (
           <CheckCircle2 className="size-4 text-(--status-available-fg)" />
         ) : interactive || row.status === "coming_soon" ? null : (
-          <Lock className="size-4 text-(--text-subtle)" />
+          <Lock className="size-3.5 text-(--ink-400)" />
         )}
       </span>
     </>

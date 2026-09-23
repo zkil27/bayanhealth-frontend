@@ -1,13 +1,10 @@
 "use client";
 
-import { ClipboardCheck, User } from "lucide-react";
+import { ClipboardCheck, FileText, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  ageFromDateOfBirth,
-  SEX_LABELS,
-  type BookingIntakeForm,
-} from "@/features/doctor/lib/api/bookingIntake";
+import { Button } from "@/components/ui/button";
+import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
 import { PatientDetails } from "./PatientDetails";
 
@@ -15,50 +12,84 @@ import { PatientDetails } from "./PatientDetails";
 export function PatientRail({
   bookingId,
   intake,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   bookingId?: string;
   /** Intake already loaded by the workspace, to avoid fetching it twice. */
   intake?: BookingIntakeForm | null;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
-  const demographics = intake?.sections.details?.demographics;
-  const age = ageFromDateOfBirth(demographics?.dateOfBirth);
-  const sex = demographics?.sex ? SEX_LABELS[demographics.sex] : undefined;
-  const patientName = intake?.patientName?.trim() || "Patient";
-  const initials = patientName
-    .split(/\s+/u)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toLocaleUpperCase())
-    .join("");
+  if (collapsed) {
+    return (
+      <aside
+        data-slot="patient-rail"
+        data-collapsed="true"
+        aria-label="Patient intake (collapsed)"
+        className="flex flex-col items-center gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) py-3.5 shadow-xs"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="size-8 p-0 rounded-lg text-(--text-muted) hover:text-(--navy-900) hover:bg-(--surface-warm-soft)"
+          onClick={onToggleCollapse}
+          title="Expand patient intake"
+          aria-label="Expand patient intake"
+        >
+          <PanelLeftOpen className="size-4.5" />
+        </Button>
+        <span className="flex size-7 items-center justify-center rounded-md bg-(--surface-brand-soft) text-(--teal-800)">
+          <FileText className="size-4" />
+        </span>
+        <span
+          className="text-[11px] font-bold text-(--ink-600) tracking-wider uppercase [writing-mode:vertical-lr] rotate-180"
+        >
+          Intake
+        </span>
+        {intake ? (
+          <span
+            className="size-2 rounded-full bg-(--teal-600)"
+            title={`Intake: ${intake.status}`}
+          />
+        ) : null}
+      </aside>
+    );
+  }
 
   return (
     <aside
       data-slot="patient-rail"
-      aria-label="Patient record"
-      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+      aria-label="Patient intake"
+      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
     >
-      <div className="border-b border-(--border-subtle) bg-(--surface-warm-soft) p-3.5">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-sm font-bold text-(--text-on-brand)"
-          >
-            {initials || <User className="size-4" />}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-bold text-(--text-heading)">{patientName}</p>
-            <p className="text-xs text-(--text-muted)">
-              {[typeof age === "number" ? `${age} years` : undefined, sex]
-                .filter(Boolean)
-                .join(" · ") || "Demographics not provided"}
-            </p>
-          </div>
+      <div className="flex items-center justify-between border-b border-(--border-subtle) bg-(--surface-warm-soft)/60 px-3.5 py-2.5">
+        <div className="flex items-center gap-2">
+          <FileText className="size-4 text-(--teal-700)" />
+          <h2 className="text-xs font-bold text-(--navy-900)">Patient Intake</h2>
           {intake ? (
-            <Badge variant="outline" className="shrink-0 gap-1 capitalize">
-              <ClipboardCheck className="size-3" /> {intake.status}
+            <Badge
+              variant="outline"
+              className="gap-1 border-(--border-default) px-1.5 py-0 text-[10px] font-semibold text-(--ink-700) capitalize"
+            >
+              <ClipboardCheck className="size-2.5 text-(--teal-700)" /> {intake.status}
             </Badge>
           ) : null}
         </div>
-        <p className="mt-2 text-xs text-(--text-subtle)">Patient-reported intake · review before documenting</p>
+        {onToggleCollapse ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="size-7 p-0 rounded-lg text-(--text-muted) hover:text-(--navy-900) hover:bg-(--surface-warm-soft)"
+            onClick={onToggleCollapse}
+            title="Collapse intake rail"
+            aria-label="Collapse intake rail"
+          >
+            <PanelLeftClose className="size-4" />
+          </Button>
+        ) : null}
       </div>
       <div className="p-3">
         <PatientDetails bookingId={bookingId} form={intake} />

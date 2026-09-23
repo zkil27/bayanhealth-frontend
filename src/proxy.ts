@@ -17,6 +17,7 @@ function configuredOrigin(value: string | undefined, protocols: readonly string[
 }
 
 export function buildContentSecurityPolicy(nonce: string): string {
+  const isDev = process.env.NODE_ENV !== "production";
   const region = (process.env.NEXT_PUBLIC_AWS_REGION ?? "ap-southeast-1").trim();
   const apiOrigin = configuredOrigin(process.env.NEXT_PUBLIC_API_BASE_URL, ["https:"]);
   const wsOrigin = configuredOrigin(process.env.NEXT_PUBLIC_WS_URL, ["wss:"]);
@@ -48,6 +49,7 @@ export function buildContentSecurityPolicy(nonce: string): string {
     `https://s3.${region}.amazonaws.com`,
     `https://*.s3.${region}.amazonaws.com`,
     ...dailyConnectSources,
+    ...(isDev ? ["ws:", "http:"] : []),
   ].filter((source): source is string => source !== null);
   const mediaSources = [
     "'self'",
@@ -62,14 +64,14 @@ export function buildContentSecurityPolicy(nonce: string): string {
     "frame-ancestors 'none'",
     "form-action 'self'",
     "object-src 'none'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src ${mediaSources.join(" ")} data:`,
     "font-src 'self' data:",
     `connect-src ${connectSources.join(" ")}`,
     `media-src ${mediaSources.join(" ")}`,
     "worker-src 'self' blob:",
-    "upgrade-insecure-requests",
+    ...(isDev ? [] : ["upgrade-insecure-requests"]),
   ].join("; ");
 }
 function applySecurityHeaders(response: NextResponse, policy: string): NextResponse {

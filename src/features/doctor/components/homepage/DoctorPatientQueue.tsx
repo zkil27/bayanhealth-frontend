@@ -651,14 +651,10 @@ function StandbyPanel({ isOnDuty }: { isOnDuty: boolean }) {
   return (
     <div
       data-slot="doctor-queue-standby"
-      className="flex flex-col items-center gap-3 rounded-2xl border border-(--status-available-fg)/20 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--status-available-bg)_70%,transparent)_0%,var(--surface-warm)_50%,color-mix(in_srgb,var(--status-available-bg)_45%,transparent)_100%)] px-5 py-6 text-center sm:flex-row sm:justify-between sm:text-left"
+      className="flex flex-col items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-warm) px-5 py-6 text-center sm:flex-row sm:justify-between sm:text-left"
     >
       <div className="flex items-center gap-3.5">
-        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-(--status-available-bg) text-(--status-available-fg)">
-          <span
-            aria-hidden
-            className="absolute size-full animate-ping rounded-full bg-(--status-available-fg)/20"
-          />
+        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-(--status-available-fg)/20 bg-(--status-available-bg) text-(--status-available-fg)">
           <Satellite className="size-4.5" aria-hidden />
         </span>
         <div>
@@ -668,7 +664,7 @@ function StandbyPanel({ isOnDuty }: { isOnDuty: boolean }) {
           <p className="mt-0.5 text-[12.5px] leading-[1.45] text-(--text-muted)">
             {isOnDuty
               ? "You're on-duty and visible in the consultation pool. A verified patient will appear here the moment their intake is ready."
-              : "Go on-duty in the card above to start receiving live on-demand consultations."}
+              : "Turn on duty status in the command bar above to start receiving live on-demand consultations."}
           </p>
         </div>
       </div>

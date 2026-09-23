@@ -5,28 +5,18 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarClock,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  RotateCcw,
   Stethoscope,
 } from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { listAgendaInRange, type DoctorBooking } from "@/features/doctor/lib/api/agenda";
 import {
   defaultWindow,
@@ -156,7 +146,6 @@ function timestamp(value?: string): number {
 
 export function CompletedConsultations() {
   const idToken = useIdToken();
-  const [expanded, setExpanded] = useState(false);
   const [dateWindow, setDateWindow] = useState<DateWindow>(() => defaultWindow());
 
   const query = useQuery({
@@ -193,62 +182,85 @@ export function CompletedConsultations() {
   }
 
   const count = state.status === "data" ? state.value.length : null;
+  const atLatest = isLatestWindow(dateWindow);
 
   return (
-    <Collapsible
-      open={expanded}
-      onOpenChange={setExpanded}
+    <div
       className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
       data-slot="completed-consultations"
     >
-      <CollapsibleTrigger
-        render={
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 bg-(--surface-brand) p-4 text-left text-lg font-semibold text-(--text-on-brand)"
-            aria-expanded={expanded}
-            data-slot="completed-consultations-toggle"
-          >
-            <ClipboardCheck className="size-5" />
-            Recent consultations
-            {count !== null ? (
-              <span className="ml-auto flex h-4 items-center overflow-hidden font-mono text-sm">
-                <NumberTicker value={count} />
-              </span>
-            ) : null}
-            <ChevronDown
-              className={`size-4 shrink-0 transition-transform ${expanded ? "" : "-rotate-90"} ${
-                count !== null ? "" : "ml-auto"
-              }`}
-              aria-hidden="true"
-            />
-          </button>
-        }
-      />
+      {/* ------------------------------------------- panel header bar -- */}
+      <div className="flex flex-col gap-3 border-b border-(--border-subtle) bg-(--surface-brand) px-5 py-4 text-(--text-on-brand) sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2.5">
+          <ClipboardCheck className="size-5 shrink-0" />
+          <span className="text-base font-semibold sm:text-lg">Recent consultations</span>
+          {count !== null ? (
+            <span className="flex items-center rounded-full bg-white/15 px-2.5 py-0.5 font-mono text-xs font-semibold text-white">
+              <NumberTicker value={count} />
+            </span>
+          ) : null}
+        </div>
 
-      <CollapsibleContent>
-        <div className="flex flex-col gap-3 p-4">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {!atLatest && (
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              onClick={() => setDateWindow(defaultWindow())}
+              className="border-white/30 bg-white/10 text-xs font-semibold text-white hover:bg-white/20 hover:text-white"
+            >
+              <RotateCcw className="size-3" />
+              Latest
+            </Button>
+          )}
+
           <WindowNav
             dateWindow={dateWindow}
             onStep={(direction) => setDateWindow((current) => stepWindow(current, direction))}
           />
-
-          <AsyncView<CompletedConsultation[]>
-            state={state}
-            onRetry={() => void query.refetch()}
-            empty={<CompletedConsultationsEmpty dateWindow={dateWindow} />}
-          >
-            {(entries) => (
-              <ul className="flex flex-col gap-3">
-                {entries.map((entry) => (
-                  <CompletedConsultationRow key={entry.bookingId} entry={entry} />
-                ))}
-              </ul>
-            )}
-          </AsyncView>
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+
+      {/* ------------------------------------------ panel content deck -- */}
+      <div className="flex min-h-[380px] flex-col p-4 sm:p-5">
+        <AsyncView<CompletedConsultation[]>
+          state={state}
+          onRetry={() => void query.refetch()}
+          loading={
+            <ul className="flex flex-col gap-3" aria-hidden>
+              {[0, 1, 2, 3].map((i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-4 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4"
+                >
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3.5 w-48" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-7 w-20 rounded-lg" />
+                </li>
+              ))}
+            </ul>
+          }
+          empty={
+            <CompletedConsultationsEmpty
+              dateWindow={dateWindow}
+              onResetWindow={!atLatest ? () => setDateWindow(defaultWindow()) : undefined}
+            />
+          }
+        >
+          {(entries) => (
+            <ul className="flex flex-col gap-3">
+              {entries.map((entry) => (
+                <CompletedConsultationRow key={entry.bookingId} entry={entry} />
+              ))}
+            </ul>
+          )}
+        </AsyncView>
+      </div>
+    </div>
   );
 }
 
@@ -261,28 +273,36 @@ function WindowNav({
 }) {
   const atLatest = isLatestWindow(dateWindow);
   return (
-    <div className="flex items-center justify-between gap-2" data-slot="completed-window-nav">
+    <div
+      className="flex items-center gap-1 rounded-xl border border-white/20 bg-white/10 px-1.5 py-1 text-white"
+      data-slot="completed-window-nav"
+    >
       <Button
         type="button"
         variant="ghost"
-        size="icon-sm"
+        size="icon-xs"
         aria-label="Previous week"
+        className="text-white hover:bg-white/20 hover:text-white"
         onClick={() => onStep(-1)}
       >
-        <ChevronLeft className="size-4" />
+        <ChevronLeft className="size-3.5" />
       </Button>
-      <span className="text-sm font-medium text-(--text-muted)" data-slot="completed-window-label">
+      <span
+        className="px-1.5 text-xs font-medium text-white"
+        data-slot="completed-window-label"
+      >
         {formatWindowLabel(dateWindow)}
       </span>
       <Button
         type="button"
         variant="ghost"
-        size="icon-sm"
+        size="icon-xs"
         aria-label="Next week"
         disabled={atLatest}
+        className="text-white hover:bg-white/20 hover:text-white disabled:opacity-30"
         onClick={() => onStep(1)}
       >
-        <ChevronRight className="size-4" />
+        <ChevronRight className="size-3.5" />
       </Button>
     </div>
   );
@@ -292,74 +312,103 @@ function CompletedConsultationRow({ entry }: { entry: CompletedConsultation }) {
   const href = postConsultationHref(entry);
   const status = displayBookingStatus(entry.status);
 
-  const body = (
-    <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="flex items-center gap-1.5 truncate font-semibold text-(--text-heading)">
-        <Stethoscope className="size-4 shrink-0 text-(--text-muted)" />
-        {formatServiceType(entry.serviceType)}
-      </span>
-      <span className="flex items-center gap-1.5 text-sm text-(--text-muted)">
-        <CalendarClock className="size-4 shrink-0" />
-        {formatOccurredAt(entry.occurredAt)}
-      </span>
-      <span className="truncate font-mono text-xs text-(--text-subtle)">
-        #{entry.bookingId}
-      </span>
-      {href ? null : (
-        // No consultation id means the consultation ended without a session
-        // being activated, so there is no workspace to open. Say so instead of
-        // offering a link that resolves to nothing.
-        <span
-          data-slot="completed-consultation-unavailable"
-          className="text-xs text-(--text-muted)"
-        >
-          No consultation record — post-consult actions unavailable
-        </span>
-      )}
-    </div>
-  );
-
-  const statusBadge = (
-    <Badge data-slot="booking-status" variant="outline" data-tone={status.tone}>
-      {status.label}
-    </Badge>
-  );
-
   return (
     <li data-slot="completed-consultation-item">
-      {href ? (
-        <Link
-          href={href}
-          data-slot="completed-consultation-link"
-          className="flex items-center justify-between gap-4 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4 transition-colors hover:bg-(--surface-warm-soft)"
-        >
-          {body}
-          {statusBadge}
-        </Link>
-      ) : (
-        <div className="flex items-center justify-between gap-4 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4 opacity-70">
-          {body}
-          {statusBadge}
+      <div
+        className={cn(
+          "group flex flex-col justify-between gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4 transition-all hover:border-(--border-default) hover:bg-(--surface-warm-soft)/50 sm:flex-row sm:items-center sm:gap-4",
+          !href && "opacity-75"
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-start gap-3.5 sm:items-center">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-(--surface-warm) text-(--text-muted) transition-colors group-hover:text-(--text-heading)">
+            <Stethoscope className="size-5" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="truncate font-semibold text-(--text-heading)">
+                {formatServiceType(entry.serviceType)}
+              </span>
+              <span className="font-mono text-xs text-(--text-subtle)">
+                #{entry.bookingId}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-(--text-muted)">
+              <CalendarClock className="size-3.5 shrink-0" />
+              <span>{formatOccurredAt(entry.occurredAt)}</span>
+            </div>
+            {!href && (
+              <span
+                data-slot="completed-consultation-unavailable"
+                className="text-xs text-(--text-muted)"
+              >
+                No consultation record — post-consult actions unavailable
+              </span>
+            )}
+          </div>
         </div>
-      )}
+
+        <div className="flex shrink-0 items-center gap-3 self-end sm:self-center">
+          <Badge
+            data-slot="booking-status"
+            variant="outline"
+            className="border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 font-medium"
+          >
+            {status.label}
+          </Badge>
+
+          {href ? (
+            <Link
+              href={href}
+              data-slot="completed-consultation-link"
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-(--border-default) bg-(--surface-card) px-3 text-xs font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-heading)"
+            >
+              <span>Chart</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : (
+            <span className="text-xs text-(--text-subtle)">No chart</span>
+          )}
+        </div>
+      </div>
     </li>
   );
 }
 
-function CompletedConsultationsEmpty({ dateWindow }: { dateWindow: DateWindow }) {
+function CompletedConsultationsEmpty({
+  dateWindow,
+  onResetWindow,
+}: {
+  dateWindow: DateWindow;
+  onResetWindow?: () => void;
+}) {
   return (
-    <Empty data-slot="completed-consultations-empty">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <ClipboardCheck />
-        </EmptyMedia>
-        <EmptyTitle>No completed consultations</EmptyTitle>
-        <EmptyDescription>
-          Nothing completed between {formatWindowLabel(dateWindow)}. Use the
-          arrows above to look at an earlier week.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <div
+      data-slot="completed-consultations-empty"
+      className="my-auto flex min-h-[300px] w-full flex-1 flex-col items-center justify-center p-8 text-center"
+    >
+      <div className="mb-3.5 flex size-12 items-center justify-center rounded-2xl border border-(--border-subtle) bg-(--surface-warm) text-(--text-muted)">
+        <ClipboardCheck className="size-6 text-(--text-muted)" />
+      </div>
+      <h3 className="font-display text-base font-semibold text-(--text-heading)">
+        No recent consults
+      </h3>
+      <p className="mt-1.5 max-w-sm text-sm text-(--text-muted)">
+        No completed consultations found between {formatWindowLabel(dateWindow)}.
+      </p>
+      {onResetWindow && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onResetWindow}
+          className="mt-4 gap-1.5 text-xs font-semibold"
+        >
+          <RotateCcw className="size-3.5" />
+          Jump to latest week
+        </Button>
+      )}
+    </div>
   );
 }
 

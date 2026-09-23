@@ -54,7 +54,7 @@ const MIN_BLOCK_PX = 16;
  * exact density behaviour doctors already see, just no longer split across
  * two different heights depending on which view is open.
  */
-const GRID_BODY_HEIGHT_PX = 420;
+const GRID_BODY_HEIGHT_PX = 580;
 
 export function densityForHeight(heightPx: number): BlockDensity {
   if (heightPx >= DENSITY_FULL_PX) return "full";
@@ -187,7 +187,7 @@ function EntryButton({
       )} on ${entry.date}`}
       onClick={(event) => onSelectEntry(entry, rectFromElement(event.currentTarget))}
       className={cn(
-        "absolute right-1 left-1 flex flex-col justify-center overflow-hidden rounded-[10px] text-left transition-all duration-150",
+        "absolute right-1 left-1 z-10 flex flex-col justify-center overflow-hidden rounded-[10px] text-left transition-all duration-150",
         "hover:z-20 hover:shadow-[0_2px_6px_rgba(120,110,80,0.18)]",
         solid ? "hover:brightness-110" : "hover:brightness-95",
         // Padding scales with the space available; a 30-minute block cannot
@@ -227,6 +227,7 @@ function DayColumn({
   onSelectRange,
   onSelectEntry,
   minHeight,
+  marks,
 }: {
   date: string;
   label: string;
@@ -238,6 +239,7 @@ function DayColumn({
   gridEnd: number;
   nowMinutes: number | null;
   selection: GridSelection | null;
+  marks: readonly number[];
   onDragStart: (date: string, minutes: number, anchor: AnchorRect) => void;
   onDragMove: (minutes: number, gridEnd: number) => void;
   /** Returns true when the gesture produced a real range (so the click is spent). */
@@ -273,13 +275,29 @@ function DayColumn({
     <div className="flex min-w-0 flex-col border-l border-(--border-subtle) first:border-l-0">
       <div
         className={cn(
-          "flex h-8.5 items-center justify-center gap-1.5 text-sm",
-          isToday ? "font-bold text-(--text-heading)" : "font-bold text-(--text-muted)",
+          "flex h-11 items-center justify-center gap-2 border-b border-(--border-subtle) px-2 text-sm",
+          isToday && "bg-(--surface-brand-soft)/15",
         )}
       >
-        {label}
+        <span
+          className={cn(
+            "text-xs font-bold tracking-wider uppercase",
+            isToday ? "text-(--action-primary)" : "text-(--text-muted)",
+          )}
+        >
+          {label}
+        </span>
         {sublabel ? (
-          <span className="font-normal text-(--text-subtle)">{sublabel}</span>
+          <span
+            className={cn(
+              "flex size-7 items-center justify-center rounded-full text-sm transition-colors",
+              isToday
+                ? "bg-(--action-primary) font-bold text-white shadow-xs"
+                : "font-semibold text-(--text-heading)",
+            )}
+          >
+            {sublabel}
+          </span>
         ) : null}
       </div>
 
@@ -347,15 +365,32 @@ function DayColumn({
             anchor: rectFromElement(event.currentTarget),
           });
         }}
-        className="relative flex-1 touch-none border-t border-(--border-subtle) px-1 pt-0.5 text-left select-none"
+        className={cn(
+          "relative flex-1 touch-none px-1 pt-0.5 text-left select-none",
+          isToday ? "bg-(--surface-brand-soft)/10" : "bg-(--surface-card)",
+        )}
         style={{ minHeight }}
       >
-        {isToday && (
-          <div
-            className="absolute inset-0 rounded-[10px] bg-(--surface-brand-soft)"
-            aria-hidden
-          />
-        )}
+        {/* Crisp horizontal grid lines for each hour and half-hour guideline */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+          {marks.map((m) => {
+            const topPct = ((m - gridStart) / (gridEnd - gridStart || 1)) * 100;
+            const hourSpanPct = (60 / (gridEnd - gridStart || 1)) * 100;
+            return (
+              <div
+                key={m}
+                className="absolute inset-x-0 border-t border-(--border-subtle)/50"
+                style={{ top: `${topPct}%` }}
+              >
+                {/* Half-hour guideline */}
+                <div
+                  className="absolute inset-x-0 border-t border-dashed border-(--border-subtle)/20"
+                  style={{ top: `${hourSpanPct / 2}%` }}
+                />
+              </div>
+            );
+          })}
+        </div>
 
         {entries.map((entry) => (
           <EntryButton
@@ -374,7 +409,7 @@ function DayColumn({
           <div
             aria-hidden
             data-slot="drag-selection"
-            className="pointer-events-none absolute right-1 left-1 rounded-[10px] border-2 border-(--action-primary) bg-(--action-primary)/20 px-2.5 py-1"
+            className="pointer-events-none absolute right-1 left-1 z-20 rounded-[10px] border-2 border-(--action-primary) bg-(--action-primary)/20 px-2.5 py-1"
             style={{
               top: `${blockPosition(active, gridStart, gridEnd).topPct}%`,
               height: `${Math.max(blockPosition(active, gridStart, gridEnd).heightPct, 2)}%`,
@@ -390,10 +425,10 @@ function DayColumn({
           <div
             aria-hidden
             data-slot="now-line"
-            className="pointer-events-none absolute right-0 left-0 h-0.5 rounded-full bg-(--red-600)"
+            className="pointer-events-none absolute right-0 left-0 z-20 h-0.5 bg-(--red-600)"
             style={{ top: `${nowPct}%` }}
           >
-            <span className="absolute -top-1 -left-1 block size-2.5 rounded-full bg-(--red-600)" />
+            <span className="absolute -top-1.25 -left-1.5 block size-3 rounded-full border-2 border-(--surface-card) bg-(--red-600) shadow-xs" />
           </div>
         )}
       </div>
@@ -448,13 +483,7 @@ export function TimeGrid({
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // One shared body height for Day and Week alike. This used to be 560px for a
-  // single day and 360px for a week — different enough that toggling D/W
-  // visibly resized the calendar card underneath the doctor's cursor. The
-  // card's own box is now fixed by its container regardless of this value (see
-  // `DoctorScheduleView`), so the two views no longer need to differ at all;
-  // a single constant means the same content also renders at the same
-  // per-hour density in both.
+  // One shared body height for Day and Week alike.
   const minHeight = GRID_BODY_HEIGHT_PX;
 
   const handleDragStart = useCallback(
@@ -512,15 +541,28 @@ export function TimeGrid({
     <div
       className="grid gap-x-0"
       style={{
-        gridTemplateColumns: `56px repeat(${days.length}, minmax(0, 1fr))`,
+        gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))`,
       }}
     >
-      <div className="flex flex-col pt-8.5">
-        {marks.map((m) => (
-          <div key={m} className="flex-1 pr-2 text-sm text-(--text-subtle)">
-            {formatHourLabel(m)}
-          </div>
-        ))}
+      <div className="relative flex flex-col">
+        {/* Header spacer to match day column header */}
+        <div className="h-11 border-b border-(--border-subtle)" aria-hidden="true" />
+
+        {/* Time labels aligned exactly to each hour grid line */}
+        <div className="relative select-none" style={{ height: minHeight }}>
+          {marks.map((m) => {
+            const topPct = ((m - startMinutes) / (endMinutes - startMinutes || 1)) * 100;
+            return (
+              <div
+                key={m}
+                className="absolute right-2.5 -translate-y-1/2 text-right text-xs font-semibold text-(--text-muted)"
+                style={{ top: `${topPct}%` }}
+              >
+                {formatHourLabel(m)}
+              </div>
+            );
+          })}
+        </div>
       </div>
       {days.map((day) => (
         <DayColumn
@@ -535,6 +577,7 @@ export function TimeGrid({
           gridEnd={endMinutes}
           nowMinutes={day.iso === todayIso ? nowMinutes : null}
           selection={selection}
+          marks={marks}
           onDragStart={handleDragStart}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}

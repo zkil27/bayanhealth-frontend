@@ -31,44 +31,59 @@ export function CalendarToolbar({
   rangeLabel,
   onStep,
   onViewChange,
+  onToday,
 }: {
   view: CalendarView;
   rangeLabel: string;
   onStep: (direction: 1 | -1) => void;
   onViewChange: (view: CalendarView) => void;
+  onToday?: () => void;
 }) {
   const stepLabel = view === "day" ? "day" : view === "week" ? "week" : "month";
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <h1 className="font-display text-2xl font-bold text-(--text-heading)">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-(--text-heading)">
         Your Calendar
       </h1>
 
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onStep(-1)}
-          aria-label={`Previous ${stepLabel}`}
-          title={`Previous ${stepLabel} (←)`}
-          className="flex size-9 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--action-secondary-hover-surface)"
-        >
-          <ChevronLeft className="size-4.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onStep(1)}
-          aria-label={`Next ${stepLabel}`}
-          title={`Next ${stepLabel} (→)`}
-          className="flex size-9 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--action-secondary-hover-surface)"
-        >
-          <ChevronRight className="size-4.5" />
-        </button>
+      <div className="flex items-center gap-2">
+        {onToday ? (
+          <button
+            type="button"
+            onClick={onToday}
+            title="Jump to today (T)"
+            className="rounded-full border border-(--border-subtle) bg-(--surface-card) px-3 py-1.5 text-xs font-bold text-(--text-heading) shadow-xs transition-colors hover:bg-(--surface-warm-soft) active:scale-95"
+          >
+            Today
+          </button>
+        ) : null}
+
+        <div className="flex items-center rounded-full border border-(--border-subtle) bg-(--surface-card) p-0.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => onStep(-1)}
+            aria-label={`Previous ${stepLabel}`}
+            title={`Previous ${stepLabel} (←)`}
+            className="flex size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onStep(1)}
+            aria-label={`Next ${stepLabel}`}
+            title={`Next ${stepLabel} (→)`}
+            className="flex size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
       </div>
 
       <span
         data-slot="schedule-week-label"
-        className="text-lg font-bold text-(--text-heading)"
+        className="text-base font-bold text-(--text-heading) sm:text-lg"
       >
         {rangeLabel}
       </span>
@@ -77,7 +92,7 @@ export function CalendarToolbar({
         <div
           role="group"
           aria-label="Calendar view"
-          className="flex items-center gap-0.5 rounded-full border border-(--border-subtle) bg-(--surface-warm-soft) p-1"
+          className="flex items-center gap-0.5 rounded-full border border-(--border-subtle) bg-(--surface-warm-soft)/60 p-1"
         >
           {CALENDAR_VIEWS.map((option) => (
             <button
@@ -87,9 +102,9 @@ export function CalendarToolbar({
               aria-pressed={view === option}
               title={`${VIEW_LABELS[option]} view (${VIEW_KEYS[option]})`}
               className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-bold transition-colors",
+                "rounded-full px-3.5 py-1 text-xs font-bold transition-all sm:text-sm",
                 view === option
-                  ? "bg-(--surface-card) text-(--text-heading) shadow-[0_1px_2px_rgba(219,210,168,0.35)]"
+                  ? "bg-(--surface-card) text-(--text-heading) shadow-xs"
                   : "text-(--text-muted) hover:text-(--text-heading)",
               )}
             >

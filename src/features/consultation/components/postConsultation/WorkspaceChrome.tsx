@@ -156,8 +156,10 @@ export function WorkspaceHeader({
 }) {
   const name = patientName?.trim();
   const heading = name || chiefComplaint?.trim() || "Post-consultation";
+  const formattedAge =
+    typeof age === "number" ? (age === 0 ? "<1 y/o (infant)" : `${age} y/o`) : null;
   const identityParts = [
-    typeof age === "number" ? String(age) : null,
+    formattedAge,
     sex?.trim() || null,
     `Konsulta #${consultationId}`,
   ].filter(Boolean);
@@ -165,34 +167,34 @@ export function WorkspaceHeader({
   return (
     <header
       data-slot="workspace-header"
-      className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-(--border-subtle) bg-(--surface-page) px-4 py-4 md:px-6"
+      className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-(--border-subtle) bg-(--surface-card) px-4 py-3.5 shadow-xs md:px-6"
     >
       <div className="flex min-w-0 items-center gap-3">
         <Link
           href="/doctor/history"
           aria-label="Back to consultation history"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
         >
-          <ArrowLeft className="size-4.5" />
+          <ArrowLeft className="size-4" />
         </Link>
         <span
           aria-hidden
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-sm font-bold text-(--text-on-brand)"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-sm font-bold text-(--text-on-brand)"
         >
           {name ? initials(name) : <Stethoscope className="size-5" />}
         </span>
         <div className="flex min-w-0 flex-col">
-          <h1 className="truncate font-display text-xl font-bold text-(--text-heading)">
+          <h1 className="truncate font-display text-lg font-bold text-(--text-heading)">
             {heading}
           </h1>
-          <p className="truncate text-sm text-(--text-muted)">
+          <p className="truncate text-xs font-semibold text-(--ink-600)">
             {name ? identityParts.join(" · ") : `#${consultationId}`}
           </p>
         </div>
         <span
           data-slot="workspace-status"
           className={cn(
-            "ml-1 flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold",
+            "ml-1 flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold",
             statusTone === "active" && "bg-(--status-available-bg) text-(--status-available-fg)",
             statusTone === "danger" && "bg-(--danger-bg) text-(--danger-fg)",
             statusTone === "done" && "bg-(--gray-bg) text-(--gray-fg)",
@@ -208,7 +210,7 @@ export function WorkspaceHeader({
         {allergies ? (
           <span
             data-slot="header-allergy-tag"
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--danger-border) bg-(--danger-bg) px-3 py-1 text-sm font-semibold text-(--danger-fg)"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--danger-border) bg-(--danger-bg) px-2.5 py-0.5 text-xs font-bold text-(--danger-fg)"
           >
             <AlertTriangle className="size-3.5 shrink-0" />
             Allergies: {allergies}

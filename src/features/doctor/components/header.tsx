@@ -41,10 +41,17 @@ export function DoctorHeader() {
     year: "numeric",
   });
 
-  // The dashboard has no header: it greets in its identity card (like the
-  // patient home), the sidebar carries the dark-mode switch, and the
-  // notification bell sits in the "Your practice" row.
-  if (pathname === "/doctor") return null;
+  // The dashboard, calendar, consults (history), and profile tabs do not render
+  // this banner: they manage their own identity cards / titles, and the
+  // sidebar carries the theme toggle and navigation controls.
+  if (
+    pathname === "/doctor" ||
+    pathname.startsWith("/doctor/schedule") ||
+    pathname.startsWith("/doctor/history") ||
+    pathname.startsWith("/doctor/profile")
+  ) {
+    return null;
+  }
 
   return (
     <header className="flex items-center justify-between gap-2 border-b border-(--border-subtle) bg-(--surface-page) px-4 py-5 md:px-7">

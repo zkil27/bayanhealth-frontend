@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AsyncView } from "@/components/async-view";
 import { useAsyncResource } from "@/hooks/use-async-resource";
 import type { AsyncState } from "@/lib/asyncView";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -518,12 +519,13 @@ export function DoctorScheduleView() {
   const today = todayIso();
 
   return (
-    <div data-slot="doctor-schedule" className="flex h-full min-h-0 w-full flex-col gap-5">
+    <div data-slot="doctor-schedule" className="flex h-full min-h-0 w-full flex-col gap-4">
       <CalendarToolbar
         view={view}
         rangeLabel={formatRangeLabel(view, anchor)}
         onStep={step}
         onViewChange={changeView}
+        onToday={() => setAnchor(new Date())}
       />
 
       {/*
@@ -538,7 +540,7 @@ export function DoctorScheduleView() {
       <AsyncView<CalendarData>
         state={viewState}
         onRetry={reload}
-        className="flex min-h-0 flex-1 flex-col gap-5"
+        className="flex min-h-0 flex-1 flex-col gap-4"
       >
         {({ slots, bookings }) => {
           const slotsByDate = new Map<string, Slot[]>();
@@ -575,31 +577,90 @@ export function DoctorScheduleView() {
                 scrolling region so they never scroll away from the content
                 they're framing.
               */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]">
-                <div className="min-h-0 flex-1 overflow-auto">
-                  <div style={{ minWidth: view === "day" ? 0 : 760 }}>
-                    {view === "month" ? (
-                      <MonthGrid
-                        anchor={anchor}
-                        entriesByDate={entriesByDate}
-                        palette={palette}
-                        todayIso={today}
-                        onSelectRange={openCreate}
-                        onSelectEntry={handleSelectEntry}
-                        onOpenDayView={goToDayView}
-                        onOpenOverflow={handleOpenOverflow}
-                      />
-                    ) : (
-                      <TimeGrid
-                        days={dayItems}
-                        entriesByDate={entriesByDate}
-                        palette={palette}
-                        todayIso={today}
-                        onSelectRange={handleSelectRange}
-                        onSelectEntry={handleSelectEntry}
-                      />
-                    )}
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)] sm:p-4">
+                <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+                  <div className="min-h-0 flex-1 overflow-auto">
+                    <div style={{ minWidth: view === "day" ? 0 : 760 }}>
+                      {view === "month" ? (
+                        <MonthGrid
+                          anchor={anchor}
+                          entriesByDate={entriesByDate}
+                          palette={palette}
+                          todayIso={today}
+                          onSelectRange={openCreate}
+                          onSelectEntry={handleSelectEntry}
+                          onOpenDayView={goToDayView}
+                          onOpenOverflow={handleOpenOverflow}
+                        />
+                      ) : (
+                        <TimeGrid
+                          days={dayItems}
+                          entriesByDate={entriesByDate}
+                          palette={palette}
+                          todayIso={today}
+                          onSelectRange={handleSelectRange}
+                          onSelectEntry={handleSelectEntry}
+                        />
+                      )}
+                    </div>
                   </div>
+
+                  {/* Day View Clinical Cockpit: Companion agenda and rapid triage rail */}
+                  {view === "day" && dayItems[0] && (
+                    <div className="hidden w-80 shrink-0 flex-col gap-3.5 border-l border-(--border-subtle) pl-4 lg:flex">
+                      <div className="flex items-center justify-between border-b border-(--border-subtle) pb-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-(--text-heading)">Day Overview</h3>
+                          <p className="text-xs text-(--text-muted)">{formatDateHeading(dayItems[0].iso)}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            openCreate({
+                              date: dayItems[0].iso,
+                              ...defaultRangeFrom(TOOLBAR_DEFAULT_START_MINUTES),
+                              anchor: rectFromMouseEvent(e),
+                            });
+                          }}
+                          className="h-7.5 rounded-full px-2.5 text-xs font-semibold"
+                        >
+                          + Add Shift
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/40 p-2.5 text-center">
+                          <span className="block text-[11px] font-semibold tracking-wider text-(--text-muted) uppercase">Available</span>
+                          <span className="text-lg font-bold text-(--teal-700)">
+                            {(slotsByDate.get(dayItems[0].iso) ?? []).filter((s) => s.status === "available").length}
+                          </span>
+                        </div>
+                        <div className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/40 p-2.5 text-center">
+                          <span className="block text-[11px] font-semibold tracking-wider text-(--text-muted) uppercase">Booked</span>
+                          <span className="text-lg font-bold text-(--navy-700)">
+                            {(slotsByDate.get(dayItems[0].iso) ?? []).filter((s) => s.status === "booked").length}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                        <ActiveDaySlotList
+                          slots={slotsByDate.get(dayItems[0].iso) ?? []}
+                          idToken={idToken}
+                          doctorId={doctorId}
+                          onMutated={refresh}
+                          onAddShift={(event) => {
+                            openCreate({
+                              date: dayItems[0].iso,
+                              ...defaultRangeFrom(TOOLBAR_DEFAULT_START_MINUTES),
+                              anchor: rectFromMouseEvent(event),
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

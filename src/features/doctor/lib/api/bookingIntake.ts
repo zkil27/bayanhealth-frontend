@@ -66,16 +66,31 @@ export interface BookingIntakeForm {
   patientName?: string;
 }
 
+const NEGATIVE_ALLERGY_PATTERNS = [
+  /^none$/i,
+  /^nkda$/i,
+  /^nka$/i,
+  /^n\/?a$/i,
+  /^denied$/i,
+  /^negative$/i,
+  /no known/i,
+];
+
+export function isNegativeAllergy(allergies: string | undefined): boolean {
+  const trimmed = allergies?.trim();
+  if (!trimmed) return true;
+  return NEGATIVE_ALLERGY_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
 /**
  * The allergy string to surface as a warning, or `undefined`.
  *
- * An explicit "None" is not an allergen — it is the patient asserting no known
- * allergies — so it must not be shown as a warning tag.
+ * Negative allergy statements (e.g. "None", "NKDA", "No known drug allergies")
+ * are patient assertions of no allergies, so they must not be shown as a warning tag.
  */
 export function usableAllergyLabel(allergies: string | undefined): string | undefined {
   const trimmed = allergies?.trim();
-  if (!trimmed) return undefined;
-  if (trimmed.toLowerCase() === "none") return undefined;
+  if (!trimmed || isNegativeAllergy(trimmed)) return undefined;
   return trimmed;
 }
 
@@ -113,6 +128,49 @@ export async function fetchBookingIntake(
   idToken: string,
   bookingId: string,
 ): Promise<BookingIntakeForm | null> {
+  if (bookingId === "demo") {
+    return {
+      bookingId: "demo",
+      status: "submitted",
+      currentStep: "review",
+      completedSteps: ["purpose", "details", "review"],
+      patientName: "Maria Santos",
+      sections: {
+        purpose: {
+          chiefComplaint: "Fever and persistent productive cough for 3 days with mild dyspnea and fatigue.",
+        },
+        details: {
+          demographics: {
+            sex: "female",
+            dateOfBirth: "1992-05-14",
+          },
+          safetyScreen: {
+            chestPain: false,
+            dyspnea: false,
+            feverDays: 3,
+          },
+          symptomReview: {
+            onset: "3 days ago",
+            location: "Chest / Upper Respiratory",
+            characteristics: "Productive cough with sputum",
+          },
+          allergies: "No known drug allergies (NKDA)",
+          structuredMedicalHistory: {
+            knownConditions: [],
+            noneReported: true,
+          },
+          vitals: {
+            temperatureC: 38.2,
+            systolicBp: 118,
+            diastolicBp: 76,
+            heartRateBpm: 82,
+            spo2Percent: 98,
+          },
+        },
+      },
+      submittedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    };
+  }
   if (!idToken || !bookingId) return null;
   try {
     const res = await api.get<BookingIntakeForm>(

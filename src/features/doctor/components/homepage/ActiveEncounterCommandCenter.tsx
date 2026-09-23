@@ -49,81 +49,99 @@ export function ActiveEncounterCommandCenter() {
   const isOnDuty = profile?.onDemandAvailable ?? false;
   const isLive = active?.isInProgress ?? false;
 
+  if (!active) {
+    return (
+      <div
+        data-slot="active-encounter-command-center"
+        className="flex items-center justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-warm)/40 px-4 py-3 text-xs transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex size-8 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-muted) shadow-2xs">
+            <Video className="size-4" aria-hidden />
+          </span>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+              Active Encounter
+            </span>
+            <span className="font-semibold text-(--text-heading)">
+              No consultation currently in room
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+              isOnDuty
+                ? "bg-(--status-available-bg) text-(--status-available-fg)"
+                : "bg-(--surface-warm) text-(--text-subtle)",
+            )}
+          >
+            <span
+              className={cn(
+                "size-1.5 rounded-full",
+                isOnDuty ? "bg-(--status-available-fg)" : "bg-(--gray-fg)",
+              )}
+              aria-hidden
+            />
+            {isOnDuty ? "Standby for calls" : "Duty paused"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-slot="active-encounter-command-center"
-      className="flex min-h-[148px] shrink-0 flex-col justify-between rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-brand) p-4 text-(--surface-card) shadow-(--shadow-float)"
+      className="flex flex-col justify-between gap-3 rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-brand) p-4 text-(--surface-card) shadow-(--shadow-float) sm:flex-row sm:items-center sm:p-5"
     >
-      <div className="flex items-center justify-between border-b border-(--surface-card)/15 pb-2 text-[11px]">
-        <span className="font-bold tracking-wider text-(--surface-card)/70 uppercase">
-          Command Center
+      <div className="flex items-start gap-3.5">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-(--surface-card)/10 text-(--teal-300) ring-1 ring-white/10">
+          <Video className="size-5" aria-hidden />
         </span>
-        {active ? (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 font-semibold",
-              isLive ? "text-(--teal-300)" : "text-(--status-soon-fg)",
-            )}
-          >
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold tracking-wider text-(--teal-300) uppercase">
+              Active Encounter
+            </span>
             <span
-              className={cn("size-1.5 rounded-full", isLive ? "bg-(--teal-300)" : "bg-(--status-soon-fg)")}
-              aria-hidden
-            />
-            {isLive ? "Active call" : "Ready to start"}
-          </span>
-        ) : (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 font-semibold",
-              isOnDuty ? "text-(--teal-300)" : "text-(--surface-card)/50",
-            )}
-          >
-            <span
-              className={cn("size-1.5 rounded-full", isOnDuty ? "bg-(--teal-300)" : "bg-(--surface-card)/40")}
-              aria-hidden
-            />
-            {isOnDuty ? "Ready" : "Offline"}
-          </span>
-        )}
-      </div>
-
-      <div className="my-2 flex-1">
-        {active ? (
-          <div className="space-y-0.5">
-            <h3 className="truncate text-sm font-bold">{active.name}</h3>
-            <p className="truncate text-xs text-(--surface-card)/70">
-              {serviceLabel(active.serviceType) ??
-                (isLive ? "Consultation in progress" : "Accepted — waiting to start")}
-            </p>
+              className={cn(
+                "inline-flex items-center gap-1 text-[11px] font-semibold",
+                isLive ? "text-(--teal-300)" : "text-(--status-soon-fg)",
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  isLive ? "bg-(--teal-300)" : "bg-(--status-soon-fg)",
+                )}
+                aria-hidden
+              />
+              {isLive ? "Call in progress" : "Ready to start"}
+            </span>
           </div>
-        ) : (
-          <div className="space-y-0.5">
-            <p className="text-xs font-semibold">No active consultation</p>
-            <p className="text-[11px] leading-tight text-(--surface-card)/60">
-              Accepted on-demand encounters will anchor here.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {active ? (
-        <div className="flex flex-col gap-2">
-          <Link
-            href={`/consultation/room/${encodeURIComponent(active.bookingId)}`}
-            data-slot="command-center-return-link"
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-(--teal-500) px-3 py-2 text-xs font-bold text-(--surface-brand) transition-colors hover:bg-(--teal-400)"
-          >
-            <Video className="size-3.5" aria-hidden />
-            {isLive ? "Return to room" : "Open room"}
-            <ArrowRight className="size-3.5" aria-hidden />
-          </Link>
-          {!isLive ? (
-            <div className="self-end">
-              <NoShowControl item={active} />
-            </div>
-          ) : null}
+          <h3 className="text-base font-bold text-white">{active.name}</h3>
+          <p className="text-xs text-(--surface-card)/75">
+            {serviceLabel(active.serviceType) ??
+              (isLive ? "Consultation in progress" : "Accepted — waiting to start")}
+          </p>
         </div>
-      ) : null}
+      </div>
+
+      <div className="flex items-center gap-2 self-end sm:self-center">
+        {!isLive ? <NoShowControl item={active} /> : null}
+        <Link
+          href={`/consultation/room/${encodeURIComponent(active.bookingId)}`}
+          data-slot="command-center-return-link"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-(--teal-500) px-4 py-2.5 text-xs font-bold text-(--surface-brand) shadow-sm transition-colors hover:bg-(--teal-400) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        >
+          <Video className="size-4" aria-hidden />
+          {isLive ? "Return to room" : "Open room"}
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
     </div>
   );
 }

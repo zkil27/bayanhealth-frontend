@@ -66,13 +66,15 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
         <Link
           href="/doctor/chat"
           aria-label="Back to conversations"
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border bg-card text-card-foreground transition-transform duration-300 md:hover:-translate-x-0.5"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs transition-transform duration-300 md:hover:-translate-x-0.5"
         >
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </Link>
 
-        <Avatar className="size-10">
-          <AvatarFallback>{patientRef.slice(0, 2)}</AvatarFallback>
+        <Avatar className="size-10 border border-(--border-subtle)">
+          <AvatarFallback className="bg-(--surface-warm) font-bold text-(--text-heading)">
+            {patientRef.slice(0, 2)}
+          </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
@@ -91,7 +93,7 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
             href={`/consultation/room/${encodeURIComponent(bookingId)}`}
             aria-label="Switch to video consultation"
             title="Switch to video"
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl border bg-card text-card-foreground transition-colors hover:bg-(--surface-warm-soft)"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs transition-colors hover:bg-(--surface-warm-soft)"
           >
             <Video className="size-5" strokeWidth={1.75} />
           </Link>
@@ -101,7 +103,7 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
       {isReadOnly ? (
         <p
           data-slot="doctor-chat-read-only-banner"
-          className="mb-3 shrink-0 rounded-lg border bg-(--surface-warm) px-3.5 py-2.5 text-[14px] leading-[1.45] text-(--text-muted)"
+          className="mb-3 shrink-0 rounded-xl border border-(--border-subtle) bg-(--surface-warm) px-4 py-3 text-[14px] leading-[1.45] text-(--text-muted)"
         >
           <span className="font-bold text-(--text-heading)">
             {bookingStatus === "cancelled"
@@ -226,10 +228,10 @@ function MessageList({
           data-own={message.isOwn ? "true" : "false"}
           data-pending={message.pending ? "true" : "false"}
           className={cn(
-            "max-w-[82%] rounded-lg px-3.5 py-2.5 text-[15px] leading-[1.45]",
+            "max-w-[82%] px-4 py-2.5 text-[15px] leading-[1.45]",
             message.isOwn
-              ? "self-end bg-primary text-primary-foreground"
-              : "self-start border bg-card text-card-foreground shadow-xs",
+              ? "self-end rounded-2xl rounded-br-xs bg-(--action-primary) font-medium text-white shadow-xs"
+              : "self-start rounded-2xl rounded-bl-xs border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs",
             message.pending && "opacity-70",
           )}
         >
@@ -274,14 +276,14 @@ function Composer({
           placeholder="Type a message…"
           aria-label="Message"
           aria-invalid={validationError ? true : undefined}
-          className="max-h-32 min-h-11 flex-1 resize-none rounded-full border bg-card px-4 py-3 text-[15px] text-card-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl border border-(--border-subtle) bg-(--surface-card) px-4 py-3 text-[15px] text-(--text-heading) placeholder:text-(--text-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         />
         <button
           type="submit"
           aria-label="Send message"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-(--action-primary) text-white shadow-xs transition-colors hover:bg-(--action-primary-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
-          <SendHorizonal className="size-[18px]" />
+          <SendHorizonal className="size-5" />
         </button>
       </div>
 

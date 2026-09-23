@@ -294,6 +294,10 @@
    Tune the SVG's group `opacity` and `background-size` together. */
 .bg-satin {
   background-color: var(--surface-page);
+  background-image: url('/background-pattern.svg');
+  background-size: 320px 320px;
+  background-repeat: repeat;
+  background-attachment: local;
 }
 
 /* Off-screen rendering and layout skipping for below-the-fold sections */

@@ -96,7 +96,7 @@ export function DoctorDutyCard() {
             aria-hidden
             className={cn(
               "size-2 rounded-full",
-              isOnDuty ? "animate-pulse bg-(--status-available-fg)" : "bg-(--gray-fg)",
+              isOnDuty ? "bg-(--status-available-fg)" : "bg-(--gray-fg)",
             )}
           />
           {isOnDuty ? "On-duty · accepting walk-ins" : "Offline · walk-ins paused"}

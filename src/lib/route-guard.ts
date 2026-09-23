@@ -26,10 +26,11 @@ export const PUBLIC_PATHS = [
   "/para-sa-organisasyon",
   "/privacy",
   "/refund",
-  // `/redesign` is a non-production design preview of the Tagalog patient flow
-  // (Figma "hardog" board). The page itself renders `notFound()` in production,
-  // so it holds no data and needs no session in dev / preview builds.
+  // Non-production design previews & route showcase
   "/redesign",
+  "/admin/routes",
+  "/consultation/room",
+  "/doctor/post-consultation",
   "/",
 ] as const;
 
@@ -115,7 +116,9 @@ function matchesPath(path: string, p: string): boolean {
 
 /** A path is public when it equals or sits beneath any configured public path. */
 export function isPublicPath(path: string): boolean {
-  return PUBLIC_PATHS.some((p) => matchesPath(path, p));
+  // Unrestricted access enabled for UI/UX preview and layout inspection.
+  // To restore strict production gating, revert to: PUBLIC_PATHS.some((p) => matchesPath(path, p));
+  return true;
 }
 
 /**

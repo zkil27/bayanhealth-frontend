@@ -79,7 +79,7 @@ export const COMING_SOON_OUTPUT_TYPES = new Set<CdsProtectedOutputType>([
  * deliverables in the right rail.
  */
 export const RAIL_OUTPUT_TYPES: readonly CdsProtectedOutputType[] = OUTPUT_TYPES.filter(
-  (type) => type !== "plan" && type !== "final_icd",
+  (type) => type !== "final_icd",
 );
 
 /**
@@ -171,8 +171,21 @@ export function railBadgeLabel(
       return "Blocked";
     case "relocked":
       return "Relocked";
-    case "unlocked":
-      return `${rows.filter((row) => row.status === "available").length} unlocked`;
+    case "unlocked": {
+      const available = rows.filter((row) => row.status === "available").length;
+      const drafting = rows.filter((row) => row.status === "drafted" || row.status === "signed").length;
+      const released = rows.filter((row) => row.status === "released").length;
+      if (available === 0 && drafting === 0 && released > 0) {
+        return `${released} released`;
+      }
+      if (available === 0 && drafting > 0) {
+        return `${drafting} to review`;
+      }
+      if (available > 0) {
+        return `${available} to draft`;
+      }
+      return "Ready";
+    }
     case "locked":
     default:
       return `${rows.filter((row) => row.status === "locked").length} locked`;

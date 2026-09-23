@@ -1,5 +1,6 @@
 "use client";
 
+import { Activity, Clock, Target } from "lucide-react";
 import type {
   CdsFinalIcdPayload,
   CdsImagingRequestPayload,
@@ -94,18 +95,41 @@ function renderPayload(
 
 function PlanView({ payload }: { payload: CdsPlanPayload }) {
   return (
-    <>
-      <Prose>{payload.summary}</Prose>
-      <Field label="Goals">
-        <Bullets items={payload.goals} />
-      </Field>
-      <Field label="Interventions">
-        <Bullets items={payload.interventions} />
-      </Field>
-      <Field label="Follow-up">
-        <Prose>{payload.followUp}</Prose>
-      </Field>
-    </>
+    <div className="flex flex-col gap-2.5">
+      <div className="rounded-lg border-l-3 border-l-(--teal-600) bg-(--surface-brand-soft)/40 p-3 text-xs font-semibold leading-relaxed text-(--navy-900)">
+        {payload.summary}
+      </div>
+
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="rounded-lg bg-(--surface-warm-soft)/60 p-2.5">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-(--navy-800)">
+            <Target className="size-3.5 text-(--teal-700)" />
+            Clinical goals
+          </p>
+          <div className="mt-1.5">
+            <Bullets items={payload.goals} />
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-(--surface-warm-soft)/60 p-2.5">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-(--navy-800)">
+            <Activity className="size-3.5 text-(--teal-700)" />
+            Interventions
+          </p>
+          <div className="mt-1.5">
+            <Bullets items={payload.interventions} />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-(--border-subtle) bg-(--surface-warm-soft)/30 p-2.5">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-(--navy-800)">
+          <Clock className="size-3.5 text-(--teal-700)" />
+          Follow-up &amp; red flags
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-(--ink-800)">{payload.followUp}</p>
+      </div>
+    </div>
   );
 }
 
@@ -288,10 +312,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <p className="text-xs font-bold tracking-wide text-(--text-subtle) uppercase">
+    <div className="flex flex-col gap-1">
+      <p className="text-xs font-bold text-(--navy-700)">
         {label}
-        {note ? <span className="ml-1.5 font-normal normal-case">({note})</span> : null}
+        {note ? <span className="ml-1.5 font-medium text-(--ink-600)">({note})</span> : null}
       </p>
       {children}
     </div>
@@ -299,14 +323,17 @@ function Field({
 }
 
 function Prose({ children }: { children: string }) {
-  return <p className="leading-relaxed whitespace-pre-line text-(--text-body)">{children}</p>;
+  return <p className="leading-relaxed whitespace-pre-line text-sm text-(--ink-800)">{children}</p>;
 }
 
 function Bullets({ items, className }: { items: string[]; className?: string }) {
   return (
-    <ul className={`list-disc space-y-0.5 pl-5 text-(--text-body) ${className ?? ""}`}>
+    <ul className={`space-y-1.5 text-xs text-(--ink-800) ${className ?? ""}`}>
       {items.map((item, index) => (
-        <li key={`${item}-${index}`}>{item}</li>
+        <li key={`${item}-${index}`} className="flex items-start gap-2">
+          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-(--teal-700)" aria-hidden />
+          <span className="leading-relaxed">{item}</span>
+        </li>
       ))}
     </ul>
   );
@@ -315,8 +342,8 @@ function Bullets({ items, className }: { items: string[]; className?: string }) 
 function Pair({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs text-(--text-subtle)">{label}</dt>
-      <dd className="font-medium text-(--text-heading)">{value}</dd>
+      <dt className="text-xs font-semibold text-(--ink-600)">{label}</dt>
+      <dd className="font-bold text-(--navy-900)">{value}</dd>
     </div>
   );
 }

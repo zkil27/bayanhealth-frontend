@@ -119,21 +119,23 @@ function ConversationRow({ entry }: { entry: ConversationEntry }) {
     <li data-slot="doctor-chat-conversation">
       <Link
         href={`/doctor/chat/${encodeURIComponent(booking.bookingId)}`}
-        className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 text-card-foreground shadow-sm transition-colors hover:bg-(--surface-warm-soft)">
-          <Avatar className="size-9">
-            <AvatarFallback>{ref.slice(0, 2)}</AvatarFallback>
+        <div className="flex items-center gap-3.5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4 text-(--text-body) shadow-xs transition-colors hover:bg-(--surface-warm-soft)">
+          <Avatar className="size-10 border border-(--border-subtle)">
+            <AvatarFallback className="bg-(--surface-warm) font-bold text-(--text-heading)">
+              {ref.slice(0, 2)}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{label}</p>
+            <p className="truncate text-sm font-bold text-(--text-heading)">{label}</p>
             {entry.lastMessage ? (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              <p className="mt-0.5 truncate text-xs text-(--text-muted)">
                 {entry.lastMessage.preview}
               </p>
             ) : (
-              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarClock className="size-3 shrink-0" />
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-(--text-muted)">
+                <CalendarClock className="size-3.5 shrink-0 text-(--text-subtle)" />
                 {formatScheduledAt(booking.scheduledAt)}
               </p>
             )}
@@ -144,12 +146,12 @@ function ConversationRow({ entry }: { entry: ConversationEntry }) {
             endpoint returns no per-conversation unread state.
           */}
           {isLive ? (
-            <Badge className="h-6 shrink-0 bg-(--status-available-bg) text-(--status-available-fg)">
+            <Badge className="h-6 shrink-0 rounded-full border-transparent bg-(--status-available-bg) px-2.5 text-xs font-bold text-(--status-available-fg)">
               <Video className="mr-1 size-3" />
               Live
             </Badge>
           ) : isHistory ? (
-            <Badge variant="outline" className="h-6 shrink-0">
+            <Badge variant="outline" className="h-6 shrink-0 rounded-full border-(--border-subtle) px-2.5 text-xs text-(--text-muted)">
               History
             </Badge>
           ) : null}
@@ -162,12 +164,12 @@ function ConversationRow({ entry }: { entry: ConversationEntry }) {
 function DoctorChatListSkeleton() {
   return (
     <ul className="flex flex-col gap-3">
-      {[0, 1].map((i) => (
-        <li key={i} className="flex items-center gap-3 rounded-xl border p-4">
-          <Skeleton className="size-9 rounded-full" />
-          <div className="flex flex-1 flex-col gap-1.5">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-40" />
+      {[0, 1, 2].map((i) => (
+        <li key={i} className="flex items-center gap-3.5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4">
+          <Skeleton className="size-10 rounded-full" />
+          <div className="flex flex-1 flex-col gap-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
           </div>
         </li>
       ))}

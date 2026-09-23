@@ -72,6 +72,15 @@ export interface DeckEntry {
  * Kept pure and exported so the tab set is testable without a rendered tree, and
  * so the workspace and the deck cannot disagree about which documents exist.
  */
+const PREFERRED_DECK_ORDER: readonly CdsProtectedOutputType[] = [
+  "plan",
+  "prescription",
+  "medical_certificate",
+  "patient_education",
+  "lab_request",
+  "imaging_request",
+];
+
 export function deriveDeckEntries(input: {
   artifacts: readonly CdsProtectedArtifact[];
   generating: ReadonlySet<CdsProtectedOutputType>;
@@ -108,6 +117,12 @@ export function deriveDeckEntries(input: {
     if (existing) continue;
     entries.push({ outputType, status: "generating" });
   }
+
+  entries.sort((a, b) => {
+    const indexA = PREFERRED_DECK_ORDER.indexOf(a.outputType);
+    const indexB = PREFERRED_DECK_ORDER.indexOf(b.outputType);
+    return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+  });
 
   return entries;
 }
@@ -153,7 +168,22 @@ export function DeliverablesDeck({
   onRelease: (artifact: CdsProtectedArtifact) => void;
   onRegenerate: (outputType: CdsProtectedOutputType) => void;
 }) {
-  if (entries.length === 0) return null;
+  if (entries.length === 0) {
+    return (
+      <section
+        data-slot="deliverables-deck-empty"
+        className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-(--border-subtle) bg-(--surface-card) p-8 text-center"
+      >
+        <span className="flex size-10 items-center justify-center rounded-full bg-(--surface-brand-soft) text-(--teal-800)">
+          <ClipboardList className="size-5" />
+        </span>
+        <h3 className="mt-2 text-sm font-bold text-(--navy-900)">No documents drafted yet</h3>
+        <p className="mt-1 max-w-sm text-xs text-(--text-muted)">
+          Select a document from Protected tools on the right (such as Plan or Prescription) to begin drafting.
+        </p>
+      </section>
+    );
+  }
 
   // An `active` naming a document that has since gone (a redraft that changed
   // type set, a stale sweep) falls back to the first tab rather than rendering
@@ -171,7 +201,7 @@ export function DeliverablesDeck({
     >
       <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
         <h2 id="deliverables-heading" className="text-[15px] font-bold text-(--text-heading)">
-          Drafted documents
+          Plan &amp; deliverables
         </h2>
         {outstanding > 0 ? (
           <span className="rounded-full bg-(--ai-bg-strong) px-2.5 py-0.5 text-xs font-bold text-(--ai-fg)">
@@ -324,7 +354,7 @@ export function DeliverablesDeck({
           // `animate-in` fire again each time rather than only on the deck's
           // own first render — CSS animation classes trigger on mount, not on
           // a prop changing underneath an element that stays mounted.
-          className="min-w-0 animate-in fade-in-0 slide-in-from-bottom-1 duration-200"
+          className="min-w-0 max-h-[min(640px,calc(100dvh-16rem))] overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-1 duration-200"
         >
           {STATUS_COPY[current.status] ? (
             <p className="px-4 pt-3 text-sm text-(--text-muted)">{STATUS_COPY[current.status]}</p>

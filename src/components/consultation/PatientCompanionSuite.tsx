@@ -78,7 +78,7 @@ export function PatientCompanionSuite({
   const purpose = intakeQuery.data?.sections?.purpose;
 
   return (
-    <div data-slot="patient-companion-suite" className="flex h-full flex-col text-(--text-body)">
+    <div data-slot="patient-companion-suite" className="flex h-full min-h-0 flex-1 flex-col text-(--text-body)">
       <Tabs defaultValue="chat" className="flex min-h-0 flex-1 flex-col gap-0">
         <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-2 sm:p-3">
           <TabsList className="h-auto w-full gap-1 rounded-xl bg-(--border-subtle)/50 p-1 sm:rounded-2xl">

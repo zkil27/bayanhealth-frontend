@@ -90,13 +90,13 @@ export function CalendarLegend({
     // `flex-shrink: 1` would let an unusually tall picker state squeeze against
     // the card instead of the reverse, which is exactly backwards — the legend
     // is the thing that must always stay fully visible.
-    <div data-slot="calendar-legend" className="flex shrink-0 flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-x-4.5 gap-y-2 text-sm text-(--text-muted)">
+    <div data-slot="calendar-legend" className="flex shrink-0 flex-col gap-2 pt-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-(--text-muted)">
         {ENTRY_CATEGORIES.map((category) => (
           <span key={category} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="size-3 shrink-0"
+              className="size-2.5 shrink-0 rounded-xs border"
               style={swatchStyle(palette[category])}
             />
             {CATEGORY_LABEL[category]}
@@ -108,9 +108,9 @@ export function CalendarLegend({
           onClick={() => setEditing((open) => !open)}
           aria-expanded={editing}
           data-slot="calendar-legend-toggle"
-          className="ml-auto flex items-center gap-1.5 rounded-full border border-(--border-subtle) px-3 py-1 text-sm font-medium text-(--text-muted) transition-colors hover:text-(--text-heading)"
+          className="ml-auto flex items-center gap-1.5 rounded-full border border-(--border-subtle) bg-(--surface-card) px-2.5 py-1 text-xs font-semibold text-(--text-muted) shadow-xs transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
         >
-          <Palette className="size-3.5" aria-hidden="true" />
+          <Palette className="size-3" aria-hidden="true" />
           {editing ? "Done" : "Colours"}
         </button>
       </div>

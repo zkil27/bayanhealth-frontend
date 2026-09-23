@@ -13,10 +13,12 @@ import {
 
 import { AsyncView } from "@/components/async-view";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
   ageFromDateOfBirth,
   fetchBookingIntake,
+  isNegativeAllergy,
   SEX_LABELS,
   type BookingIntakeForm,
   type IntakeReproductiveHealth,
@@ -203,11 +205,11 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
         reproductiveHealth={details?.reproductiveHealth}
       />
 
-      <div className="grid gap-2">
-        <div className="rounded-[12px] border border-(--border-subtle) bg-(--surface-card) p-3">
-          <Section icon={<Pill className="size-4 shrink-0" />} label="Allergies">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-[10px] border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
+          <Section icon={<Pill className="size-3.5 shrink-0 text-(--teal-700)" />} label="Allergies">
             {allergies ? (
-              <span className={allergies.toLowerCase() === "none" ? "" : "font-semibold text-(--danger-fg)"}>
+              <span className={isNegativeAllergy(allergies) ? "text-xs font-semibold text-(--ink-800)" : "text-xs font-bold text-(--danger-fg)"}>
                 {allergies}
               </span>
             ) : (
@@ -215,9 +217,9 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
             )}
           </Section>
         </div>
-        <div className="rounded-[12px] border border-(--border-subtle) bg-(--surface-card) p-3">
-          <Section icon={<Pill className="size-4 shrink-0" />} label="Current medications">
-            {medications || <NotAnswered />}
+        <div className="rounded-[10px] border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
+          <Section icon={<Pill className="size-3.5 shrink-0 text-(--teal-700)" />} label="Medications">
+            <span className="text-xs font-medium text-(--ink-800)">{medications || <NotAnswered />}</span>
           </Section>
         </div>
       </div>
@@ -235,7 +237,7 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
       <Disclosure title="Demographics & measurements">
         <dl data-slot="patient-details-summary" className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
           <SummaryRow label="Age">
-            {typeof age === "number" ? `${age} y/o` : <NotAnswered />}
+            {typeof age === "number" ? (age === 0 ? "<1 y/o (infant)" : `${age} y/o`) : <NotAnswered />}
           </SummaryRow>
           <SummaryRow label="Sex">{sex || <NotAnswered />}</SummaryRow>
           {baseline ? (
@@ -267,7 +269,7 @@ function ClinicalAlerts({
   reproductiveHealth?: IntakeReproductiveHealth;
 }) {
   const alerts: string[] = [];
-  if (allergies && allergies.toLowerCase() !== "none") alerts.push(`Allergy: ${allergies}`);
+  if (allergies && !isNegativeAllergy(allergies)) alerts.push(`Allergy: ${allergies}`);
   if (safety?.chestPain === true) alerts.push("Chest pain reported");
   if (safety?.dyspnea === true) alerts.push("Shortness of breath reported");
   if (
@@ -292,21 +294,21 @@ function ClinicalAlerts({
       data-slot="patient-clinical-alerts"
       className={
         alerts.length > 0
-          ? "rounded-[12px] border border-(--danger-border) bg-(--danger-bg) p-3"
-          : "rounded-[12px] border border-(--status-available-fg)/30 bg-(--status-available-bg) p-3"
+          ? "rounded-[12px] border border-(--danger-border) bg-(--danger-bg) p-2.5 shadow-2xs"
+          : "rounded-[12px] border border-(--status-available-fg)/30 bg-(--status-available-bg) p-2.5 shadow-2xs"
       }
       aria-label="Clinical alerts"
     >
-      <p className="flex items-center gap-1.5 text-sm font-bold text-(--text-heading)">
-        <AlertTriangle className={alerts.length > 0 ? "size-4 text-(--danger-fg)" : "size-4 text-(--status-available-fg)"} />
-        Clinical alerts
+      <p className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
+        <AlertTriangle className={alerts.length > 0 ? "size-3.5 text-(--danger-fg)" : "size-3.5 text-(--status-available-fg)"} />
+        Clinical alerts ({alerts.length})
       </p>
       {alerts.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-sm text-(--danger-fg)">
+        <ul className="mt-1.5 space-y-1 text-xs font-bold text-(--danger-fg)">
           {alerts.map((alert) => <li key={alert}>• {alert}</li>)}
         </ul>
       ) : (
-        <p className="mt-1 text-sm text-(--status-available-fg)">No patient-reported alerts identified.</p>
+        <p className="mt-1 text-xs font-medium text-(--status-available-fg)">No patient-reported alerts identified.</p>
       )}
     </section>
   );
@@ -324,15 +326,15 @@ function Disclosure({
   return (
     <details
       open={open}
-      className="group overflow-hidden rounded-[12px] border border-(--border-subtle) bg-(--surface-card)"
+      className="group overflow-hidden rounded-[12px] border border-(--border-subtle) bg-(--surface-card) shadow-2xs"
     >
-      <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-bold text-(--text-heading)">
+      <summary className="cursor-pointer list-none px-3 py-2 text-xs font-bold uppercase tracking-wider text-(--navy-700) hover:bg-(--surface-warm-soft)/40">
         <span className="flex items-center justify-between gap-2">
           {title}
-          <span aria-hidden className="text-(--text-subtle) transition-transform group-open:rotate-180">⌄</span>
+          <span aria-hidden className="text-(--ink-500) transition-transform group-open:rotate-180">⌄</span>
         </span>
       </summary>
-      <div className="flex flex-col gap-3 border-t border-(--border-subtle) p-3">{children}</div>
+      <div className="flex flex-col gap-2.5 border-t border-(--border-subtle) p-3">{children}</div>
     </details>
   );
 }
@@ -380,19 +382,34 @@ function SymptomReviewSection({ review }: { review?: IntakeSymptomReview }) {
   if (rows.length === 0 && typeof review.painSeverity !== "number") return null;
 
   return (
-    <Section icon={<Stethoscope className="size-4 shrink-0" />} label="Symptom review">
-      <div className="flex flex-col gap-1.5">
+    <Section icon={<Stethoscope className="size-3.5 shrink-0 text-(--teal-700)" />} label="Symptom review">
+      <div className="flex flex-col gap-2">
         {typeof review.painSeverity === "number" ? (
-          <Badge variant="outline" className="w-fit">
-            Pain severity: {review.painSeverity}/10
-          </Badge>
-        ) : null}
-        {rows.map(({ key, label }) => (
-          <div key={key}>
-            <span className="block text-xs text-muted-foreground">{label}</span>
-            <span>{review[key]}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-(--ink-600)">Pain:</span>
+            <Badge
+              variant="outline"
+              className={cn(
+                "w-fit font-bold",
+                review.painSeverity >= 7
+                  ? "border-(--danger-border) bg-(--danger-bg) text-(--danger-fg)"
+                  : review.painSeverity >= 4
+                    ? "border-(--status-soon-fg)/40 bg-(--status-soon-bg) text-(--status-soon-fg)"
+                    : "border-(--border-default) text-(--ink-800)"
+              )}
+            >
+              {review.painSeverity}/10 {review.painSeverity >= 7 ? "Severe" : review.painSeverity >= 4 ? "Moderate" : "Mild"}
+            </Badge>
           </div>
-        ))}
+        ) : null}
+        <div className="grid grid-cols-1 gap-2 rounded-lg bg-(--surface-warm-soft)/40 p-2.5 sm:grid-cols-2">
+          {rows.map(({ key, label }) => (
+            <div key={key} className="flex flex-col">
+              <span className="text-[11px] font-semibold text-(--ink-600)">{label}</span>
+              <span className="text-xs font-semibold text-(--navy-900)">{review[key]}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </Section>
   );
@@ -403,19 +420,21 @@ function ReproductiveHealthSection({ health }: { health?: IntakeReproductiveHeal
   if (!health) return null;
 
   return (
-    <Section icon={<Baby className="size-4 shrink-0" />} label="Reproductive health">
+    <Section icon={<Baby className="size-3.5 shrink-0 text-(--teal-700)" />} label="Reproductive health">
       <div className="flex flex-wrap gap-1.5">
-        <Badge variant="outline">
+        <Badge variant="outline" className="border-(--border-default) font-semibold text-(--ink-800)">
           Pregnancy possibility:{" "}
           {PREGNANCY_POSSIBILITY_LABELS[health.pregnancyPossibility] ?? health.pregnancyPossibility}
         </Badge>
         {health.cyclePattern ? (
-          <Badge variant="outline">
+          <Badge variant="outline" className="border-(--border-default) font-semibold text-(--ink-800)">
             Cycle: {CYCLE_PATTERN_LABELS[health.cyclePattern] ?? health.cyclePattern}
           </Badge>
         ) : null}
         {health.lastMenstrualPeriod ? (
-          <Badge variant="outline">Last menstrual period: {health.lastMenstrualPeriod}</Badge>
+          <Badge variant="outline" className="border-(--border-default) font-semibold text-(--ink-800)">
+            Last menstrual period: {health.lastMenstrualPeriod}
+          </Badge>
         ) : null}
       </div>
     </Section>
@@ -425,8 +444,8 @@ function ReproductiveHealthSection({ health }: { health?: IntakeReproductiveHeal
 function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="font-medium text-foreground">{children}</dd>
+      <dt className="text-[11px] font-semibold text-(--ink-600)">{label}</dt>
+      <dd className="text-xs font-semibold text-(--navy-900)">{children}</dd>
     </div>
   );
 }
@@ -446,14 +465,14 @@ function SafetyScreen({ screen }: { screen?: IntakeSafetyScreen }) {
       typeof screen.feverDays === "number");
 
   return (
-    <div className="flex flex-col gap-2" data-slot="patient-details-safety-screen">
-      <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-        <ShieldAlert className="size-4 shrink-0 text-amber-600" />
+    <div className="flex flex-col gap-1.5" data-slot="patient-details-safety-screen">
+      <span className="flex items-center gap-1.5 text-xs font-bold text-(--navy-700)">
+        <ShieldAlert className="size-3.5 shrink-0 text-amber-600" />
         Red-flag screening
       </span>
       {!answered ? (
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <AlertTriangle className="size-3.5 shrink-0" />
+        <p className="flex items-center gap-1.5 text-xs font-medium text-(--ink-600)">
+          <AlertTriangle className="size-3.5 shrink-0 text-(--danger-fg)" />
           Not answered — treat as unscreened, not as negative.
         </p>
       ) : (
@@ -461,13 +480,13 @@ function SafetyScreen({ screen }: { screen?: IntakeSafetyScreen }) {
           <Answer label="Chest pain" value={screen?.chestPain} />
           <Answer label="Shortness of breath" value={screen?.dyspnea} />
           {typeof screen?.feverDays === "number" ? (
-            <Badge variant="outline">
+            <Badge variant="outline" className="border-(--border-default) font-semibold text-(--ink-800)">
               {screen.feverDays === 0
                 ? "No fever"
                 : `Fever ${screen.feverDays} day${screen.feverDays === 1 ? "" : "s"}`}
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">
+            <Badge variant="outline" className="border-(--border-subtle) font-medium text-(--ink-600)">
               Fever: not asked
             </Badge>
           )}
@@ -480,13 +499,16 @@ function SafetyScreen({ screen }: { screen?: IntakeSafetyScreen }) {
 function Answer({ label, value }: { label: string; value?: boolean }) {
   if (value === undefined) {
     return (
-      <Badge variant="outline" className="text-muted-foreground">
+      <Badge variant="outline" className="border-(--border-subtle) font-medium text-(--ink-600)">
         {label}: not asked
       </Badge>
     );
   }
   return (
-    <Badge variant={value ? "destructive" : "outline"}>
+    <Badge
+      variant={value ? "destructive" : "outline"}
+      className={value ? "font-bold" : "border-(--border-default) font-semibold text-(--ink-800)"}
+    >
       {label}: {value ? "Yes" : "No"}
     </Badge>
   );
@@ -502,16 +524,16 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="flex flex-col gap-1">
+      <span className="flex items-center gap-1.5 text-xs font-bold text-(--navy-700)">
         {icon}
         {label}
       </span>
-      <div className="pl-5 text-sm">{children}</div>
+      <div className="text-sm font-medium text-(--ink-800)">{children}</div>
     </div>
   );
 }
 
 function NotAnswered() {
-  return <span className="text-muted-foreground italic">Not answered</span>;
+  return <span className="text-xs text-(--ink-500) italic">Not answered</span>;
 }

@@ -12,7 +12,6 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronRight,
-  Clock,
   FileText,
   FlaskConical,
   HeartPulse,
@@ -707,13 +706,10 @@ function LiveActivityCard({
       className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 sm:p-5 shadow-(--shadow-card)"
     >
       <div className="min-w-0 flex-1">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-(--status-available-fg) uppercase">
-          <Clock className="size-3.5" /> Mabilisang Tulong
-        </span>
-        <h3 className="mt-1 text-[16px] sm:text-[17px] font-bold text-(--text-heading)">
+        <h3 className="text-[20px] sm:text-[22px] font-bold text-(--text-heading) leading-snug">
           Kailangan mo ng doktor ngayon?
         </h3>
-        <p className="mt-0.5 text-[13px] sm:text-[13.5px] text-(--text-muted)">
+        <p className="mt-1 text-[13px] sm:text-[13.5px] text-(--text-muted)">
           Available ang PRC doctor sa loob ng 5–15 minuto para sa agarang telekonsulta.
         </p>
       </div>

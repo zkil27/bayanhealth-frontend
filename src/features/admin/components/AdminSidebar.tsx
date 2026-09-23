@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   CalendarClock,
+  Compass,
   LayoutDashboard,
   Settings,
   ShieldCheck,
@@ -52,6 +53,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/kyc", label: "KYC supervision", icon: ShieldCheck },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/settings", label: "Platform settings", icon: Settings },
+  { href: "/admin/routes", label: "Route Directory", icon: Compass },
 ];
 
 /**

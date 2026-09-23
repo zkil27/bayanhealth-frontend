@@ -113,10 +113,10 @@ export function computeGridBounds(
   return { startMinutes: start, endMinutes: end };
 }
 
-/** Hour marks across the grid window, every two hours, matching the D2 design's row labels. */
+/** Hour marks across the grid window, every one hour, providing clinical schedule density. */
 export function hourMarks(startMinutes: number, endMinutes: number): number[] {
   const marks: number[] = [];
-  for (let m = startMinutes; m < endMinutes; m += 120) marks.push(m);
+  for (let m = startMinutes; m < endMinutes; m += 60) marks.push(m);
   return marks;
 }
 

@@ -333,7 +333,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-3 p-4">
-        <p className="text-xs text-(--text-subtle)">
+        <p className="text-xs font-medium text-(--ink-600)">
           Assessment v{artifact.assessmentVersion} · revision {artifact.artifactRevision}
           {artifact.physicianEditedAt ? (
             <> · edited {new Date(artifact.physicianEditedAt).toLocaleTimeString()}</>
@@ -439,7 +439,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 disabled={props.busy || props.regenerating}
                 onClick={() => setSigning(true)}
               >
-                <PenLine className="size-4" /> Sign
+                <PenLine className="size-4" /> Sign &amp; lock
               </Button>
               {amendable ? (
                 <Button
@@ -470,10 +470,6 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 </Button>
               ) : null}
             </div>
-            <p className="text-xs text-(--text-muted)">
-              Signing locks the content and records your review. The patient still cannot
-              see this until you release it separately.
-            </p>
 
             {/*
               A popup rather than an inline block that used to take over this
@@ -544,20 +540,17 @@ export function ArtifactCard(props: ArtifactCardProps) {
               prescription reaches nobody until it is released. Stated on the
               card rather than left to the button label.
             */}
-            <p className="text-sm text-(--text-body)">
-              {patientReadable
-                ? "Signed. The patient still cannot see this until you release it."
-                : "Signed and kept with your records."}
-            </p>
-            <HoldToReleaseButton
-              label={patientReadable ? "Release to patient" : "Release for records"}
-              disabled={props.busy}
-              onConfirm={props.onRelease}
-            />
-            <p className="text-xs text-(--text-muted)">
-              Press and hold for 2 seconds to release. {visibility.detail} Releases this
-              document only.
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-(--teal-800)">
+                <CheckCircle2 className="size-3.5 text-(--status-available-fg)" />
+                Signed · Ready to release
+              </span>
+              <HoldToReleaseButton
+                label={patientReadable ? "Release to patient" : "Release for records"}
+                disabled={props.busy}
+                onConfirm={props.onRelease}
+              />
+            </div>
           </>
         ) : artifact.lifecycleStatus === "released" ? (
           <p className="flex items-start gap-2 text-sm text-(--text-body)">

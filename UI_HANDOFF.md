@@ -1,7 +1,7 @@
 # UI/UX Handoff Guide for Main Repository AI Agent
 
 > **Document Type**: AI Agent Execution Manual & Developer Handoff  
-> **Source Fork**: `BayanHealthMVP-ui-fork-tite` (UI/UX Redesign Fork)  
+> **Source Fork**: `bayanhealth-frontend` (UI/UX Redesign Fork)  
 > **Destination**: Main Repository (`BayanHealthMVP`)  
 > **Primary Goal**: Enable the AI agent and lead developer in the main repo to port UI/UX changes cleanly, accurately, and with **ZERO code bloat or logic breakage**.
 

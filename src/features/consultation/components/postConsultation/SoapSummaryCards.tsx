@@ -37,62 +37,79 @@ export function SoapSummaryCards({
 }) {
   const details = intake?.sections.details;
   const purpose = intake?.sections.purpose;
+  const hasVitals = details?.vitals && hasAnyVital(details.vitals);
 
   return (
     <div
       data-slot="soap-summary-cards"
-      className="flex flex-col gap-3.5 sm:flex-row sm:flex-wrap"
+      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs md:flex-row md:items-center md:divide-x md:divide-(--border-subtle)"
     >
-      <SummaryCard letter="S" title="Subjective">
-        {intake === undefined ? (
-          <p className="text-sm text-(--text-muted)">Loading patient intake…</p>
-        ) : !purpose?.chiefComplaint?.trim() ? (
-          <p className="text-sm text-(--text-muted)">
-            No chief complaint was submitted for this consultation.
-          </p>
-        ) : (
-          <>
-            <p className="text-[15px] leading-relaxed text-(--text-body)">
-              {purpose.chiefComplaint}
-            </p>
-            {purpose.patientVerbatim?.trim() ? (
-              <p className="mt-1.5 text-sm text-(--text-muted)">
-                &ldquo;{purpose.patientVerbatim}&rdquo;
-              </p>
-            ) : null}
-          </>
-        )}
-      </SummaryCard>
-
-      <SummaryCard letter="O" title="Objective">
-        {intake === undefined ? (
-          <p className="text-sm text-(--text-muted)">Loading patient intake…</p>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {details?.vitals && hasAnyVital(details.vitals) ? (
-              <div className="flex flex-wrap gap-2">
-                {VITALS.map((vital) => {
-                  const flag = vital.sanityCheck(details.vitals as IntakeVitals);
-                  return (
-                    <VitalTile
-                      key={vital.key}
-                      icon={vital.icon}
-                      label={vital.label}
-                      value={vital.format(details.vitals as IntakeVitals)}
-                      flagged={Boolean(flag)}
-                      flagLabel={flag}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-(--text-muted)">
-                No vitals were recorded for this consultation.
-              </p>
-            )}
+      {/* S: Subjective */}
+      <div className="flex min-w-0 flex-1 items-start gap-2.5">
+        <span
+          aria-hidden
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
+        >
+          S
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-(--navy-900)">Subjective</span>
+            <span className="text-[10px] font-semibold text-(--ink-500)">(Chief complaint)</span>
           </div>
-        )}
-      </SummaryCard>
+          {intake === undefined ? (
+            <p className="mt-0.5 text-xs text-(--ink-500)">Loading intake…</p>
+          ) : !purpose?.chiefComplaint?.trim() ? (
+            <p className="mt-0.5 text-xs text-(--ink-500)">No chief complaint submitted</p>
+          ) : (
+            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-(--navy-900)">
+              {purpose.chiefComplaint}
+              {purpose.patientVerbatim?.trim() ? (
+                <span className="ml-1 font-normal text-(--ink-600) italic">
+                  &ldquo;{purpose.patientVerbatim}&rdquo;
+                </span>
+              ) : null}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* O: Objective */}
+      <div className="flex min-w-0 flex-1 items-start gap-2.5 md:pl-3">
+        <span
+          aria-hidden
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
+        >
+          O
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-(--navy-900)">Objective</span>
+            <span className="text-[10px] font-semibold text-(--ink-500)">(Vitals)</span>
+          </div>
+          {intake === undefined ? (
+            <p className="mt-0.5 text-xs text-(--ink-500)">Loading vitals…</p>
+          ) : hasVitals ? (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {VITALS.map((vital) => {
+                const flag = vital.sanityCheck(details!.vitals as IntakeVitals);
+                return (
+                  <VitalTile
+                    key={vital.key}
+                    icon={vital.icon}
+                    label={vital.label}
+                    value={vital.format(details!.vitals as IntakeVitals)}
+                    flagged={Boolean(flag)}
+                    flagLabel={flag}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-0.5 text-xs text-(--ink-500)">No vitals recorded for this consultation</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -109,20 +126,22 @@ function SummaryCard({
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-1 flex-col rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-4 py-3.5",
-        "shadow-[0_2px_4px_rgba(219,210,168,0.3),0_1px_2px_rgba(120,110,80,0.06)] sm:min-w-[18rem]",
+        "flex min-w-0 flex-1 flex-col rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-4 py-3",
+        "shadow-xs sm:min-w-[18rem]",
       )}
       aria-label={title}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <span
           aria-hidden
-          className="flex size-5 items-center justify-center rounded-md bg-(--surface-warm-soft) text-xs font-bold text-(--text-muted)"
+          className="flex size-5.5 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
         >
           {letter}
         </span>
         <h3 className="text-sm font-bold text-(--text-heading)">{title}</h3>
-        <span className="ml-auto text-sm text-(--text-subtle)">read-only</span>
+        <span className="ml-auto rounded-md bg-(--ink-100) px-2 py-0.5 text-[11px] font-semibold text-(--ink-600)">
+          Intake record
+        </span>
       </div>
       <div className="pt-2">{children}</div>
     </section>

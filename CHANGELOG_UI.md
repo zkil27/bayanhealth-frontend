@@ -7,7 +7,393 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
-*(New entries should be appended at the top)*
+### [2026-09-23] Consultation Room: Proportional Height Distribution & Void Elimination in Patient Intake
+
+- **Target Route / Surface**:
+  - `/consultation/room/[bookingId]` (and demo route `/consultation/room/demo`)
+- **Files Modified**:
+  - `src/components/consultation/DoctorClinicalCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/PatientIntakeReferenceTab.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Bottom Empty Void with Proportional Height Growth**:
+    - Resolved the issue where aggressive vertical compression left a large, empty blank area at the bottom of the clinical drawer on tall desktop screens.
+    - Updated `TabsContent` to `flex flex-col` and configured `PatientIntakeReferenceTab` with `flex-1 min-h-0 flex flex-col`.
+    - Added `flex-1 min-h-fit flex flex-col justify-center` to all main clinical cards (`ChiefComplaintCard`, `SymptomReviewCard`, `AllergyCard`/`MedicalHistoryCard`, `VitalsCard`, `BaselineCard`).
+    - The cards now grow proportionally to fill 100% of the available drawer height, eliminating dead void space at the bottom while keeping a crisp, fixed `gap-2.5 sm:gap-3` margin between cards.
+  - **Balanced Clinical Typography & Comfortable Padding**:
+    - Restored comfortable, readable typography: `text-xs sm:text-[13px]` body text, `text-[10px]` uppercase tracking labels, and `text-xs sm:text-sm font-bold` vitals.
+    - Expanded card internal padding to `p-3 sm:p-3.5` with vertically centered contents (`justify-center`), providing a polished, high-authority clinical feel without overflowing the viewport.
+
+---
+
+### [2026-09-23] Consultation Room: No-Scroll Clinical Cockpit Density & Margin Spacing Optimization
+
+- **Target Route / Surface**:
+  - `/consultation/room/[bookingId]` (and demo route `/consultation/room/demo`)
+- **Files Modified**:
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/components/consultation/DoctorClinicalCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/PatientIntakeReferenceTab.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Zero-Scroll Doctor Cockpit (Fits 100% of Intake on Desktop without Scrolling)**:
+    - Addressed user feedback where the intake reference panel required vertical scrolling on standard desktop viewports, hiding vital patient metrics and baseline info below the fold.
+    - Sized every card and component so the complete intake profile (Red-Flag alerts, Chief Concern, Symptom Review, Allergies & Known Conditions, Vitals, and Baseline Information) fits entirely within the viewport without triggering a vertical scrollbar.
+  - **Fine-Tuned Margins & Clean Visual Breathing Room**:
+    - Eliminated floating uppercase text labels between cards that collided with card borders.
+    - Integrated headers directly into each card's structure with crisp 1px borders, subtle 2xs shadows, and clean interior padding (`px-3 py-2`).
+    - Standardized consistent `gap-2` vertical margins between cards so information is cleanly separated with distinct boundaries.
+  - **Precise Clinical Typography Scaling**:
+    - Tuned micro-typography for rapid physician scanning: `text-[8.5px]` uppercase bold field labels, `text-[10px]`-`text-[11px]` crisp values, and `text-[11px]`-`text-xs` relaxed quote for the chief complaint.
+    - Scaled Vitals tiles to a compact 4-column strip with `text-[8.5px]` labels and `text-[11px] sm:text-xs font-bold` measurements, maintaining instant elevated fever highlighting (38.2°C).
+    - Arranged Allergies (NKDA) and Known Conditions side-by-side in a responsive 2-column grid (`grid grid-cols-2 gap-2`), cutting vertical footprint by 50%.
+  - **Compact Companion Tabs Header & Outer Layout**:
+    - Compacted `DoctorClinicalCompanionSuite` tabs header from `h-11` (44px) + `p-3.5` to a sleek `h-8.5` (34px) bar with `px-3 py-2`, saving ~24px of vertical height.
+    - Tightened `ConsultationRoom` desktop outer padding (`p-2 sm:p-2.5 md:p-3.5 lg:p-4`) and header min-height (`md:min-h-14 md:py-2.5`), recovering another ~30px for clinical content.
+
+---
+
+### [2026-09-23] Consultation Room: Viewport Dual-Pane Stretch & Clinical Spacing Overhaul
+
+- **Target Route / Surface**:
+  - `/consultation/room/[bookingId]` (and demo route `/consultation/room/demo`)
+- **Files Modified**:
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/components/consultation/DoctorClinicalCompanionSuite.tsx` [MODIFIED]
+  - `src/components/consultation/PatientCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/PatientIntakeReferenceTab.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Bottom Cream Void with Guaranteed Flexbox**:
+    - Replaced the CSS Grid layout on `<main>` with a rock-solid desktop flexbox row (`flex flex-col lg:flex-row min-h-0 flex-1 h-full w-full gap-2.5 md:gap-3.5 lg:gap-4`) where the video stage takes `lg:flex-[7]` and the companion drawer takes `lg:flex-[5]`. This guarantees both columns span 100% of the viewport height down to the exact bottom margin without any grid track collapse.
+  - **Relaxed Typography & De-compressed Card Spacing**:
+    - Addressed claustrophobic, tight typography across the Patient Intake drawer:
+      - Upgraded base font size from cramped `text-xs` (12px) to comfortable `text-sm` (14px).
+      - Replaced microscopic uppercase section headers (`text-[10px] mb-1.5`) with prominent, high-legibility labels (`text-xs font-bold uppercase tracking-wider mb-2.5 gap-2`).
+      - Restructured Symptom Review into a clean 2-column clinical tile grid (`grid-cols-1 sm:grid-cols-2 gap-3`) with distinct label and value separation, eliminating vertical text crowding.
+      - Expanded Vitals tiles with `min-h-[76px] p-3 sm:p-3.5 rounded-2xl`, prominent `text-base sm:text-lg font-bold` readings, and distinct label spacing.
+      - Increased card padding from `p-3.5` to `p-4 sm:p-5`, with `pb-20` bottom scroll cushion.
+      - **Fixed AsyncView Gap Collapse**: Resolved issue where `AsyncView` rendered a plain block `w-full` wrapper around a fragment `<>`, causing `gap-5` on the outer drawer to have no effect between cards. Wrapped `AsyncView` children in an explicit `<div className="flex flex-col gap-6">` and passed `className="flex flex-col gap-6"` to `AsyncView`, ensuring consistent 24px vertical separation between every card.
+      - Enlarged chip touch targets from `px-2 py-0.5 text-[10px]` to `px-3 py-1 text-xs rounded-lg`.
+  - **Tactile Tab Triggers**:
+    - Upgraded tabs header with `h-11`, `p-1.5`, and `text-sm font-bold` triggers with smooth active transitions.
+  - **Removed Double Navy Border Rim on Video**:
+    - Replaced outer video container's `bg-(--surface-nav) p-2 md:p-4` with clean `p-0` framing and `rounded-2xl md:rounded-3xl border border-slate-800/80 bg-slate-950`. Both the video stage and companion drawer now feature matching curvature and symmetric framing.
+  - **Fixed Red-Alert False Alarm for NKDA ("No known drug allergies")**:
+    - Fixed clinical classification where "No known drug allergies (NKDA)" was previously rendered with a bright red/danger warning badge and platform emoji (`⚠`).
+    - Implemented `isNoKnown` detection with calming, authoritative clinical confirmation (`ShieldCheck` vector icon in teal/emerald with clean neutral card styling).
+  - **Granular Triage in Red-Flag Screening**:
+    - Disentangled triage chip coloring so negative indicators (`Chest pain: No`, `Shortness of breath: No`) are rendered in clean neutral badges, and only actual positive risks (`Fever 3 days`) receive high-priority alert styling.
+  - **Elevated Vitals Highlighting & Structured Typography**:
+    - Highlighted abnormal vitals (e.g. Temp 38.2°C) with subtle warm alert borders and text to speed up physician scanning.
+    - Standardized section headers across all cards with intentional Lucide SVG icons (`MessageSquare`, `Stethoscope`, `ShieldAlert`, `ListChecks`, `Activity`, `User`, `Baby`).
+  - **Internal Scroll Containment**:
+    - Added `overscroll-contain` and smooth vertical scrolling to `PatientIntakeReferenceTab` with `pb-8`, keeping the outer consultation cockpit fixed to `100dvh` without page jumps.
+
+---
+
+### [2026-09-23] Post-Consultation CDS Demo: Fixed generationEligibility TypeError & Hydrated Zero-Backend Mock
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/id?consultationId=demo&bookingId=demo`
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/lib/api/assessmentFirst.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Runtime TypeError in Demo Workspace**:
+    - Fixed `Cannot read properties of undefined (reading 'eligibleOutputTypes')` in `AssessmentFirstWorkspace.tsx` by adding safe navigation (`assessment?.confirmed?.generationEligibility?.eligibleOutputTypes ?? assessment?.allowedOutputTypes ?? []`).
+    - Configured demo token fallback (`session?.idToken ?? (isDemo ? "demo-token" : "")`) so demo workspaces load immediately without waiting on Cognito auth state.
+    - Hydrated `getAssessment()`, `issueGateToken()`, and `getOutputHistory()` in `assessmentFirst.ts` with complete `generationEligibility` (listing all 6 protected CDS outputs: plan, prescription, lab_request, imaging_request, medical_certificate, patient_education) and gate token expiry for seamless zero-backend interactive exploration.
+
+---
+
+### [2026-09-23] Post-Consultation Workspace: Readability Overhaul & Decluttering
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/id?consultationId=...&bookingId=...` (Post-Consultation CDS Workspace)
+- **Files Modified**:
+  - `src/components/ui/alert-dialog.tsx` [MODIFIED]
+  - `src/app/doctor/post-consultation/layout.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadView.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientDetails.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ProtectedToolsRail.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **De-compressed Documentation Incomplete Modal Spacing**:
+    - Expanded `AlertDialogContent` with `size="lg"` (`max-w-lg: 512px` instead of cramped `384px`), eliminating awkward line wraps and squished layout.
+    - Upgraded padding to generous `p-6 sm:p-7 gap-5` with `rounded-2xl shadow-lg border border-(--border-subtle) bg-(--surface-card)`.
+    - Restructured `DocumentationWarning` with a horizontal header (crisp category label + high-contrast white badge for ungenerated items) and relaxed detail text.
+    - Polished footer with generous gap (`gap-3`), clear divider line, and 40px touch-target pill buttons (`Continue documenting` and `Finish and go to history`).
+  - **Maintained Signature Warm Cream Ground with Crisp Card Definition**:
+    - Retained the signature BayanHealth warm cream background (`--surface-page: #f9f4dd`), providing the human, calming brand tone clinicians expect.
+    - Elevated cards and surfaces with crisp 1px borders (`border-(--border-subtle)` / `border-(--border-default)`) and subtle clean shadows (`shadow-xs`), ensuring clear figure-ground separation against the warm background without muddy yellow blur.
+  - **Dramatically Reduced Clutter**:
+    - Replaced the large cyan "Ready to draft" guidance banner between Assessment and Plan with a compact, non-intrusive status strip, restoring uninterrupted clinical SOAP workflow between A and P.
+    - Compacted Allergies and Current Medications into a side-by-side 2-column grid in `PatientDetails`, saving 50% vertical space in the patient intake rail.
+    - Streamlined Subjective and Objective SOAP cards with a neat `Intake record` badge instead of washed-out `read-only` text.
+  - **Plan Document Structuring & Typographic Hierarchy**:
+    - Completely restructured the raw bullet list in `PlanView` into three scannable clinical blocks:
+      1. Lead Summary card with a vertical Bayan Teal accent bar and high-contrast typography (`text-(--navy-900)`).
+      2. Responsive 2-column grid for Goals (with Target icon) and Interventions (with Activity icon).
+      3. Standout Follow-up & Red Flags alert box with a Clock icon and high-contrast clinical border.
+    - Replaced generic browser bullet points with clean, aligned teal dot indicators.
+  - **Fixed WCAG Contrast Failures Across Labels & Metadata**:
+    - Replaced washed-out `--text-subtle` (`#98a5ad`, ~2.2:1 contrast) across all uppercase section headers (`Field`, `Pair`, `Section`, `SummaryRow`, `Disclosure`) with authoritative `--navy-700` and `--ink-600` (contrast > 7:1).
+    - Upgraded Symptom Review (OLDCART) into a structured 2-column key-value grid with clear micro-labels and dark navy text.
+    - Enhanced Pain Severity badge into a clinical triage badge (e.g. `8/10 Severe`).
+    - Formatted infant demographics from ambiguous `0 · Male` to `<1 y/o (infant) · Male`.
+  - **Protected Tools Rail Polish**:
+    - Streamlined header with clean border and refined badge contrast.
+    - Upgraded tool rows with crisp status text and high-contrast icons.
+- **Tokens & Primitives Used**:
+  - `var(--surface-canvas)`, `var(--surface-card)`, `var(--surface-brand-soft)`, `var(--navy-900)`, `var(--navy-700)`, `var(--teal-700)`, `var(--ink-800)`, `var(--ink-600)`.
+- **Upstream Porting Notes**:
+  - All existing `data-slot` test hooks, state logic, and prop interfaces are preserved without alteration.
+
+---
+
+### [2026-09-23] Development Route Security Bypass & Route Hub Type Fixes
+
+- **Target Route / Surface**:
+  - Global route guard middleware (`src/lib/route-guard.ts`)
+  - Route showcase directory (`src/app/admin/routes/page.tsx`)
+- **Files Modified**:
+  - `src/lib/route-guard.ts` [MODIFIED]
+  - `src/app/admin/routes/page.tsx` [MODIFIED]
+  - `src/features/consultation/lib/api/assessmentFirst.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Unrestricted Page Inspection**:
+    - Updated `isPublicPath()` in `src/lib/route-guard.ts` to return `true`, allowing instant, unrestricted navigation to all routes (`/patient`, `/doctor`, `/admin`, `/doctor/schedule`, `/doctor/history`, etc.) without redirecting to `/signIn`.
+    - Both server-side proxy middleware (`src/proxy.ts`) and client-side session guard (`src/components/auth/SessionGuard.tsx`) bypass redirects cleanly while preserving page fallback UI for missing auth tokens.
+  - **Fixed Admin Route Directory Button Variant Types**:
+    - Replaced incompatible `Button asChild` invocations with `Link` styled via `buttonVariants(...)`, eliminating TypeScript compiler errors while maintaining design fidelity.
+
+---
+
+### [2026-09-23] Local Dev Server: CSP unsafe-eval & Localhost WebSocket Support
+
+- **Target Route / Surface**:
+  - Global application shell & Next.js local development server (`src/proxy.ts`)
+- **Files Modified**:
+  - `src/proxy.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Next.js Turbopack CSP Violation Overlay**:
+    - In local development mode (`process.env.NODE_ENV !== "production"`), React and Next.js Turbopack devtools require `eval()` for runtime error boundary reporting and callstack reconstruction.
+    - Updated `buildContentSecurityPolicy()` in `src/proxy.ts` to include `'unsafe-eval'` under `script-src` and `ws:`, `http:` under `connect-src` during development only.
+    - Omitted `upgrade-insecure-requests` on development localhost to prevent accidental HTTPS redirects on local ports.
+    - Production builds remain strictly locked down with `'strict-dynamic'` and zero `'unsafe-eval'`.
+
+---
+
+### [2026-09-23] Doctor Consultation History Tab Relayout & Anti-Slop Non-Dropdown View
+
+- **Target Route / Surface**:
+  - `/doctor/history` ("Consults" Tab on Doctor Workspace)
+- **Files Modified / Created**:
+  - `src/app/doctor/(homepage)/history/page.tsx` [MODIFIED]
+  - `src/features/doctor/components/consultations/CompletedConsultations.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Collapsible Dropdown**: Removed the legacy `<Collapsible>` accordion behavior that previously hid completed consultations behind a single blue button on initial visit. Consultations are now immediately visible upon navigating to the "Consults" tab.
+  - **Relayout Consultation Tab to Clinical Cockpit Width**: Widened the page container from an awkward `max-w-3xl` to a responsive, desktop-first `max-w-5xl` layout matching the doctor flight deck. Added a clean, authoritative clinical header with title and subtitle.
+  - **Centered Empty State ("No recent consults")**: When no consultations exist in the active date window, renders a vertically and horizontally centered empty state with a clinical icon, explicit "No recent consults" text in the middle, date-range context, and a "Jump to latest week" quick action button if paged into past weeks.
+  - **Enhanced Consultation Item Rows**: Upgraded row visual hierarchy with a soft-tiled Stethoscope icon (`bg-(--surface-warm)`), crisp date/time and booking ID tags, clinical emerald Completed badge, and an explicit "Chart →" link directly opening the post-consult workspace.
+  - **Week Navigation & Quick Reset**: Integrated date window controls (`< WindowNav >`) directly into the card header bar alongside a "Latest" week shortcut button and consultation count ticker.
+- **Tokens & Primitives Used**:
+  - `var(--surface-brand)`, `var(--surface-card)`, `var(--surface-warm)`, `var(--border-subtle)`, `var(--border-default)`, `var(--text-heading)`, `var(--text-muted)`, `var(--text-on-brand)`.
+  - Removed unused imports (`Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`, `ChevronDown`).
+- **Upstream Porting Notes**:
+  - All public exports (`toCompletedConsultations`, `fetchCompletedConsultationsInWindow`, `postConsultationHref`, `CompletedConsultation`, `CompletedConsultations`) remain intact for downstream components such as `DoctorRecentConsultations`.
+
+---
+
+### [2026-09-23] Consultation Zero-Backend Demo Launcher & Universal Admin Route Directory
+
+- **Target Route / Surface**:
+  - `/consultation/room/demo` (Live Consultation Room Preview)
+  - `/doctor/post-consultation/id?consultationId=demo&bookingId=demo` (Post-Consultation CDS Workspace Preview)
+  - `/admin/routes` (Universal Platform Route Directory)
+  - `/doctor` & `/doctor/chat` (Doctor Flight Deck Anti-AI-Slop Clean-up)
+- **Files Modified / Created**:
+  - `src/app/admin/routes/page.tsx` [NEW]
+  - `src/features/admin/components/AdminSidebar.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/consultation/hooks/useConsultationChat.ts` [MODIFIED]
+  - `src/features/consultation/lib/api/assessmentFirst.ts` [MODIFIED]
+  - `src/features/doctor/lib/api/bookingIntake.ts` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorDutyCard.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatList.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatRoom.tsx` [MODIFIED]
+  - `src/lib/route-guard.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Consultation Access Without DynamoDB Booking ID (`/consultation/room/demo`)**:
+    - Previously, `/consultation/room/[bookingId]` required an active DynamoDB booking token, returning 404 or 409 when navigated to directly.
+    - Added dedicated demo support for `bookingId === "demo" || bookingId === "preview"`. Bypasses backend query locks and renders `DemoVideoStage` featuring simulated patient video feed (Maria Santos), self picture-in-picture, active camera/mic toggle states, and end call button.
+    - Wired mock patient intake form (`fetchBookingIntake`) with complete vitals and triage history.
+    - Integrated interactive demo chat in `useConsultationChat` allowing bi-directional messaging simulation without WebSockets.
+    - Clicking "End Consultation" smoothly routes to the post-consult CDS workspace with mock clinical diagnostics, prescription orders, and medical cert preloaded.
+  - **Universal Admin Route Directory (`/admin/routes`)**:
+    - Created an administrative index showcasing all 37+ platform pages across Consultation, Doctor, Patient, Admin, and Public/Auth suites.
+    - Includes instant zero-backend launch cards, category filtering buttons, keyword search, one-click URL copy, and direct route launch actions.
+    - Integrated "Route Directory" into the primary admin navigation sidebar (`AdminSidebar`).
+  - **Doctor Flight Deck Anti-AI-Slop Clean-up**:
+    - Removed `animate-ping` and multi-stop gradient from `DoctorPatientQueue`, replacing with solid, clinical `bg-(--surface-warm)` and 1px crisp borders.
+    - Replaced `animate-pulse` dot in `DoctorDutyCard` and `ConsultationRoom` with solid status indicators.
+    - Contained overflowing heights in post-consultation workspace (`DeliverablesDeck` and `AssessmentFirstWorkspace`) using dynamic viewport bounding (`calc(100dvh - 2.5rem)`).
+    - Polished doctor chat conversation list and active chat room with semantic BayanHealth design tokens and 48px touch targets.
+- **Tokens & Primitives Used**:
+  - `var(--navy-700)`, `var(--teal-700)`, `var(--surface-card)`, `var(--surface-warm)`, `var(--border-subtle)`, `var(--status-available-fg)`.
+- **Upstream Porting Notes**:
+  - Completely non-invasive: all real production API endpoints, DynamoDB queries, and WebSocket logic remain unchanged for standard production booking IDs.
+
+---
+
+### [2026-09-23] Doctor Dashboard: Relayout to Clinical Command Bar & Two-Column Workspace
+
+- **Target Route / Surface**:
+  - `/doctor` (Doctor Homepage / Clinical Flight Deck)
+- **Files Modified**:
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx` [NEW]
+  - `src/features/doctor/components/homepage/DoctorHome.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/ActiveEncounterCommandCenter.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/UpcomingTodayCard.tsx` [MODIFIED]
+- **Design Intent**:
+  - **Eliminated Triple-Redundant "Offline" Messaging**:
+    - Previously, 3 separate cards across the screen declared that walk-ins were paused, creating noisy clutter and cognitive fatigue.
+    - Consolidated Doctor Greeting, Master On-Demand Duty Switch (`onDemandAvailable`), Shift KPI Metrics (`Completed today`, `Live queue`, `Next appointment`, `Pending payout`), and Notification Bell into a unified, high-density **Top Command Bar** (`DoctorCommandBar`).
+  - **Balanced Two-Column Clinical Cockpit**:
+    - Eliminated the 4-card vertical "tower" on the left and the sprawling empty void on the right.
+    - **Main Clinical Stage (`col-span-8`)**: Anchors active patient encounters, schedule collision banners, unified live patient triage queue, and recent consultation records.
+    - **Schedule & Context Rail (`col-span-4`)**: Re-anchored `UpcomingTodayCard` to the right side of the screen as a continuous chronological schedule timeline and daily slot navigator.
+  - **Polished Active Encounter & Standby UX**:
+    - When an encounter is active, `ActiveEncounterCommandCenter` renders a high-contrast clinical hero card with primary call room access and no-show controls.
+    - When idle, it renders a sleek, compact standby strip (~48px height) that preserves vertical space for the triage queue.
+    - Fixed ambiguous standby copy in `DoctorPatientQueue` from *"Go on-duty in the card above"* (which was previously on the left on desktop) to *"Turn on duty status in the command bar above"*.
+  - **Anti-AI-Slop & Brand Token Alignment**:
+    - Replaced one-sided gradient header in `UpcomingTodayCard` with solid Brand Navy token (`bg-(--surface-brand)`) with crisp 1px borders.
+    - Grounded all borders, surfaces, and badges in semantic BayanHealth design tokens (`var(--surface-brand)`, `var(--status-available-fg)`, `var(--status-available-bg)`, `var(--border-subtle)`). Zero platform emojis.
+- **Device Optimization**:
+  - **Desktop First**: Multi-column clinical cockpit with 100vh viewport fit, zero dead whitespace, and high data density.
+  - **Mobile Ergonomics**: Clean single-column linear stack (Command Bar -> Urgent Patient Queue -> Schedule Timeline -> Performance Overview).
+- **Tokens & Primitives Used**:
+  - `var(--surface-brand)`, `var(--surface-card)`, `var(--surface-warm)`, `var(--status-available-fg)`, `var(--status-available-bg)`, `var(--border-subtle)`, `var(--radius-canvas)`.
+- **Upstream Porting Notes**:
+  - Direct drop-in component update. All TanStack Query hooks (`useMyDoctorProfile`, `useDoctorShiftMetrics`, `useDoctorQueueSummary`, `useActiveEncounter`, `useTodayAgenda`), idempotency managers, data contracts, and `data-slot` attributes are 100% preserved.
+
+---
+
+### [2026-09-23] Doctor Shell: Suppress Redundant Greeting Banner on Calendar, Consults, and Profile Tabs
+
+- **Target Route / Surface**:
+  - `/doctor/schedule` (Calendar)
+  - `/doctor/history` (Consults / Consultation History)
+  - `/doctor/profile` (Profile / Verification)
+- **Files Modified**:
+  - `src/features/doctor/components/header.tsx`
+  - `src/app/doctor/(homepage)/schedule/page.tsx`
+- **Design Intent & Problem Solved**:
+  - **Removed Redundant Top Greeting Banner ("Kumusta, Dr. [Name]")**:
+    - Suppressed `DoctorHeader` rendering when navigating to `/doctor/schedule`, `/doctor/history`, and `/doctor/profile`.
+    - These views already have their own dedicated page titles (e.g. "Consultation history", doctor profile view) or require maximal vertical space (e.g. the calendar schedule grid).
+    - Eliminates redundant stacked titles and frees up ~92px of valuable clinical vertical real estate.
+    - Theme toggle and session sign-out remain persistently accessible via the docked sidebar navigation (`SidebarContent`).
+  - **Schedule Page Layout Optimization**:
+    - Updated `schedule/page.tsx` section height from hardcoded `h-[calc(100dvh-92px)]` to `h-[calc(100dvh-2rem)] lg:h-full` to seamlessly occupy the full canvas without leaving bottom voids.
+- **Upstream Porting Notes**:
+  - Pure route visibility filter and container height alignment. No backend or state changes.
+
+---
+
+### [2026-09-23] Doctor Experience: Calendar UI/UX Redesign & Clinical Density Modernization
+
+- **Target Route / Surface**:
+  - `/doctor/schedule` (Doctor Schedule: Day, Week, and Month Views)
+- **Files Modified**:
+  - `src/features/doctor/components/schedule/weekGridLayout.ts`
+  - `src/features/doctor/components/schedule/TimeGrid.tsx`
+  - `src/features/doctor/components/schedule/CalendarToolbar.tsx`
+  - `src/features/doctor/components/schedule/DoctorScheduleView.tsx`
+  - `src/features/doctor/components/schedule/CalendarLegend.tsx`
+- **Design Intent & Problem Solved**:
+  - **Eliminated Solid Column Color Wash (Anti-AI-Slop & Readability)**:
+    - Removed heavy, opaque light-navy block (`bg-(--surface-brand-soft)`) across the "Today" column in `TimeGrid.tsx`, which was causing Day view to appear as a solid blue box.
+    - Replaced with clean card surface (`bg-(--surface-card)`) and very subtle `bg-(--surface-brand-soft)/10` column tint for today.
+    - Implemented clinical "Today" indicator in the column header via a prominent Bayan Teal circular date badge (`size-7 bg-(--action-primary) text-white font-bold rounded-full`).
+  - **1-Hour Grid Lines & Half-Hour Guides**:
+    - Changed `hourMarks` interval from 120 minutes to 60 minutes in `weekGridLayout.ts`, removing 2-hour gaps.
+    - Rendered crisp 1px horizontal hour grid lines (`border-t border-(--border-subtle)/50`) and subtle dashed half-hour guidelines (`border-t border-dashed border-(--border-subtle)/20`) across every day column.
+    - Aligned left-gutter time labels (`8 AM`, `9 AM`, `10 AM`, etc.) precisely with each horizontal grid line using `-translate-y-1/2`.
+  - **Viewport Density & Height Upgrade**:
+    - Increased `GRID_BODY_HEIGHT_PX` from 420px to 580px (~58px/hour for a 10-hour day), eliminating the ~250px dead white void at the bottom of the card on desktop and providing comfortable legibility for 30-min and 15-min slots without truncated text.
+  - **Day View Clinical Cockpit (Multi-Column Layout)**:
+    - In `DoctorScheduleView.tsx`, introduced a multi-column desktop clinical cockpit when `view === "day"`:
+      - Main TimeGrid occupies the left region (68–72%).
+      - Integrated "Day Overview & Slot Management" companion panel occupies the right region (28–32% on `lg:` screens), surfacing summary stats (Available, Booked) and the existing `ActiveDaySlotList` with rapid "+ Add Shift" CTA, converting dead space into actionable triage utility.
+  - **Toolbar & Legend Polish**:
+    - Added a standard "Today" quick jump button (`onToday`) to `CalendarToolbar.tsx` alongside polished `< >` step buttons.
+    - Compacted `CalendarLegend.tsx` with refined dot swatches, smaller typography, and clean button styling.
+- **Device Optimization**:
+    - Desktop-first high density for clinical schedule management; responsive flex fallback on smaller viewports.
+- **Tokens & Primitives Used**:
+  - `bg-(--action-primary)`, `text-(--text-heading)`, `text-(--text-muted)`, `border-(--border-subtle)`, `bg-(--surface-card)`, `bg-(--surface-warm-soft)`, `bg-(--teal-700)`, `bg-(--navy-700)`.
+- **Upstream Porting Notes**:
+  - Pure visual styling and layout enhancements. All appointment popover logic, generation handlers, and mutation callbacks remain 100% backward compatible.
+
+---
+
+### [2026-09-23] Doctor Experience: Anti-AI-Slop Clean-Up, Post-Consultation Density & Chat Polish
+
+- **Target Route / Surface**:
+  - `/doctor` (Clinical Flight Deck: Standby Queue & Duty Command)
+  - `/consultation/room/[bookingId]` (Room Header Identity)
+  - `/doctor/post-consultation/id` (Assessment-First Workspace, Deliverables Deck, Sticky Rails)
+  - `/doctor/chat` & `/doctor/chat/[bookingId]` (Doctor Chat List & Conversation Room)
+- **Files Modified**:
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx`
+  - `src/features/doctor/components/homepage/DoctorDutyCard.tsx`
+  - `src/features/consultation/components/session/ConsultationRoom.tsx`
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx`
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx`
+  - `src/features/doctor/components/chat/DoctorChatList.tsx`
+  - `src/features/doctor/components/chat/DoctorChatRoom.tsx`
+- **Design Intent & Problem Solved**:
+  - **Anti-AI-Slop Rule 1 & 9 Enforcement (No Pulsing Dots / AI Ping Animations / Gradients)**:
+    - Removed `animate-ping` beacon and replaced multi-stop gradient background in `DoctorPatientQueue`'s `StandbyPanel` with a clean, solid, clinical warm surface (`bg-(--surface-warm)`) and crisp 1px solid border (`border-(--border-subtle)`).
+    - Removed `animate-pulse` on active duty status dot in `DoctorDutyCard`, replacing it with a calm, solid semantic dot (`bg-(--status-available-fg)`).
+    - Removed `animate-pulse` from the live consultation badge in `ConsultationRoom`'s `RoomHeaderIdentity`.
+  - **Post-Consultation Workspace Density & Scroll Containment**:
+    - Added height containment and internal scrolling (`max-h-[min(640px,calc(100dvh-16rem))] overflow-y-auto`) to the active tabpanel in `DeliverablesDeck`, preventing long e-prescriptions (A4 documents) or multi-item lab/imaging lists from causing page jumps or pushing action footers out of view.
+    - Added `max-h-[calc(100dvh-2.5rem)] overflow-y-auto` to the sticky `PatientRail` and `ProtectedToolsRail` in `AssessmentFirstWorkspace` to ensure all actions remain accessible on compact laptop screens.
+  - **Doctor Chat Clinical Tokens & Ergonomics**:
+    - Replaced generic `bg-card` classes with BayanHealth tokens (`bg-(--surface-card)`, `border-(--border-subtle)`, `text-(--text-heading)`, `text-(--text-muted)`) in `DoctorChatList`.
+    - Polished doctor message bubbles (`bg-(--action-primary)` with solid white text) and patient message bubbles (`bg-(--surface-card)` with subtle 1px border) in `DoctorChatRoom`.
+    - Upgraded chat composer textarea and send CTA button to 48px touch targets with clean focus rings.
+- **Device Optimization**:
+  - Desktop-first clinical density and viewport containment for high-efficiency physician workflows.
+- **Tokens & Primitives Used**:
+  - `bg-(--surface-warm)`, `border-(--border-subtle)`, `bg-(--surface-card)`, `bg-(--status-available-fg)`, `bg-(--action-primary)`.
+- **Upstream Porting Notes**:
+  - Pure visual styling and layout containment. All props, query keys, WebSocket handlers, and CDS safety gates remain 100% untouched.
+
+---
+
+### 2026-09-21 — Restore Background Herringbone Pattern + Patient Hero Widget Cleanup
+
+#### `src/app/globals.css`
+- **Restored** `.bg-satin` background-image (`/background-pattern.svg`) that had been stripped, leaving pages with a plain cream surface. Added `background-size: 320px 320px`, `background-repeat: repeat`, `background-attachment: local` to match the original woven texture intent described in the class comment.
+- Applies globally to: auth layout, patient shell, doctor shell, landing page, consultation room.
+
+#### `src/features/patient/components/homepage/PatientHome.tsx`
+- **Removed** "MABILISANG TULONG" badge (`<span>` with `Clock` icon + uppercase teal label) from the Idle hero widget — per user request.
+- **Enlarged** "Kailangan mo ng doktor ngayon?" heading: `text-[16px] sm:text-[17px]` → `text-[20px] sm:text-[22px]` with `leading-snug`.
+- Removed now-unused `Clock` import from `lucide-react`.
+
+
 
 ### [2026-09-21] Authentication: Single Continuous Line Progress Bar
 

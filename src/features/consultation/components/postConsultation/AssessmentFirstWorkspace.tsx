@@ -123,8 +123,9 @@ export function AssessmentFirstWorkspace({
   bookingId?: string;
 }) {
   const session = useAuthStore((state) => state.session);
-  const token = session?.idToken ?? "";
-  const physicianActorId = session?.userId ?? "";
+  const isDemo = consultationId === "demo" || consultationId === "demo-consult";
+  const token = session?.idToken ?? (isDemo ? "demo-token" : "");
+  const physicianActorId = session?.userId ?? (isDemo ? "demo-doctor" : "");
   /**
    * The doctor's stored signature specimen. Read here rather than inside each
    * artifact card so seven cards share one request, and so a doctor who has not
@@ -180,6 +181,7 @@ export function AssessmentFirstWorkspace({
    * false while unconfirmed, where the editor is the whole point of the phase.
    */
   const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [patientRailCollapsed, setPatientRailCollapsed] = useState(false);
   const previewRequestRef = useRef(0);
   const candidateSearchRequestRef = useRef(0);
   /**
@@ -364,7 +366,10 @@ export function AssessmentFirstWorkspace({
   const candidateSuppressed =
     evaluation?.routing.outcome === "REFER_F2F" || evaluation?.routing.outcome === "EMERGENCY";
   const allowedTypes = useMemo(
-    () => assessment?.confirmed?.generationEligibility.eligibleOutputTypes ?? [],
+    () =>
+      assessment?.confirmed?.generationEligibility?.eligibleOutputTypes
+      ?? (assessment as unknown as { allowedOutputTypes?: CdsProtectedOutputType[] })?.allowedOutputTypes
+      ?? [],
     [assessment],
   );
 
@@ -1017,12 +1022,12 @@ export function AssessmentFirstWorkspace({
     (artifact) => !artifact.effectiveStale && artifact.outputType === "final_icd",
   );
   const icdPayload = readFinalIcdPayload(icdArtifact);
-  // Plan is reviewed in SOAP order. Final ICD is shown inside Assessment, so
-  // neither is repeated in the generic deliverables deck.
+  // Plan is now unified as the premier tab of the deliverables deck.
+  // Final ICD remains shown inside the Assessment card.
   const deckEntries = deriveDeckEntries({
     artifacts: current,
     generating,
-    exclude: new Set<CdsProtectedOutputType>(["plan", "final_icd"]),
+    exclude: new Set<CdsProtectedOutputType>(["final_icd"]),
   });
 
   // Identity for the header, from the structured intake demographics.
@@ -1084,9 +1089,21 @@ export function AssessmentFirstWorkspace({
         both rails stick on the wide layouts so neither scrolls away from the
         document they describe.
       */}
-      <div className="grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[18rem_minmax(0,1fr)_21rem]">
-        <div className="order-2 min-w-0 lg:order-3 xl:order-1 xl:sticky xl:top-4">
-          <PatientRail bookingId={bookingId} intake={intake} />
+      <div
+        className={cn(
+          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+          patientRailCollapsed
+            ? "xl:grid-cols-[3.5rem_minmax(0,1fr)_21rem]"
+            : "xl:grid-cols-[18rem_minmax(0,1fr)_21rem]",
+        )}
+      >
+        <div className="order-2 min-w-0 lg:order-3 xl:order-1 xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2.5rem)] xl:overflow-y-auto">
+          <PatientRail
+            bookingId={bookingId}
+            intake={intake}
+            collapsed={patientRailCollapsed}
+            onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
+          />
         </div>
 
         <main className="order-1 flex min-w-0 flex-col gap-4 lg:order-1 xl:order-2">
@@ -1148,10 +1165,13 @@ export function AssessmentFirstWorkspace({
             <div
               data-slot="workspace-guidance"
               data-step={guidance.step}
-              className="rounded-[14px] border border-(--border-subtle) bg-(--surface-accent-soft) p-3.5"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2 text-xs shadow-2xs"
             >
-              <p className="text-[15px] font-bold text-(--text-heading)">{guidance.heading}</p>
-              <p className="mt-0.5 text-sm text-(--text-muted)">{guidance.instruction}</p>
+              <div className="flex items-center gap-2">
+                <span className="size-2 shrink-0 rounded-full bg-(--teal-600)" aria-hidden />
+                <span className="font-bold text-(--navy-900)">{guidance.heading}:</span>
+                <span className="font-medium text-(--ink-700)">{guidance.instruction}</span>
+              </div>
             </div>
           ) : null}
 
@@ -1273,13 +1293,13 @@ export function AssessmentFirstWorkspace({
           {planRow ? (
             <section
               data-slot="plan-card"
-              className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-[0_6px_16px_rgba(219,210,168,0.25),0_1px_3px_rgba(120,110,80,0.06)]"
+              className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
               aria-labelledby="plan-heading"
             >
-              <div className="flex items-center gap-2 border-b border-(--border-subtle) px-4 py-3.5">
+              <div className="flex items-center gap-2 border-b border-(--border-subtle) px-4 py-3">
                 <span
                   aria-hidden
-                  className="flex size-6 items-center justify-center rounded-md bg-(--surface-accent-soft) text-xs font-bold text-(--status-available-fg)"
+                  className="flex size-5.5 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700)"
                 >
                   P
                 </span>
@@ -1461,7 +1481,7 @@ export function AssessmentFirstWorkspace({
           ) : null}
         </main>
 
-        <div className="order-3 min-w-0 lg:order-2 lg:sticky lg:top-4 xl:order-3">
+        <div className="order-3 min-w-0 lg:order-2 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto xl:order-3">
           <ProtectedToolsRail
             railState={railState}
             badgeLabel={railBadgeLabel(railState, railRows)}
@@ -1581,7 +1601,7 @@ function AssessmentCard({
     return (
       <section
         data-slot="assessment-summary-bar"
-        className="flex flex-wrap items-center gap-3 rounded-[14px] border border-(--status-available-fg)/40 bg-(--surface-card) px-4 py-3 shadow-[0_2px_4px_rgba(219,210,168,0.3),0_1px_2px_rgba(120,110,80,0.06)]"
+        className="flex flex-wrap items-center gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-4 py-3 shadow-xs"
         aria-labelledby="assessment-heading"
       >
         <span
@@ -1591,24 +1611,24 @@ function AssessmentCard({
           <CheckCircle2 className="size-4" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <h2 id="assessment-heading" className="text-[15px] font-bold text-(--text-heading)">
-            Your Assessment
+          <h2 id="assessment-heading" className="text-xs font-bold uppercase tracking-wider text-(--navy-700)">
+            Confirmed Assessment
           </h2>
-          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-(--text-muted)">
-            <span className="truncate">{confirmed.diagnosis}</span>
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+            <span className="truncate font-semibold text-(--navy-900)">{confirmed.diagnosis}</span>
             {icd ? (
               <span
                 data-slot="assessment-icd-code"
-                className="shrink-0 rounded-full bg-(--status-available-bg) px-2 py-0.5 font-bold text-(--status-available-fg)"
+                className="shrink-0 rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-xs font-bold text-(--teal-800)"
               >
                 ICD-10 {icd.code}
               </span>
             ) : icdSyncing ? (
-              <span className="flex shrink-0 items-center gap-1 text-(--ai-fg)">
+              <span className="flex shrink-0 items-center gap-1 text-xs text-(--ai-fg)">
                 <Spinner className="size-3" /> Syncing ICD-10…
               </span>
             ) : null}
-            <span className="text-(--text-subtle)">v{assessment.assessmentVersion}</span>
+            <span className="text-xs font-medium text-(--ink-500)">v{assessment.assessmentVersion}</span>
           </div>
         </div>
         <Button
@@ -1864,12 +1884,15 @@ function FinishDocumentationControl({
         <CheckCircle2 className="size-4" />
         Finish documentation
       </Button>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      <AlertDialogContent
+        size="lg"
+        className="p-6 sm:p-7 gap-5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) shadow-lg"
+      >
+        <AlertDialogHeader className="space-y-1.5 text-left">
+          <AlertDialogTitle className="text-lg font-bold text-(--navy-900)">
             {hasOutstanding ? "Finish with incomplete documentation?" : "Finish documentation?"}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-sm leading-relaxed text-(--ink-600)">
             Your confirmed Assessment is already saved. Leaving this workspace will not generate,
             sign, release, or delete any document.
           </AlertDialogDescription>
@@ -1898,20 +1921,23 @@ function FinishDocumentationControl({
             />
           ) : null}
           {!hasOutstanding ? (
-            <p className="rounded-[12px] bg-(--status-available-bg) p-3 text-(--status-available-fg)">
+            <p className="rounded-xl border border-(--teal-500)/30 bg-(--status-available-bg) p-3.5 text-sm font-medium text-(--status-available-fg)">
               All selected documentation has been completed. You can safely return to consultation history.
             </p>
           ) : (
-            <p className="font-medium">
+            <p className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/40 p-3 text-xs font-medium text-(--ink-700)">
               You can return later to complete the remaining documents. Confirm only if this is intentional.
             </p>
           )}
         </div>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel>Continue documenting</AlertDialogCancel>
+        <AlertDialogFooter className="mt-1 pt-4 border-t border-(--border-subtle) flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
+          <AlertDialogCancel className="w-full sm:w-auto h-10 rounded-full border border-(--border-default) px-5 text-xs font-semibold text-(--ink-700) hover:bg-(--surface-warm-soft)">
+            Continue documenting
+          </AlertDialogCancel>
           <AlertDialogAction
             data-slot="finish-documentation-confirm"
+            className="w-full sm:w-auto h-10 rounded-full bg-(--action-primary) px-5 text-xs font-semibold text-white shadow-xs hover:bg-(--action-primary-hover)"
             onClick={() => router.push("/doctor/history")}
           >
             Finish and go to history
@@ -1932,10 +1958,14 @@ function DocumentationWarning({
   detail: string;
 }) {
   return (
-    <div className="rounded-[12px] border border-(--status-soon-fg)/40 bg-(--status-soon-bg)/40 p-3">
-      <p className="font-bold text-(--text-heading)">{title}</p>
-      <p className="mt-0.5">{items.join(", ")}</p>
-      <p className="mt-1 text-xs text-(--text-muted)">{detail}</p>
+    <div className="rounded-xl border border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40 p-3.5 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-(--status-soon-fg)">{title}</p>
+        <span className="rounded-md border border-(--status-soon-fg)/20 bg-white/90 px-2.5 py-0.5 text-xs font-bold text-(--navy-900) shadow-2xs">
+          {items.join(", ")}
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-(--ink-600)">{detail}</p>
     </div>
   );
 }

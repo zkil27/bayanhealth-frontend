@@ -2,7 +2,9 @@
 
 import { useCallback } from "react";
 import {
+  Activity,
   Baby,
+  CheckCircle2,
   FileQuestion,
   ListChecks,
   MessageSquare,
@@ -10,8 +12,10 @@ import {
   ShieldCheck,
   Stethoscope,
   TriangleAlert,
+  User,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { AsyncView } from "@/components/async-view";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
@@ -55,24 +59,33 @@ export function PatientIntakeReferenceTab({ bookingId }: { bookingId: string }) 
   );
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4 text-xs" data-slot="room-patient-intake">
+    <div className="p-3 sm:p-3.5 text-xs flex-1 min-h-0 flex flex-col" data-slot="room-patient-intake">
       <AsyncView<BookingIntakeForm | null>
         fetcher={fetcher}
         deps={[idToken, bookingId]}
         empty={<NoIntakePanel />}
+        className="flex-1 min-h-0 flex flex-col"
       >
         {(form) =>
           form ? (
-            <>
+            <div className="flex-1 min-h-0 flex flex-col gap-2.5 sm:gap-3">
               <RedFlagCard screen={form.sections?.details?.safetyScreen} />
               <ChiefComplaintCard form={form} />
               <SymptomReviewCard review={form.sections?.details?.symptomReview} />
-              <AllergyCard allergies={form.sections?.details?.allergies} />
-              <MedicalHistoryCard history={form.sections?.details?.structuredMedicalHistory} />
-              <ReproductiveHealthCard health={form.sections?.details?.reproductiveHealth} />
+
+              {/* Side-by-side Allergies & Known Conditions */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 flex-1 min-h-fit">
+                <AllergyCard allergies={form.sections?.details?.allergies} />
+                <MedicalHistoryCard history={form.sections?.details?.structuredMedicalHistory} />
+              </div>
+
+              {form.sections?.details?.reproductiveHealth ? (
+                <ReproductiveHealthCard health={form.sections?.details?.reproductiveHealth} />
+              ) : null}
+
               <VitalsCard vitals={form.sections?.details?.vitals} />
               <BaselineCard form={form} />
-            </>
+            </div>
           ) : (
             <NoIntakePanel />
           )
@@ -82,20 +95,8 @@ export function PatientIntakeReferenceTab({ bookingId }: { bookingId: string }) 
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="mb-1.5 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
-      {children}
-    </span>
-  );
-}
-
 /**
- * Red-flag screening, in three real states rather than two: reported,
- * cleared, and unasked. The deterministic router already treats an absent
- * answer as a non-match, so drawing "not asked" as "no" here would hide the
- * same gap from the physician the router already refuses to hide from
- * itself.
+ * Compact Red-flag screening horizontal banner.
  */
 function RedFlagCard({ screen }: { screen?: IntakeSafetyScreen }) {
   const chestPain = screen?.chestPain;
@@ -122,51 +123,60 @@ function RedFlagCard({ screen }: { screen?: IntakeSafetyScreen }) {
     amber: "bg-(--status-soon-bg) border-(--status-soon-fg)/30 text-(--status-soon-fg)",
   }[tone];
 
-  const chipToneClasses = {
-    teal: "border-(--status-available-fg)/30 text-(--status-available-fg)",
-    rose: "border-(--danger-border)/30 text-(--danger-fg)",
-    amber: "border-(--status-soon-fg)/30 text-(--status-soon-fg)",
-  }[tone];
-
   const headline = !anyAnswered
     ? "Red-flag screening not answered"
     : anyPositive
       ? "Red flag reported"
       : anyUnasked
-        ? "Screening incomplete — treat as unscreened"
+        ? "Screening incomplete"
         : "No red flags reported";
 
   const Icon = tone === "teal" ? ShieldCheck : tone === "rose" ? ShieldAlert : TriangleAlert;
 
   return (
     <div
-      className={`space-y-1.5 rounded-2xl border p-3.5 ${toneClasses}`}
+      className={cn("rounded-xl border px-3.5 py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-2xs shrink-0", toneClasses)}
       data-slot="room-intake-red-flags"
     >
-      <div className="flex items-center gap-1.5 font-bold">
-        <Icon className="size-3.5 shrink-0" />
+      <div className="flex items-center gap-2 font-bold text-xs">
+        <Icon className="size-4 shrink-0" />
         <span>{headline}</span>
       </div>
       {anyAnswered ? (
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={`rounded-md border bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold ${chipToneClasses}`}
+            className={cn(
+              "rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+              chestPain === true
+                ? "border-(--danger-border)/50 bg-rose-100/90 text-rose-900 font-bold"
+                : "border-(--border-subtle) bg-(--surface-card) text-(--text-body)"
+            )}
           >
-            Chest pain: {chestPain === undefined ? "not asked" : chestPain ? "Yes" : "No"}
+            Chest pain: <strong className="font-semibold">{chestPain === undefined ? "—" : chestPain ? "Yes" : "No"}</strong>
           </span>
           <span
-            className={`rounded-md border bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold ${chipToneClasses}`}
+            className={cn(
+              "rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+              dyspnea === true
+                ? "border-(--danger-border)/50 bg-rose-100/90 text-rose-900 font-bold"
+                : "border-(--border-subtle) bg-(--surface-card) text-(--text-body)"
+            )}
           >
-            Shortness of breath: {dyspnea === undefined ? "not asked" : dyspnea ? "Yes" : "No"}
+            Shortness of breath: <strong className="font-semibold">{dyspnea === undefined ? "—" : dyspnea ? "Yes" : "No"}</strong>
           </span>
           <span
-            className={`rounded-md border bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold ${chipToneClasses}`}
+            className={cn(
+              "rounded-lg border px-2 py-0.5 text-[11px] font-semibold",
+              typeof feverDays === "number" && feverDays > 0
+                ? "border-(--danger-border)/50 bg-rose-100/90 text-rose-900 font-bold"
+                : "border-(--border-subtle) bg-(--surface-card) text-(--text-body)"
+            )}
           >
             {typeof feverDays === "number"
               ? feverDays === 0
                 ? "No fever"
-                : `Fever ${feverDays} day${feverDays === 1 ? "" : "s"}`
-              : "Fever: not asked"}
+                : `Fever ${feverDays}d`
+              : "Fever: —"}
           </span>
         </div>
       ) : null}
@@ -180,29 +190,57 @@ function ChiefComplaintCard({ form }: { form: BookingIntakeForm }) {
   const tags = purpose?.complaintTags ?? [];
 
   return (
-    <div data-slot="room-intake-chief-complaint">
-      <SectionLabel>
-        <span className="flex items-center gap-1.5 normal-case tracking-normal">
-          <MessageSquare className="size-3.5 shrink-0 text-(--text-subtle)" />
-          Reported chief concern
-        </span>
-      </SectionLabel>
-      <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3.5">
-        <p className="text-xs leading-relaxed font-semibold text-(--text-heading)">
-          {chiefComplaint ? `“${chiefComplaint}”` : <NotAnswered />}
-        </p>
-        {tags.length > 0 ? (
-          <div className="mt-2 flex flex-wrap gap-1.5 border-t border-(--border-subtle) pt-2">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-medium text-(--text-body)"
-              >
-                {tag.replaceAll("_", " ")}
-              </span>
-            ))}
-          </div>
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 min-h-fit flex flex-col justify-center" data-slot="room-intake-chief-complaint">
+      <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <MessageSquare className="size-3 text-(--surface-nav)" />
+        <span>Reported Chief Concern</span>
+      </div>
+      <p className="border-l-2 border-(--surface-nav-accent) pl-2.5 text-xs sm:text-[13px] font-semibold leading-relaxed text-(--text-heading)">
+        {chiefComplaint ? `“${chiefComplaint}”` : <NotAnswered />}
+      </p>
+      {tags.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1 border-t border-(--border-subtle)/60 pt-1.5">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10.5px] font-medium text-(--text-muted)"
+            >
+              {tag.replaceAll("_", " ")}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SymptomReviewCard({ review }: { review?: IntakeSymptomReview }) {
+  if (!review) return null;
+  const rows = SYMPTOM_REVIEW_FIELDS.filter(({ key }) => review[key]);
+  if (rows.length === 0 && typeof review.painSeverity !== "number") return null;
+
+  return (
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 min-h-fit flex flex-col justify-center" data-slot="room-intake-symptom-review">
+      <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <div className="flex items-center gap-1.5">
+          <Stethoscope className="size-3 text-(--surface-nav)" />
+          <span>Symptom Review</span>
+        </div>
+        {typeof review.painSeverity === "number" ? (
+          <span className="rounded-md border border-(--border-subtle) bg-slate-50 dark:bg-slate-900/50 px-2 py-0.5 text-[10.5px] font-bold text-(--text-body)">
+            Pain: {review.painSeverity}/10
+          </span>
         ) : null}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {rows.map(({ key, label }) => (
+          <div key={key} className="rounded-lg border border-(--border-subtle)/60 bg-slate-50/70 dark:bg-slate-900/40 p-2 sm:p-2.5">
+            <span className="block text-[9px] font-bold uppercase tracking-wider text-(--text-muted) mb-0.5">{label}</span>
+            <span className="text-xs font-semibold leading-snug text-(--text-heading) block truncate">
+              {review[key]}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -210,22 +248,55 @@ function ChiefComplaintCard({ form }: { form: BookingIntakeForm }) {
 
 function AllergyCard({ allergies }: { allergies?: string }) {
   const trimmed = allergies?.trim();
-  const usable = usableAllergyLabel(allergies);
+  const isNoKnown =
+    !trimmed ||
+    /^(none|no known|nkda|n\/a|no drug allergies|none reported)/i.test(trimmed);
+  const usable = isNoKnown ? undefined : usableAllergyLabel(allergies);
 
   return (
-    <div data-slot="room-intake-allergies">
-      <SectionLabel>Allergies &amp; sensitivities</SectionLabel>
-      <div
-        className={`rounded-xl border p-3 text-xs font-bold ${
-          usable
-            ? "border-(--danger-border)/40 bg-(--danger-bg) text-(--danger-fg)"
-            : "border-(--border-subtle) bg-(--surface-card) text-(--text-body)"
-        }`}
-      >
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 flex flex-col justify-between" data-slot="room-intake-allergies">
+      <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <ShieldAlert className="size-3 text-(--surface-nav)" />
+        <span>Allergies</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs sm:text-[13px]">
         {usable ? (
-          <>⚠ {usable}</>
+          <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 text-xs truncate block">
+            {usable}
+          </span>
         ) : trimmed ? (
-          "No known drug allergies reported"
+          <span className="flex items-center gap-1 text-emerald-800 text-xs sm:text-[13px] font-semibold truncate">
+            <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+            NKDA (No known)
+          </span>
+        ) : (
+          <NotAnswered />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MedicalHistoryCard({ history }: { history?: IntakeStructuredMedicalHistory }) {
+  if (!history) return null;
+  const conditionLabels = knownConditionLabels(history);
+
+  return (
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 flex flex-col justify-between" data-slot="room-intake-medical-history">
+      <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <ListChecks className="size-3 text-(--surface-nav)" />
+        <span>Conditions</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs sm:text-[13px]">
+        {history.noneReported ? (
+          <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 text-xs sm:text-[13px] font-medium truncate">
+            <CheckCircle2 className="size-3.5 text-teal-600 shrink-0" />
+            None reported
+          </span>
+        ) : conditionLabels.length > 0 || history.other ? (
+          <span className="text-xs sm:text-[13px] font-semibold text-(--text-heading) truncate block">
+            {[...conditionLabels, history.other].filter(Boolean).join(", ")}
+          </span>
         ) : (
           <NotAnswered />
         )}
@@ -240,11 +311,18 @@ function VitalsCard({ vitals }: { vitals?: IntakeVitals }) {
   );
 
   return (
-    <div data-slot="room-intake-vitals">
-      <SectionLabel>Self-reported vitals</SectionLabel>
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 min-h-fit flex flex-col justify-center" data-slot="room-intake-vitals">
+      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <Activity className="size-3 text-(--surface-nav)" />
+        <span>Self-Reported Vitals</span>
+      </div>
       {hasVitals ? (
         <div className="grid grid-cols-4 gap-2 text-center">
-          <VitalTile label="Temp" value={vitals?.temperatureC ? `${vitals.temperatureC}°C` : "—"} />
+          <VitalTile
+            label="Temp"
+            value={vitals?.temperatureC ? `${vitals.temperatureC}°C` : "—"}
+            isElevated={typeof vitals?.temperatureC === "number" && vitals.temperatureC >= 38.0}
+          />
           <VitalTile
             label="BP"
             value={
@@ -257,19 +335,48 @@ function VitalsCard({ vitals }: { vitals?: IntakeVitals }) {
           <VitalTile label="SpO₂" value={vitals?.spo2Percent ? `${vitals.spo2Percent}%` : "—"} />
         </div>
       ) : (
-        <p className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 text-(--text-muted) italic">
-          No vitals logged during intake.
+        <p className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-2 text-(--text-muted) italic text-xs">
+          No vitals logged.
         </p>
       )}
     </div>
   );
 }
 
-function VitalTile({ label, value }: { label: string; value: string }) {
+function VitalTile({
+  label,
+  value,
+  isElevated = false,
+}: {
+  label: string;
+  value: string;
+  isElevated?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2">
-      <span className="block text-[9px] font-bold text-(--text-subtle) uppercase">{label}</span>
-      <span className="text-xs font-bold text-(--text-heading)">{value}</span>
+    <div
+      className={cn(
+        "rounded-xl border p-2 sm:p-2.5 shadow-2xs transition-colors flex flex-col items-center justify-center",
+        isElevated
+          ? "border-amber-300 bg-amber-50/90 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 ring-1 ring-amber-300/50"
+          : "border-(--border-subtle) bg-slate-50/50 dark:bg-slate-900/30"
+      )}
+    >
+      <span
+        className={cn(
+          "block text-[9px] font-bold uppercase tracking-wider mb-0.5",
+          isElevated ? "text-amber-800 dark:text-amber-300" : "text-(--text-muted)"
+        )}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          "text-xs sm:text-sm font-bold tracking-tight",
+          isElevated ? "font-extrabold text-amber-950 dark:text-amber-200" : "text-(--text-heading)"
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -281,138 +388,36 @@ function BaselineCard({ form }: { form: BookingIntakeForm }) {
   const sex = demographics?.sex ? SEX_LABELS[demographics.sex] : undefined;
   const medications = details?.medications?.trim();
   const baseline = details?.baselineMeasurements;
-  const historyRows = parseMedicalHistoryLines(details?.medicalHistory).filter(
-    (row) => !(baseline && SUPPRESSED_BASELINE_HISTORY_LABELS.has(row.label)),
-  );
 
   return (
-    <div data-slot="room-intake-baseline">
-      <SectionLabel>Baseline information</SectionLabel>
-      <div className="grid grid-cols-2 gap-2.5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3.5 text-[11px]">
-        {form.patientName ? (
-          <div>
-            <span className="block text-(--text-subtle)">Patient name</span>
-            <span className="font-bold text-(--text-heading)">{form.patientName}</span>
-          </div>
-        ) : null}
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 min-h-fit flex flex-col justify-center" data-slot="room-intake-baseline">
+      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <User className="size-3 text-(--surface-nav)" />
+        <span>Baseline Information</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <div>
-          <span className="block text-(--text-subtle)">Age &amp; sex</span>
-          <span className="font-bold text-(--text-heading)">
-            {typeof age === "number" ? `${age} y/o` : "—"}
-            {sex ? ` · ${sex}` : ""}
-            {age === undefined && !sex ? <NotAnswered /> : null}
+          <span className="block text-[9px] font-semibold text-(--text-muted) uppercase mb-0.5">Patient</span>
+          <span className="font-bold text-(--text-heading) truncate block text-xs sm:text-[13px]">{form.patientName ?? "—"}</span>
+        </div>
+        <div>
+          <span className="block text-[9px] font-semibold text-(--text-muted) uppercase mb-0.5">Age &amp; Sex</span>
+          <span className="font-bold text-(--text-heading) truncate block text-xs sm:text-[13px]">
+            {typeof age === "number" ? `${age} y/o` : "—"}{sex ? ` · ${sex}` : ""}
           </span>
         </div>
-        {baseline ? (
-          <div>
-            <span className="block text-(--text-subtle)">Height &amp; weight</span>
-            <span className="font-bold text-(--text-heading)">
-              {baseline.heightCm} cm · {baseline.weightKg} kg
-              {baseline.selfReported ? (
-                <span className="ml-1 font-normal text-(--text-subtle)">(self-reported)</span>
-              ) : null}
-            </span>
-          </div>
-        ) : null}
         <div>
-          <span className="block text-(--text-subtle)">Current medications</span>
-          <span className="font-semibold text-(--text-body)">
-            {medications || <NotAnswered />}
+          <span className="block text-[9px] font-semibold text-(--text-muted) uppercase mb-0.5">Medications</span>
+          <span className="font-semibold text-(--text-body) truncate block text-xs">
+            {medications || "None reported"}
           </span>
         </div>
-        {historyRows.map((row) => (
-          <div key={row.label}>
-            <span className="block text-(--text-subtle)">{row.label}</span>
-            <span className="font-semibold text-(--text-body)">{row.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Structured medical-history checklist — the known-conditions multi-select the
- * updated intake form collects, distinct from the free-text `medicalHistory`
- * block. `noneReported` is an explicit patient assertion and is rendered as
- * one, not left blank.
- */
-function MedicalHistoryCard({ history }: { history?: IntakeStructuredMedicalHistory }) {
-  if (!history) return null;
-  const conditionLabels = knownConditionLabels(history);
-
-  return (
-    <div data-slot="room-intake-medical-history">
-      <SectionLabel>
-        <span className="flex items-center gap-1.5 normal-case tracking-normal">
-          <ListChecks className="size-3.5 shrink-0 text-(--text-subtle)" />
-          Known medical conditions
-        </span>
-      </SectionLabel>
-      <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3.5">
-        {history.noneReported ? (
-          <p className="text-xs font-semibold text-(--text-body)">
-            No known medical conditions reported
-          </p>
-        ) : conditionLabels.length > 0 || history.other ? (
-          <div className="flex flex-wrap gap-1.5">
-            {conditionLabels.map((label) => (
-              <span
-                key={label}
-                className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold text-(--text-body)"
-              >
-                {label}
-              </span>
-            ))}
-            {history.other ? (
-              <span className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold text-(--text-body)">
-                {history.other}
-              </span>
-            ) : null}
-          </div>
-        ) : (
-          <NotAnswered />
-        )}
-        {history.details ? (
-          <p className="mt-2 border-t border-(--border-subtle) pt-2 text-xs leading-relaxed text-(--text-muted)">
-            {history.details}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Extended symptom review (OLDCART-style follow-up beyond the base OLDCART
- * fields folded into `oldcart`) the updated intake form collects for
- * teleconsult and sick-leave bookings.
- */
-function SymptomReviewCard({ review }: { review?: IntakeSymptomReview }) {
-  if (!review) return null;
-  const rows = SYMPTOM_REVIEW_FIELDS.filter(({ key }) => review[key]);
-  if (rows.length === 0 && typeof review.painSeverity !== "number") return null;
-
-  return (
-    <div data-slot="room-intake-symptom-review">
-      <SectionLabel>
-        <span className="flex items-center gap-1.5 normal-case tracking-normal">
-          <Stethoscope className="size-3.5 shrink-0 text-(--text-subtle)" />
-          Symptom review
-        </span>
-      </SectionLabel>
-      <div className="space-y-2 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3.5">
-        {typeof review.painSeverity === "number" ? (
-          <span className="inline-flex rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-bold text-(--text-body)">
-            Pain severity: {review.painSeverity}/10
+        <div>
+          <span className="block text-[9px] font-semibold text-(--text-muted) uppercase mb-0.5">Body Metrics</span>
+          <span className="font-semibold text-(--text-heading) truncate block text-xs">
+            {baseline ? `${baseline.heightCm}cm · ${baseline.weightKg}kg` : "Not logged"}
           </span>
-        ) : null}
-        {rows.map(({ key, label }) => (
-          <div key={key}>
-            <span className="block text-[10px] font-bold text-(--text-subtle) uppercase">{label}</span>
-            <span className="text-xs leading-relaxed text-(--text-body)">{review[key]}</span>
-          </div>
-        ))}
+        </div>
       </div>
     </div>
   );
@@ -423,25 +428,18 @@ function ReproductiveHealthCard({ health }: { health?: IntakeReproductiveHealth 
   if (!health) return null;
 
   return (
-    <div data-slot="room-intake-reproductive-health">
-      <SectionLabel>
-        <span className="flex items-center gap-1.5 normal-case tracking-normal">
-          <Baby className="size-3.5 shrink-0 text-(--text-subtle)" />
-          Reproductive health
-        </span>
-      </SectionLabel>
-      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3.5">
-        <span className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold text-(--text-body)">
-          Pregnancy possibility: {PREGNANCY_POSSIBILITY_LABELS[health.pregnancyPossibility] ?? health.pregnancyPossibility}
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-1.5 shadow-2xs" data-slot="room-intake-reproductive-health">
+      <div className="mb-0.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-(--text-muted)">
+        <Baby className="size-2.5 text-(--surface-nav)" />
+        <span>Reproductive health</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5 text-[10px]">
+        <span className="rounded border border-(--border-subtle) bg-slate-50 px-1.5 py-0.5 font-medium text-(--text-body)">
+          Pregnancy: {PREGNANCY_POSSIBILITY_LABELS[health.pregnancyPossibility] ?? health.pregnancyPossibility}
         </span>
         {health.cyclePattern ? (
-          <span className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold text-(--text-body)">
+          <span className="rounded border border-(--border-subtle) bg-slate-50 px-2 py-0.5 font-medium text-(--text-body)">
             Cycle: {CYCLE_PATTERN_LABELS[health.cyclePattern] ?? health.cyclePattern}
-          </span>
-        ) : null}
-        {health.lastMenstrualPeriod ? (
-          <span className="rounded-md border border-(--border-subtle) bg-(--surface-card) px-2 py-0.5 text-[10px] font-semibold text-(--text-body)">
-            Last menstrual period: {health.lastMenstrualPeriod}
           </span>
         ) : null}
       </div>

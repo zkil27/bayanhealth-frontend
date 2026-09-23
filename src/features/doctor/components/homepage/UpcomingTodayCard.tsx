@@ -97,7 +97,7 @@ export function UpcomingTodayCard() {
   return (
     <div className={cn(RAIL_CARD_CLASS, "h-full")} data-slot="upcoming-today-card">
       <div className="flex flex-col gap-3 p-4 pb-0">
-        <div className="rounded-2xl bg-[linear-gradient(135deg,var(--surface-nav)_0%,color-mix(in_srgb,var(--surface-nav)_78%,#000)_100%)] px-4 py-3 text-(--text-on-brand)">
+        <div className="rounded-2xl bg-(--surface-brand) px-4 py-3 text-(--text-on-brand) shadow-2xs">
           <span className="text-[10px] font-bold tracking-(--tracking-overline) text-(--text-on-brand)/70 uppercase">
             Today&apos;s agenda
           </span>

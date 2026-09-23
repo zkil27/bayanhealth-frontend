@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,7 +10,13 @@ import {
   Clock,
   Hourglass,
   MessagesSquare,
+  Mic,
+  MicOff,
+  PhoneOff,
+  Video,
+  VideoOff,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -52,6 +58,7 @@ const POLL_INTERVAL_MS = 4000;
  * stays `in_progress` forever and the assessment-first pipeline is unreachable.
  */
 export function ConsultationRoom({ bookingId }: { bookingId: string }) {
+  const isDemo = bookingId === "demo" || bookingId === "preview";
   const idToken = useIdToken();
   const userId = useUserId();
   const router = useRouter();
@@ -61,7 +68,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   const stateQuery = useQuery({
     queryKey: ["consultation-state", bookingId, idToken],
     queryFn: () => fetchBookingConsultationState(idToken ?? "", bookingId),
-    enabled: !!idToken,
+    enabled: !!idToken && !isDemo,
     // Keep polling until a session exists. A successful read is no longer terminal:
     // the pre-consult phase resolves with no session, and the room must notice when
     // the doctor starts the consultation so it can upgrade itself to realtime.
@@ -72,19 +79,10 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   // `<ConsultationVideo />` needs the booking's own status to gate its credential
   // requests (Requirement 20.6), so the room reads the booking too, not just
   // `/state`. Both participants reach the room through this component.
-  //
-  // Polls at the same cadence as `stateQuery` until the booking reaches a
-  // terminal status. Doctor and patient are different browser sessions with
-  // independent query caches — the doctor's own `invalidateQueries` after
-  // completing has no effect on the patient's client. Without this poll, the
-  // patient's `bookingQuery.data.status` never learns the doctor ended the
-  // consultation, so the completed-booking redirect below never fires for
-  // them and they are left on a stale "in progress" view (ADR-20260810-02
-  // follow-up).
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId, idToken],
     queryFn: () => fetchBookingDetail(idToken ?? "", bookingId),
-    enabled: !!idToken,
+    enabled: !!idToken && !isDemo,
     staleTime: 1000 * 60 * 5,
     retry: false,
     throwOnError: false,
@@ -94,15 +92,25 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     },
   });
 
-  // Captured before the doctor's own completion redirect, and used to gate
-  // the completed-booking redirect below. `complete.mutate()`'s own
-  // `invalidateQueries` refetches `bookingQuery` in the same browser tab,
-  // and that refetch can resolve before `router.push` below finishes its
-  // navigation. Without this guard the doctor's own completion briefly
-  // renders `RedirectToBookingPanel` (the *patient's* completed view) and
-  // its `router.replace` wins the race against `router.push`, sending the
-  // doctor to their own booking page instead of the post-consult workspace
-  // (ADR-20260810-02 follow-up).
+  const demoData = useMemo(
+    () => ({
+      booking: {
+        bookingId: "demo",
+        doctorId: userId ?? "demo-doctor",
+        status: "in_progress",
+        serviceType: "general_consultation",
+      },
+      session: {
+        consultationId: "demo",
+        bookingId: "demo",
+        sessionId: "demo-session",
+        status: "active",
+        startedAt: "2026-09-23T14:00:00.000Z",
+      },
+    }),
+    [userId],
+  );
+
   const [dismissedCompletionRedirect, setDismissedCompletionRedirect] = useState(false);
 
   const complete = useMutation({
@@ -112,15 +120,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       setDismissedCompletionRedirect(true);
       void queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
       void queryClient.invalidateQueries({ queryKey: ["doctor-intake-queue"] });
-      // Read from the booking record, not `stateQuery`'s session summary --
-      // `bookingQuery`'s own consultationId is written by the same `/start`
-      // call that creates the session, so it is available at the same time
-      // and does not depend on which query happened to resolve first.
       const consultationId = bookingQuery.data?.consultationId ?? stateQuery.data?.session?.consultationId;
-      // Hand the doctor straight to the post-consult workspace, which is keyed by
-      // consultationId. Without this the workspace is only reachable by typing
-      // the query parameter by hand. `bookingId` rides along because the
-      // patient's intake is addressed by booking id, not consultation id.
       router.push(
         consultationId
           ? `/doctor/post-consultation/id?consultationId=${encodeURIComponent(consultationId)}&bookingId=${encodeURIComponent(bookingId)}`
@@ -134,7 +134,15 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     },
   });
 
-  if (stateQuery.isLoading) {
+  const handleComplete = () => {
+    if (isDemo) {
+      router.push("/doctor/post-consultation/id?consultationId=demo&bookingId=demo");
+      return;
+    }
+    complete.mutate();
+  };
+
+  if (stateQuery.isLoading && !isDemo) {
     return (
       <CenteredRoomPanel>
         <div
@@ -148,7 +156,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     );
   }
 
-  if (stateQuery.error) {
+  if (stateQuery.error && !isDemo) {
     return (
       <CenteredRoomPanel>
         <div
@@ -172,24 +180,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     );
   }
 
-  // `GET /state` answers 409 both before the consultation starts and after it
-  // ends — `CHAT_ENABLED_STATUSES` on the backend is `['confirmed', 'in_progress']`
-  // and excludes `completed` — so `stateQuery.data` is `null` in both cases and
-  // this branch cannot tell them apart on its own. Before the consultation has
-  // started that ambiguity is fine: it is a neutral waiting state that resolves
-  // itself once the doctor starts. After it has ended it is not fine: the
-  // booking-detail query below still answers (it has no such gate), so a patient
-  // who stayed on this page after the doctor pressed "End consultation" was left
-  // on a permanent "hasn't started yet" screen for a consultation that was
-  // actually over — nothing on this route ever told them to leave it.
-  //
-  // Redirect off this route as soon as the booking's own status says the
-  // consultation is finished, rather than exposing a control here for something
-  // there is nothing left to do. `CompletedStep` on the patient's own booking
-  // page already renders the right next-step messaging (education/prescription
-  // cards, "your doctor is writing up their findings") — this route has no
-  // equivalent and should not grow one.
-  if (bookingQuery.data?.status === "completed" && !dismissedCompletionRedirect) {
+  if (bookingQuery.data?.status === "completed" && !dismissedCompletionRedirect && !isDemo) {
     return (
       <CenteredRoomPanel>
         <RedirectToBookingPanel bookingId={bookingId} />
@@ -197,7 +188,9 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     );
   }
 
-  if (!stateQuery.data) {
+  const consultationData = isDemo ? demoData : stateQuery.data;
+
+  if (!consultationData) {
     return (
       <CenteredRoomPanel>
         <NotStartedPanel isFetching={stateQuery.isFetching} />
@@ -205,22 +198,22 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
     );
   }
 
-  const { booking, session } = stateQuery.data;
-  const isAssignedDoctor = !!userId && booking.doctorId === userId;
+  const { booking, session } = consultationData;
+  const isAssignedDoctor = isDemo || (!!userId && booking.doctorId === userId);
 
   return (
     <div
       data-slot="consultation-room"
-      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-0 overflow-hidden p-0 text-slate-900 antialiased md:gap-3.5 md:p-5"
+      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-2 overflow-hidden p-2 text-slate-900 antialiased sm:p-2.5 md:gap-3 md:p-3.5 lg:gap-3 lg:p-4"
     >
-      <header className="min-h-14 shrink-0 border-b border-slate-200/70 bg-(--surface-card) px-3 py-2 shadow-xs md:min-h-16 md:rounded-3xl md:border md:px-6 md:py-3">
+      <header className="min-h-12 shrink-0 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2 shadow-2xs md:min-h-14 md:rounded-2xl md:border md:px-5 md:py-2.5">
         {session ? (
           <InProgressHeader
             bookingId={bookingId}
             booking={booking}
             session={session}
             isAssignedDoctor={isAssignedDoctor}
-            onComplete={() => complete.mutate()}
+            onComplete={handleComplete}
             completing={complete.isPending}
           />
         ) : (
@@ -248,18 +241,13 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
         itself never grows past the viewport (`header`'s `shrink-0` above and
         this section's own `min-h-0` are what makes that possible).
       */}
-      <main className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(15rem,42dvh)_minmax(0,1fr)] items-stretch gap-0 overflow-hidden md:gap-3.5 lg:grid-cols-12 lg:grid-rows-1 lg:gap-4">
-        <div className="flex min-h-0 flex-col overflow-hidden border-b border-teal-950/20 bg-(--surface-nav) p-2 shadow-sm md:rounded-[28px] md:border md:p-4 lg:col-span-7 lg:h-full">
-          {/*
-            `<ConsultationVideo />` gates its own credential requests on
-            `bookingStatus` (Requirement 20.6) and renders nothing while
-            ineligible, so an unconfigured or pre-consult environment shows
-            the room without a dead button rather than a control that goes
-            nowhere. It fills this pane's full height itself (`h-full`
-            internally) once a call is live, rather than sizing to its
-            content and leaving the rest of this teal panel empty.
-          */}
-          <ConsultationVideo bookingId={bookingId} bookingStatus={bookingQuery.data?.status} />
+      <main className="flex flex-col lg:flex-row min-h-0 flex-1 h-full w-full gap-2.5 md:gap-3.5 lg:gap-4 overflow-hidden">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950 shadow-sm md:rounded-3xl h-[40dvh] lg:h-full lg:flex-[7] min-w-0 shrink-0 lg:shrink">
+          {isDemo ? (
+            <DemoVideoStage onEndCall={handleComplete} />
+          ) : (
+            <ConsultationVideo bookingId={bookingId} bookingStatus={bookingQuery.data?.status} />
+          )}
         </div>
 
         {/*
@@ -268,7 +256,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
           message carries in both phases, so one continuous thread spans the
           start of the consultation.
         */}
-        <aside className="min-h-0 overflow-hidden bg-(--surface-card) shadow-sm md:rounded-[28px] md:border md:border-slate-200/70 lg:col-span-5 lg:h-full">
+        <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-card) shadow-sm md:rounded-3xl lg:h-full lg:flex-[5] min-w-0">
           {isAssignedDoctor ? (
             <DoctorClinicalCompanionSuite
               bookingId={bookingId}
@@ -301,10 +289,7 @@ function CenteredRoomPanel({ children }: { children: React.ReactNode }) {
 /**
  * Identity strip shared by both header phases: a monogram for the *other*
  * participant, their real name where the caller's role is allowed to see it,
- * a status pill, and the booking reference. Never a placeholder name — a
- * doctor viewer without a submitted intake, or a patient viewer before the
- * doctor profile resolves, falls back to the existing queue convention
- * (`Ref XXXXXX`) rather than inventing one.
+ * a status pill, and the booking reference.
  */
 function RoomHeaderIdentity({
   bookingId,
@@ -317,6 +302,7 @@ function RoomHeaderIdentity({
   isAssignedDoctor: boolean;
   live: boolean;
 }) {
+  const isDemo = bookingId === "demo" || bookingId === "preview";
   const idToken = useIdToken();
 
   // Doctor viewer: the patient's name comes back on the same intake read the
@@ -324,7 +310,7 @@ function RoomHeaderIdentity({
   const intakeQuery = useQuery({
     queryKey: ["booking-intake", bookingId, idToken],
     queryFn: () => fetchBookingIntake(idToken ?? "", bookingId),
-    enabled: !!idToken && isAssignedDoctor,
+    enabled: !!idToken && isAssignedDoctor && !isDemo,
     staleTime: 1000 * 30,
     retry: false,
     throwOnError: false,
@@ -335,18 +321,20 @@ function RoomHeaderIdentity({
   const doctorQuery = useQuery({
     queryKey: ["doctor-public-profile", booking.doctorId, idToken],
     queryFn: () => fetchDoctorPublicProfile(booking.doctorId ?? "", idToken ?? ""),
-    enabled: !!idToken && !isAssignedDoctor && !!booking.doctorId,
+    enabled: !!idToken && !isAssignedDoctor && !!booking.doctorId && !isDemo,
     staleTime: 1000 * 60 * 10,
     retry: false,
     throwOnError: false,
   });
 
-  const refLabel = `Ref ${bookingId.slice(-6).toUpperCase()}`;
-  const displayName = isAssignedDoctor
-    ? intakeQuery.data?.patientName
-    : doctorQuery.data?.fullName
-      ? formatDoctorName(doctorQuery.data.fullName)
-      : undefined;
+  const refLabel = isDemo ? "Ref DEMO01" : `Ref ${bookingId.slice(-6).toUpperCase()}`;
+  const displayName = isDemo
+    ? "Maria Santos (Demo Patient)"
+    : isAssignedDoctor
+      ? intakeQuery.data?.patientName
+      : doctorQuery.data?.fullName
+        ? formatDoctorName(doctorQuery.data.fullName)
+        : undefined;
   const monogram = isAssignedDoctor ? "PT" : "DR";
 
   return (
@@ -359,7 +347,7 @@ function RoomHeaderIdentity({
           <h1 className="max-w-32 truncate text-sm font-bold text-slate-900 sm:max-w-none">{displayName ?? refLabel}</h1>
           {live ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-teal-200/60 bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800 sm:px-2.5">
-              <span className="size-1.5 animate-pulse rounded-full bg-(--surface-nav-accent)" />
+              <span className="size-1.5 rounded-full bg-(--surface-nav-accent)" />
               <span className="sm:hidden">Live</span>
               <span className="hidden sm:inline">Live Consultation</span>
             </span>
@@ -594,3 +582,111 @@ function NotStartedPanel({ isFetching }: { isFetching: boolean }) {
     </section>
   );
 }
+
+function DemoVideoStage({ onEndCall }: { onEndCall: () => void }) {
+  const [micMuted, setMicMuted] = useState(false);
+  const [cameraOff, setCameraOff] = useState(false);
+
+  return (
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl bg-slate-950 text-white shadow-inner">
+      {/* Top Bar / Room Status */}
+      <div className="relative z-10 flex items-center justify-between p-3.5 sm:p-4">
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs backdrop-blur-md">
+          <span className="size-2 rounded-full bg-emerald-400" />
+          <span className="font-medium tracking-tight text-white/90">
+            Live Demo Session &bull; 720p HD
+          </span>
+        </div>
+        <div className="rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[11px] font-mono text-white/70">
+          00:14:22
+        </div>
+      </div>
+
+      {/* Main Video Simulation (Patient Feed) */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950">
+        <div className="relative flex flex-col items-center">
+          <div className="relative flex size-24 items-center justify-center rounded-full border-2 border-teal-500/40 bg-teal-950/60 shadow-xl sm:size-28">
+            <span className="text-2xl font-bold tracking-tight text-teal-300 sm:text-3xl">
+              MS
+            </span>
+            <span className="absolute bottom-0 right-0 flex size-6 items-center justify-center rounded-full border-2 border-slate-950 bg-teal-500">
+              <span className="size-2 rounded-full bg-white" />
+            </span>
+          </div>
+          <div className="mt-3.5 text-center">
+            <p className="text-base font-semibold text-white">Maria Santos</p>
+            <p className="text-xs text-white/60">Patient &bull; Makati City</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Self-view Picture-in-Picture (Doctor Feed) */}
+      <div className="relative z-10 m-3.5 flex items-end justify-between sm:m-4">
+        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+          <span className="text-xs text-white/80 font-medium">BayanHealth WebRTC Demo</span>
+        </div>
+
+        <div className="relative h-28 w-24 overflow-hidden rounded-xl border border-white/20 bg-slate-900/90 shadow-2xl sm:h-32 sm:w-28">
+          <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center">
+            {cameraOff ? (
+              <VideoOff className="size-6 text-white/40" />
+            ) : (
+              <>
+                <div className="flex size-10 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold text-white">
+                  DOC
+                </div>
+                <span className="mt-1.5 text-[10px] text-white/70">You (Doctor)</span>
+              </>
+            )}
+          </div>
+          {micMuted ? (
+            <div className="absolute top-1.5 right-1.5 rounded-full bg-rose-600/80 p-1">
+              <MicOff className="size-2.5 text-white" />
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Stage Bottom Controls Bar */}
+      <div className="relative z-20 flex items-center justify-center gap-3 border-t border-white/10 bg-slate-950/80 p-3 backdrop-blur-md sm:p-4">
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={() => setMicMuted((prev) => !prev)}
+          className={cn(
+            "size-11 rounded-full border-white/15 bg-white/10 text-white hover:bg-white/20 hover:text-white transition-colors",
+            micMuted && "bg-rose-500/20 border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
+          )}
+          aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
+        >
+          {micMuted ? <MicOff className="size-5" /> : <Mic className="size-5" />}
+        </Button>
+
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={() => setCameraOff((prev) => !prev)}
+          className={cn(
+            "size-11 rounded-full border-white/15 bg-white/10 text-white hover:bg-white/20 hover:text-white transition-colors",
+            cameraOff && "bg-rose-500/20 border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
+          )}
+          aria-label={cameraOff ? "Turn on camera" : "Turn off camera"}
+        >
+          {cameraOff ? <VideoOff className="size-5" /> : <Video className="size-5" />}
+        </Button>
+
+        <Button
+          type="button"
+          onClick={onEndCall}
+          className="flex h-11 items-center gap-2 rounded-full bg-rose-600 px-5 font-semibold text-white shadow-md hover:bg-rose-700 transition-colors"
+        >
+          <PhoneOff className="size-4" />
+          <span>End Consultation</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+

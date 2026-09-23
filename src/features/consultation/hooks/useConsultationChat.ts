@@ -263,6 +263,53 @@ export function useConsultationChat({
     if (startedRef.current) return;
     startedRef.current = true;
 
+    if (bookingId === "demo" || bookingId === "preview") {
+      async function loadDemo() {
+        setTransportSafe("ws");
+        upsertMessages([
+          {
+            messageId: "demo-msg-1",
+            sessionId: "demo",
+            consultationId: "demo",
+            bookingId,
+            senderId: "patient-demo",
+            senderRole: "patient",
+            messageType: "text",
+            content: "Good day, Doc! I have been having a slight headache since yesterday afternoon.",
+            createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+            isOwn: myRole === "patient",
+          },
+          {
+            messageId: "demo-msg-2",
+            sessionId: "demo",
+            consultationId: "demo",
+            bookingId,
+            senderId: "doctor-demo",
+            senderRole: "doctor",
+            messageType: "text",
+            content: "Hello Maria. Thank you for reaching out. Are you experiencing any nausea, fever, or visual sensitivity?",
+            createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+            isOwn: myRole === "doctor",
+          },
+          {
+            messageId: "demo-msg-3",
+            sessionId: "demo",
+            consultationId: "demo",
+            bookingId,
+            senderId: "patient-demo",
+            senderRole: "patient",
+            messageType: "text",
+            content: "No fever Doc, just feeling a bit fatigued and throbbing behind the eyes.",
+            createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+            isOwn: myRole === "patient",
+          },
+        ]);
+        setIsLoading(false);
+      }
+      void loadDemo();
+      return;
+    }
+
     if (readOnly) {
       // Mirrors the shape of `connect()`/`fallbackToHttp()` below: state
       // updates happen inside an async function invoked via `void`, not
@@ -360,12 +407,12 @@ export function useConsultationChat({
   // fetched once on mount and cannot change again — the write route stays closed
   // for those statuses — so a recurring poll would only repeat the same read.
   useEffect(() => {
-    if (transport !== "http" || readOnly) return;
+    if (transport !== "http" || readOnly || bookingId === "demo" || bookingId === "preview") return;
     const timer = setInterval(() => {
       void hydrateFromHttp();
     }, HTTP_POLL_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [transport, readOnly, hydrateFromHttp]);
+  }, [transport, readOnly, bookingId, hydrateFromHttp]);
 
   const setInput = useCallback((value: string) => {
     setInputState(value);
@@ -389,6 +436,25 @@ export function useConsultationChat({
     }
     setValidationError(null);
     setSendError(null);
+
+    if (bookingId === "demo" || bookingId === "preview") {
+      const seq = ++localSeqRef.current;
+      const demoMsg: DisplayMessage = {
+        messageId: `demo-local-${seq}`,
+        sessionId: "demo",
+        consultationId: "demo",
+        bookingId,
+        senderId: myUserId ?? "demo-user",
+        senderRole: myRole,
+        messageType: "text",
+        content: text,
+        createdAt: new Date().toISOString(),
+        isOwn: true,
+      };
+      upsertMessages([demoMsg]);
+      setInputState("");
+      return true;
+    }
 
     if (transportRef.current === "ws" && socketRef.current) {
       // Optimistically render the sent message in chronological order; the
