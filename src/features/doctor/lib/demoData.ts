@@ -33,16 +33,20 @@ export const DEMO_DOCTOR_PROFILE: DemoDoctorProfile = {
 export const DEMO_DOCTOR_KYC_BUNDLE: DoctorKycBundle = {
   profile: {
     doctorId: "demo-doc-01",
+    email: "angela.reyes@bayanhealth.com",
     fullName: "Dr. Angela Reyes, MD",
     licenseNumber: "PRC #0148922",
     specialty: "Internal Medicine & Adult Tele-Triage",
-    subspecialty: "Cardiometabolic & Primary Care",
     phoneNumber: "+63 917 892 4012",
     bio: "Board-certified internist with 12+ years of experience in tertiary hospital and telemedicine practice across Metro Manila. Specializing in adult acute care, hypertension, and primary triage.",
     onDemandAvailable: true,
     verificationStatus: "approved",
+    createdAt: "2026-01-10T08:00:00.000Z",
+    updatedAt: "2026-08-15T08:30:00.000Z",
     signature: {
       signerName: "Dr. Angela Reyes, MD",
+      updatedAt: "2026-08-15T08:30:00.000Z",
+      drawingSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       strokes: [
         [
           { x: 0.15, y: 0.5 },
