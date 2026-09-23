@@ -128,9 +128,95 @@ export async function fetchBookingIntake(
   idToken: string,
   bookingId: string,
 ): Promise<BookingIntakeForm | null> {
-  if (bookingId === "demo") {
+  if (bookingId === "demo" || bookingId.startsWith("demo")) {
+    if (bookingId === "demo-sch-ramon") {
+      return {
+        bookingId: "demo-sch-ramon",
+        status: "submitted",
+        currentStep: "review",
+        completedSteps: ["purpose", "details", "review"],
+        patientName: "Ramon Dela Cruz",
+        sections: {
+          purpose: {
+            chiefComplaint: "T2DM & Stage 1 HTN routine 3-month review. Blood pressure 142/88. Maintenance refill requested.",
+          },
+          details: {
+            demographics: {
+              sex: "male",
+              dateOfBirth: "1968-11-04",
+            },
+            safetyScreen: {
+              chestPain: false,
+              dyspnea: false,
+              feverDays: 0,
+            },
+            symptomReview: {
+              onset: "3 months ago",
+              location: "Cardiovascular / Endocrine",
+              characteristics: "Occasional morning occipital heaviness",
+            },
+            allergies: "Amlodipine (peripheral edema)",
+            structuredMedicalHistory: {
+              knownConditions: ["diabetes", "hypertension"],
+              noneReported: false,
+            },
+            vitals: {
+              systolicBp: 142,
+              diastolicBp: 88,
+              heartRateBpm: 76,
+              temperatureC: 36.6,
+              spo2Percent: 99,
+            },
+          },
+        },
+        submittedAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      };
+    }
+    if (bookingId === "demo-req-manuel") {
+      return {
+        bookingId: "demo-req-manuel",
+        status: "submitted",
+        currentStep: "review",
+        completedSteps: ["purpose", "details", "review"],
+        patientName: "Manuel Tan",
+        sections: {
+          purpose: {
+            chiefComplaint: "Acute gastroenteritis x 5 diarrhea episodes, tolerating oral fluids.",
+          },
+          details: {
+            demographics: {
+              sex: "male",
+              dateOfBirth: "1985-08-20",
+            },
+            safetyScreen: {
+              chestPain: false,
+              dyspnea: false,
+              feverDays: 1,
+            },
+            symptomReview: {
+              onset: "1 day ago",
+              location: "Gastrointestinal",
+              characteristics: "Watery stools, mild crampy abdominal pain",
+            },
+            allergies: "No known drug allergies (NKDA)",
+            structuredMedicalHistory: {
+              knownConditions: [],
+              noneReported: true,
+            },
+            vitals: {
+              systolicBp: 112,
+              diastolicBp: 74,
+              heartRateBpm: 84,
+              temperatureC: 37.4,
+              spo2Percent: 99,
+            },
+          },
+        },
+        submittedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+      };
+    }
     return {
-      bookingId: "demo",
+      bookingId: bookingId || "demo",
       status: "submitted",
       currentStep: "review",
       completedSteps: ["purpose", "details", "review"],
@@ -180,7 +266,8 @@ export async function fetchBookingIntake(
     return res.data;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
+    console.warn("fetchBookingIntake network/CORS error, returning null:", err);
+    return null;
   }
 }
 

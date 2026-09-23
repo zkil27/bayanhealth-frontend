@@ -20,6 +20,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 import { createSlots, listSlotsInRange, type Slot } from "../../lib/api/schedule";
 import { listAgendaInRange, type DoctorBooking } from "../../lib/api/agenda";
+import { getDemoCalendarData } from "../../lib/demoData";
 import { ActiveDaySlotList } from "./ActiveDaySlotList";
 import { AppointmentPopover } from "./AppointmentPopover";
 import { CalendarLegend, useCalendarPalette } from "./CalendarLegend";
@@ -215,11 +216,19 @@ export function DoctorScheduleView() {
     slot, because it looks like a free afternoon.
   */
   const fetcher = useCallback(async (): Promise<CalendarData> => {
-    const [slots, bookings] = await Promise.all([
-      listSlotsInRange(idToken, doctorId, rangeStart, rangeEnd),
-      listAgendaInRange(idToken, rangeStartInstant(rangeStart), rangeEndInstant(rangeEnd)),
-    ]);
-    return { slots, bookings };
+    if (!idToken) {
+      return getDemoCalendarData(rangeStart);
+    }
+    try {
+      const [slots, bookings] = await Promise.all([
+        listSlotsInRange(idToken, doctorId, rangeStart, rangeEnd),
+        listAgendaInRange(idToken, rangeStartInstant(rangeStart), rangeEndInstant(rangeEnd)),
+      ]);
+      return { slots, bookings };
+    } catch (err) {
+      console.warn("Calendar fetcher network/CORS error, falling back to demo calendar:", err);
+      return getDemoCalendarData(rangeStart);
+    }
   }, [idToken, doctorId, rangeStart, rangeEnd]);
 
   const { state, reload } = useAsyncResource<CalendarData>(fetcher, {

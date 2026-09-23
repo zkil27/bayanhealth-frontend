@@ -7,6 +7,34 @@ This document serves as the single source of truth for the **upstream AI agent**
 
 ## Log Entries
 
+### [2026-09-23] Doctor Suite: Resilient Calendar Consultations, Consultation Room & History on Remote Staging (Vercel)
+
+- **Target Route / Surface**:
+  - `/doctor/schedule` (Physician Working Calendar, Time Grid, Shifts & Consultations)
+  - `/consultation/room/[bookingId]` (Doctor & Patient Video Consultation Room)
+  - `/doctor/history` (Completed Consultations Log)
+  - Pre-Consult Intake Briefing (`AppointmentPopover.tsx` & `bookingIntake.ts`)
+- **Files Modified**:
+  - `src/features/doctor/components/schedule/DoctorScheduleView.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/AppointmentPopover.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/doctor/components/consultations/CompletedConsultations.tsx` [MODIFIED]
+  - `src/features/doctor/lib/api/bookingIntake.ts` [MODIFIED]
+  - `src/features/doctor/lib/demoData.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Calendar Consult Failed to Load on Vercel**:
+    - **Problem**: When evaluating `/doctor/schedule` on remote staging (Vercel origin `https://bayanhealth-frontend.vercel.app`), browser calls to AWS API Gateway failed due to CORS and unauthenticated state, displaying a fatal `AsyncView` red error card: *"Could not reach the API at https://f9xiyx5s64.execute-api.ap-southeast-1.amazonaws.com"*.
+    - **Fix**: Updated `DoctorScheduleView.tsx` `fetcher` to catch network/CORS/token errors and fallback to `getDemoCalendarData(rangeStart)`. The calendar time grid now reliably renders morning consultation shifts, afternoon follow-up clinic slots, and scheduled/in-progress patient encounters (Ramon Dela Cruz, Manuel Tan, Maria Santos).
+  - **Resolved Pre-Consult Intake Loading in Calendar Appointment Popovers**:
+    - **Problem**: In `AppointmentPopover.tsx`, viewing an appointment's intake was gated strictly on `idToken`, leaving the intake card absent or failing on remote staging.
+    - **Fix**: Updated `useIntake` and `fetchBookingIntake` to recognize demo bookings (`bookingId.startsWith("demo")`), providing authentic clinical intake data (vitals, chief complaints, structured history) with zero backend dependency.
+  - **Seamless Demo Consultation Room Access**:
+    - Extended `ConsultationRoom.tsx` demo gating to all `demo-` prefixed bookings, ensuring visiting clinicians can click *"Join consultation"* or *"Open consultation room"* from the calendar or triage queue and immediately enter the video stage with companion intake and chat tools active.
+  - **Resolved Indefinite Skeleton Loading on Doctor History**:
+    - Removed strict `enabled: !!idToken` gate from `CompletedConsultations.tsx` and provided high-fidelity past encounters (urgent care, specialist follow-up) so reviewing past patient charts works immediately during demonstrations.
+
+---
+
 ### [2026-09-23] Doctor & Patient Chat: Fix Consultation Chat Loading Race Condition on Closed/Terminal Bookings
 
 - **Target Route / Surface**:

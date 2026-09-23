@@ -387,10 +387,11 @@ function useIntake(bookingId: string | null): IntakeState {
   const [state, setState] = useState<IntakeState>({ kind: "loading" });
 
   useEffect(() => {
-    if (!bookingId || !idToken) return;
+    if (!bookingId) return;
+    if (!idToken && !bookingId.startsWith("demo")) return;
 
     let live = true;
-    fetchBookingIntake(idToken, bookingId)
+    fetchBookingIntake(idToken ?? "", bookingId)
       .then((form) => {
         if (!live) return;
         setState({ kind: "ready", briefing: summariseIntake(asForm(form)) });
@@ -406,7 +407,7 @@ function useIntake(bookingId: string | null): IntakeState {
 
   // No booking to read (a withheld reservation) or no session: the section is
   // absent entirely rather than sitting on a spinner that will never resolve.
-  return bookingId && idToken ? state : { kind: "none" };
+  return bookingId && (idToken || bookingId.startsWith("demo")) ? state : { kind: "none" };
 }
 
 /** Guard the wire shape: anything that is not an intake object reads as absent. */

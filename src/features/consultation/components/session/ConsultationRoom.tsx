@@ -59,7 +59,7 @@ const POLL_INTERVAL_MS = 4000;
  * stays `in_progress` forever and the assessment-first pipeline is unreachable.
  */
 export function ConsultationRoom({ bookingId }: { bookingId: string }) {
-  const isDemo = bookingId === "demo" || bookingId === "preview";
+  const isDemo = bookingId === "demo" || bookingId === "preview" || bookingId.startsWith("demo");
   const idToken = useIdToken();
   const userId = useUserId();
   const router = useRouter();
@@ -96,20 +96,20 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   const demoData = useMemo(
     () => ({
       booking: {
-        bookingId: "demo",
-        doctorId: userId ?? "demo-doctor",
+        bookingId: bookingId || "demo",
+        doctorId: userId ?? "demo-doc-01",
         status: "in_progress",
         serviceType: "general_consultation",
       },
       session: {
         consultationId: "demo",
-        bookingId: "demo",
+        bookingId: bookingId || "demo",
         sessionId: "demo-session",
         status: "active",
-        startedAt: "2026-09-23T14:00:00.000Z",
+        startedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
       },
     }),
-    [userId],
+    [userId, bookingId],
   );
 
   const [dismissedCompletionRedirect, setDismissedCompletionRedirect] = useState(false);

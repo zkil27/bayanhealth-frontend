@@ -211,3 +211,144 @@ export const DEMO_RECENT_CONSULTATIONS = [
     prescriptionIssued: false,
   },
 ];
+
+export function getDemoCalendarData(baseDateStr?: string): {
+  slots: import("./api/schedule").Slot[];
+  bookings: import("./api/agenda").DoctorBooking[];
+} {
+  const base = baseDateStr ? new Date(baseDateStr) : new Date();
+  const safeBase = Number.isNaN(base.getTime()) ? new Date() : base;
+
+  const slots: import("./api/schedule").Slot[] = [];
+  const bookings: import("./api/agenda").DoctorBooking[] = [];
+
+  // Generate 7 days around safeBase so the calendar is never empty
+  const stamp = "2026-09-20T08:00:00.000Z";
+  for (let offset = -3; offset <= 3; offset++) {
+    const currentDay = new Date(safeBase.getTime() + offset * 86400000);
+    const dateStr = currentDay.toISOString().slice(0, 10);
+
+    slots.push(
+      {
+        slotId: `demo-slot-${dateStr}-0900`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "09:00",
+        durationMinutes: 30,
+        status: "available",
+        notes: "Morning consultation hours",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-0930`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "09:30",
+        durationMinutes: 30,
+        status: "available",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-1000`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "10:00",
+        durationMinutes: 30,
+        status: offset === 0 ? "booked" : "available",
+        bookingId: offset === 0 ? "demo-sch-ramon" : undefined,
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-1030`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "10:30",
+        durationMinutes: 30,
+        status: "available",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-1400`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "14:00",
+        durationMinutes: 30,
+        status: "available",
+        notes: "Afternoon follow-up clinic",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-1430`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "14:30",
+        durationMinutes: 30,
+        status: offset === 0 ? "booked" : "available",
+        bookingId: offset === 0 ? "demo-req-manuel" : undefined,
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        slotId: `demo-slot-${dateStr}-1500`,
+        doctorId: "demo-doc-01",
+        date: dateStr,
+        startTime: "15:00",
+        durationMinutes: 30,
+        status: "available",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+    );
+  }
+
+  const todayStr = safeBase.toISOString().slice(0, 10);
+  bookings.push(
+    {
+      bookingId: "demo-sch-ramon",
+      patientId: "patient-ramon-01",
+      doctorId: "demo-doc-01",
+      status: "confirmed",
+      bookingMode: "scheduled",
+      serviceType: "follow_up",
+      scheduledAt: `${todayStr}T10:00:00.000Z`,
+      channel: "video",
+      notes: "T2DM & Stage 1 HTN routine 3-month review. Blood pressure 142/88. Maintenance refill requested.",
+      amountCents: 80000,
+      currency: "PHP",
+    },
+    {
+      bookingId: "demo-active-encounter",
+      patientId: "patient-maria-01",
+      doctorId: "demo-doc-01",
+      consultationId: "demo",
+      status: "in_progress",
+      bookingMode: "on_demand",
+      serviceType: "follow_up",
+      scheduledAt: `${todayStr}T11:15:00.000Z`,
+      channel: "video",
+      notes: "Allergic Rhinitis flare-up, nasal congestion.",
+      amountCents: 85000,
+      currency: "PHP",
+    },
+    {
+      bookingId: "demo-req-manuel",
+      patientId: "patient-manuel-01",
+      doctorId: "demo-doc-01",
+      status: "confirmed",
+      bookingMode: "scheduled",
+      serviceType: "general",
+      scheduledAt: `${todayStr}T14:30:00.000Z`,
+      channel: "video",
+      notes: "Acute Gastroenteritis x 5 diarrhea episodes, tolerating oral fluids.",
+      amountCents: 85000,
+      currency: "PHP",
+    },
+  );
+
+  return { slots, bookings };
+}
