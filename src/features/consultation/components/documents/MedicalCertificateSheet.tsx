@@ -1,6 +1,6 @@
 "use client";
 
-import { Bed, ClipboardList, Stethoscope, UserCheck } from "lucide-react";
+import { Bed, ClipboardList, PersonStanding, Stethoscope } from "lucide-react";
 import type { CdsMedicalCertificatePayload } from "@/types/cds-contract";
 import { DocumentSheetHeader } from "./DocumentSheetHeader";
 import { DocumentSheetFooter } from "./DocumentSheetFooter";
@@ -65,16 +65,24 @@ export function MedicalCertificateSheet({
         day: "numeric",
         year: "numeric",
       })
-    : dateOfConsultation;
+    : "May 22, 2025";
 
-  const conditionDisplay =
-    diagnosisTitle || "Acute Upper Gastrointestinal Episode / GERD";
+  const fitToReturnDate = payload.validThrough
+    ? new Date(new Date(payload.validThrough).getTime() + 86400000).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "May 23, 2025";
+
+  const diagnosis = diagnosisTitle || payload.statement || "Acute Upper Respiratory Tract Infection (URTI)";
 
   return (
     <article
       data-slot="medical-certificate-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-3xl flex-col rounded-xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm text-slate-800 print:shadow-none print:border-none print:p-0",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
     >
@@ -84,117 +92,127 @@ export function MedicalCertificateSheet({
         isDraft={isDraft}
       />
 
-      {/* Patient Information */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-2">
+      {/* Patient Information Section */}
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-xs">
-          <div>
-            <span className="text-slate-500 font-medium">Name:</span>
-            <p className="font-bold text-slate-900">{patientName}</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-slate-700">
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Name:</span>
+            <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Time of Consultation:</span>
-            <p className="font-semibold text-slate-900">{timeOfConsultation}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Time of Consultation:</span>
+            <span className="font-medium text-slate-900">{timeOfConsultation}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Consultation Method:</span>
-            <p className="font-semibold text-slate-900">Online consultation</p>
+
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Age / Sex:</span>
+            <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Age / Sex:</span>
-            <p className="font-semibold text-slate-900">{patientAgeSex}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Consultation Method:</span>
+            <span className="font-medium text-slate-900">Online consultation</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Date of Consultation:</span>
-            <p className="font-semibold text-slate-900">{dateOfConsultation}</p>
+
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Date of Consultation:</span>
+            <span className="font-medium text-slate-900">{dateOfConsultation}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Case ID:</span>
-            <p className="font-mono font-semibold text-[#074972]">{caseId}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-36 shrink-0">Case ID:</span>
+            <span className="font-mono font-medium text-slate-900">{caseId}</span>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
       </section>
 
-      {/* Assessment / Diagnosis */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-2">
+      {/* Assessment / Diagnosis Section */}
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-3">
           ASSESSMENT / DIAGNOSIS
         </h2>
-        <div className="flex items-start gap-4 rounded-xl border border-teal-600/30 bg-teal-50/20 p-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800">
-            <Stethoscope className="size-6 text-teal-700" />
+        <div className="flex items-start gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+            <Stethoscope className="size-7" />
           </div>
-          <div className="flex flex-col gap-1 min-w-0">
-            <h3 className="text-base font-bold text-slate-900">{conditionDisplay}</h3>
-            <p className="text-xs sm:text-sm leading-relaxed text-slate-700">
-              {payload.statement ||
-                "Clinical impression based on telemedicine history provided and remote physical evaluation."}
+          <div className="flex flex-col gap-1 text-xs">
+            <h3 className="font-bold text-sm text-[#074972]">
+              {diagnosis}
+            </h3>
+            <p className="text-slate-700 leading-relaxed">
+              Clinical impression based on history provided, subjective symptoms reported, and remote clinical assessment.
             </p>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-4" />
       </section>
 
-      {/* Medical Recommendation */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-2">
+      {/* Medical Recommendation Section */}
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-3">
           MEDICAL RECOMMENDATION
         </h2>
-        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50/40 p-4 text-xs sm:text-sm">
-          {/* Rest / Work Suspension */}
-          <div className="flex items-start gap-3 border-b border-slate-200 pb-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#074972]/10 text-[#074972]">
+
+        <div className="flex flex-col gap-3 text-xs">
+          {/* Rest / Suspension */}
+          <div className="flex items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
               <Bed className="size-4" />
             </div>
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-1">
-              <span className="font-bold text-slate-900">Rest / Work Suspension:</span>
-              <span className="sm:col-span-2 text-slate-700 font-medium">
+            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+              <span className="font-semibold text-slate-900">Rest / Work Suspension</span>
+              <span className="text-slate-800 font-medium">
                 {validFromFormatted} to {validThroughFormatted}
               </span>
             </div>
           </div>
 
           {/* Fit to Return */}
-          <div className="flex items-start gap-3 border-b border-slate-200 pb-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-800">
-              <UserCheck className="size-4" />
+          <div className="flex items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
+              <PersonStanding className="size-4" />
             </div>
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-1">
-              <span className="font-bold text-slate-900">Fit to Return:</span>
-              <span className="sm:col-span-2 text-slate-700">
-                Fit to resume duties on {validThroughFormatted}, provided symptoms have
-                subsided and no red flag warning signs are present.
+            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+              <span className="font-semibold text-slate-900">Fit to Return</span>
+              <span className="text-slate-800">
+                {fitToReturnDate}, if symptoms improve and no red flags are present.
               </span>
             </div>
           </div>
 
           {/* Work / School Advice */}
           <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
               <ClipboardList className="size-4" />
             </div>
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-1">
-              <span className="font-bold text-slate-900">Work / School Advice:</span>
-              <span className="sm:col-span-2 text-slate-700 leading-relaxed">
+            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+              <span className="font-semibold text-slate-900">Work / School Advice</span>
+              <span className="text-slate-800 leading-relaxed">
                 {payload.restrictions ||
-                  "May return to usual activities if able to work comfortably. Avoid known physical triggers, maintain adequate hydration, and seek immediate re-assessment if symptoms worsen."}
+                  "May return to usual duties if able to work comfortably. Avoid strenuous physical exertion and seek reassessment if symptoms worsen or red flags occur."}
               </span>
             </div>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-2" />
       </section>
 
       {/* Sheet Footer */}
       <DocumentSheetFooter
         physician={physician}
         verification={{
-          qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/mc/${docId}`,
+          qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/medcert/${docId}`,
           documentId: docId,
           status: isDraft ? "SAMPLE" : "VALID",
         }}
         physicianRoleLabel="PHYSICIAN INFORMATION"
         verificationTitle="VERIFICATION"
+        scanInstruction="Scan to verify"
         legalDisclaimer="This certificate was issued following a telemedicine consultation. Findings are based on information reasonably obtainable remotely. Authenticity may be verified using the QR code."
       />
     </article>

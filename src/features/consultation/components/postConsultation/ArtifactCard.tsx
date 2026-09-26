@@ -41,7 +41,6 @@ import { ArtifactPayloadEditor, isEditablePayload } from "./ArtifactPayloadEdito
 import { SignaturePreview } from "./SignaturePreview";
 import { SignaturePadDialog } from "./SignatureField";
 import { OUTPUT_LABELS } from "./workspacePhase";
-import { ClinicalDocumentSheet } from "../documents/ClinicalDocumentSheet";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import {
   isPatientReadableOutput,
@@ -177,8 +176,6 @@ export interface ArtifactCardProps {
    */
   embedded?: boolean;
   intake?: BookingIntakeForm | null;
-  viewMode?: "preview" | "form";
-  onViewModeChange?: (mode: "preview" | "form") => void;
 }
 
 export function ArtifactCard(props: ArtifactCardProps) {
@@ -192,9 +189,6 @@ export function ArtifactCard(props: ArtifactCardProps) {
     isEditablePayload(artifact.outputType, artifact.payload);
   const provenance = computeArtifactProvenance(artifact);
 
-  const [localViewMode, setLocalViewMode] = useState<"preview" | "form">("preview");
-  const effectiveViewMode = props.viewMode ?? localViewMode;
-  const setEffectiveViewMode = props.onViewModeChange ?? setLocalViewMode;
   const [fullModalOpen, setFullModalOpen] = useState(false);
 
   const [editing, setEditing] = useState(false);
@@ -402,31 +396,17 @@ export function ArtifactCard(props: ArtifactCardProps) {
         ) : (
           <div
             className={cn(
-              "min-w-0 rounded-[10px]",
-              effectiveViewMode === "preview" ? "bg-transparent p-0" : "p-3",
-              effectiveViewMode === "form" && (
-                embedded
-                  ? "bg-(--surface-warm-soft)"
-                  : provenance === "edited"
-                    ? "bg-(--edited-bg-strong)"
-                    : provenance === "ai"
-                      ? "bg-(--ai-bg-strong)"
-                      : "bg-(--surface-warm-soft)"
-              ),
+              "min-w-0 rounded-[10px] p-3",
+              embedded
+                ? "bg-(--surface-warm-soft)"
+                : provenance === "edited"
+                  ? "bg-(--edited-bg-strong)"
+                  : provenance === "ai"
+                    ? "bg-(--ai-bg-strong)"
+                    : "bg-(--surface-warm-soft)",
             )}
           >
-            {effectiveViewMode === "preview" ? (
-              <div className="overflow-x-auto pb-2">
-                <ClinicalDocumentSheet
-                  artifact={artifact}
-                  intake={props.intake}
-                  specimen={props.specimen}
-                  doctorName={props.defaultSignerName}
-                />
-              </div>
-            ) : (
-              <ArtifactPayloadView outputType={artifact.outputType} payload={artifact.payload} />
-            )}
+            <ArtifactPayloadView outputType={artifact.outputType} payload={artifact.payload} />
           </div>
         )}
       </div>
@@ -498,45 +478,16 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 ) : null}
               </div>
 
-              {/* View Mode & Full Sheet Affordances */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-full border border-(--border-subtle) bg-(--surface-warm-soft) p-0.5 text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setEffectiveViewMode("preview")}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs transition-colors",
-                      effectiveViewMode === "preview"
-                        ? "bg-(--surface-card) text-[#074972] font-bold shadow-2xs"
-                        : "text-(--text-muted) hover:text-(--text-heading)",
-                    )}
-                  >
-                    <Eye className="mr-1 inline-block size-3.5" /> Patient Sheet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEffectiveViewMode("form")}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs transition-colors",
-                      effectiveViewMode === "form"
-                        ? "bg-(--surface-card) text-[#074972] font-bold shadow-2xs"
-                        : "text-(--text-muted) hover:text-(--text-heading)",
-                    )}
-                  >
-                    Form View
-                  </button>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft)"
-                  onClick={() => setFullModalOpen(true)}
-                >
-                  <Maximize2 className="size-3.5" /> Full Sheet
-                </Button>
-              </div>
+              {/* Preview Official Document Modal Trigger */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-[#074972] font-semibold cursor-pointer shadow-2xs"
+                onClick={() => setFullModalOpen(true)}
+              >
+                <Eye className="size-3.5 text-[#074972]" /> Preview Official Document
+              </Button>
             </div>
 
             {/*
@@ -654,10 +605,10 @@ export function ArtifactCard(props: ArtifactCardProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft)"
+              className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-[#074972] font-semibold cursor-pointer shadow-2xs"
               onClick={() => setFullModalOpen(true)}
             >
-              <Maximize2 className="size-3.5" /> Full Sheet / Print
+              <Eye className="size-3.5 text-[#074972]" /> Preview Official Document
             </Button>
           </div>
         ) : props.onRegenerate ? (

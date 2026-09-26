@@ -65,7 +65,8 @@ export function PrescriptionSheet({
     <article
       data-slot="prescription-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-3xl flex-col rounded-xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm text-slate-800 print:shadow-none print:border-none print:p-0",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
     >
@@ -76,110 +77,110 @@ export function PrescriptionSheet({
       />
 
       {/* Patient Information Section */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-2">
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-xs">
-          <div>
-            <span className="text-slate-500 font-medium">Name:</span>
-            <p className="font-bold text-slate-900">{patientName}</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-slate-700">
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Name:</span>
+            <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Date issued:</span>
-            <p className="font-semibold text-slate-900">{dateIssued}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Date issued:</span>
+            <span className="font-medium text-slate-900">{dateIssued}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Time issued:</span>
-            <p className="font-semibold text-slate-900">{timeIssued}</p>
+
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Date of Birth:</span>
+            <span className="font-medium text-slate-900">{patientDob}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Date of Birth:</span>
-            <p className="font-semibold text-slate-900">{patientDob}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Time issued:</span>
+            <span className="font-medium text-slate-900">{timeIssued}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Age / Sex:</span>
-            <p className="font-semibold text-slate-900">{patientAgeSex}</p>
+
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Age / Sex:</span>
+            <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Valid until:</span>
-            <p className="font-semibold text-slate-900">{validUntil}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Valid until:</span>
+            <span className="font-medium text-slate-900">{validUntil}</span>
           </div>
-          <div className="col-span-2">
-            <span className="text-slate-500 font-medium">Allergies:</span>
-            <p
+
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Allergies:</span>
+            <span
               className={cn(
-                "font-semibold",
+                "font-medium",
                 allergies.toLowerCase().includes("no known")
-                  ? "text-slate-800"
-                  : "text-rose-700 font-bold",
+                  ? "text-slate-900"
+                  : "text-red-700 font-bold",
               )}
             >
               {allergies}
-            </p>
+            </span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Rx ID:</span>
-            <p className="font-mono font-semibold text-[#074972]">{rxId}</p>
+          <div className="flex gap-2">
+            <span className="text-slate-600 font-medium w-24 shrink-0">Rx ID:</span>
+            <span className="font-mono font-medium text-slate-900">{rxId}</span>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
       </section>
 
       {/* Prescription Table Section */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-2">
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
           PRESCRIPTION
         </h2>
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <div className="w-full overflow-hidden border border-[#074972]/40 rounded-xs">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-[#074972] text-white">
-                <th className="py-2.5 px-3 font-bold border-r border-[#074972]/30 w-[30%]">
+                <th className="py-2.5 px-3 font-semibold border-r border-[#074972]/50 w-[30%]">
                   Medication
                 </th>
-                <th className="py-2.5 px-3 font-bold border-r border-[#074972]/30 w-[38%]">
+                <th className="py-2.5 px-3 font-semibold border-r border-[#074972]/50 w-[40%]">
                   Sig (Directions)
                 </th>
-                <th className="py-2.5 px-3 font-bold border-r border-[#074972]/30 text-center w-[12%]">
+                <th className="py-2.5 px-2 font-semibold border-r border-[#074972]/50 text-center w-[10%]">
                   Qty
                 </th>
-                <th className="py-2.5 px-3 font-bold border-r border-[#074972]/30 text-center w-[10%]">
+                <th className="py-2.5 px-2 font-semibold border-r border-[#074972]/50 text-center w-[10%]">
                   Route
                 </th>
-                <th className="py-2.5 px-3 font-bold text-center w-[10%]">
+                <th className="py-2.5 px-2 font-semibold text-center w-[10%]">
                   Refills
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-[#074972]/20 bg-white">
               {payload.medications && payload.medications.length > 0 ? (
                 payload.medications.map((med, index) => (
-                  <tr key={index} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-3 align-top border-r border-slate-200">
-                      <p className="font-bold text-slate-900 text-xs sm:text-sm">
+                  <tr key={index}>
+                    <td className="py-3 px-3 align-top border-r border-[#074972]/20">
+                      <p className="font-bold text-[#074972] text-xs leading-snug">
                         {med.genericName}
                       </p>
-                      {med.dose ? (
-                        <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                      {med.dose && !med.genericName.includes(med.dose) ? (
+                        <p className="text-[11px] text-slate-600 mt-0.5">
                           {med.dose}
                         </p>
                       ) : null}
                     </td>
-                    <td className="py-3 px-3 align-top border-r border-slate-200 text-slate-700">
-                      <p className="leading-relaxed">{med.instructions}</p>
-                      {med.frequency || med.duration ? (
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          {[med.frequency, med.duration].filter(Boolean).join(" · ")}
-                        </p>
-                      ) : null}
+                    <td className="py-3 px-3 align-top border-r border-[#074972]/20 text-slate-800 leading-relaxed">
+                      {med.instructions}
                     </td>
-                    <td className="py-3 px-3 align-top border-r border-slate-200 text-center font-medium text-slate-800">
-                      {med.duration || "1 pack"}
+                    <td className="py-3 px-2 align-top border-r border-[#074972]/20 text-center font-medium text-slate-800">
+                      {med.duration || "14 capsules"}
                     </td>
-                    <td className="py-3 px-3 align-top border-r border-slate-200 text-center font-medium text-slate-700">
+                    <td className="py-3 px-2 align-top border-r border-[#074972]/20 text-center text-slate-700">
                       {med.route || "Oral"}
                     </td>
-                    <td className="py-3 px-3 align-top text-center text-slate-500 font-medium">
+                    <td className="py-3 px-2 align-top text-center text-slate-700">
                       None
                     </td>
                   </tr>
@@ -197,25 +198,22 @@ export function PrescriptionSheet({
       </section>
 
       {/* Special Instructions Section */}
-      <section className="mb-6">
-        <h2 className="text-[11px] font-bold tracking-wider text-[#074972] uppercase mb-1.5">
+      <section className="mb-4">
+        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-1.5">
           SPECIAL INSTRUCTIONS
         </h2>
-        <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-xs leading-relaxed text-slate-700">
-          <ul className="list-disc pl-4 space-y-1">
-            <li>Avoid self-adjusting the prescribed medication dose.</li>
-            <li>Consult again if symptoms persist, worsen, or unexpected reactions occur.</li>
-            <li>
-              Proceed immediately to the nearest Emergency Room if there is severe pain,
-              difficulty breathing, persistent vomiting, or black stools.
+        <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800 leading-relaxed">
+          <li>Avoid self-adjusting the dose.</li>
+          <li>Consult again if symptoms persist or worsen.</li>
+          <li>Go to ER if there is vomiting blood, black stools, or difficulty swallowing.</li>
+          {payload.notes ? (
+            <li className="font-medium text-slate-900">
+              Note: {payload.notes}
             </li>
-            {payload.notes ? (
-              <li className="font-semibold text-slate-900 pt-1">
-                Doctor&apos;s note: {payload.notes}
-              </li>
-            ) : null}
-          </ul>
-        </div>
+          ) : null}
+        </ul>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-2" />
       </section>
 
       {/* Sheet Footer */}
@@ -229,6 +227,7 @@ export function PrescriptionSheet({
         }}
         physicianRoleLabel="PHYSICIAN INFORMATION"
         verificationTitle="PHARMACY VERIFICATION"
+        scanInstruction="Scan before dispensing"
         legalDisclaimer="This is a computer-generated electronic prescription and does not require a wet signature. Pharmacists should verify authenticity using the QR code prior to dispensing."
       />
     </article>

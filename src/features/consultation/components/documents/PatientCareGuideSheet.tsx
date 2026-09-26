@@ -1,16 +1,9 @@
 "use client";
 
 import {
-  AlertCircle,
-  Clock,
-  HeartHandshake,
-  HelpCircle,
-  Pill,
   Stethoscope,
-  Utensils,
-  Moon,
-  PiggyBank,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { CdsPatientEducationPayload } from "@/types/cds-contract";
 import { DocumentSheetHeader } from "./DocumentSheetHeader";
@@ -45,7 +38,7 @@ export function PatientCareGuideSheet({
     [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Babae"]
       .filter(Boolean)
       .join(" / ");
-  const dateStr =
+  const dateOfConsultation =
     patient?.consultationDate ||
     new Date().toLocaleDateString("en-US", {
       month: "short",
@@ -53,23 +46,16 @@ export function PatientCareGuideSheet({
       year: "numeric",
     });
   const caseId = patient?.caseId || "BH-25-05-20-10245";
+  const docId = verification?.documentId || `CG-${caseId}`;
 
-  const diagnosisTitle =
-    payload?.titleFilipino || payload?.title || "GERD (Acid Reflux)";
-  const warningSigns = payload?.warningSigns ?? [
-    "Hirap o masakit sa paghinga",
-    "Pagsusuka ng dugo o parang kape",
-    "Itim o malagkit na dumi",
-    "Matinding pananakit ng tiyan",
-    "Hindi maipaliwanag na pagbaba ng timbang",
-    "Paulit-ulit na pagsusuka",
-  ];
+  const diagnosisTitle = payload?.title || "GERD (Acid Reflux) at Ubo";
 
   return (
     <article
       data-slot="patient-care-guide-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-3xl flex-col rounded-xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm text-slate-800 print:shadow-none print:border-none print:p-0",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
     >
@@ -79,178 +65,190 @@ export function PatientCareGuideSheet({
         isDraft={isDraft}
       />
 
-      {/* Patient Bar */}
-      <section className="mb-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-xs">
-          <div>
-            <span className="text-slate-500 font-medium">Pasyente:</span>
-            <p className="font-bold text-slate-900 truncate">{patientDisplayName}</p>
+      {/* Patient Demographic Bar */}
+      <section className="mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 text-xs text-slate-700 divide-x divide-slate-300">
+          <div className="pr-3">
+            <span className="text-slate-500 block text-[11px]">Pasyente:</span>
+            <span className="font-bold text-slate-900">{patientDisplayName}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Edad / Kasarian:</span>
-            <p className="font-semibold text-slate-900">{patientAgeSex}</p>
+          <div className="px-3">
+            <span className="text-slate-500 block text-[11px]">Edad / Kasarian:</span>
+            <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Petsa:</span>
-            <p className="font-semibold text-slate-900">{dateStr}</p>
+          <div className="px-3">
+            <span className="text-slate-500 block text-[11px]">Petsa:</span>
+            <span className="font-medium text-slate-900">{dateOfConsultation}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Case ID:</span>
-            <p className="font-mono font-semibold text-[#074972] truncate">{caseId}</p>
+          <div className="pl-3">
+            <span className="text-slate-500 block text-[11px]">Case ID:</span>
+            <span className="font-mono font-medium text-slate-900">{docId}</span>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
       </section>
 
-      {/* Diagnosis Explanation Banner */}
-      <section className="mb-6">
-        <div className="flex items-start gap-4 rounded-xl border border-teal-600/30 bg-teal-50/25 p-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800">
-            <Stethoscope className="size-6 text-teal-700" />
+      {/* Diagnosis Outlined Container */}
+      <section className="mb-4 rounded-xl border border-[#074972]/30 p-4">
+        <div className="flex items-start gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+            <Stethoscope className="size-7" />
           </div>
-          <div className="flex flex-col gap-1 min-w-0">
-            <h2 className="text-base font-bold text-slate-900">
+          <div className="flex flex-col gap-1 text-xs">
+            <h2 className="font-bold text-sm text-[#074972]">
               Diagnosis: {diagnosisTitle}
             </h2>
-            <p className="text-xs sm:text-sm leading-relaxed text-slate-700">
-              Umaakyat ang asido mula sa tiyan papunta sa lalamunan. Kaya puwedeng
-              makaramdam ng sikmura o dibdib na mahapdi, maasim ang lasa sa bibig, at madalas
-              na pagdighay. Sundin ang mga sumusunod na gabay para sa mabilis na paggaling.
+            <p className="text-slate-700 leading-relaxed font-medium">
+              Umaakyat ang asido mula sa tiyan papunta sa lalamunan o may pamamaga sa daluyan ng hangin. Kaya puwedeng makaramdam ng sikmura o dibdib na mahapdi, maasim ang lasa, tuyong ubo, at madalas na pagdighay.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 5 Numbered Action Steps */}
-      <section className="mb-6 flex flex-col gap-3">
-        {/* Step 1: Medication */}
-        <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-3.5 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#074972] font-black text-sm text-white">
+      {/* Numbered Steps 1 to 5 */}
+      <section className="mb-4 flex flex-col divide-y divide-slate-200 text-xs">
+        {/* Step 1 */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
             1
           </div>
-          <div className="flex-1 text-xs sm:text-sm">
-            <h3 className="font-bold text-[#074972] uppercase text-xs mb-1">
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)_160px] gap-2 items-start w-full pt-1">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               INUMIN ANG GAMOT AYON SA RESETA
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-3 text-slate-700">
-              <ul className="list-disc pl-4 space-y-0.5">
-                <li>Inumin ang gamot 30 minuto bago kumain ng almusal.</li>
-                <li>Kumpletuhin ang mga araw ayon sa payo ng doktor.</li>
-              </ul>
-              <div className="rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600 border border-slate-200">
-                Huwag basta magdagdag o huminto ng gamot nang walang payo ng doktor.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 2: Food & Diet */}
-        <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-3.5 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#074972] font-black text-sm text-white">
-            2
-          </div>
-          <div className="flex-1 text-xs sm:text-sm">
-            <h3 className="font-bold text-[#074972] uppercase text-xs mb-1">
-              SA PAGKAIN AT INUMIN
-            </h3>
-            <ul className="list-disc pl-4 space-y-0.5 text-slate-700">
-              <li>Kumain nang kaunti pero mas madalas (small frequent meals).</li>
-              <li>
-                Iwasan muna ang kape, soft drinks, alak, tsokolate, maanghang, at mamantikang pagkain.
-              </li>
-              <li>Huwag humiga agad pagkatapos kumain — maghintay nang 2 hanggang 3 oras.</li>
+            </span>
+            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
+              <li>Inumin ang niresetang gamot ayon sa iskedyul</li>
+              <li>Isang beses bawat araw, 30 minutes bago mag-almusal</li>
+              <li>Kumpletuhin ang buong bilang ng araw na itinakda</li>
             </ul>
-          </div>
-        </div>
-
-        {/* Step 3: Sleep */}
-        <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-3.5 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#074972] font-black text-sm text-white">
-            3
-          </div>
-          <div className="flex-1 text-xs sm:text-sm">
-            <h3 className="font-bold text-[#074972] uppercase text-xs mb-1">
-              SA PAGTULOG AT PAGPAPAHINGA
-            </h3>
-            <ul className="list-disc pl-4 space-y-0.5 text-slate-700">
-              <li>Kung umiinit o humahapdi sa gabi, itaas nang kaunti ang ulunan ng kama (6–8 inches).</li>
-              <li>Huwag magsuot ng masisikip na damit sa bandang tiyan.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Step 4: Follow-up */}
-        <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-3.5 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#074972] font-black text-sm text-white">
-            4
-          </div>
-          <div className="flex-1 text-xs sm:text-sm">
-            <h3 className="font-bold text-[#074972] uppercase text-xs mb-1">
-              PAG-FOLLOW-UP
-            </h3>
-            <p className="text-slate-700">
-              Mag-follow up sa loob ng <strong>2 hanggang 4 na linggo</strong> o bumalik agad kung
-              hindi gumagaan o pabalik-balik ang pananakit.
+            <p className="text-[11px] text-slate-500 italic">
+              Kung may ibang iniinom, sundin ang payo ng doktor. Huwag magdagdag nang walang paalam.
             </p>
           </div>
         </div>
 
-        {/* Step 5: Red Flags / ER */}
-        <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/40 p-3.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-700 font-black text-sm text-white">
+        {/* Step 2 */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+            2
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+              SA PAGKAIN
+            </span>
+            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
+              <li>Kumain nang kaunti pero mas madalas sa maghapon.</li>
+              <li>Iwas muna sa kape, soft drinks, alak, tsokolate, maanghang, maasim, at mamantikang pagkain.</li>
+              <li>Huwag humiga agad pagkatapos kumain. Maghintay ng 2 hanggang 3 oras.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Step 3 */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+            3
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+              SA PAGTULOG
+            </span>
+            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
+              <li>Kung umiinit o sumasakit ang sikmura sa gabi, itaas nang kaunti ang ulunan ng kama (6–8 inches).</li>
+              <li>Iwasang matulog agad pagkagaling sa kainan.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Step 4 */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+            4
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+              FOLLOW-UP
+            </span>
+            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
+              <li>Mag-follow up sa loob ng 2 hanggang 4 na linggo para sa re-assessment.</li>
+              <li>Bumalik nang mas maaga kung hindi gumagaan ang pakiramdam o pabalik-balik ang sintomas.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Step 5: Red Flags in Red */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
             5
           </div>
-          <div className="flex-1 text-xs sm:text-sm">
-            <h3 className="font-bold text-rose-800 uppercase text-xs mb-1">
-              PUMUNTA AGAD SA EMERGENCY ROOM (ER) KUNG MAY:
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-rose-900">
-              {warningSigns.map((sign, idx) => (
-                <div key={idx} className="flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-rose-600 shrink-0" />
-                  <span>{sign}</span>
-                </div>
-              ))}
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+            <span className="font-bold text-red-700 tracking-wider uppercase text-xs">
+              PUMUNTA AGAD SA ER KUNG MAY
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-red-700 font-medium">
+              <ul className="list-disc pl-5 space-y-0.5">
+                <li>Hirap o masakit na paghinga</li>
+                <li>Pagsusuka ng dugo o parang kape</li>
+                <li>Itim o malagkit na dumi</li>
+                <li>Matindi o lumalalang sakit ng tiyan</li>
+              </ul>
+              <ul className="list-disc pl-5 space-y-0.5">
+                <li>Nawawalan ng timbang nang hindi sinasadya</li>
+                <li>Paulit-ulit o matinding pagsusuka</li>
+                <li>Hirap lumunok o parang may nakabara sa lalamunan</li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Practical Support Cards */}
-      <section className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-        <div className="rounded-lg border border-teal-600/30 bg-teal-50/20 p-3">
-          <div className="flex items-center gap-1.5 font-bold text-teal-900 mb-1">
-            <PiggyBank className="size-4 text-teal-700" />
-            <span>PARA HINDI SAYANG ANG GASTOS</span>
+      {/* Two Outlined Callout Cards */}
+      <section className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Para Hindi Sayang Ang Gastos */}
+        <div className="rounded-xl border border-[#18a58c] p-3 text-xs flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+            <Wallet className="size-5" />
           </div>
-          <ul className="list-disc pl-4 space-y-0.5 text-slate-700">
-            <li>Maaaring itanong sa botika kung may mas murang generic na gamot.</li>
-            <li>Dalhin ang mga lumang reseta at lab results sa susunod na check-up.</li>
-          </ul>
+          <div className="flex flex-col gap-1">
+            <h3 className="font-bold text-xs text-[#074972] tracking-wider uppercase">
+              PARA HINDI SAYANG ANG GASTOS
+            </h3>
+            <ul className="list-disc pl-4 space-y-0.5 text-slate-700 text-[11px]">
+              <li>Puwede magtanong kung may mas murang generic na gamot.</li>
+              <li>Huwag basta bumili ng maraming gamot kung hindi nireseta.</li>
+              <li>Dalhin ang lumang reseta at mga test results sa susunod na check-up.</li>
+            </ul>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-[#074972]/20 bg-slate-50 p-3">
-          <div className="flex items-center gap-1.5 font-bold text-[#074972] mb-1">
-            <Users className="size-4 text-[#074972]" />
-            <span>NAHIHIRAPAN SUMUNOD SA PLANO?</span>
+        {/* Nahihirapan Sumunod Sa Plano? */}
+        <div className="rounded-xl border border-[#18a58c] p-3 text-xs flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+            <Users className="size-5" />
           </div>
-          <p className="text-slate-700 leading-relaxed">
-            Ipakita ang gabay na ito sa anak, caregiver, o barangay health worker (BHW) na
-            pinagkakatiwalaan ninyo upang maalalayan kayo.
-          </p>
+          <div className="flex flex-col gap-1">
+            <h3 className="font-bold text-xs text-[#074972] tracking-wider uppercase">
+              NAHIHIRAPAN SUMUNOD SA PLANO?
+            </h3>
+            <p className="text-slate-700 text-[11px] leading-relaxed">
+              Ipakita ang gabay na ito sa anak, kapamilya, caregiver, o barangay health worker na pinagkakatiwalaan ninyo para matulungan kayong masubaybayan ang tamang gamutan.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Sheet Footer */}
+      {/* Footer */}
       <DocumentSheetFooter
         physician={physician}
         verification={{
-          qrValue: verification?.qrValue || `https://bayanhealth.ph/patient/care-plan/${caseId}`,
-          documentId: caseId,
+          qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/careplan/${docId}`,
+          documentId: docId,
           status: isDraft ? "SAMPLE" : "CARE PLAN AVAILABLE",
         }}
         physicianRoleLabel="IMPORMASYON NG DOKTOR"
-        verificationTitle="CARE PLAN VERIFICATION"
-        legalDisclaimer="Ang gabay na ito ay ibinigay kasunod ng online teleconsultation. Para sa anumang agarang emergency, huwag mag-atubiling pumunta sa pinakamalapit na ospital."
+        verificationTitle="SCAN PARA BUMALIK SA CARE PLAN"
+        scanInstruction="Makikita rito ang reseta at follow-up schedule"
       />
     </article>
   );

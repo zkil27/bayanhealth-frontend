@@ -5,8 +5,8 @@ import {
   Building2,
   Clock,
   FileText,
-  User,
   Info,
+  User,
 } from "lucide-react";
 import type { CdsPlanPayload } from "@/types/cds-contract";
 import { DocumentSheetHeader } from "./DocumentSheetHeader";
@@ -39,8 +39,8 @@ export function ClinicalReferralSheet({
   isDraft = false,
   referredSpecialty = "Internal Medicine / Gastroenterology Clinic",
   urgency = "Within 24 hours if symptoms worsen; otherwise routine follow-up.",
-  reasonForReferral,
-  clinicalDiagnosis,
+  reasonForReferral = "Specialist face-to-face clinical assessment, diagnostic evaluation, and consideration of further work-up.",
+  clinicalDiagnosis = "Probable GERD / Upper respiratory involvement",
   className,
 }: ClinicalReferralSheetProps) {
   const patientName = patient?.name || "Maria Teresa D. Reyes";
@@ -58,15 +58,12 @@ export function ClinicalReferralSheet({
   const caseId = patient?.caseId || "BH-25-05-20-10245";
   const docId = verification?.documentId || `REF-${caseId}`;
 
-  const reasonText =
-    reasonForReferral ||
-    "Persistent symptoms requiring in-person physical assessment, specialized evaluation, and consideration of further diagnostic work-up.";
-
   return (
     <article
       data-slot="clinical-referral-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-3xl flex-col rounded-xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm text-slate-800 print:shadow-none print:border-none print:p-0",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
     >
@@ -76,130 +73,130 @@ export function ClinicalReferralSheet({
         isDraft={isDraft}
       />
 
-      {/* Patient Bar */}
-      <section className="mb-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-xs">
-          <div>
-            <span className="text-slate-500 font-medium">Patient:</span>
-            <p className="font-bold text-slate-900 truncate">{patientName}</p>
+      {/* Patient Demographic Bar */}
+      <section className="mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 text-xs text-slate-700 divide-x divide-slate-300">
+          <div className="pr-3">
+            <span className="text-slate-500 block text-[11px]">Patient:</span>
+            <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Age / Sex:</span>
-            <p className="font-semibold text-slate-900">{patientAgeSex}</p>
+          <div className="px-3">
+            <span className="text-slate-500 block text-[11px]">Age / Sex:</span>
+            <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Date of Referral:</span>
-            <p className="font-semibold text-slate-900">{dateOfReferral}</p>
+          <div className="px-3">
+            <span className="text-slate-500 block text-[11px]">Date of Referral:</span>
+            <span className="font-medium text-slate-900">{dateOfReferral}</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Case ID:</span>
-            <p className="font-mono font-semibold text-[#074972] truncate">{caseId}</p>
+          <div className="pl-3">
+            <span className="text-slate-500 block text-[11px]">Case ID:</span>
+            <span className="font-mono font-medium text-slate-900">{docId}</span>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
       </section>
 
-      {/* Referral Fields */}
-      <section className="mb-6 flex flex-col gap-3 text-xs sm:text-sm">
-        {/* REFERRED TO */}
-        <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-800">
-            <Building2 className="size-4" />
+      {/* Structured Referral Rows */}
+      <section className="mb-4 flex flex-col gap-3 text-xs">
+        {/* Referred To */}
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+            <Building2 className="size-5" />
           </div>
-          <div className="flex-1">
-            <span className="text-[10px] font-bold tracking-wider text-[#074972] uppercase block">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               REFERRED TO:
             </span>
-            <p className="font-bold text-slate-900">{referredSpecialty}</p>
+            <span className="font-semibold text-slate-900">{referredSpecialty}</span>
           </div>
         </div>
 
-        {/* URGENCY */}
-        <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
-            <Clock className="size-4" />
+        <div className="h-[1px] w-full bg-slate-200" />
+
+        {/* Urgency */}
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+            <Clock className="size-5" />
           </div>
-          <div className="flex-1">
-            <span className="text-[10px] font-bold tracking-wider text-[#074972] uppercase block">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               URGENCY:
             </span>
-            <p className="text-slate-800 font-medium">{urgency}</p>
+            <span className="text-slate-800">{urgency}</span>
           </div>
         </div>
 
-        {/* REASON FOR REFERRAL */}
-        <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 bg-white">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#074972]/10 text-[#074972]">
-            <FileText className="size-4" />
+        <div className="h-[1px] w-full bg-slate-200" />
+
+        {/* Reason for Referral */}
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+            <FileText className="size-5" />
           </div>
-          <div className="flex-1">
-            <span className="text-[10px] font-bold tracking-wider text-[#074972] uppercase block">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               REASON FOR REFERRAL:
             </span>
-            <p className="text-slate-800 leading-relaxed">{reasonText}</p>
+            <span className="text-slate-800 leading-relaxed font-medium">
+              {planPayload?.summary || reasonForReferral}
+            </span>
           </div>
         </div>
 
-        {/* CLINICAL SUMMARY */}
-        <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3.5 bg-slate-50/40">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-700">
-            <User className="size-4" />
+        <div className="h-[1px] w-full bg-slate-200" />
+
+        {/* Clinical Summary */}
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+            <User className="size-5" />
           </div>
-          <div className="flex-1 space-y-1.5">
-            <span className="text-[10px] font-bold tracking-wider text-[#074972] uppercase block">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               CLINICAL SUMMARY:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-x-3 gap-y-1 text-xs">
-              <span className="text-slate-500 font-medium">Presenting complaint:</span>
-              <span className="font-medium text-slate-900">
-                {planPayload?.summary || "Upper abdominal discomfort, reflux, burning sensation."}
-              </span>
-
-              <span className="text-slate-500 font-medium">Relevant history:</span>
-              <span className="text-slate-800">
-                Allergies: {patient?.allergies || "None declared"}.
-              </span>
-
-              <span className="text-slate-500 font-medium">Current management:</span>
-              <span className="text-slate-800">
-                {planPayload?.interventions?.join("; ") || "Medical therapy initiated."}
-              </span>
-
-              <span className="text-slate-500 font-medium">Findings / Assessment:</span>
-              <span className="font-bold text-slate-900">
-                {clinicalDiagnosis || "Probable GERD / Acid Reflux."}
-              </span>
+            <div className="flex flex-col gap-1 text-slate-800">
+              <p>
+                <span className="font-semibold">Presenting complaint:</span> persistent cough, reflux symptoms, malaise.
+              </p>
+              <p>
+                <span className="font-semibold">Relevant history:</span> no known chronic illness; {patient?.allergies || "no known drug allergies"}.
+              </p>
+              <p>
+                <span className="font-semibold">Current management:</span> conservative symptomatic care, initial teleconsultation workup.
+              </p>
+              <p>
+                <span className="font-semibold">Findings / Assessment:</span> {clinicalDiagnosis}.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* RECOMMENDATIONS / RED FLAGS TO MONITOR */}
-        <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50/30 p-3.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
-            <AlertTriangle className="size-4" />
+        <div className="h-[1px] w-full bg-slate-200" />
+
+        {/* Recommendations / Red Flags */}
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+            <AlertTriangle className="size-5" />
           </div>
-          <div className="flex-1">
-            <span className="text-[10px] font-bold tracking-wider text-rose-800 uppercase block mb-1">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
               RECOMMENDATIONS / RED FLAGS TO MONITOR:
             </span>
-            <ul className="list-disc pl-4 space-y-0.5 text-xs text-rose-900">
-              <li>Persistent vomiting or inability to tolerate oral intake</li>
-              <li>Black or tarry stools, or blood in vomitus</li>
-              <li>Severe progressive abdominal pain</li>
-              <li>Unintended weight loss or difficulty swallowing (dysphagia)</li>
+            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
+              <li>persistent vomiting or hemoptysis</li>
+              <li>black stools (melena)</li>
+              <li>severe progressive abdominal or chest pain</li>
+              <li>unintended significant weight loss</li>
+              <li>difficulty swallowing (dysphagia) or shortness of breath</li>
             </ul>
           </div>
         </div>
+
+        <div className="h-[1px] w-full bg-[#074972]/30 mt-2 mb-2" />
       </section>
 
-      {/* Notice Pill */}
-      <div className="mb-2 flex items-center gap-2 rounded-lg bg-[#074972]/5 px-3 py-2 text-xs text-slate-700">
-        <Info className="size-4 text-[#074972] shrink-0" />
-        <span>
-          <strong>Patient Notice:</strong> Please bring this document to the receiving clinic or hospital upon arrival.
-        </span>
-      </div>
-
-      {/* Sheet Footer */}
+      {/* Footer */}
       <DocumentSheetFooter
         physician={physician}
         verification={{
@@ -209,8 +206,16 @@ export function ClinicalReferralSheet({
         }}
         physicianRoleLabel="REFERRING PHYSICIAN"
         verificationTitle="REFERRAL VERIFICATION"
-        legalDisclaimer="This clinical referral facilitates care coordination. Final diagnostic workup and acute management remain under the clinical discretion of the receiving medical team."
+        scanInstruction="Receiving clinic scans here"
       />
+
+      {/* Receiving Clinic Note */}
+      <div className="mt-4 flex items-center gap-2.5 border-t border-slate-200 pt-3 text-[11px] text-slate-600">
+        <Info className="size-4 text-[#005f73] shrink-0" />
+        <span>
+          <strong className="text-slate-800">Bring this document to the receiving clinic.</strong> Additional medical information may be requested by the receiving physician.
+        </span>
+      </div>
     </article>
   );
 }

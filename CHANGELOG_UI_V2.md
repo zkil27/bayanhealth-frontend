@@ -9,6 +9,34 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-09-26] Clinical Document Experience: Modal-First Preview & Authentic Printable Paper Styling
+
+- **Target Route / Surface**:
+  - `/doctor/consultation/[id]` (Live Teleconsultation Room & Doctor Companion Suite)
+  - `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/DoctorDeliverablesPreviewTab.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetHeader.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetFooter.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PrescriptionSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/MedicalCertificateSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DiagnosticRequestSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/ClinicalReferralSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PatientCareGuideSheet.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Modal-First Document Preview**: Removed inline document sheet rendering from `ArtifactCard`. The doctor now sees the dense, structured form editor/view by default for maximum clinical productivity. Added an explicit, prominent "Preview Official Document" action button that opens `DocumentSheetModal`.
+  - **Ergonomic In-Call Companion**: Replaced the cramped inline A4 sheet in `DoctorDeliverablesPreviewTab` with a sleek overview card list for the 5 patient deliverables, with individual "Preview Document" buttons launching the full-screen modal.
+  - **Authentic Printable Paper Transformation**: Stripped out web UI artifacts (nested gray card boxes, UI badge pills, colored card backgrounds) in favor of authentic 8.5"x11"/A4 printable stationery matching the doctor's reference images:
+    - Pure white paper foundation (`bg-white`) with clean typographic key-value alignment and solid divider rules.
+    - Official BayanHealth letterhead with brand teal rule and validity badges (`SAMPLE • NOT VALID` vs `OFFICIAL • VALID`).
+    - High-contrast clinical tables and bulleted instruction sections on clean white paper.
+    - Blue cursive digital signature specimen and authentic teal verification box (`qrcode.react`).
+    - Dedicated `@media print` CSS rules in `DocumentSheetModal` ensuring zero-chrome physical printing and PDF export.
+
+---
+
 ### [2026-09-26] Consultation Flow & Clinical Templates: 2-Column Cockpit & Authentic Patient Deliverables Preview
 
 - **Target Route / Surface**:

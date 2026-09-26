@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
+  Eye,
   FileText,
-  Maximize2,
   Pill,
   Printer,
   ShieldCheck,
@@ -13,12 +13,9 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
-import { fetchBookingIntake, type BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
-import { ClinicalDocumentSheet } from "../documents/ClinicalDocumentSheet";
+import { fetchBookingIntake } from "@/features/doctor/lib/api/bookingIntake";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import type { ClinicalDocumentArtifact } from "../documents/types";
 import type { CdsProtectedOutputType } from "@/types/cds-contract";
@@ -195,6 +192,49 @@ export function DoctorDeliverablesPreviewTab({
     };
   }, [bookingId, complaint]);
 
+  const openPreview = (type: CdsProtectedOutputType) => {
+    setSelectedType(type);
+    setIsModalOpen(true);
+  };
+
+  const deliverableItems = [
+    {
+      type: "prescription" as const,
+      title: "Electronic Prescription (Rx)",
+      subtitle: "3 medications · Amoxicillin, Paracetamol, Cetirizine",
+      tag: "Dispensing Rx",
+      icon: Pill,
+    },
+    {
+      type: "medical_certificate" as const,
+      title: "Medical Certificate",
+      subtitle: "3-day rest period · Fit to return on recovery",
+      tag: "Certification",
+      icon: ShieldCheck,
+    },
+    {
+      type: "lab_request" as const,
+      title: "Diagnostic Request",
+      subtitle: "CBC with Platelets, Urinalysis, Chest X-Ray",
+      tag: "Lab & Imaging",
+      icon: TestTube2,
+    },
+    {
+      type: "plan" as const,
+      title: "Clinical Referral",
+      subtitle: "Pulmonology / Internal Medicine Clinic",
+      tag: "Specialist Care",
+      icon: UserCheck,
+    },
+    {
+      type: "patient_education" as const,
+      title: "Care Guide (Gabay)",
+      subtitle: "Tagalog home care plan & red flag warnings",
+      tag: "Patient Education",
+      icon: Stethoscope,
+    },
+  ];
+
   const activeArtifact = templateArtifacts[selectedType] || templateArtifacts.prescription;
 
   return (
@@ -202,19 +242,19 @@ export function DoctorDeliverablesPreviewTab({
       data-slot="doctor-deliverables-preview-tab"
       className="flex flex-col h-full min-h-0 bg-(--surface-subtle)/40 text-xs"
     >
-      {/* Top Controls Toolbar */}
-      <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-2.5 sm:p-3 flex flex-col gap-2">
+      {/* Header Info */}
+      <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--brand-navy)/10 text-(--brand-navy)">
-              <FileText className="size-3.5" />
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#074972]/10 text-[#074972]">
+              <FileText className="size-4" />
             </span>
-            <div className="min-w-0">
-              <h4 className="font-semibold text-(--text-headings) truncate text-xs">
-                Patient Deliverables Preview
+            <div>
+              <h4 className="font-bold text-(--text-headings) text-xs">
+                Clinical Deliverables
               </h4>
-              <p className="text-[11px] text-(--text-muted) truncate">
-                Authentic clinical paper preview
+              <p className="text-[11px] text-(--text-muted)">
+                Preview official documents for this encounter
               </p>
             </div>
           </div>
@@ -222,106 +262,67 @@ export function DoctorDeliverablesPreviewTab({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setIsModalOpen(true)}
-            className="h-7 gap-1.5 px-2.5 text-[11px] font-semibold text-(--brand-navy) border-(--brand-navy)/25 hover:bg-(--brand-navy)/5 shadow-2xs"
+            onClick={() => openPreview("prescription")}
+            className="h-7 gap-1 px-2.5 text-[11px] font-semibold text-[#074972] border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
           >
-            <Maximize2 className="size-3" />
-            Full Sheet / Print
+            <Printer className="size-3" />
+            Print Specimen
           </Button>
-        </div>
-
-        {/* Template Selector Pills */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedType("prescription")}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 border ${
-              selectedType === "prescription"
-                ? "bg-(--brand-navy) text-white border-(--brand-navy) shadow-xs"
-                : "bg-(--surface-card) text-(--text-muted) border-(--border-subtle) hover:text-(--text-body) hover:bg-(--surface-subtle)"
-            }`}
-          >
-            <Pill className="size-3" />
-            Rx (Prescription)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedType("medical_certificate")}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 border ${
-              selectedType === "medical_certificate"
-                ? "bg-(--brand-navy) text-white border-(--brand-navy) shadow-xs"
-                : "bg-(--surface-card) text-(--text-muted) border-(--border-subtle) hover:text-(--text-body) hover:bg-(--surface-subtle)"
-            }`}
-          >
-            <ShieldCheck className="size-3" />
-            Medical Certificate
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedType("lab_request")}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 border ${
-              selectedType === "lab_request"
-                ? "bg-(--brand-navy) text-white border-(--brand-navy) shadow-xs"
-                : "bg-(--surface-card) text-(--text-muted) border-(--border-subtle) hover:text-(--text-body) hover:bg-(--surface-subtle)"
-            }`}
-          >
-            <TestTube2 className="size-3" />
-            Diagnostic Request
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedType("plan")}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 border ${
-              selectedType === "plan"
-                ? "bg-(--brand-navy) text-white border-(--brand-navy) shadow-xs"
-                : "bg-(--surface-card) text-(--text-muted) border-(--border-subtle) hover:text-(--text-body) hover:bg-(--surface-subtle)"
-            }`}
-          >
-            <UserCheck className="size-3" />
-            Clinical Referral
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedType("patient_education")}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 border ${
-              selectedType === "patient_education"
-                ? "bg-(--brand-navy) text-white border-(--brand-navy) shadow-xs"
-                : "bg-(--surface-card) text-(--text-muted) border-(--border-subtle) hover:text-(--text-body) hover:bg-(--surface-subtle)"
-            }`}
-          >
-            <Stethoscope className="size-3" />
-            Care Guide (Gabay)
-          </button>
         </div>
       </div>
 
-      {/* Sheet Preview Scroll Container */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 flex flex-col items-center">
-        <div className="w-full max-w-2xl flex flex-col gap-2.5">
-          {/* Subtle Contextual Hint */}
-          <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-(--surface-card) border border-(--border-subtle) text-[11px] text-(--text-muted)">
-            <span className="flex items-center gap-1.5 font-medium">
-              <span className="size-1.5 rounded-full bg-(--brand-teal)" />
-              In-Consultation Patient Preview
-            </span>
-            <span className="text-[10px]">
-              Final editing & digital signing take place in Post-Consult
-            </span>
-          </div>
-
-          {/* Authentic Document Sheet */}
-          <div className="rounded-xl border border-(--border-subtle) bg-white shadow-sm overflow-hidden">
-            <ClinicalDocumentSheet
-              artifact={activeArtifact}
-              intake={intake}
-              className="text-xs"
-            />
-          </div>
+      {/* List of Deliverable Cards */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-2.5">
+        <div className="rounded-lg bg-teal-50/50 border border-teal-600/20 px-3 py-2 text-[11px] text-teal-900 leading-relaxed">
+          <span className="font-bold">In-Consultation Reference: </span>
+          Click any document below to inspect the exact printable paper sheet the patient will receive upon release.
         </div>
+
+        {deliverableItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.type}
+              className="flex flex-col gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs hover:border-[#074972]/30 transition-all"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#074972] mt-0.5">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h5 className="font-bold text-slate-900 text-xs truncate">
+                        {item.title}
+                      </h5>
+                      <span className="rounded-md bg-slate-100 px-1.5 py-0.2 text-[10px] font-medium text-slate-600">
+                        {item.tag}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                      {item.subtitle}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-(--border-subtle)/60 pt-2 mt-1">
+                <span className="text-[10px] text-slate-500 font-medium">
+                  Patient name &amp; case details mapped
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openPreview(item.type)}
+                  className="h-6.5 gap-1 px-2.5 text-[11px] font-semibold text-[#074972] border-[#074972]/30 hover:bg-[#074972]/5 cursor-pointer shadow-2xs"
+                >
+                  <Eye className="size-3" />
+                  Preview Document
+                </Button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Modal for Full-Screen View & Print Specimen */}
