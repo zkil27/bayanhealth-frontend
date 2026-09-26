@@ -48,7 +48,7 @@ When instructed to sync a component or surface, the main repo AI agent **MUST fo
 
 ```mermaid
 flowchart TD
-    A[Step 1: Read CHANGELOG_UI.md in Fork] --> B[Step 2: Inspect Target Files in Main Repo]
+    A[Step 1: Read CHANGELOG_UI_V2.md in Fork] --> B[Step 2: Inspect Target Files in Main Repo]
     B --> C[Step 3: Add Missing shadcn Primitives]
     C --> D[Step 4: Surgical JSX & Style Porting]
     D --> E[Step 5: Run Verification Gates]
@@ -56,8 +56,8 @@ flowchart TD
     E -->|Fail| D
 ```
 
-### Step 1: Read `CHANGELOG_UI.md`
-Before touching code, consult [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) in this fork.  
+### Step 1: Read `CHANGELOG_UI_V2.md`
+Before touching code, consult [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) (or [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) for historical entries prior to 2026-09-26) in this fork.  
 Find the entry for the component or route being synced. Review:
 - Files modified.
 - Design intent and device optimizations applied.
@@ -117,7 +117,7 @@ You are updating the UI of the main BayanHealth repository based on the UI/UX fo
 I want you to port the UI changes for: <SPECIFY COMPONENT OR ROUTE, e.g. Patient Doctor Card & Booking Flow>.
 
 Follow these strict rules from `UI_HANDOFF.md`:
-1. Check `CHANGELOG_UI.md` in the fork for the exact list of files modified and the design intent.
+1. Check `CHANGELOG_UI_V2.md` (or `CHANGELOG_UI.md` for historical entries) in the fork for the exact list of files modified and the design intent.
 2. Port ONLY the visual styling, JSX layout, and Tailwind CSS classes.
 3. PRESERVE all existing business logic, TanStack Query hooks, React Hook Form registrations, and API calls in the main repo.
 4. Do NOT introduce any arbitrary hex colors; ensure all colors use semantic tokens (Brand Teal `#18a58c`, Brand Navy `#074972`, Cream `#f3eac5`).

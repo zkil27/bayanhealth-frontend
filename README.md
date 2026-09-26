@@ -106,7 +106,7 @@ All necessary design guidelines, component specifications, and behavioral user j
 | **UI/UX Agent Spec & Anti-Slop** | [`UI_UX_AGENT.md`](./UI_UX_AGENT.md) | Anti-AI slop manifesto, color palette, mobile/desktop ergonomics, accessibility |
 | **UI Handoff Manual** | [`UI_HANDOFF.md`](./UI_HANDOFF.md) | The Golden Rule of Porting (Visual Shell vs Data Plumbing) and AI prompts |
 | **Agent Operating Rules** | [`AGENTS.md`](./AGENTS.md) | High-level operational rules for AI coding assistants working on the UI |
-| **UI Changelog** | [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) | Running record of UI/UX improvements, layouts, and responsive fixes |
+| **UI Changelog** | [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) | Running record of UI/UX improvements, layouts, and responsive fixes (supersedes `CHANGELOG_UI.md`) |
 | **Backend & Dev Outputs** | [`DEV_OUTPUTS.md`](./DEV_OUTPUTS.md) | Backend endpoints, Cognito IDs, DynamoDB tables, and `.env` setup |
 | **Feature Specifications** | [`docs/specs/`](./docs/specs/) | PRDs for landing page, dark mode, dashboard improvements, CDS gating, etc. |
 | **Behavioral Scenarios** | [`docs/scenarios/`](./docs/scenarios/) | Given-When-Then user flows for Auth, Booking, Consultation, and Onboarding |
