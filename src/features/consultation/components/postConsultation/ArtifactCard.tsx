@@ -6,7 +6,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Eye,
   FileSignature,
+  Maximize2,
   PenLine,
   RefreshCw,
   Send,
@@ -32,12 +34,15 @@ import type {
   CdsSignaturePoint,
 } from "@/types/cds-contract";
 import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
+import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
 import { ArtifactPayloadView } from "./ArtifactPayloadView";
 import { ArtifactPayloadEditor, isEditablePayload } from "./ArtifactPayloadEditor";
 import { SignaturePreview } from "./SignaturePreview";
 import { SignaturePadDialog } from "./SignatureField";
 import { OUTPUT_LABELS } from "./workspacePhase";
+import { ClinicalDocumentSheet } from "../documents/ClinicalDocumentSheet";
+import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import {
   isPatientReadableOutput,
   patientVisibilityCopy,
@@ -169,15 +174,11 @@ export interface ArtifactCardProps {
    * Rendered inside another component's own card chrome (the deliverables
    * deck's tab-connected container) rather than drawing its own border,
    * rounded corners, background wash, and title/status header.
-   *
-   * The deck's tab strip is that header now — title, the two provenance
-   * chips, and the patient-visibility badge all moved there so the document's
-   * name stops appearing twice (once on its tab, once again on this card) and
-   * the card's own body can stay the plain white the deck's unified card
-   * calls for. Standalone usage (the Plan card, directly in the workspace)
-   * omits this and keeps drawing all of that itself.
    */
   embedded?: boolean;
+  intake?: BookingIntakeForm | null;
+  viewMode?: "preview" | "form";
+  onViewModeChange?: (mode: "preview" | "form") => void;
 }
 
 export function ArtifactCard(props: ArtifactCardProps) {
@@ -190,6 +191,11 @@ export function ArtifactCard(props: ArtifactCardProps) {
     !artifact.effectiveStale &&
     isEditablePayload(artifact.outputType, artifact.payload);
   const provenance = computeArtifactProvenance(artifact);
+
+  const [localViewMode, setLocalViewMode] = useState<"preview" | "form">("preview");
+  const effectiveViewMode = props.viewMode ?? localViewMode;
+  const setEffectiveViewMode = props.onViewModeChange ?? setLocalViewMode;
+  const [fullModalOpen, setFullModalOpen] = useState(false);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<CdsProtectedArtifactPayload>(artifact.payload);
@@ -396,21 +402,31 @@ export function ArtifactCard(props: ArtifactCardProps) {
         ) : (
           <div
             className={cn(
-              "min-w-0 rounded-[10px] p-3",
-              // Plain in embedded use — the deck's tab chips carry the AI /
-              // edited signal now, so the reading surface itself stays the
-              // white the unified card calls for, matching how the Plan
-              // card's own non-embedded body reads when it is neutral.
-              embedded
-                ? "bg-(--surface-warm-soft)"
-                : provenance === "edited"
-                  ? "bg-(--edited-bg-strong)"
-                  : provenance === "ai"
-                    ? "bg-(--ai-bg-strong)"
-                    : "bg-(--surface-warm-soft)",
+              "min-w-0 rounded-[10px]",
+              effectiveViewMode === "preview" ? "bg-transparent p-0" : "p-3",
+              effectiveViewMode === "form" && (
+                embedded
+                  ? "bg-(--surface-warm-soft)"
+                  : provenance === "edited"
+                    ? "bg-(--edited-bg-strong)"
+                    : provenance === "ai"
+                      ? "bg-(--ai-bg-strong)"
+                      : "bg-(--surface-warm-soft)"
+              ),
             )}
           >
-            <ArtifactPayloadView outputType={artifact.outputType} payload={artifact.payload} />
+            {effectiveViewMode === "preview" ? (
+              <div className="overflow-x-auto pb-2">
+                <ClinicalDocumentSheet
+                  artifact={artifact}
+                  intake={props.intake}
+                  specimen={props.specimen}
+                  doctorName={props.defaultSignerName}
+                />
+              </div>
+            ) : (
+              <ArtifactPayloadView outputType={artifact.outputType} payload={artifact.payload} />
+            )}
           </div>
         )}
       </div>
@@ -442,43 +458,85 @@ export function ArtifactCard(props: ArtifactCardProps) {
           </div>
         ) : artifact.lifecycleStatus === "generated" && !artifact.effectiveStale ? (
           <>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
-                disabled={props.busy || props.regenerating}
-                onClick={() => setSigning(true)}
-              >
-                <PenLine className="size-4" /> Sign &amp; lock
-              </Button>
-              {amendable ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
+                  disabled={props.busy || props.regenerating}
+                  onClick={() => setSigning(true)}
+                >
+                  <PenLine className="size-4" /> Sign &amp; lock
+                </Button>
+                {amendable ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "rounded-full",
+                      provenance === "edited"
+                        ? "border-(--edited-border) text-(--edited-fg) hover:bg-(--edited-bg)"
+                        : "border-(--ai-border) text-(--ai-fg) hover:bg-(--ai-bg)",
+                    )}
+                    disabled={props.busy || props.regenerating}
+                    onClick={() => setEditing(true)}
+                  >
+                    <PenLine className="size-4" />{" "}
+                    {provenance === "edited" ? "Edit again" : "Edit draft"}
+                  </Button>
+                ) : null}
+                {props.onRegenerate ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="rounded-full"
+                    disabled={props.busy || props.regenerating || !props.canRegenerate}
+                    onClick={props.onRegenerate}
+                  >
+                    <RefreshCw className="size-4" /> Redraft
+                  </Button>
+                ) : null}
+              </div>
+
+              {/* View Mode & Full Sheet Affordances */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-full border border-(--border-subtle) bg-(--surface-warm-soft) p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setEffectiveViewMode("preview")}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs transition-colors",
+                      effectiveViewMode === "preview"
+                        ? "bg-(--surface-card) text-[#074972] font-bold shadow-2xs"
+                        : "text-(--text-muted) hover:text-(--text-heading)",
+                    )}
+                  >
+                    <Eye className="mr-1 inline-block size-3.5" /> Patient Sheet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEffectiveViewMode("form")}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs transition-colors",
+                      effectiveViewMode === "form"
+                        ? "bg-(--surface-card) text-[#074972] font-bold shadow-2xs"
+                        : "text-(--text-muted) hover:text-(--text-heading)",
+                    )}
+                  >
+                    Form View
+                  </button>
+                </div>
+
                 <Button
                   type="button"
                   variant="outline"
-                  className={cn(
-                    "rounded-full",
-                    provenance === "edited"
-                      ? "border-(--edited-border) text-(--edited-fg) hover:bg-(--edited-bg)"
-                      : "border-(--ai-border) text-(--ai-fg) hover:bg-(--ai-bg)",
-                  )}
-                  disabled={props.busy || props.regenerating}
-                  onClick={() => setEditing(true)}
+                  size="sm"
+                  className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft)"
+                  onClick={() => setFullModalOpen(true)}
                 >
-                  <PenLine className="size-4" />{" "}
-                  {provenance === "edited" ? "Edit again" : "Edit draft"}
+                  <Maximize2 className="size-3.5" /> Full Sheet
                 </Button>
-              ) : null}
-              {props.onRegenerate ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full"
-                  disabled={props.busy || props.regenerating || !props.canRegenerate}
-                  onClick={props.onRegenerate}
-                >
-                  <RefreshCw className="size-4" /> Redraft
-                </Button>
-              ) : null}
+              </div>
             </div>
 
             {/*
@@ -553,10 +611,21 @@ export function ArtifactCard(props: ArtifactCardProps) {
               card rather than left to the button label.
             */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-(--teal-800)">
-                <CheckCircle2 className="size-3.5 text-(--status-available-fg)" />
-                Signed · Ready to release
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-(--teal-800)">
+                  <CheckCircle2 className="size-3.5 text-(--status-available-fg)" />
+                  Signed · Ready to release
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft)"
+                  onClick={() => setFullModalOpen(true)}
+                >
+                  <Maximize2 className="size-3.5" /> Full Sheet / Print
+                </Button>
+              </div>
               <HoldToReleaseButton
                 label={patientReadable ? "Release to patient" : "Release for records"}
                 disabled={props.busy}
@@ -565,21 +634,32 @@ export function ArtifactCard(props: ArtifactCardProps) {
             </div>
           </>
         ) : artifact.lifecycleStatus === "released" ? (
-          <p className="flex items-start gap-2 text-sm text-(--text-body)">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-(--status-available-fg)" />
-            <span>
-              {patientReadable ? "Shared with the patient" : "Released to your records"} at{" "}
-              {artifact.releasedAt
-                ? new Date(artifact.releasedAt).toLocaleString()
-                : "server-recorded time"}
-              .{" "}
-              <span className="text-(--text-muted)">
-                {patientReadable
-                  ? "It is on their booking page now."
-                  : "The patient has no screen for this document type."}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-start gap-2 text-sm text-(--text-body)">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-(--status-available-fg)" />
+              <span>
+                {patientReadable ? "Shared with the patient" : "Released to your records"} at{" "}
+                {artifact.releasedAt
+                  ? new Date(artifact.releasedAt).toLocaleString()
+                  : "server-recorded time"}
+                .{" "}
+                <span className="text-(--text-muted)">
+                  {patientReadable
+                    ? "It is on their booking page now."
+                    : "The patient has no screen for this document type."}
+                </span>
               </span>
-            </span>
-          </p>
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft)"
+              onClick={() => setFullModalOpen(true)}
+            >
+              <Maximize2 className="size-3.5" /> Full Sheet / Print
+            </Button>
+          </div>
         ) : props.onRegenerate ? (
           <Button
             type="button"
@@ -591,6 +671,15 @@ export function ArtifactCard(props: ArtifactCardProps) {
           </Button>
         ) : null}
       </footer>
+
+      <DocumentSheetModal
+        open={fullModalOpen}
+        onOpenChange={setFullModalOpen}
+        artifact={artifact}
+        intake={props.intake}
+        specimen={props.specimen}
+        doctorName={props.defaultSignerName}
+      />
     </article>
   );
 }

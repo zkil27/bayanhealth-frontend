@@ -31,7 +31,6 @@ import { CareContinuityPanel } from "./CareContinuityPanel";
 import { DeliverablesDeck, deriveDeckEntries } from "./DeliverablesDeck";
 import { PatientRail } from "./PatientRail";
 import { SoapSummaryCards } from "./SoapSummaryCards";
-import { ProtectedToolsRail } from "./ProtectedToolsRail";
 import { WorkspaceHeader } from "./WorkspaceChrome";
 import {
   deriveFinishReadiness,
@@ -1061,43 +1060,40 @@ export function AssessmentFirstWorkspace({
         }
         statusTone={safetyLock ? "danger" : assessment.confirmed ? "active" : "done"}
         actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            disabled={busy}
-            onClick={() =>
-              run(async () => {
-                resetDerived();
-                await refreshAssessment();
-                await refreshOutputs();
-              })
-            }
-          >
-            <RefreshCw className="size-4" /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              disabled={busy}
+              onClick={() =>
+                run(async () => {
+                  resetDerived();
+                  await refreshAssessment();
+                  await refreshOutputs();
+                })
+              }
+            >
+              <RefreshCw className="size-4" /> Refresh
+            </Button>
+            <FinishDocumentationControl assessment={assessment} artifacts={current} />
+          </div>
         }
       />
 
       {/*
-        Three columns only where three columns fit. The old layout jumped
-        straight from one column to three at `xl`, so every laptop between those
-        widths got the entire patient rail and the entire tools rail stacked
-        above and below the work — the tools a physician reaches for most,
-        pushed furthest from the thing they act on. It now steps 1 → 2 → 3, and
-        both rails stick on the wide layouts so neither scrolls away from the
-        document they describe.
+        2-Column Clinical Cockpit: Patient Intake on the left, full documentation stage on the right.
       */}
       <div
         className={cn(
-          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4",
           patientRailCollapsed
-            ? "xl:grid-cols-[3.5rem_minmax(0,1fr)_21rem]"
-            : "xl:grid-cols-[18rem_minmax(0,1fr)_21rem]",
+            ? "lg:grid-cols-[3.5rem_minmax(0,1fr)]"
+            : "lg:grid-cols-[18rem_minmax(0,1fr)]",
         )}
       >
-        <div className="order-2 min-w-0 lg:order-3 xl:order-1 xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2.5rem)] xl:overflow-y-auto">
+        <div className="order-2 min-w-0 lg:order-1 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
           <PatientRail
             bookingId={bookingId}
             intake={intake}
@@ -1106,7 +1102,7 @@ export function AssessmentFirstWorkspace({
           />
         </div>
 
-        <main className="order-1 flex min-w-0 flex-col gap-4 lg:order-1 xl:order-2">
+        <main className="order-1 flex min-w-0 flex-col gap-4 lg:order-2">
           {/*
             Read-only Subjective / Objective context. It sits above the
             Assessment card because it is what the physician reads while writing
@@ -1300,6 +1296,9 @@ export function AssessmentFirstWorkspace({
             onFinalize={finalize}
             onRelease={release}
             onRegenerate={(outputType) => void generate(outputType)}
+            onDraft={(outputType) => void generate(outputType)}
+            intake={intake}
+            gateStatusLabel={railBadgeLabel(railState, railRows)}
           />
 
           <CareContinuityPanel consultationId={consultationId} token={token} />
@@ -1401,40 +1400,16 @@ export function AssessmentFirstWorkspace({
               </div>
             </details>
           ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
+            <div>
+              <p className="text-sm font-bold text-(--text-heading)">Complete Consultation</p>
+              <p className="text-xs text-(--text-muted)">
+                Review and release all clinical documents, or complete this encounter.
+              </p>
+            </div>
+            <FinishDocumentationControl assessment={assessment} artifacts={current} />
+          </div>
         </main>
-
-        <div className="order-3 min-w-0 lg:order-2 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto xl:order-3">
-          <ProtectedToolsRail
-            railState={railState}
-            badgeLabel={railBadgeLabel(railState, railRows)}
-            rows={railRows}
-            busy={busy}
-            generating={generating}
-            onDraft={(outputType) => void generate(outputType)}
-            onFocusArtifact={setActiveDeliverable}
-            gateHint={
-              assessment.confirmed && railState === "unlocked"
-                ? "Every draft is re-checked against the current record on the server."
-                : undefined
-            }
-            blockedMessage="For a red-flag assessment, routine deliverables stay locked until the safety finding is resolved. Acknowledge the current episode once the latest check reads routine."
-            relockedMessage="The assessment or the clinical record changed. Re-run the safety check to unlock the tools and draft the affected documents again."
-            footer={
-              railState === "unlocked" || railState === "locked" ? (
-                <FinishDocumentationControl assessment={assessment} artifacts={current} />
-              ) : railState === "relocked" ? (
-                <Button
-                  type="button"
-                  className="w-full rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
-                  disabled={busy}
-                  onClick={() => updateOrReattest("reattest")}
-                >
-                  Re-confirm assessment
-                </Button>
-              ) : null
-            }
-          />
-        </div>
       </div>
     </div>
   );

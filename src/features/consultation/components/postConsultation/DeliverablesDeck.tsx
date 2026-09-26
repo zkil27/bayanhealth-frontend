@@ -9,14 +9,23 @@ import {
   Hash,
   PenLine,
   Pill,
+  Plus,
   Scan,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { CdsProtectedArtifact, CdsProtectedOutputType } from "@/types/cds-contract";
 import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
+import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
 import {
   AiProvenanceChip,
@@ -143,6 +152,15 @@ const STATUS_COPY: Partial<Record<DeckStatus, string>> = {
   stale: "Out of date",
 };
 
+const ALL_DRAFT_TYPES: readonly CdsProtectedOutputType[] = [
+  "prescription",
+  "medical_certificate",
+  "patient_education",
+  "lab_request",
+  "imaging_request",
+  "plan",
+];
+
 export function DeliverablesDeck({
   entries,
   active,
@@ -156,6 +174,9 @@ export function DeliverablesDeck({
   onFinalize,
   onRelease,
   onRegenerate,
+  onDraft,
+  intake,
+  gateStatusLabel,
 }: {
   entries: readonly DeckEntry[];
   active: CdsProtectedOutputType | null;
@@ -169,6 +190,9 @@ export function DeliverablesDeck({
   onFinalize: (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => Promise<void>;
   onRelease: (artifact: CdsProtectedArtifact) => void;
   onRegenerate: (outputType: CdsProtectedOutputType) => void;
+  onDraft?: (outputType: CdsProtectedOutputType) => void;
+  intake?: BookingIntakeForm | null;
+  gateStatusLabel?: string;
 }) {
   if (entries.length === 0) {
     return (
@@ -176,13 +200,34 @@ export function DeliverablesDeck({
         data-slot="deliverables-deck-empty"
         className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-(--border-subtle) bg-(--surface-card) p-8 text-center"
       >
-        <span className="flex size-10 items-center justify-center rounded-full bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
-          <ClipboardList className="size-5" />
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
+          <ClipboardList className="size-6" />
         </span>
-        <h3 className="mt-2 text-sm font-bold text-(--text-heading)">No documents drafted yet</h3>
-        <p className="mt-1 max-w-sm text-xs text-(--text-muted)">
-          Select a document from Protected tools on the right (such as Plan or Prescription) to begin drafting.
+        <h3 className="mt-3 text-base font-bold text-(--text-heading)">No clinical documents drafted yet</h3>
+        <p className="mt-1 max-w-md text-xs text-(--text-muted) leading-relaxed">
+          Generate official patient-facing documents, electronic prescriptions, or medical certificates below:
         </p>
+        {onDraft ? (
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+            {ALL_DRAFT_TYPES.map((type) => {
+              const Icon = TOOL_ICONS[type];
+              return (
+                <Button
+                  key={type}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full gap-1.5 text-xs border-(--border-subtle) hover:border-(--teal-600) hover:bg-(--surface-accent-soft)"
+                  disabled={busy || !canRegenerate}
+                  onClick={() => onDraft(type)}
+                >
+                  <Icon className="size-3.5 text-teal-700" />
+                  + {OUTPUT_LABELS[type]}
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -195,25 +240,67 @@ export function DeliverablesDeck({
     (entry) => entry.status === "draft" || entry.status === "edited",
   ).length;
 
+  const undraftedTypes = ALL_DRAFT_TYPES.filter(
+    (type) => !entries.some((e) => e.outputType === type),
+  );
+
   return (
     <section
       data-slot="deliverables-deck"
       aria-labelledby="deliverables-heading"
       className="flex min-w-0 flex-col"
     >
-      <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
-        <h2 id="deliverables-heading" className="text-[15px] font-bold text-(--text-heading)">
-          Plan &amp; deliverables
-        </h2>
-        {outstanding > 0 ? (
-          <span className="rounded-full bg-(--ai-bg-strong) px-2.5 py-0.5 text-xs font-bold text-(--ai-fg)">
-            {outstanding} awaiting your signature
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 rounded-full bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
-            <CheckCircle2 className="size-3" /> All reviewed
-          </span>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 id="deliverables-heading" className="text-[15px] font-bold text-(--text-heading)">
+            Plan &amp; deliverables
+          </h2>
+          {outstanding > 0 ? (
+            <span className="rounded-full bg-(--ai-bg-strong) px-2.5 py-0.5 text-xs font-bold text-(--ai-fg)">
+              {outstanding} awaiting your signature
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 rounded-full bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
+              <CheckCircle2 className="size-3" /> All reviewed
+            </span>
+          )}
+
+          {gateStatusLabel ? (
+            <span className="rounded-full bg-(--surface-accent-soft) px-2.5 py-0.5 text-xs font-bold text-(--teal-800) dark:text-(--teal-300)">
+              {gateStatusLabel}
+            </span>
+          ) : null}
+        </div>
+
+        {onDraft && undraftedTypes.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={busy || !canRegenerate}
+                className="flex items-center gap-1.5 rounded-full border border-dashed border-teal-600/40 bg-teal-50/40 px-3 py-1 text-xs font-bold text-(--teal-800) hover:bg-teal-50 disabled:opacity-50 transition-colors"
+              >
+                <Plus className="size-3.5" />
+                Add Document
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {undraftedTypes.map((type) => {
+                const Icon = TOOL_ICONS[type];
+                return (
+                  <DropdownMenuItem
+                    key={type}
+                    onClick={() => onDraft(type)}
+                    className="flex items-center gap-2 cursor-pointer text-xs py-2"
+                  >
+                    <Icon className="size-3.5 text-teal-700" />
+                    <span>+ {OUTPUT_LABELS[type]}</span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
 
       {/*
@@ -365,6 +452,7 @@ export function DeliverablesDeck({
             <ArtifactCard
               embedded
               artifact={current.artifact}
+              intake={intake}
               busy={busy}
               regenerating={generating.has(current.outputType)}
               specimen={specimen}
