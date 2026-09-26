@@ -81,36 +81,36 @@ export function PrescriptionSheet({
         <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-slate-700">
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Name:</span>
+        <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Name:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Date issued:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Date issued:</span>
             <span className="font-medium text-slate-900">{dateIssued}</span>
           </div>
 
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Date of Birth:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Date of Birth:</span>
             <span className="font-medium text-slate-900">{patientDob}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Time issued:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Time issued:</span>
             <span className="font-medium text-slate-900">{timeIssued}</span>
           </div>
 
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Age / Sex:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Valid until:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Valid until:</span>
             <span className="font-medium text-slate-900">{validUntil}</span>
           </div>
 
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Allergies:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Allergies:</span>
             <span
               className={cn(
                 "font-medium",
@@ -122,8 +122,8 @@ export function PrescriptionSheet({
               {allergies}
             </span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-24 shrink-0">Rx ID:</span>
+          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Rx ID:</span>
             <span className="font-mono font-medium text-slate-900">{rxId}</span>
           </div>
         </div>

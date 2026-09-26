@@ -9,6 +9,28 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-09-26] Impeccable Redesign: Professional Clinical Document Preview Lightbox Modal
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[id]` (Clinical Document Review & Verification)
+  - `/doctor/consultation/[id]` (Live Teleconsultation Room Deliverables Preview)
+- **Files Modified**:
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PrescriptionSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/MedicalCertificateSheet.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Fixed 384px Dialog Constraint**: Overrode the inherited `sm:max-w-sm` limitation from `dialog.tsx` with high-priority `!w-[96vw] !max-w-6xl !h-[92vh] !max-h-[94vh]` dimensions, eliminating the cramped 384px sliver layout and double scrollbars.
+  - **Professional Inspector Toolbar**: Integrated a dedicated `h-14` dark inspector toolbar (`bg-slate-900 border-b border-slate-800`) featuring:
+    - Clinical document badge and title with patient name & case ID.
+    - Format indicator (`Standard Clinical Sheet · 8.5 × 11 in (Portrait)`).
+    - High-visibility `Print / Save as PDF` primary button (`bg-[#18a58c]`).
+    - Dedicated close button without absolute layout collisions (`showCloseButton={false}`).
+  - **Centered Paper Lightbox Canvas**: The white physical paper document (`max-w-[800px]`) is rendered centered on a neutral dark gray `#25282a` stage with a realistic deep paper drop shadow (`shadow-[0_20px_60px_rgba(0,0,0,0.5)]`), replicating the inspection experience of Adobe Acrobat and Apple Preview.
+  - **Typographic Alignment Fixes**: Refactored the demographic sections of `PrescriptionSheet` and `MedicalCertificateSheet` to use fixed-width CSS grid tracks (`grid-cols-[90px_minmax(0,1fr)]` / `grid-cols-[130px_minmax(0,1fr)]`), preventing multi-line text wrapping of patient names and dates.
+  - **Print CSS Isolation**: Verified clean `@media print` rules so physical printers and PDF exports generate zero-chrome, 100% scale clinical sheets.
+
+---
+
 ### [2026-09-26] Clinical Document Experience: Modal-First Preview & Authentic Printable Paper Styling
 
 - **Target Route / Surface**:

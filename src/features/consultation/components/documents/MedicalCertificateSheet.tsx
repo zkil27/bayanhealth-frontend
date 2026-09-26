@@ -97,31 +97,31 @@ export function MedicalCertificateSheet({
         <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-slate-700">
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Name:</span>
+        <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Name:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Time of Consultation:</span>
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Time of Consultation:</span>
             <span className="font-medium text-slate-900">{timeOfConsultation}</span>
           </div>
 
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Age / Sex:</span>
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Consultation Method:</span>
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Consultation Method:</span>
             <span className="font-medium text-slate-900">Online consultation</span>
           </div>
 
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Date of Consultation:</span>
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Date of Consultation:</span>
             <span className="font-medium text-slate-900">{dateOfConsultation}</span>
           </div>
-          <div className="flex gap-2">
-            <span className="text-slate-600 font-medium w-36 shrink-0">Case ID:</span>
+          <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
+            <span className="text-slate-600 font-medium">Case ID:</span>
             <span className="font-mono font-medium text-slate-900">{caseId}</span>
           </div>
         </div>
