@@ -18,7 +18,6 @@ import {
   postConsultationHref,
   type CompletedConsultation,
 } from "../consultations/CompletedConsultations";
-import { DEMO_RECENT_CONSULTATIONS } from "@/features/doctor/lib/demoData";
 
 /** Rows shown in place before the doctor has to leave the dashboard for the full archive. */
 const VISIBLE_CAP = 3;
@@ -95,16 +94,7 @@ export function DoctorRecentConsultations() {
           : "Couldn't load your recent consultations.",
     };
   } else {
-    const rawData = query.data ?? [];
-    const demoItems: CompletedConsultation[] = DEMO_RECENT_CONSULTATIONS.map((c, idx) => ({
-      bookingId: c.bookingId,
-      consultationId: c.consultationId,
-      patientName: c.patientName,
-      serviceType: idx === 0 ? "urgent_care" : idx === 1 ? "specialist" : "general",
-      occurredAt: new Date(Date.now() - (idx + 1) * 45 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - (idx + 1) * 45 * 60 * 1000).toISOString(),
-    }));
-    state = { status: "data", value: rawData.length > 0 ? rawData : demoItems };
+    state = { status: "data", value: query.data ?? [] };
   }
 
   return (
@@ -177,9 +167,7 @@ export function DoctorRecentConsultations() {
 }
 
 function RecentConsultationRow({ entry }: { entry: CompletedConsultation }) {
-  const href = entry.bookingId.startsWith("demo-")
-    ? "/doctor/post-consultation/id?consultationId=demo&bookingId=demo"
-    : postConsultationHref(entry);
+  const href = postConsultationHref(entry);
   const label = serviceLabel(entry.serviceType);
   const dateLabel = formatOccurredAt(entry.occurredAt);
 

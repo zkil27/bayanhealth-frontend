@@ -44,7 +44,6 @@ import { DoctorConsultationAccess } from "./DoctorConsultationAccess";
 import { DoctorDashboardDrawer } from "./DoctorDashboardDrawer";
 import { TriageDetailsModal } from "./TriageDetailsModal";
 import { AcceptConsultModal, type AcceptConsultTarget } from "./AcceptConsultModal";
-import { DEMO_ON_DEMAND_REQUESTS, DEMO_SCHEDULED_INTAKES } from "../../lib/demoData";
 import type { patientBoardInfo } from "../../types/bookingBoard.types";
 
 export function serviceLabel(serviceType?: string): string | null {
@@ -270,22 +269,7 @@ function UnifiedQueueList() {
     })),
   ];
 
-  // If live queue is empty (or no active backend connection), present high-fidelity clinical demo cases
-  const rows: QueueRow[] =
-    rawRows.length > 0
-      ? rawRows
-      : [
-          ...DEMO_ON_DEMAND_REQUESTS.map((item) => ({
-            kind: "pool" as const,
-            key: `pool-${item.bookingId}`,
-            item,
-          })),
-          ...DEMO_SCHEDULED_INTAKES.map((item) => ({
-            kind: "incoming" as const,
-            key: `incoming-${item.bookingId}`,
-            item,
-          })),
-        ];
+  const rows: QueueRow[] = rawRows;
 
   const visibleRows = expanded ? rows : rows.slice(0, VISIBLE_CAP);
   const hiddenCount = rows.length - visibleRows.length;

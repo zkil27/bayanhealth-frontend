@@ -5,7 +5,6 @@ import { ArrowRight, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
-import { DEMO_ACTIVE_ENCOUNTER } from "@/features/doctor/lib/demoData";
 import { useActiveEncounter } from "../../hooks/useActiveEncounter";
 import { NoShowControl, serviceLabel } from "./DoctorPatientQueue";
 
@@ -45,12 +44,9 @@ import { NoShowControl, serviceLabel } from "./DoctorPatientQueue";
  * started, and ends.
  */
 export function ActiveEncounterCommandCenter() {
-  const { item: rawActive } = useActiveEncounter();
+  const { item: active } = useActiveEncounter();
   const { profile } = useMyDoctorProfile();
   const isOnDuty = profile ? (profile.onDemandAvailable ?? false) : true;
-
-  // Use live active item if available; otherwise use DEMO_ACTIVE_ENCOUNTER for visiting clinicians
-  const active = rawActive ?? DEMO_ACTIVE_ENCOUNTER;
   const isLive = active?.isInProgress ?? false;
 
   if (!active) {

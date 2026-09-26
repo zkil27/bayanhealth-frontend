@@ -13,7 +13,6 @@ import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
 import { useDoctorShiftMetrics } from "@/features/doctor/hooks/useDoctorShiftMetrics";
 import { useDoctorQueueSummary } from "@/features/doctor/hooks/useDoctorQueueSummary";
 import { updateDoctorProfile } from "@/features/doctor/lib/api/kyc";
-import { DEMO_DOCTOR_PROFILE, DEMO_SHIFT_METRICS } from "@/features/doctor/lib/demoData";
 import { DoctorNotification } from "../notification/DoctorNotification";
 
 export const DOCTOR_ME_PROFILE_QUERY_KEY = "doctor-me-profile";
@@ -38,21 +37,12 @@ export function DoctorCommandBar() {
   const { totalActive, isLoading: queueLoading } = useDoctorQueueSummary();
 
   const [error, setError] = useState<string | null>(null);
-  const [demoDuty, setDemoDuty] = useState(true);
   const keyRef = useRef(createIdempotencyKeyManager());
 
-  // Use real backend data when authenticated, or realistic clinical demo defaults for demonstrations
-  const activeProfile = profile ?? DEMO_DOCTOR_PROFILE;
-  const name = activeProfile.fullName;
-  const specialty = activeProfile.specialty;
-  const isOnDuty = profile ? (profile.onDemandAvailable ?? false) : demoDuty;
+  const name = profile?.fullName?.trim() || "Doctor";
+  const specialty = profile?.specialty?.trim();
+  const isOnDuty = profile?.onDemandAvailable ?? false;
   const isShiftLoading = Boolean(idToken && (metricsLoading || queueLoading));
-
-  // Resolved shift metrics with clinical demo fallbacks
-  const displayCompleted = completedToday > 0 ? completedToday : DEMO_SHIFT_METRICS.completedToday;
-  const displayQueue = totalActive > 0 ? totalActive : DEMO_SHIFT_METRICS.liveQueue;
-  const displayPayout =
-    metrics.pendingPayout > 0 ? metrics.pendingPayout : DEMO_SHIFT_METRICS.pendingPayoutCents / 100;
 
   const [todayLabel, setTodayLabel] = useState<string | null>(null);
   useEffect(() => {
@@ -69,10 +59,7 @@ export function DoctorCommandBar() {
 
   const toggle = useMutation({
     mutationFn: async (next: boolean) => {
-      if (!idToken || !profile) {
-        setDemoDuty(next);
-        return;
-      }
+      if (!idToken || !profile) throw new Error("Your profile hasn't loaded yet.");
       await updateDoctorProfile(
         idToken,
         {
@@ -101,7 +88,7 @@ export function DoctorCommandBar() {
         hour: "numeric",
         minute: "2-digit",
       })
-    : (completedToday > 0 ? "None today" : DEMO_SHIFT_METRICS.nextAppointment);
+    : "None today";
 
   return (
     <header
@@ -221,20 +208,20 @@ export function DoctorCommandBar() {
       {/* Bottom Row: Shift Overview Metrics Ribbon */}
       <dl className="grid grid-cols-2 gap-3 border-t border-(--border-subtle) pt-3 sm:grid-cols-4 md:gap-4">
         <StatCell label="Completed today" loading={isShiftLoading}>
-          <NumberTicker value={displayCompleted} className="font-display" />
+          <NumberTicker value={completedToday} className="font-display" />
         </StatCell>
         <StatCell
           label="Live queue"
           loading={isShiftLoading}
-          tone={displayQueue > 0 ? "brand" : "default"}
+          tone={totalActive > 0 ? "brand" : "default"}
         >
-          <NumberTicker value={displayQueue} className="font-display" />
+          <NumberTicker value={totalActive} className="font-display" />
         </StatCell>
         <StatCell label="Next appointment" loading={isShiftLoading} small={!metrics.nextAppointment}>
           {nextAppointmentLabel}
         </StatCell>
         <StatCell label="Pending payout" loading={isShiftLoading}>
-          <NumberTicker value={displayPayout} prefix="₱" className="font-display" />
+          <NumberTicker value={metrics.pendingPayout} prefix="₱" className="font-display" />
         </StatCell>
       </dl>
     </header>
