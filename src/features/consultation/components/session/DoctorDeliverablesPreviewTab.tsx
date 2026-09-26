@@ -20,7 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchBookingIntake, type BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 import { ClinicalDocumentSheet } from "../documents/ClinicalDocumentSheet";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
-import type { CdsProtectedArtifact, CdsProtectedOutputType } from "@/types/cds-contract";
+import type { ClinicalDocumentArtifact } from "../documents/types";
+import type { CdsProtectedOutputType } from "@/types/cds-contract";
 
 interface DoctorDeliverablesPreviewTabProps {
   bookingId: string;
@@ -40,10 +41,10 @@ export function DoctorDeliverablesPreviewTab({
     staleTime: 1000 * 60 * 5,
   });
 
-  const complaint = intake?.sections?.details?.chiefComplaint?.description || "Upper respiratory symptoms";
+  const complaint = intake?.sections?.purpose?.chiefComplaint || "Upper respiratory symptoms";
 
   // Synthesize sample artifacts matching the 5 reference templates
-  const templateArtifacts = useMemo<Record<CdsProtectedOutputType, CdsProtectedArtifact>>(() => {
+  const templateArtifacts = useMemo<Record<string, ClinicalDocumentArtifact>>(() => {
     return {
       prescription: {
         artifactId: `sample-rx-${bookingId}`,
@@ -51,49 +52,34 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "prescription",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
           medications: [
             {
-              genericName: "Amoxicillin + Clavulanic Acid (Co-Amoxiclav)",
-              brandName: "Augmentin",
-              strength: "625 mg",
-              dosageForm: "tablet",
+              genericName: "Amoxicillin + Clavulanic Acid (Co-Amoxiclav) 625mg",
+              dose: "625 mg",
               route: "Oral",
-              sig: "Take 1 tablet every 12 hours after meals for 7 days. Complete the full antibiotic course.",
-              quantity: "14 tablets",
-              refills: 0,
-              indication: `Bacterial exacerbation related to ${complaint}`,
-              warnings: "Take with food to minimize gastric upset. Discontinue and report immediately if skin rash or swelling occurs.",
+              frequency: "Every 12 hours after meals",
+              duration: "7 days",
+              instructions: "Take 1 tablet every 12 hours after meals for 7 days. Complete the full antibiotic course.",
             },
             {
-              genericName: "Paracetamol",
-              brandName: "Biogesic",
-              strength: "500 mg",
-              dosageForm: "tablet",
+              genericName: "Paracetamol 500mg",
+              dose: "500 mg",
               route: "Oral",
-              sig: "Take 1 tablet every 4 to 6 hours as needed for body ache or temperature >= 37.8°C.",
-              quantity: "10 tablets",
-              refills: 0,
-              indication: "Fever and generalized body pain",
-              warnings: "Do not exceed 4,000 mg (8 tablets) within 24 hours to prevent hepatotoxicity.",
+              frequency: "Every 4 to 6 hours as needed",
+              duration: "3 to 5 days",
+              instructions: "Take 1 tablet every 4 to 6 hours as needed for body ache or temperature >= 37.8°C.",
             },
             {
-              genericName: "Cetirizine Dihydrochloride",
-              brandName: "Virlix",
-              strength: "10 mg",
-              dosageForm: "tablet",
+              genericName: "Cetirizine Dihydrochloride 10mg",
+              dose: "10 mg",
               route: "Oral",
-              sig: "Take 1 tablet once daily at bedtime for 5 days as needed.",
-              quantity: "5 tablets",
-              refills: 0,
-              indication: "Allergic rhinitis and nasal congestion",
-              warnings: "May cause mild drowsiness. Avoid operating heavy machinery.",
+              frequency: "Once daily at bedtime",
+              duration: "5 days",
+              instructions: "Take 1 tablet once daily at bedtime for 5 days as needed for rhinitis.",
             },
           ],
-          instructions:
+          notes:
             "Drink at least 2.5 liters of warm fluids daily. Return for evaluation if fever persists past 72 hours despite medication.",
-          dispensingPrecautions:
-            "Valid for this prescription only. Pharmacist must verify authenticity QR or patient case identification.",
         },
       },
       medical_certificate: {
@@ -102,24 +88,11 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "medical_certificate",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
-          diagnosis: `Acute Upper Respiratory Tract Infection (URTI) with Acute Nasopharyngitis; ${complaint}`,
-          findings:
-            "Patient was evaluated via teleconsultation presenting with non-productive cough, low-grade pyrexia, rhinorrhea, and mild pharyngeal congestion. No respiratory distress observed. Hemodynamically stable.",
-          recommendations:
-            "Recommended to undergo conservative symptomatic therapy, adequate hydration, and temporary home rest to facilitate recovery and prevent transmission.",
+          statement:
+            `Patient was evaluated via teleconsultation presenting with non-productive cough, low-grade pyrexia, rhinorrhea, and mild pharyngeal congestion secondary to Acute Upper Respiratory Tract Infection (URTI) with ${complaint}. Recommended to undergo conservative symptomatic therapy, adequate hydration, and temporary home rest for 3 days to facilitate recovery and prevent transmission.`,
+          restrictions: "Excuse from strenuous physical exertion, in-person work/school duties for 3 days.",
           validFrom: new Date().toISOString().split("T")[0],
           validThrough: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-          restrictions: "Excuse from strenuous physical exertion, in-person work/school duties for 3 days.",
-          fitToWork: false,
-          fitToWorkNotes:
-            "Expected fit to resume normal duties on " +
-            new Date(Date.now() + 86400000 * 3).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }) +
-            " provided the patient remains afebrile for at least 24 hours without antipyretics.",
         },
       },
       lab_request: {
@@ -128,27 +101,20 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "lab_request",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
-          clinicalIndication: `Evaluation of persistent febrile illness and ${complaint}`,
           tests: [
             {
               testName: "Complete Blood Count (CBC) with Platelet Count",
-              category: "Hematology",
-              fastingRequired: false,
-              instructions: "Routine venipuncture. No prior fasting required.",
-              urgency: "routine",
+              rationale: `Rule out acute bacterial infection or thrombocytopenia in relation to ${complaint}`,
+              priority: "routine",
             },
             {
               testName: "Routine Urinalysis (Clean-Catch Midstream)",
-              category: "Clinical Microscopy",
-              fastingRequired: false,
-              instructions: "Submit first morning or clean-catch midstream urine specimen.",
-              urgency: "routine",
+              rationale: "Screen for secondary systemic involvement or urinary tract infection",
+              priority: "routine",
             },
           ],
-          patientPreparation:
-            "Ensure adequate hydration prior to blood extraction. Follow sterile midstream cleaning protocol for urinalysis.",
-          precautions: "Bring official laboratory result slip on follow-up teleconsultation.",
+          instructions:
+            "Ensure adequate hydration prior to blood extraction. Routine venipuncture. No prior fasting required.",
         },
       },
       imaging_request: {
@@ -157,18 +123,15 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "imaging_request",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
-          reasonForExam: `Persistent productive cough and pharyngeal congestion; rule out consolidation or infiltrates`,
-          modalities: [
+          studies: [
             {
-              modality: "Chest X-Ray PA View (Standing)",
-              region: "Thorax / Chest",
-              instructions: "Wear clothing free of metallic buttons or jewelry. Remove necklaces.",
-              contrast: "none",
+              studyName: "Chest X-Ray PA View (Standing)",
+              bodyRegion: "Thorax / Chest",
+              rationale: `Persistent productive cough and pharyngeal congestion; rule out consolidation or infiltrates`,
+              priority: "routine",
             },
           ],
-          patientPreparation: "Inform radiologic technologist if pregnancy is suspected.",
-          precautions: "Non-contrast plain radiography.",
+          instructions: "Wear clothing free of metallic buttons or jewelry. Inform technician if pregnancy is suspected.",
         },
       },
       plan: {
@@ -177,12 +140,18 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "plan",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
-          reason: `Specialist evaluation for recurrent respiratory symptoms and targeted clinical workup`,
-          specialty: "Pulmonology / Internal Medicine",
-          urgency: "routine",
-          clinicalSummary: `Patient presented with a history of ${complaint}. Teleconsultation initial assessment demonstrates acute upper airway involvement with favorable response to standard antipyretics. Referred for pulmonary baseline spirometry if cough persists beyond 2 weeks.`,
-          recommendations: "Comprehensive pulmonary assessment, chest imaging review, and allergen evaluation.",
+          summary: `Specialist evaluation for recurrent respiratory symptoms and targeted clinical workup`,
+          goals: [
+            "Identify underlying allergen triggers",
+            "Obtain pulmonary baseline spirometry",
+            "Optimize long-term airway health",
+          ],
+          interventions: [
+            "Internal Medicine / Pulmonology specialist consultation",
+            "Chest imaging correlation",
+            "Environmental control measures",
+          ],
+          followUp: "Follow-up within 2 weeks or immediately if dyspnea or hemoptysis occurs.",
         },
       },
       patient_education: {
@@ -191,25 +160,28 @@ export function DoctorDeliverablesPreviewTab({
         outputType: "patient_education",
         lifecycleStatus: "generated",
         payload: {
-          schemaVersion: "v1",
           title: "Gabay sa Iyong Pagpapagaling at Pag-inom ng Gamot",
-          summary: "Mahalagang gabay at paalala mula sa iyong BayanHealth doktor para sa ligtas at mabilis na paggaling.",
+          language: "taglish",
           sections: [
             {
               heading: "1. Sundin ang Tamang Oras ng Gamot",
-              body: "Inumin ang niresetang gamot ayon sa schedule. Huwag laktawan o itigil ang antibiotic kahit gumanda na ang pakiramdam.",
+              content: "Inumin ang niresetang gamot ayon sa schedule. Huwag laktawan o itigil ang antibiotic kahit gumanda na ang pakiramdam.",
+              language: "filipino",
             },
             {
               heading: "2. Uminom ng Maraming Maligamgam na Tubig",
-              body: "Mag-target ng 8 hanggang 10 baso ng tubig araw-araw upang lumabnaw ang plema at mapanatiling hydrated ang lalamunan.",
+              content: "Mag-target ng 8 hanggang 10 baso ng tubig araw-araw upang lumabnaw ang plema at mapanatiling hydrated ang lalamunan.",
+              language: "filipino",
             },
             {
               heading: "3. Magpahinga nang Sapat (7-8 Oras)",
-              body: "Iwasan ang labis na pagpupuyat at mabibigat na gawain habang may lagnat o trangkaso upang makabawi ang resistensya.",
+              content: "Iwasan ang labis na pagpupuyat at mabibigat na gawain habang may lagnat o trangkaso upang makabawi ang resistensya.",
+              language: "filipino",
             },
             {
               heading: "4. Huwag Mag-Self Medicate",
-              body: "Iwasang uminom ng ibang gamot na hindi kasama sa reseta nang walang konsultasyon sa doktor.",
+              content: "Iwasang uminom ng ibang gamot na hindi kasama sa reseta nang walang konsultasyon sa doktor.",
+              language: "filipino",
             },
           ],
           warningSigns: [
@@ -218,7 +190,6 @@ export function DoctorDeliverablesPreviewTab({
             "Labis na panghihina o kawalan ng kakayahang uminom ng likido",
             "Pangangati, pamamantal, o pamamaga ng labi matapos uminom ng gamot",
           ],
-          followUpAdvice: "Mag-book ng follow-up teleconsultation makalipas ang 5 hanggang 7 araw o kapag may bagong sintomas.",
         },
       },
     };

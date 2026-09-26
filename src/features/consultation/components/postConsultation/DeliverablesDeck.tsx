@@ -274,15 +274,12 @@ export function DeliverablesDeck({
 
         {onDraft && undraftedTypes.length > 0 ? (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                disabled={busy || !canRegenerate}
-                className="flex items-center gap-1.5 rounded-full border border-dashed border-teal-600/40 bg-teal-50/40 px-3 py-1 text-xs font-bold text-(--teal-800) hover:bg-teal-50 disabled:opacity-50 transition-colors"
-              >
-                <Plus className="size-3.5" />
-                Add Document
-              </button>
+            <DropdownMenuTrigger
+              disabled={busy || !canRegenerate}
+              className="flex items-center gap-1.5 rounded-full border border-dashed border-teal-600/40 bg-teal-50/40 px-3 py-1 text-xs font-bold text-(--teal-800) hover:bg-teal-50 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              <Plus className="size-3.5" />
+              Add Document
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               {undraftedTypes.map((type) => {

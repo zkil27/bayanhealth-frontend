@@ -8,15 +8,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { CdsProtectedArtifact } from "@/types/cds-contract";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
 import { ClinicalDocumentSheet } from "./ClinicalDocumentSheet";
+import type { ClinicalDocumentArtifact } from "./types";
 
 interface DocumentSheetModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  artifact: CdsProtectedArtifact | undefined;
+  artifact: ClinicalDocumentArtifact | undefined;
   intake?: BookingIntakeForm | null;
   specimen?: DoctorSignatureSpecimen | undefined;
   doctorName?: string;

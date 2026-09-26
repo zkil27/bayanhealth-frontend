@@ -17,11 +17,16 @@ import { MedicalCertificateSheet } from "./MedicalCertificateSheet";
 import { DiagnosticRequestSheet } from "./DiagnosticRequestSheet";
 import { ClinicalReferralSheet } from "./ClinicalReferralSheet";
 import { PatientCareGuideSheet } from "./PatientCareGuideSheet";
-import type { DocumentPatientInfo, DocumentPhysicianInfo, DocumentVerificationInfo } from "./types";
+import type {
+  ClinicalDocumentArtifact,
+  DocumentPatientInfo,
+  DocumentPhysicianInfo,
+  DocumentVerificationInfo,
+} from "./types";
 import { ageFromDateOfBirth, SEX_LABELS } from "@/features/doctor/lib/api/bookingIntake";
 
 interface ClinicalDocumentSheetProps {
-  artifact: CdsProtectedArtifact;
+  artifact: ClinicalDocumentArtifact;
   intake?: BookingIntakeForm | null;
   specimen?: DoctorSignatureSpecimen | undefined;
   doctorName?: string;

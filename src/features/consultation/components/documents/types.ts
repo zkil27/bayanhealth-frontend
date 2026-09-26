@@ -1,4 +1,9 @@
-import type { CdsSignaturePoint } from "@/types/cds-contract";
+import type { CdsProtectedArtifact, CdsSignaturePoint } from "@/types/cds-contract";
+
+export type ClinicalDocumentArtifact = Pick<
+  CdsProtectedArtifact,
+  "artifactId" | "consultationId" | "outputType" | "lifecycleStatus" | "payload"
+> & Partial<CdsProtectedArtifact>;
 
 export interface DocumentPatientInfo {
   name: string;
