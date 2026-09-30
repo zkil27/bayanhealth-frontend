@@ -32,6 +32,6 @@ export interface DocumentPhysicianInfo {
 export interface DocumentVerificationInfo {
   qrValue: string;
   documentId: string;
-  status?: "ACTIVE" | "VALID" | "REQUEST ACTIVE" | "REFERRAL ACTIVE" | "CARE PLAN AVAILABLE" | "SAMPLE";
+  status?: "ACTIVE" | "VALID" | "REQUEST ACTIVE" | "REFERRAL ACTIVE" | "CARE PLAN AVAILABLE" | "DRAFT" | "SAMPLE";
   validUntil?: string;
 }

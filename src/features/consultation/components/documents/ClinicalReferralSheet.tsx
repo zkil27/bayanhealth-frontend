@@ -37,17 +37,17 @@ export function ClinicalReferralSheet({
   physician,
   verification,
   isDraft = false,
-  referredSpecialty = "Internal Medicine / Gastroenterology Clinic",
-  urgency = "Within 24 hours if symptoms worsen; otherwise routine follow-up.",
-  reasonForReferral = "Specialist face-to-face clinical assessment, diagnostic evaluation, and consideration of further work-up.",
-  clinicalDiagnosis = "Probable GERD / Upper respiratory involvement",
+  referredSpecialty = "Specialist Clinic",
+  urgency = "Routine follow-up or as clinically indicated",
+  reasonForReferral = "Clinical evaluation, specialist assessment, and consideration of further management as appropriate.",
+  clinicalDiagnosis = "Clinical referral as indicated.",
   className,
 }: ClinicalReferralSheetProps) {
-  const patientName = patient?.name || "Maria Teresa D. Reyes";
+  const patientName = patient?.name || "—";
   const patientAgeSex =
-    [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Female"]
+    [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
-      .join(" / ");
+      .join(" / ") || "—";
   const dateOfReferral =
     patient?.consultationDate ||
     new Date().toLocaleDateString("en-US", {
@@ -55,8 +55,8 @@ export function ClinicalReferralSheet({
       day: "numeric",
       year: "numeric",
     });
-  const caseId = patient?.caseId || "BH-25-05-20-10245";
-  const docId = verification?.documentId || `REF-${caseId}`;
+  const caseId = patient?.caseId || "—";
+  const docId = verification?.documentId || (patient?.caseId ? `REF-${patient.caseId}` : "—");
 
   return (
     <article
@@ -156,17 +156,26 @@ export function ClinicalReferralSheet({
               CLINICAL SUMMARY:
             </span>
             <div className="flex flex-col gap-1 text-slate-800">
+              {planPayload?.summary ? (
+                <p>
+                  <span className="font-semibold">Plan summary:</span> {planPayload.summary}
+                </p>
+              ) : null}
+              {planPayload?.interventions && planPayload.interventions.length > 0 ? (
+                <p>
+                  <span className="font-semibold">Interventions:</span> {planPayload.interventions.join("; ")}
+                </p>
+              ) : null}
+              {planPayload?.followUp ? (
+                <p>
+                  <span className="font-semibold">Follow-up:</span> {planPayload.followUp}
+                </p>
+              ) : null}
               <p>
-                <span className="font-semibold">Presenting complaint:</span> persistent cough, reflux symptoms, malaise.
+                <span className="font-semibold">Clinical impression:</span> {clinicalDiagnosis}
               </p>
               <p>
-                <span className="font-semibold">Relevant history:</span> no known chronic illness; {patient?.allergies || "no known drug allergies"}.
-              </p>
-              <p>
-                <span className="font-semibold">Current management:</span> conservative symptomatic care, initial teleconsultation workup.
-              </p>
-              <p>
-                <span className="font-semibold">Findings / Assessment:</span> {clinicalDiagnosis}.
+                <span className="font-semibold">Known allergies:</span> {patient?.allergies || "No known drug allergies"}
               </p>
             </div>
           </div>
@@ -184,11 +193,10 @@ export function ClinicalReferralSheet({
               RECOMMENDATIONS / RED FLAGS TO MONITOR:
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
-              <li>persistent vomiting or hemoptysis</li>
-              <li>black stools (melena)</li>
-              <li>severe progressive abdominal or chest pain</li>
-              <li>unintended significant weight loss</li>
-              <li>difficulty swallowing (dysphagia) or shortness of breath</li>
+              <li>Acute or worsening respiratory distress or chest discomfort</li>
+              <li>Signs of acute hypoperfusion, altered sensorium, or hemodynamic instability</li>
+              <li>Intractable pain unresponsive to conservative medical therapy</li>
+              <li>Persistent vomiting, intolerance to oral intake, or high fever</li>
             </ul>
           </div>
         </div>
@@ -202,7 +210,7 @@ export function ClinicalReferralSheet({
         verification={{
           qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/ref/${docId}`,
           documentId: docId,
-          status: isDraft ? "SAMPLE" : "REFERRAL ACTIVE",
+          status: isDraft ? "DRAFT" : "REFERRAL ACTIVE",
         }}
         physicianRoleLabel="REFERRING PHYSICIAN"
         verificationTitle="REFERRAL VERIFICATION"

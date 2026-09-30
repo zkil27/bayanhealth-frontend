@@ -31,8 +31,8 @@ export function DocumentSheetHeader({
 
         <div>
           {isDraft ? (
-            <span className="inline-flex items-center rounded-md border border-red-500 bg-white px-3 py-0.5 text-[11px] font-bold tracking-wider text-red-600 uppercase">
-              SAMPLE • NOT VALID
+            <span className="inline-flex items-center rounded-md border border-amber-600 bg-amber-50 px-3 py-0.5 text-[11px] font-bold tracking-wider text-amber-700 uppercase">
+              DRAFT • NOT FINAL
             </span>
           ) : (
             <span className="inline-flex items-center rounded-md border border-(--teal-700) bg-white px-3 py-0.5 text-[11px] font-bold tracking-wider text-(--teal-700) uppercase">

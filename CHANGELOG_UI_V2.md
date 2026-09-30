@@ -9,6 +9,298 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Care Continuity: 2-Column Clinical Proportions, Restored Identity, & Calendar Popover Redesign
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`CareContinuityPanel.tsx`, `calendar.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` [MODIFIED]
+  - `src/components/ui/calendar.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Restored Authoritative Clinical Identity ("Care Continuity")**:
+    - Reverted "Reconsultation & Follow-up" back to authoritative **"Care Continuity"** branding per clinical convention, paired with a clear subtitle: *"Follow-up window & directives for patient re-evaluation"*.
+  - **Remediated "Too Flat in Length" Aspect Ratio with a 2-Column Clinical Cockpit**:
+    - Previously, condensing the panel into 3 single-line rows across a 1000px container resulted in an awkward, ultra-wide ribbon with a stretched 850px text input and unbalanced negative space.
+    - Re-architected the card into a harmonious, desktop-dense **2-column grid** (`grid-cols-1 lg:grid-cols-12 gap-5`):
+      - **Left Column (`lg:col-span-5` - Return Interval)**: Structured 3-column tactile grid for quick intervals (`+3 Days`, `+1 Week`, `+2 Weeks`, `+1 Month`, `+3 Months`, and `Custom...`), anchored below by a dedicated **Target Date Feedback Tile** rendering the full formatted date (`EEEE, MMMM d, yyyy`), relative distance badge (`· In 2 weeks`), and quick clear action.
+      - **Right Column (`lg:col-span-7` - Clinical Directives & Actions)**: Replaced the overly long single-line input with a comfortable, natural-measure `Textarea` (`min-h-[72px]`), paired with quick clinical directive chips (`+ General follow-up`, `+ Symptom re-check`, `+ Review lab results`, `+ Vital signs check`, `+ Medication review`, `+ Clinical clearance`) and an action footer with dirty state detection.
+  - **Calendar Popover UI Redesign & Typography Polish**:
+    - Fixed Tailwind CSS v4 `--cell-size` calculation bug in `calendar.tsx` where `--spacing(7)` failed to evaluate, restoring proper cell heights, widths, and navigation alignments.
+    - Redesigned `CalendarDayButton` to feature crisp Bayan Teal selected tiles (`bg-(--teal-700) text-white font-bold shadow-xs rounded-lg`), clear hover states (`hover:bg-(--surface-warm-soft)`), and accessible disabled strikes.
+    - Remediated header text collision (`Select Target DateToday: Sep 30, 2026`) in the popover by enforcing explicit width (`w-[330px]`), structured header flex spacing with today chip badge, an integrated shortcut jump bar (`+3d`, `+1w`, `+2w`, `+1m`, `+3m`) directly inside the popover, and a confirmation footer with `Done` CTA.
+- **Device Optimization**: Balanced 2-column desktop clinical workflow, auto-stacking on mobile viewports.
+- **Tokens & Primitives Used**: `Button`, `Textarea`, `Calendar`, `Popover`, `PopoverContent`, `PopoverTrigger`, `CalendarClock`, `CalendarIcon`, `CheckCheck`, `Clock`, `FileText`, `sonner`, `cn`.
+- **Upstream Porting Notes**: Component-scoped updates to `CareContinuityPanel.tsx` and `src/components/ui/calendar.tsx`. 100% preservation of `fetchFollowUpRecommendation` and `saveFollowUpRecommendation` API contracts. Zero backend or CDS schema changes.
+
+### [2026-09-30] SOAP Summary Cards: Clinical Triage Highlighting, Typography Scaling, & Narrative Truncation Remediation
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`SoapSummaryCards.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Clinical Narrative Truncation (`truncate`)**:
+    - Replaced the single-line `truncate` with `line-clamp-2` and `text-sm font-semibold text-(--text-heading) leading-snug`, preventing multi-word patient complaints from being hidden behind ellipses.
+    - Moved the patient verbatim quotation (`patientVerbatim`) to a dedicated styled row with gentle italic styling, ensuring the patient's authentic voice is preserved and readable.
+  - **Clinical Abnormality Triage Highlighting**:
+    - Previously, vitals were styled passively as generic grey tags with only biological implausibility checks (`<35 || >41°C`), causing clinically elevated readings (e.g., Fever of 38.2°C) to blend into the background.
+    - Introduced structured clinical triage logic (`clinicalTriage`):
+      - **Fever / Pyrexia (≥ 38.0°C)** & Elevated (≥ 37.5°C): High-contrast amber badge (`bg-amber-50/90 text-amber-950 border-amber-300 ring-1 ring-amber-300/50`) with `(Fever)` label.
+      - **Blood Pressure Triage**: Flags hypertensive (≥ 140/90) and hypotensive (< 90 systolic) readings.
+      - **Pulse Pressure Sanity Check**: Catches impossible inverted blood pressure (`systolicBp <= diastolicBp`, e.g. 85/95 mmHg) and flags as `(Unverified)`.
+      - **Heart Rate Triage**: Flags tachycardia (> 100 bpm) and bradycardia (< 60 bpm).
+      - **Hypoxia Triage (SpO₂)**: Flags low oxygen (< 95%) and critical hypoxia (< 92%) with high-contrast critical status badges (`--danger-fg`, `--danger-bg`, `--danger-border`).
+  - **Typography & Ergonomic Legibility**:
+    - Vital values upgraded to `text-xs sm:text-[13px] font-bold tabular-nums` to ensure instant scanability at desktop arm's length (24–28 inches).
+    - Standardized labels to crisp micro-caps (`text-[10px] font-bold uppercase tracking-wider`).
+    - Resolved WCAG 2.1 AA contrast failure on flagged vitals by replacing low-contrast `--status-soon` tokens with high-contrast accessible clinical alerts (> 10:1 ratio).
+  - **Responsive Spatial Rebalance & Code Cleanliness**:
+    - Rebalanced flex layout to `lg:flex-[1.25]` for Subjective and `lg:flex-1` for Objective with top-alignment (`lg:items-start`), preventing vertical centering mismatch when vitals wrap.
+    - Added responsive border divider on mobile/tablet screens (`divide-y divide-(--border-subtle)`).
+    - Purged 32 lines of unused dead code (`SummaryCard`).
+- **Device Optimization**: Desktop clinical cockpit scanability and mobile touch accessibility.
+- **Tokens & Primitives Used**: `--surface-card`, `--border-subtle`, `--surface-brand-soft`, `--navy-700`, `--teal-700`, `--surface-warm-soft`, `--danger-fg`, `--danger-bg`, `--danger-border`, `TriangleAlert`, `Thermometer`, `Gauge`, `HeartPulse`, `Wind`, `cn`.
+- **Upstream Porting Notes**: Component-scoped updates to `SoapSummaryCards.tsx`. Zero business logic or CDS contract changes.
+
+### [2026-09-30] Deliverables Deck: Mistaken Document Discard, Tab Close Affordance, & Clinical Void Guardrails
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`DeliverablesDeck.tsx`, `ArtifactCard.tsx`, `AssessmentFirstWorkspace.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Solved Accidental Document Addition Dilemma**:
+    - Previously, when a doctor accidentally added an unneeded deliverable (e.g. clicking "+ Add Document" -> "Lab request" or "Imaging request" when no tests were required), there was no affordance to remove or discard the document. The unneeded draft remained in the deck, cluttered the tab bar, inflated the pending signature count, and triggered warnings upon completing the consultation.
+  - **Dual Ergonomic Removal Affordances**:
+    - **Card Action Bar (`ArtifactCard.tsx`)**: In the draft card footer alongside `Redraft`, added an accessible, discrete **`Discard draft`** action button (`variant="ghost"` with clinical rose hover tint, `<Trash2 className="size-3.5" />`).
+    - **Active Tab Close Trigger (`DeliverablesDeck.tsx`)**: On the active tab, added a subtle, accessible close button (`×`) enabling direct removal from the review checklist.
+    - **Generating Cancellation (`DeliverablesDeck.tsx`)**: If a document is still drafting, physicians can click **`Cancel drafting`** directly on the placeholder card.
+  - **Clinical Safety Guardrails & Protection**:
+    - **Mandatory Core Document Protection**: The core consultation `Plan` is strictly non-discardable (`canDiscard={outputType !== 'plan'}`). Only optional deliverables (`Prescription`, `Medical certificate`, `Lab request`, `Imaging request`, `Patient education`) can be discarded.
+    - **Clinical Confirmation Dialog (`AlertDialog`)**: Prevents accidental clicks by presenting a reassuring modal clarifying that the unreviewed draft was never visible to the patient and can be re-added anytime from "+ Add Document".
+    - **Signed Deliverable Protection (`Void signature & remove`)**: If an unwanted deliverable was mistakenly batch-signed (e.g. via "Sign all"), physicians can void and remove the signed draft before release with an explicit medicolegal attestation warning.
+    - **Instant "Undo" Recovery**: Discarding triggers a high-visibility Sonner toast with an **`Undo`** action that instantaneously restores the draft and re-focuses its tab.
+  - **Dynamic State Reconciliation & Lifecycle Integrity**:
+    - Discarded deliverables immediately update `deckEntries`, decrease the `X awaiting your signature` badge count, and automatically return to the `+ Add Document` catalog.
+    - Excluded from `FinishDocumentationControl` so completion warnings no longer report discarded deliverables.
+- **Device Optimization**: Desktop clinical cockpit density and tablet touch targets.
+- **Tokens & Primitives Used**: `AlertDialog`, `AlertDialogAction`, `AlertDialogCancel`, `AlertDialogContent`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogHeader`, `AlertDialogTitle`, `Trash2`, `FileX2`, `X`, `Button`, `sonner`, `cn`.
+- **Upstream Porting Notes**: Component-scoped updates across `ArtifactCard.tsx`, `DeliverablesDeck.tsx`, and `AssessmentFirstWorkspace.tsx`. Zero business logic or CDS contract changes.
+
+### [2026-09-30] Deliverables Deck: Add Document Button & Rich Clinical Template Menu Redesign
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`DeliverablesDeck.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Replaced Faint Dashed Ghost Button with Authoritative Action Trigger**:
+    - Previously, the `+ Add Document` trigger rendered as a small (~24px tall) dashed outline pill with no visual weight, looking tentative or like a placeholder element.
+    - Redesigned into a confident, solid clinical action button (`h-8 sm:h-8.5 px-3.5 gap-2 rounded-xl border border-(--teal-600)/30 bg-white text-(--teal-800) shadow-2xs hover:bg-(--teal-50)/80`) with an icon tile (`Plus`), bold label, an undrafted count badge (`{undraftedTypes.length}`), and a dropdown chevron indicator.
+  - **Expanded & Intuitive Clinical Template Dropdown Menu**:
+    - Previously, the dropdown menu was a cramped `w-52` (208px) container with bare single-line text (e.g. `+ Patient education`) providing zero clinical context or description.
+    - Expanded menu into a spacious, high-scanability clinical catalog (`w-80 sm:w-88 rounded-2xl border border-(--border-subtle) bg-white p-2 shadow-xl`):
+      - **Categorized Header**: `ADD CLINICAL DELIVERABLE` with `<FilePlus2 className="size-4" />` and instructional subtitle.
+      - **Rich Clinical Cards**: Each undrafted document template features an interactive card layout with a `size-9.5` semantic icon tile, bold document title (`OUTPUT_LABELS`), and a clinical subtitle (`OUTPUT_DESCRIPTIONS`) explaining its exact scope (e.g. *"Personalized Tagalog/English home care guide & red flags"*, *"Work/school clearance with diagnosis & excused rest dates"*).
+      - **Add Action Indicator**: An interactive plus button tile that animates to filled teal on item hover.
+      - **Reassuring Clinical Footer**: Context note clarifying that newly drafted documents land in editable draft mode for clinician review and digital signature before patient release.
+- **Device Optimization**: Desktop clinical cockpit ergonomics — immediate recognition of available document templates without cognitive guesswork.
+- **Tokens & Primitives Used**: `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `TOOL_ICONS`, `OUTPUT_LABELS`, `OUTPUT_DESCRIPTIONS`, `cn`.
+- **Upstream Porting Notes**: Component-scoped updates to `DeliverablesDeck.tsx`. Zero business logic or CDS contract changes.
+
+### [2026-09-30] Care Continuity Panel: Clinical Layout Redesign, Custom Calendar, & Live Patient Preview
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` & `AssessmentFirstWorkspace.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Replaced Clunky Native HTML Date Input with Custom Intuitive Calendar Picker**:
+    - Previously, a browser-native `<input type="date">` was used, which looked discordant, unbranded, and cumbersome for clinicians to use.
+    - Integrated a custom, accessible date picker built on `Calendar` (`react-day-picker`) and `Popover` styled with BayanHealth tokens. Features clear month navigation, disabled past dates (`before: startOfToday()`), relative countdown badges (`"In 7 days · Next Wednesday"`), and shortcut quick actions (`Today`, `+1 Week`, `+2 Weeks`, `Close`).
+  - **1-Click Clinical Interval Presets**:
+    - Clinicians schedule follow-ups using standard medical intervals. Added one-click preset buttons (`+3 Days`, `+1 Week`, `+2 Weeks`, `+1 Month`, `+3 Months`) that instantly compute the target date, update the calendar, and highlight the active duration.
+  - **Rapid Charting Reason Chips**:
+    - Added one-click clinical directive suggestion chips (`"Symptom reassessment & recovery check"`, `"Review laboratory & diagnostic test results"`, `"Blood pressure & vital signs recheck"`, `"Medication tolerance & dosage titration"`, `"Post-treatment clinical clearance"`) to accelerate documentation while still permitting free-form textarea editing.
+  - **Balanced 2-Column Clinical Layout & Live Patient Mobile Preview**:
+    - Eliminated the wide empty white void on desktop by introducing a balanced responsive 2-column grid (`grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px]`).
+    - The right column features a live **Patient App Preview** card that mockups exactly what the patient will see on their mobile home screen (scheduled follow-up date, countdown chip, attending physician note, directives quote box, and patient booking CTA).
+  - **Surface & Hierarchy Harmony**:
+    - Enforced uniform 1px solid borders, brand navy and teal accents, elevated card header with semantic icon tile (`size-10 rounded-xl bg-(--teal-50) text-(--teal-700)`), status indicator pills (`Active recommendation` vs `Unsaved changes`), and clear actions (`Save recommendation`, `Clear`).
+- **Device Optimization**: Desktop clinical cockpit ergonomics with rapid 1-click presets; stacks responsively on narrower screens.
+- **Tokens & Primitives Used**: `Calendar`, `Popover`, `Button`, `Textarea`, `date-fns` (`addDays`, `differenceInCalendarDays`, `format`, `parseISO`, `startOfToday`), `cn`.
+- **Upstream Porting Notes**: Component-scoped redesign in `CareContinuityPanel.tsx` with optional `doctorName` passed from `AssessmentFirstWorkspace.tsx`. Zero breaking changes to `fetchFollowUpRecommendation` or `saveFollowUpRecommendation` APIs.
+
+### [2026-09-30] Clinical Document Sheets: Placeholder Information Removal & Authentic Clinical Fallbacks
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Document preview modal and clinical document sheets in `src/features/consultation/components/documents/`)
+- **Files Modified**:
+  - `src/features/consultation/components/documents/ClinicalDocumentSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PrescriptionSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetFooter.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetHeader.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/MedicalCertificateSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DiagnosticRequestSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/ClinicalReferralSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PatientCareGuideSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/types.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Enforced "Absent, Never a Placeholder" Principle**: Fabricated patient demographics, credentials, and static condition-specific content were removed from printable clinical document templates to prevent misinformation and maintain clinical authority.
+  - **Authentic Patient & Physician Identification**:
+    - Replaced hardcoded patient names (`"Maria Teresa D. Reyes"`, `"Maria Santos"`), dates of birth (`"Jan 12, 1997"`), and fake case numbers (`"BH-25-05-20-10245"`) with authentic data from `intake` and `consultationId`, safely defaulting to clinical standard em-dashes (`"—"`) when absent.
+    - Replaced fake physician credentials (`"Dr. Andrea M. Santos, MD"`, `"SAMPLE-0000000"`) and fake cursive signatures with authentic physician props or an authentic `"Signature pending attestation"` status indicator.
+  - **Replaced "SAMPLE" Badges with Clinical "DRAFT" Lifecycle Stamps**:
+    - Updated document headers from `"SAMPLE • NOT VALID"` to `"DRAFT • NOT FINAL"` (`bg-amber-50 text-amber-700 border-amber-600`).
+    - Updated verification status badges from `"SAMPLE"` to `"DRAFT"` with amber styling, keeping `"ACTIVE"` / `"VALID"` reserved for signed/released documents.
+  - **Dynamic Payloads & Generalized Clinical Instructions**:
+    - **Diagnostic Requests**: Removed hardcoded CBC and urinalysis tables; now dynamically renders `labPayload.tests` and `imagingPayload.studies` with a clean `"None requested"` empty state.
+    - **Prescriptions**: Removed hardcoded `"14 capsules"` fallback and replaced condition-specific GERD warnings with universal emergency medical advice.
+    - **Medical Certificates**: Removed hardcoded `"May 22, 2025"` dates and fake `"Acute Upper Respiratory Tract Infection (URTI)"` fallbacks; now accurately binds to `payload.validFrom`, `payload.validThrough`, and `payload.statement`.
+    - **Clinical Referrals**: Replaced hardcoded cough/reflux complaints with structured bindings to `planPayload.summary`, `interventions`, and `followUp`.
+    - **Patient Care Guides**: Removed hardcoded Tagalog GERD advice in favor of dynamic mapping over `payload.sections` and `payload.warningSigns`.
+- **Device Optimization**: Printable 8.5 × 11 in (Portrait) clinical sheets and responsive on-screen modal inspector.
+- **Tokens & Primitives Used**: `DocumentSheetHeader`, `DocumentSheetFooter`, `QRCodeSVG`, `SignaturePreview`.
+- **Upstream Porting Notes**: Component-scoped template updates. Zero business logic or CDS schema breakage.
+
+### [2026-09-30] Deliverables Deck: Top Stroke Removal & Semantic Icon Tile Highlight Redesign
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Deliverables Deck Tab Strip - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Top Stroke (`border-t-2`)**:
+    - Previously, a thick colored top border (`border-t-2 border-t-(--navy-600)` or `border-t-(--gold-500)`) was applied to the active tab to color-code document status. This broke the clean physical folder-tab aesthetic and violated anti-AI slop design principles (one-sided glowing/colored strokes).
+    - Removed the top stroke entirely. The active tab now features a crisp, uniform 1px solid border (`border border-(--border-subtle) border-b-0 rounded-t-xl -mb-px z-10 bg-(--surface-card)`), cleanly merging into the document body with subtle elevation (`shadow-[0_-2px_6px_rgba(0,0,0,0.03)]`).
+  - **Semantic Icon Avatar Tiles for High-Scanability Status Color-Coding**:
+    - Instead of relying on a top border line or raw colored icons, each document tab now anchors its icon inside an authoritative **Semantic Icon Avatar Tile** (`size-6 rounded-md border`):
+      - **Draft / To sign**: Amber tile (`bg-amber-500/12 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300 border-amber-500/25`)
+      - **Signed**: Clinical sky/navy tile (`bg-sky-500/12 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300 border-sky-500/25`)
+      - **Released**: Vibrant teal tile (`bg-teal-500/12 text-teal-800 dark:bg-teal-400/15 dark:text-teal-300 border-teal-500/25`)
+      - **Outdated / Stale**: Crimson tile (`bg-red-500/12 text-red-700 border-red-500/25`)
+      - **Generating**: Purple tile with spinner (`bg-purple-500/12 text-purple-700 border-purple-500/25`)
+    - When active, the icon tile is highlighted with an elegant focus ring (`ring-1.5 ring-current/20 shadow-2xs`).
+  - **Streamlined Status Pills & Clutter Elimination**:
+    - Removed duplicate yellow badges (`[To sign]` + `[Draft · Needs review]`) that previously crowded the active tab.
+    - Each tab now displays a single, crisp triage capsule (`To sign`, `Ready to sign`, `Signed`, or `Released`) with clinical iconography (`Clock`, `PenLine`, `Check`).
+    - The active tab selectively displays `<AiProvenanceChip />` (`AI draft`) without repeating review copy.
+- **Device Optimization**: Desktop clinical cockpit ergonomics — immediate recognition of signed vs. pending documents across ambient clinic lighting.
+- **Tokens & Primitives Used**: `TOOL_ICONS`, `AiProvenanceChip`, `cn`, semantic color palettes (`amber`, `sky`, `teal`, `red`, `purple`).
+- **Upstream Porting Notes**: Component-scoped updates to `DeliverablesDeck.tsx`. Zero business logic or CDS contract changes.
+
+### [2026-09-30] Clinical Feedback Ergonomics: High-Visibility Rich Sonner Toast Redesign
+
+- **Target Route / Surface**: Global Toaster Notification System (`src/components/ui/sonner.tsx`)
+- **Files Modified**:
+  - `src/components/ui/sonner.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Overhauled Toast Scale, Typography, and Prominence**:
+    - Previously, toasts rendered as small 356px white cards in the bottom-right corner, where they were easily overlooked and obstructed by dev overlays or bottom floating controls. The typography was small (`13.5px`) with a tiny 16px icon.
+    - Expanded card width to `--width: 460px` (`w-full sm:w-[460px] max-w-[94vw]`) with balanced padding (`p-4 sm:p-4.5`), bold readable typography (`text-[15px] sm:text-base font-semibold leading-snug`), and an elevated `shadow-xl`.
+    - **Eliminated Competing "Double X" Visual Conflict & Added Click-to-Dismiss**:
+      - Replaced `OctagonXIcon` (stop-sign with an "X") with `CircleAlertIcon` (`!`), the clinical gold standard for error/danger alerts.
+      - Removed the visible close button (`closeButton`) to prevent visual clutter and competing glyph semantics.
+      - **Instant Click-to-Dismiss**: Enabled tap/click dismissal anywhere on the toast card (`cursor-pointer select-none hover:opacity-95 active:scale-[0.99]`), removing the need for tedious manual swiping/sliding (`swipeDirections={[]}`).
+      - Toasts still auto-dismiss after 5000ms if left untouched.
+    - Repositioned toasts by default to `position="top-right"` with a generous 5000ms duration so critical clinical notifications appear clearly at eye-level without collision.
+  - **Full-Surface Clinical Semantic Color Architecture**:
+    - **Error**: High-visibility clinical crimson wash (`!bg-(--danger-bg) dark:!bg-[#3a1f1f]`, crisp 2px solid border `!border-2 !border-(--danger-border) dark:!border-[#e79a9a]`, and deep red typography `!text-(--danger-fg) dark:!text-[#fca5a5]`).
+    - **Success**: Calming Bayan teal theme (`!bg-(--status-available-bg)`, `!border-2 !border-(--teal-600)`, `!text-(--status-available-fg)`).
+    - **Warning**: Warm clinical amber theme (`!bg-(--status-soon-bg)`, `!border-2 !border-(--gold-600)`, `!text-(--status-soon-fg)`).
+    - **Info**: Brand navy clinical theme (`!bg-(--surface-brand-soft)`, `!border-2 !border-(--border-brand)`, `!text-(--surface-brand)`).
+- **Device Optimization**: Desktop clinical cockpit scanability — unmistakable error and status recognition from distance and across different ambient lighting conditions.
+- **Tokens & Primitives Used**: `var(--danger-bg)`, `var(--danger-fg)`, `var(--danger-border)`, `var(--status-available-bg)`, `var(--status-available-fg)`, `var(--status-soon-bg)`, `var(--status-soon-fg)`, `var(--surface-brand-soft)`, `var(--border-brand)`, `Sonner`, `Toaster`.
+- **Upstream Porting Notes**: Component-scoped styling upgrade in `src/components/ui/sonner.tsx`. Fully backwards-compatible with all `toast.error`, `toast.success`, `toast.warning`, and `toast.info` callers.
+
+### [2026-09-30] Clinical Feedback Ergonomics: Error Banner to Sonner Toast Migration
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Persistent Inline Error Banner**:
+    - Previously, operational errors from API actions (e.g. *"The server would not accept this action. Refresh to load current state, then try again."*, signing conflicts, or generation issues) were caught and stored in `error` state, rendering as an intrusive, full-width red/pink `<p role="alert">` banner right above the deliverables deck.
+    - This caused disruptive layout shifts (CLS), displaced the active clinical workspace downwards, and stayed on screen until a new action was initiated.
+  - **Migrated Operational Errors to Non-Intrusive Sonner Toasts**:
+    - Converted all operational error handlers in `run`, `generate`, `amend`, `finalize`, `confirm`, `runCandidateSearch`, and `loadPreview` to fire `toast.error(message)`.
+    - Fully removed the inline `<p role="alert">{error}</p>` DOM element from the workspace layout.
+    - Scoped `initialLoadError` strictly to catastrophic initial consultation load failures (when `!assessment` cannot mount at all), preserving the full-page empty error guard while making all runtime interaction errors toast notifications.
+- **Device Optimization**: Zero Cumulative Layout Shift (CLS) on desktop clinical cockpit during rapid action dispatch.
+- **Tokens & Primitives Used**: `toast.error`, `Sonner`, `Toaster`.
+- **Upstream Porting Notes**: Component-scoped updates to `AssessmentFirstWorkspace.tsx`. No CDS contract or backend API changes.
+
+### [2026-09-30] Doctor Navigation: Archived In-App Chat Tab
+
+- **Target Route / Surface**: Doctor Navigation Sidebar (`src/components/layout/nav-items.ts`)
+- **Files Modified**:
+  - `src/components/layout/nav-items.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Archived Doctor Chat Sidebar Item**:
+    - Removed the "Chat" navigation tab from `DOCTOR_NAV` so it no longer appears in the desktop navigation rail.
+    - Declutters the doctor desktop flight deck to focus clinician attention on essential daily workflows (`Dashboard`, `Calendar`, `Consults`, `Med Ed`, and `Profile`).
+  - **Preserved Underlying Routes & Components**:
+    - Strict non-destructive archive: all underlying page routes (`src/app/doctor/(homepage)/chat/page.tsx`, `src/app/doctor/(homepage)/chat/layout.tsx`, `src/app/doctor/(homepage)/chat/[bookingId]/page.tsx`) and feature components (`src/features/doctor/components/chat/*`) remain intact on disk.
+    - The tab can be reinstated at any time simply by uncommenting the entry in `DOCTOR_NAV`.
+- **Device Optimization**: Desktop navigation ergonomics (Doctor) — focused 5-destination rail without unused or secondary communication tabs.
+- **Tokens & Primitives Used**: `DOCTOR_NAV`, `SidebarContent`.
+- **Upstream Porting Notes**: Single configuration change in `src/components/layout/nav-items.ts`. No routing, API, or data hook alterations.
+
+### [2026-09-30] Clinical Triage Ergonomics: Deliverables Lifecycle Color Coding System
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ProtectedToolsRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Visual Ambiguity Between Lifecycle Stages**:
+    - Previously, "Signed" and "Released" deliverables both used identical teal color styles (`bg-(--status-available-bg) text-(--status-available-fg)` and `<Check className="size-2.5" />`), while the left rail (`ProtectedToolsRail`) rendered drafted, signed, and released items in undifferentiated teal tints (`bg-(--surface-accent-soft)` / `bg-(--status-available-bg)`).
+    - Clinicians scanning under time pressure could not immediately tell which documents were still pending their review & signature, which had been attested and ready to release, and which were already live with the patient.
+  - **Tri-State Clinical Semantic Color Architecture**:
+    - **Drafted / Not Signed (Action Required)**: 🟡 **Warm Amber** (`var(--status-soon-fg)` / `var(--status-soon-bg)` / `Clock` icon). Applied to tab icons, top-tab indicators (`border-t-2 border-t-(--gold-500)`), tab badges (`Clock` + "To sign"), rail item backgrounds and trailing clock icons, header "N awaiting your signature" pill, and finish warning dialog.
+    - **Already Signed (Attested / Ready to Release)**: 🔵 **Brand Navy / Clinical Indigo** (`var(--navy-700)` / `var(--navy-100)` / `PenLine` icon). Applied to tab icons, active tab top indicators (`border-t-2 border-t-(--navy-600)`), tab badges (`PenLine` + "Signed"), rail item icon backgrounds and trailing pen icons, artifact card header badge ("Signed by you"), footer action banner ("Signed · Ready to release"), and finish warning dialog.
+    - **Already Released (Complete / Dispatched to Patient)**: 🟢 **Bayan Teal / Emerald** (`var(--status-available-fg)` / `var(--status-available-bg)` / `Check` / `CheckCircle2` icon). Applied to tab icons, active tab top indicators (`border-t-2 border-t-(--teal-600)`), tab badges (`Check` + "Released"), rail checkmark icons, artifact card header ("Released"), and footer sharing timestamp.
+    - **Outdated / Stale**: 🔴 **Danger Red** (`var(--danger-fg)` / `var(--danger-bg)` / `AlertCircle` icon + "Outdated").
+- **Device Optimization**: High-density desktop clinical triage (Doctor) — instant foveal scanning of document signing state without reading fine print.
+- **Tokens & Primitives Used**: `var(--status-soon-fg)`, `var(--status-soon-bg)`, `var(--navy-700)`, `var(--navy-100)`, `var(--status-available-fg)`, `var(--status-available-bg)`, `var(--danger-fg)`, `var(--danger-bg)`, `Clock`, `PenLine`, `Check`, `CheckCircle2`, `AlertCircle`.
+- **Upstream Porting Notes**: Component-scoped updates across `DeliverablesDeck.tsx`, `ProtectedToolsRail.tsx`, `ArtifactCard.tsx`, and `AssessmentFirstWorkspace.tsx`. Zero changes to CDS contracts, DynamoDB schemas, or TanStack query hooks.
+
+### [2026-09-30] Clinical Focus Ergonomics: In-Call Documents Preview Removal
+
+- **Target Route / Surface**: `/consultation/room/[id]` (Active Video Consultation Room - Doctor Companion Suite)
+- **Files Modified / Deleted**:
+  - `src/components/consultation/DoctorClinicalCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/DoctorDeliverablesPreviewTab.tsx` [DELETED]
+- **Design Intent & Problem Solved**:
+  - **Decommissioned Redundant In-Call "Documents Preview" Tab**:
+    - During an active telehealth video consultation, the clinician's foveal focus and working memory should be centered on the patient and active clinical history.
+    - Clinical deliverables (prescriptions, medical certificates, lab requests, referrals) are governed, synthesized, signed, and released in the dedicated post-consultation cockpit (`/doctor/post-consultation/[id]`). Displaying mock deliverables inside the live call inspector caused unnecessary cognitive split and redundant controls.
+    - Streamlined `DoctorClinicalCompanionSuite` into a focused, balanced 2-tab inspector: **Patient Intake** (submitted safety screen, vitals, baseline history) and **Conversation** (in-call encrypted chat).
+- **Device Optimization**: Desktop clinical cockpit cognitive focus and distraction-free in-call ergonomics.
+- **Tokens & Primitives Used**: `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `ClipboardList`, `MessagesSquare`.
+- **Upstream Porting Notes**: Component-scoped modification in `DoctorClinicalCompanionSuite.tsx` and deletion of `DoctorDeliverablesPreviewTab.tsx`. No data hooks or session logic affected.
+
+### [2026-09-30] Clinical Feedback Ergonomics: Transient Banner to Non-Intrusive Sonner Toast Redesign
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/components/ui/sonner.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Disruptive Inline Banner Layout Shift (CLS)**:
+    - Transient action confirmations (such as "Released. Nothing else was changed.", "Signed...", and "Draft saved...") previously rendered as an inline `<p role="status">` banner across the full width between the assessment actions and the deliverables deck.
+    - This caused sudden layout shift (~54px) pushing the active clinical review deck down, consumed precious vertical space in the desktop clinical cockpit, and persisted indefinitely until another async action executed.
+  - **Redesigned Feedback into Impeccable Non-Intrusive Sonner Toasts**:
+    - Replaced the inline banner with rich, accessible Sonner toasts (`toast.success`, `toast.info`, `toast.warning`, `toast.error`).
+    - "Released. Nothing else was changed." now dispatches a crisp `toast.success` notification that communicates state clearly, adheres to clinical desktop ergonomics, and automatically departs without shifting the clinician's workspace view.
+    - Finalization and batch signing (`handleBatchSign`) coalesce cleanly with stable toast IDs (`finalize-signature`) to prevent notification spamming.
+  - **Enhanced Sonner Toaster Primitive with Authoritative Tokens**:
+    - Styled `Toaster` in `src/components/ui/sonner.tsx` with BayanHealth tokens (`--teal-600` / `--teal-400` success checkmarks, `--danger-fg` alerts, `--action-primary` info, `--gold-600` warnings).
+    - Preserved dark mode token contract (`--popover`, `--border`, `--popover-foreground`) with zero hardcoded hex values.
+- **Device Optimization**: Desktop-first clinical cockpit density (Doctor) — zero layout shifting and maximum vertical information density.
+- **Tokens & Primitives Used**: `var(--teal-600)`, `var(--teal-400)`, `var(--action-primary)`, `var(--danger-fg)`, `var(--gold-600)`, `var(--popover)`, `var(--border)`, `var(--shadow-card)`, `toast` (Sonner), `CircleCheckIcon`, `InfoIcon`, `TriangleAlertIcon`, `OctagonXIcon`.
+- **Upstream Porting Notes**: Component-scoped updates to `AssessmentFirstWorkspace.tsx`, `DeliverablesDeck.tsx`, and `src/components/ui/sonner.tsx`. No changes to CDS contracts, DynamoDB schemas, or TanStack query hooks.
+
 ### [2026-09-26] Clinical Workflow & Visual Hierarchy: Doctorflow Optimization & Guided Sign Queue
 
 - **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)

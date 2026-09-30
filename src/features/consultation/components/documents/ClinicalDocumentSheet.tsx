@@ -40,44 +40,44 @@ export function ClinicalDocumentSheet({
   artifact,
   intake,
   specimen,
-  doctorName = "Dr. Andrea M. Santos, MD",
-  doctorSpecialty = "General Practitioner",
-  doctorLicenseNumber = "SAMPLE-0000000",
-  doctorPtrNumber = "SAMPLE-0000000",
+  doctorName,
+  doctorSpecialty,
+  doctorLicenseNumber,
+  doctorPtrNumber,
   className,
 }: ClinicalDocumentSheetProps) {
   const isDraft = artifact.lifecycleStatus === "generated";
 
-  // Build clean patient info from intake or fallbacks
+  // Build clean patient info from intake or authentic fallback
   const dob = intake?.sections?.details?.demographics?.dateOfBirth;
   const rawSex = intake?.sections?.details?.demographics?.sex;
   const allergiesStr = intake?.sections?.details?.allergies;
 
   const patientInfo: DocumentPatientInfo = {
-    name: intake?.patientName || "Maria Teresa D. Reyes",
+    name: intake?.patientName || "—",
     dateOfBirth: dob
       ? new Date(dob).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         })
-      : "Jan 12, 1997",
-    age: dob ? ageFromDateOfBirth(dob) : 28,
+      : "—",
+    age: dob ? ageFromDateOfBirth(dob) : undefined,
     sex: rawSex
       ? (SEX_LABELS[rawSex as keyof typeof SEX_LABELS] || rawSex)
-      : "Female",
+      : "—",
     allergies: allergiesStr && allergiesStr.trim().length > 0
       ? allergiesStr
       : "No known drug allergies",
-    caseId: artifact.consultationId || intake?.bookingId || "BH-25-05-20-10245",
+    caseId: artifact.consultationId || intake?.bookingId || "—",
   };
 
   // Build physician info
   const physicianInfo: DocumentPhysicianInfo = {
-    name: doctorName,
-    title: doctorSpecialty,
-    licenseNumber: doctorLicenseNumber,
-    ptrNumber: doctorPtrNumber,
+    name: doctorName || specimen?.signerName || "Attending Physician",
+    title: doctorSpecialty || "Licensed Physician",
+    licenseNumber: doctorLicenseNumber || "—",
+    ptrNumber: doctorPtrNumber || "—",
     signatureStrokes: specimen?.strokes,
     signedAt: artifact.physicianEditedAt
       ? new Date(artifact.physicianEditedAt).toLocaleString()
@@ -87,7 +87,7 @@ export function ClinicalDocumentSheet({
   const verificationInfo: DocumentVerificationInfo = {
     qrValue: `https://bayanhealth.ph/verify/${artifact.outputType}/${artifact.artifactId}`,
     documentId: `${artifact.outputType.substring(0, 3).toUpperCase()}-${patientInfo.caseId}`,
-    status: isDraft ? "VALID" : "ACTIVE",
+    status: isDraft ? "DRAFT" : "ACTIVE",
   };
 
   switch (artifact.outputType) {

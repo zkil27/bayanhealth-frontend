@@ -30,11 +30,11 @@ export function MedicalCertificateSheet({
   diagnosisTitle,
   className,
 }: MedicalCertificateSheetProps) {
-  const patientName = patient?.name || "Maria Teresa D. Reyes";
+  const patientName = patient?.name || "—";
   const patientAgeSex =
-    [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Female"]
+    [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
-      .join(" / ");
+      .join(" / ") || "—";
   const dateOfConsultation =
     patient?.consultationDate ||
     new Date().toLocaleDateString("en-US", {
@@ -48,8 +48,8 @@ export function MedicalCertificateSheet({
       hour: "2-digit",
       minute: "2-digit",
     });
-  const caseId = patient?.caseId || "BH-25-05-20-10245";
-  const docId = verification?.documentId || `MC-${caseId}`;
+  const caseId = patient?.caseId || "—";
+  const docId = verification?.documentId || (patient?.caseId ? `MC-${patient.caseId}` : "—");
 
   const validFromFormatted = payload.validFrom
     ? new Date(payload.validFrom).toLocaleDateString("en-US", {
@@ -65,7 +65,7 @@ export function MedicalCertificateSheet({
         day: "numeric",
         year: "numeric",
       })
-    : "May 22, 2025";
+    : validFromFormatted;
 
   const fitToReturnDate = payload.validThrough
     ? new Date(new Date(payload.validThrough).getTime() + 86400000).toLocaleDateString("en-US", {
@@ -73,9 +73,9 @@ export function MedicalCertificateSheet({
         day: "numeric",
         year: "numeric",
       })
-    : "May 23, 2025";
+    : "Upon clinical recovery";
 
-  const diagnosis = diagnosisTitle || payload.statement || "Acute Upper Respiratory Tract Infection (URTI)";
+  const diagnosis = diagnosisTitle || payload.statement || "Clinical evaluation conducted";
 
   return (
     <article
@@ -208,7 +208,7 @@ export function MedicalCertificateSheet({
         verification={{
           qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/medcert/${docId}`,
           documentId: docId,
-          status: isDraft ? "SAMPLE" : "VALID",
+          status: isDraft ? "DRAFT" : "VALID",
         }}
         physicianRoleLabel="PHYSICIAN INFORMATION"
         verificationTitle="VERIFICATION"

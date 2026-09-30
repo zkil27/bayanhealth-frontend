@@ -4,10 +4,12 @@ import {
   BookOpen,
   CheckCircle2,
   ClipboardList,
+  Clock,
   FileBadge,
   FlaskConical,
   Hash,
   Lock,
+  PenLine,
   Pill,
   Scan,
   ShieldAlert,
@@ -220,14 +222,20 @@ function ToolRowItem({
       <span
         aria-hidden
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-xl",
-          row.status === "released" || row.status === "signed"
+          "flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+          row.status === "released"
             ? "bg-(--status-available-bg) text-(--status-available-fg)"
-            : row.status === "stale" || row.status === "coming_soon"
-              ? "bg-(--status-soon-bg) text-(--status-soon-fg)"
-              : interactive
-                ? "bg-(--surface-accent-soft) text-(--status-available-fg)"
-                : "bg-(--gray-bg) text-(--text-subtle)",
+            : row.status === "signed"
+              ? "bg-(--navy-100) dark:bg-(--navy-900)/40 text-(--navy-700) dark:text-(--navy-300)"
+              : row.status === "drafted"
+                ? "bg-(--status-soon-bg) text-(--status-soon-fg)"
+                : row.status === "stale"
+                  ? "bg-(--danger-bg) text-(--danger-fg)"
+                  : row.status === "coming_soon"
+                    ? "bg-(--status-soon-bg) text-(--status-soon-fg)"
+                    : interactive
+                      ? "bg-(--surface-accent-soft) text-(--action-primary)"
+                      : "bg-(--gray-bg) text-(--text-subtle)",
         )}
       >
         {generating ? <Spinner className="size-4.5" /> : <Icon className="size-4.5" />}
@@ -246,9 +254,17 @@ function ToolRowItem({
             "truncate text-xs",
             generating
               ? "text-(--ai-fg)"
-              : row.status === "stale" || row.status === "coming_soon"
+              : row.status === "drafted"
                 ? "font-semibold text-(--status-soon-fg)"
-                : "font-medium text-(--text-muted)",
+                : row.status === "signed"
+                  ? "font-semibold text-(--navy-700) dark:text-(--navy-300)"
+                  : row.status === "released"
+                    ? "font-semibold text-(--status-available-fg)"
+                    : row.status === "stale"
+                      ? "font-semibold text-(--danger-fg)"
+                      : row.status === "coming_soon"
+                        ? "font-semibold text-(--status-soon-fg)"
+                        : "font-medium text-(--text-muted)",
           )}
         >
           {generating ? "Drafting…" : row.detail}
@@ -257,6 +273,10 @@ function ToolRowItem({
       <span aria-hidden className="ml-auto shrink-0">
         {generating ? null : row.status === "released" ? (
           <CheckCircle2 className="size-4 text-(--status-available-fg)" />
+        ) : row.status === "signed" ? (
+          <PenLine className="size-4 text-(--navy-700) dark:text-(--navy-300)" />
+        ) : row.status === "drafted" ? (
+          <Clock className="size-4 text-(--status-soon-fg)" />
         ) : interactive || row.status === "coming_soon" ? null : (
           <Lock className="size-3.5 text-(--text-subtle)" />
         )}

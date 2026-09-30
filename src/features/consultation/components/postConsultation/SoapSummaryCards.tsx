@@ -42,60 +42,77 @@ export function SoapSummaryCards({
   return (
     <div
       data-slot="soap-summary-cards"
-      className="flex flex-col gap-2.5 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-2xs lg:flex-row lg:items-center lg:justify-between lg:divide-x lg:divide-(--border-subtle)"
+      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 shadow-2xs divide-y divide-(--border-subtle) lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
     >
       {/* S: Subjective */}
-      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <div className="flex min-w-0 flex-1 lg:flex-[1.25] items-start gap-2.5 pb-2.5 lg:pb-0">
         <span
           aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
         >
           S
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-heading)">Subjective:</span>
-            {intake === undefined ? (
-              <span className="text-xs text-(--text-muted)">Loading intake…</span>
-            ) : !purpose?.chiefComplaint?.trim() ? (
-              <span className="text-xs text-(--text-muted)">No chief complaint submitted</span>
-            ) : (
-              <p className="truncate text-xs font-semibold text-(--text-heading)" title={purpose.chiefComplaint}>
-                {purpose.chiefComplaint}
-                {purpose.patientVerbatim?.trim() ? (
-                  <span className="ml-1 font-normal text-(--text-muted) italic">
-                    &ldquo;{purpose.patientVerbatim}&rdquo;
-                  </span>
-                ) : null}
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted) shrink-0">
+                Subjective:
+              </span>
+              {intake === undefined ? (
+                <span className="text-xs text-(--text-muted)">Loading intake…</span>
+              ) : !purpose?.chiefComplaint?.trim() ? (
+                <span className="text-xs text-(--text-muted) italic">No chief complaint submitted</span>
+              ) : (
+                <p
+                  className="text-sm font-semibold text-(--text-heading) leading-snug line-clamp-2"
+                  title={purpose.chiefComplaint}
+                >
+                  {purpose.chiefComplaint}
+                </p>
+              )}
+            </div>
+            {purpose?.patientVerbatim?.trim() ? (
+              <p
+                className="text-xs text-(--text-muted) italic leading-normal pl-0.5 line-clamp-1"
+                title={`Patient verbatim: "${purpose.patientVerbatim}"`}
+              >
+                &ldquo;{purpose.patientVerbatim}&rdquo;
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
 
       {/* O: Objective */}
-      <div className="flex min-w-0 flex-1 items-center gap-2.5 lg:pl-3.5">
+      <div className="flex min-w-0 flex-1 items-start gap-2.5 pt-2.5 lg:pt-0 lg:pl-3.5">
         <span
           aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
+          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
         >
           O
         </span>
         <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+              Objective Vitals
+            </span>
+          </div>
           {intake === undefined ? (
             <p className="text-xs text-(--text-muted)">Loading vitals…</p>
           ) : hasVitals ? (
             <div className="flex flex-wrap items-center gap-1.5">
               {VITALS.map((vital) => {
-                const flag = vital.sanityCheck(details!.vitals as IntakeVitals);
+                const vitalsData = details!.vitals as IntakeVitals;
+                const sanityFlag = vital.sanityCheck(vitalsData);
+                const clinicalTriage = vital.clinicalTriage(vitalsData);
                 return (
                   <VitalTile
                     key={vital.key}
                     icon={vital.icon}
                     label={vital.label}
-                    value={vital.format(details!.vitals as IntakeVitals)}
-                    flagged={Boolean(flag)}
-                    flagLabel={flag}
+                    value={vital.format(vitalsData)}
+                    sanityFlag={sanityFlag}
+                    clinicalTriage={clinicalTriage}
                   />
                 );
               })}
@@ -109,74 +126,102 @@ export function SoapSummaryCards({
   );
 }
 
-function SummaryCard({
-  letter,
-  title,
-  children,
-}: {
-  letter: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className={cn(
-        "flex min-w-0 flex-1 flex-col rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-4 py-3",
-        "shadow-xs sm:min-w-[18rem]",
-      )}
-      aria-label={title}
-    >
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden
-          className="flex size-5.5 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
-        >
-          {letter}
-        </span>
-        <h3 className="text-sm font-bold text-(--text-heading)">{title}</h3>
-        <span className="ml-auto rounded-md bg-(--surface-warm-soft) px-2 py-0.5 text-[11px] font-semibold text-(--text-muted)">
-          Intake record
-        </span>
-      </div>
-      <div className="pt-2">{children}</div>
-    </section>
-  );
+type VitalSeverity = "normal" | "warning" | "critical" | "unverified";
+
+interface ClinicalTriageResult {
+  severity: VitalSeverity;
+  label?: string;
 }
 
 function VitalTile({
   icon: Icon,
   label,
   value,
-  flagged,
-  flagLabel,
+  sanityFlag,
+  clinicalTriage,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
   /** Whether this reading fell outside its plausible physiological range. */
-  flagged?: boolean;
-  /** The reason shown alongside the value when {@link flagged} is true. */
-  flagLabel?: string;
+  sanityFlag?: string;
+  /** Clinical status derived from standard diagnostic thresholds. */
+  clinicalTriage?: ClinicalTriageResult;
 }) {
+  const isUnverified = Boolean(sanityFlag);
+  const severity: VitalSeverity = isUnverified
+    ? "unverified"
+    : clinicalTriage?.severity ?? "normal";
+  const flagText = isUnverified ? sanityFlag : clinicalTriage?.label;
+
+  const styleConfig: Record<
+    VitalSeverity,
+    {
+      container: string;
+      icon: string;
+      label: string;
+      value: string;
+      badge: string;
+    }
+  > = {
+    normal: {
+      container: "border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-heading)",
+      icon: "text-(--teal-700)",
+      label: "text-(--text-muted)",
+      value: "text-(--text-heading)",
+      badge: "",
+    },
+    warning: {
+      container:
+        "border-amber-300/90 bg-amber-50/90 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200 ring-1 ring-amber-300/50 shadow-2xs",
+      icon: "text-amber-700 dark:text-amber-400",
+      label: "text-amber-800 dark:text-amber-300",
+      value: "font-extrabold text-amber-950 dark:text-amber-100",
+      badge: "text-amber-800 dark:text-amber-300",
+    },
+    critical: {
+      container:
+        "border-(--danger-border)/50 bg-(--danger-bg) text-(--danger-fg) ring-1 ring-(--danger-border)/40 shadow-2xs",
+      icon: "text-(--danger-fg)",
+      label: "text-(--danger-fg)/90",
+      value: "font-extrabold text-(--danger-fg)",
+      badge: "text-(--danger-fg)",
+    },
+    unverified: {
+      container:
+        "border-dashed border-amber-400 bg-amber-50/60 text-amber-900 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-200 shadow-2xs",
+      icon: "text-amber-700 dark:text-amber-400",
+      label: "text-amber-800 dark:text-amber-300",
+      value: "font-semibold text-amber-950 dark:text-amber-100",
+      badge: "text-amber-800 dark:text-amber-300",
+    },
+  };
+
+  const style = styleConfig[severity];
+
   return (
     <div
       data-slot="vital-tile"
       data-vital={label}
-      data-flagged={flagged ? "true" : undefined}
+      data-severity={severity}
+      role={severity !== "normal" ? "status" : undefined}
+      aria-label={`${label}: ${value}${flagText ? ` (${flagText})` : ""}`}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors shadow-2xs",
-        flagged
-          ? "border border-(--status-soon-fg)/40 bg-(--status-soon-bg) font-bold text-(--status-soon-fg)"
-          : "border border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-heading)",
+        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors",
+        style.container,
       )}
     >
-      <Icon className={cn("size-3.5 shrink-0", flagged ? "text-(--status-soon-fg)" : "text-(--teal-700)")} />
-      <span className="font-semibold text-(--text-muted) text-[11px]">{label}:</span>
-      <span className="font-bold text-xs">{value}</span>
-      {flagged ? (
-        <span className="flex items-center gap-0.5 text-[10px] font-bold text-(--status-soon-fg)">
-          <TriangleAlert className="size-3" />
-          ({flagLabel})
+      <Icon className={cn("size-3.5 shrink-0", style.icon)} />
+      <span className={cn("text-[10px] font-bold uppercase tracking-wider", style.label)}>
+        {label}:
+      </span>
+      <span className={cn("text-xs sm:text-[13px] font-bold tabular-nums", style.value)}>
+        {value}
+      </span>
+      {flagText ? (
+        <span className={cn("flex items-center gap-0.5 text-[10px] font-bold tracking-tight", style.badge)}>
+          <TriangleAlert className="size-3 shrink-0" />
+          ({flagText})
         </span>
       ) : null}
     </div>
@@ -187,11 +232,7 @@ const NOT_RECORDED = "—";
 
 /**
  * Plausible physiological bounds for a patient-reported home reading. A value
- * outside these is flagged as unverified rather than trusted at face value —
- * the intake device is unsupervised, so an implausible number is far more
- * likely to be a typo or a miscalibrated cuff/thermometer than a genuine
- * emergency the physician would otherwise triage from the chief complaint.
- * These bounds are a sanity check on the reading, not a clinical threshold.
+ * outside these is flagged as unverified rather than trusted at face value.
  */
 const VITAL_BOUNDS = {
   temperatureC: { min: 35, max: 41 },
@@ -205,14 +246,16 @@ function outOfRange(value: number, bounds: { min: number; max: number }): boolea
   return value < bounds.min || value > bounds.max;
 }
 
-/** The four vitals from the design, each with its icon, format, and sanity check. */
+/** The four vitals from the design, each with its icon, format, sanity check, and clinical triage. */
 const VITALS: ReadonlyArray<{
   key: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
   format: (v: IntakeVitals) => string;
-  /** Returns the flag reason when this reading fails its sanity check, else undefined. */
+  /** Returns the flag reason when this reading fails its biological sanity check, else undefined. */
   sanityCheck: (v: IntakeVitals) => string | undefined;
+  /** Evaluates clinical normality/abnormality for rapid triage scanning. */
+  clinicalTriage: (v: IntakeVitals) => ClinicalTriageResult | undefined;
 }> = [
   {
     key: "temperature",
@@ -224,6 +267,16 @@ const VITALS: ReadonlyArray<{
       typeof v.temperatureC === "number" && outOfRange(v.temperatureC, VITAL_BOUNDS.temperatureC)
         ? "Unverified"
         : undefined,
+    clinicalTriage: (v) => {
+      if (typeof v.temperatureC !== "number") return undefined;
+      if (v.temperatureC >= 38.0) {
+        return { severity: "warning", label: "Fever" };
+      }
+      if (v.temperatureC >= 37.5) {
+        return { severity: "warning", label: "Elevated" };
+      }
+      return { severity: "normal" };
+    },
   },
   {
     key: "bloodPressure",
@@ -233,11 +286,26 @@ const VITALS: ReadonlyArray<{
       typeof v.systolicBp === "number" && typeof v.diastolicBp === "number"
         ? `${v.systolicBp}/${v.diastolicBp}`
         : NOT_RECORDED,
-    sanityCheck: (v) =>
-      (typeof v.systolicBp === "number" && outOfRange(v.systolicBp, VITAL_BOUNDS.systolicBp)) ||
-      (typeof v.diastolicBp === "number" && outOfRange(v.diastolicBp, VITAL_BOUNDS.diastolicBp))
-        ? "Unverified"
-        : undefined,
+    sanityCheck: (v) => {
+      const hasSys = typeof v.systolicBp === "number";
+      const hasDia = typeof v.diastolicBp === "number";
+      if (hasSys && outOfRange(v.systolicBp!, VITAL_BOUNDS.systolicBp)) return "Unverified";
+      if (hasDia && outOfRange(v.diastolicBp!, VITAL_BOUNDS.diastolicBp)) return "Unverified";
+      // Pulse pressure inversion: systolic must be greater than diastolic
+      if (hasSys && hasDia && v.systolicBp! <= v.diastolicBp!) return "Unverified";
+      return undefined;
+    },
+    clinicalTriage: (v) => {
+      const { systolicBp, diastolicBp } = v;
+      if (typeof systolicBp !== "number" || typeof diastolicBp !== "number") return undefined;
+      if (systolicBp >= 140 || diastolicBp >= 90) {
+        return { severity: "warning", label: "High" };
+      }
+      if (systolicBp < 90) {
+        return { severity: "warning", label: "Low" };
+      }
+      return { severity: "normal" };
+    },
   },
   {
     key: "heartRate",
@@ -249,6 +317,16 @@ const VITALS: ReadonlyArray<{
       typeof v.heartRateBpm === "number" && outOfRange(v.heartRateBpm, VITAL_BOUNDS.heartRateBpm)
         ? "Unverified"
         : undefined,
+    clinicalTriage: (v) => {
+      if (typeof v.heartRateBpm !== "number") return undefined;
+      if (v.heartRateBpm > 100) {
+        return { severity: "warning", label: "High" };
+      }
+      if (v.heartRateBpm < 60) {
+        return { severity: "warning", label: "Low" };
+      }
+      return { severity: "normal" };
+    },
   },
   {
     key: "spo2",
@@ -260,6 +338,16 @@ const VITALS: ReadonlyArray<{
       typeof v.spo2Percent === "number" && outOfRange(v.spo2Percent, VITAL_BOUNDS.spo2Percent)
         ? "Unverified"
         : undefined,
+    clinicalTriage: (v) => {
+      if (typeof v.spo2Percent !== "number") return undefined;
+      if (v.spo2Percent < 92) {
+        return { severity: "critical", label: "Critical" };
+      }
+      if (v.spo2Percent < 95) {
+        return { severity: "critical", label: "Low" };
+      }
+      return { severity: "normal" };
+    },
   },
 ];
 

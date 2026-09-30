@@ -9,15 +9,27 @@ import {
   Clock,
   Eye,
   FileSignature,
+  FileX2,
   Maximize2,
   PenLine,
   RefreshCw,
   Send,
+  Trash2,
   Undo2,
   X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -142,14 +154,14 @@ export function ReviewStatusChip({ provenance }: { provenance: Exclude<ArtifactP
     <span
       data-slot="review-status"
       className={cn(
-        "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold",
+        "flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold",
         provenance === "edited"
-          ? "bg-(--status-available-bg) text-(--status-available-fg)"
-          : "bg-(--status-soon-bg) text-(--status-soon-fg)",
+          ? "border-(--teal-500)/30 bg-(--status-available-bg) text-(--status-available-fg)"
+          : "border-(--status-soon-fg)/30 bg-(--status-soon-bg) text-(--status-soon-fg)",
       )}
     >
       {provenance === "edited" ? <CheckCircle2 className="size-3" /> : <Clock className="size-3" />}
-      {provenance === "edited" ? "Reviewed" : "Needs your review"}
+      {provenance === "edited" ? "Edited · Ready to sign" : "Draft · Needs review"}
     </span>
   );
 }
@@ -170,6 +182,10 @@ export interface ArtifactCardProps {
   onRegenerate?: () => void;
   /** Whether re-drafting is currently permitted (gate open, type eligible). */
   canRegenerate?: boolean;
+  /** Discard this document draft or void signed document */
+  onDiscard?: () => void;
+  /** Whether this document can be discarded/removed (false for Plan or already released) */
+  canDiscard?: boolean;
   /**
    * Rendered inside another component's own card chrome (the deliverables
    * deck's tab-connected container) rather than drawing its own border,
@@ -204,6 +220,8 @@ export function ArtifactCard(props: ArtifactCardProps) {
   const [drawn, setDrawn] = useState<CdsSignaturePoint[][]>([]);
   const [typedName, setTypedName] = useState(props.defaultSignerName ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [voidDialogOpen, setVoidDialogOpen] = useState(false);
 
   /*
     A regeneration — or the physician's own amendment — replaces the payload
@@ -315,10 +333,15 @@ export function ArtifactCard(props: ArtifactCardProps) {
               <AiProvenanceChip />
               {!artifact.effectiveStale ? <ReviewStatusChip provenance={provenance} /> : null}
             </>
-          ) : (
-            <span className="flex items-center gap-1 rounded-full bg-(--status-available-bg) px-2 py-0.5 text-xs font-bold text-(--status-available-fg)">
+          ) : artifact.lifecycleStatus === "released" ? (
+            <span className="flex items-center gap-1 rounded-full border border-(--teal-500)/30 bg-(--status-available-bg) px-2 py-0.5 text-xs font-bold text-(--status-available-fg)">
               <CheckCircle2 className="size-3" />
-              {artifact.lifecycleStatus === "released" ? "Released" : "Signed by you"}
+              Released
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 rounded-full border border-(--navy-400)/30 bg-(--navy-100) dark:bg-(--navy-900)/40 px-2 py-0.5 text-xs font-bold text-(--navy-700) dark:text-(--navy-300)">
+              <PenLine className="size-3" />
+              Signed by you
             </span>
           )}
 
@@ -480,6 +503,19 @@ export function ArtifactCard(props: ArtifactCardProps) {
                     <RefreshCw className="size-4" /> Redraft
                   </Button>
                 ) : null}
+                {props.canDiscard && props.onDiscard ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full text-(--text-muted) hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold gap-1.5 transition-colors cursor-pointer"
+                    disabled={props.busy || props.regenerating}
+                    onClick={() => setDiscardDialogOpen(true)}
+                  >
+                    <Trash2 className="size-3.5 text-rose-600/80" />
+                    <span>Discard draft</span>
+                  </Button>
+                ) : null}
               </div>
 
               {/* Preview Official Document Modal Trigger */}
@@ -567,8 +603,8 @@ export function ArtifactCard(props: ArtifactCardProps) {
             */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-(--teal-800)">
-                  <CheckCircle2 className="size-3.5 text-(--status-available-fg)" />
+                <span className="flex items-center gap-1.5 text-xs font-bold text-(--navy-700) dark:text-(--navy-300)">
+                  <PenLine className="size-3.5 text-(--navy-600) dark:text-(--navy-400)" />
                   Signed · Ready to release
                 </span>
                 <Button
@@ -580,6 +616,19 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 >
                   <Maximize2 className="size-3.5" /> Full Sheet / Print
                 </Button>
+                {props.canDiscard && props.onDiscard ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full gap-1 text-xs text-(--text-muted) hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold transition-colors cursor-pointer"
+                    disabled={props.busy}
+                    onClick={() => setVoidDialogOpen(true)}
+                  >
+                    <FileX2 className="size-3.5 text-rose-600/80" />
+                    <span>Void signature &amp; remove</span>
+                  </Button>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 <HoldToReleaseButton
@@ -661,6 +710,68 @@ export function ArtifactCard(props: ArtifactCardProps) {
         specimen={props.specimen}
         doctorName={props.defaultSignerName}
       />
+
+      {/* Discard draft confirmation dialog */}
+      {props.canDiscard && props.onDiscard ? (
+        <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
+            <AlertDialogHeader className="space-y-1.5 text-left">
+              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
+                Discard {label} draft?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+                Are you sure you want to remove this unreviewed {label.toLowerCase()} draft? It has not been signed or released, and the patient cannot see it. You can re-add it at any time from &ldquo;+ Add Document&rdquo;.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
+              <AlertDialogCancel className="rounded-full text-xs">
+                Keep draft
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs hover:bg-rose-700"
+                onClick={() => {
+                  setDiscardDialogOpen(false);
+                  props.onDiscard?.();
+                }}
+              >
+                <Trash2 className="size-3.5 mr-1" />
+                Discard draft
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
+
+      {/* Void signed document confirmation dialog */}
+      {props.canDiscard && props.onDiscard ? (
+        <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
+          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
+            <AlertDialogHeader className="space-y-1.5 text-left">
+              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
+                Void signature &amp; remove {label}?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+                This document was signed with your digital signature but has NOT been released to the patient. Voiding it will revoke the signature attestation and remove this deliverable from the encounter.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
+              <AlertDialogCancel className="rounded-full text-xs">
+                Keep signed document
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs hover:bg-rose-700"
+                onClick={() => {
+                  setVoidDialogOpen(false);
+                  props.onDiscard?.();
+                }}
+              >
+                <FileX2 className="size-3.5 mr-1" />
+                Void &amp; remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </article>
   );
 }

@@ -39,8 +39,8 @@ export function DocumentSheetModal({
 
   const docTitle = OUTPUT_LABELS[artifact.outputType] || "Clinical Document";
   const isDraft = artifact.lifecycleStatus === "generated";
-  const patientName = intake?.patientName || "Maria Teresa D. Reyes";
-  const caseId = artifact.consultationId || intake?.bookingId || "BH-25-05-20-10245";
+  const patientName = intake?.patientName || "—";
+  const caseId = artifact.consultationId || intake?.bookingId || "—";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

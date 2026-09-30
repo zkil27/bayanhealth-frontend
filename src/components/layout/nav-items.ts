@@ -41,7 +41,9 @@ export const DOCTOR_NAV: NavItem[] = [
   { title: "Dashboard", href: "/doctor", icon: Home },
   { title: "Calendar", href: "/doctor/schedule", icon: CalendarClock },
   { title: "Consults", href: "/doctor/history", icon: Video },
-  { title: "Chat", href: "/doctor/chat", icon: MessageSquareText },
+  // ARCHIVED: Chat tab hidden from doctor sidebar per request.
+  // Underlying routes (/doctor/chat) and components remain intact for future restoration.
+  // { title: "Chat", href: "/doctor/chat", icon: MessageSquareText },
   { title: "Med Ed", href: "/med-ed", icon: GraduationCap, comingSoon: true },
   { title: "Profile", href: "/doctor/profile", icon: UserRound },
 ];

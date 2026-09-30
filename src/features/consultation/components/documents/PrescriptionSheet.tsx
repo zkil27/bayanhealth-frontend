@@ -27,12 +27,12 @@ export function PrescriptionSheet({
   isDraft = false,
   className,
 }: PrescriptionSheetProps) {
-  const patientName = patient?.name || "Maria Teresa D. Reyes";
-  const patientDob = patient?.dateOfBirth || "Jan 12, 1997";
+  const patientName = patient?.name || "—";
+  const patientDob = patient?.dateOfBirth || "—";
   const patientAgeSex =
-    [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Female"]
+    [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
-      .join(" / ");
+      .join(" / ") || "—";
   const allergies = patient?.allergies?.trim() || "No known drug allergies";
 
   const dateIssued =
@@ -59,7 +59,7 @@ export function PrescriptionSheet({
       year: "numeric",
     });
 
-  const rxId = verification?.documentId || `RX-${patient?.caseId || "25-05-20-10245"}`;
+  const rxId = verification?.documentId || (patient?.caseId ? `RX-${patient.caseId}` : "—");
 
   return (
     <article
@@ -175,7 +175,7 @@ export function PrescriptionSheet({
                       {med.instructions}
                     </td>
                     <td className="py-3 px-2 align-top border-r border-(--navy-700)/20 text-center font-medium text-slate-800">
-                      {med.duration || "14 capsules"}
+                      {med.duration || "—"}
                     </td>
                     <td className="py-3 px-2 align-top border-r border-(--navy-700)/20 text-center text-slate-700">
                       {med.route || "Oral"}
@@ -203,9 +203,9 @@ export function PrescriptionSheet({
           SPECIAL INSTRUCTIONS
         </h2>
         <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800 leading-relaxed">
-          <li>Avoid self-adjusting the dose.</li>
-          <li>Consult again if symptoms persist or worsen.</li>
-          <li>Go to ER if there is vomiting blood, black stools, or difficulty swallowing.</li>
+          <li>Take medications exactly as directed. Avoid self-adjusting dose or discontinuing prematurely.</li>
+          <li>Consult your physician if symptoms persist or if adverse effects develop.</li>
+          <li>Seek immediate emergency care if you experience severe shortness of breath, acute chest pain, or allergic reaction.</li>
           {payload.notes ? (
             <li className="font-medium text-slate-900">
               Note: {payload.notes}
@@ -222,7 +222,7 @@ export function PrescriptionSheet({
         verification={{
           qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/rx/${rxId}`,
           documentId: rxId,
-          status: isDraft ? "SAMPLE" : "ACTIVE",
+          status: isDraft ? "DRAFT" : "ACTIVE",
           validUntil,
         }}
         physicianRoleLabel="PHYSICIAN INFORMATION"

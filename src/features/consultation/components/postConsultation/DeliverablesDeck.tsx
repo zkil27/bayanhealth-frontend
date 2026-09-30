@@ -2,22 +2,29 @@
 
 import { useState } from "react";
 import {
+  AlertCircle,
   ArrowRight,
   BookOpen,
   Check,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
   Clock,
   FileBadge,
+  FilePlus2,
   FlaskConical,
   Hash,
+  Info,
   PenLine,
   Pill,
   Plus,
   Scan,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +39,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
@@ -45,7 +53,6 @@ import {
   AiProvenanceChip,
   ArtifactCard,
   computeArtifactProvenance,
-  ReviewStatusChip,
   type ArtifactSignatureInput,
 } from "./ArtifactCard";
 import { OUTPUT_LABELS } from "./workspacePhase";
@@ -60,6 +67,16 @@ const TOOL_ICONS: Record<CdsProtectedOutputType, React.ComponentType<{ className
   lab_request: FlaskConical,
   imaging_request: Scan,
   patient_education: BookOpen,
+};
+
+const OUTPUT_DESCRIPTIONS: Record<CdsProtectedOutputType, string> = {
+  plan: "Clinical goals, interventions & specialist referral",
+  prescription: "Official electronic Rx with medications & dosage directions",
+  medical_certificate: "Work/school clearance with diagnosis & excused rest dates",
+  lab_request: "Diagnostic laboratory workup order (blood, urine, etc.)",
+  imaging_request: "Diagnostic imaging order (X-ray, ultrasound, CT)",
+  patient_education: "Personalized Tagalog/English home care guide & red flags",
+  final_icd: "Authoritative ICD-10 diagnostic coding classification",
 };
 
 /**
@@ -189,6 +206,7 @@ export function DeliverablesDeck({
   onRelease,
   onRegenerate,
   onDraft,
+  onDiscard,
   intake,
   gateStatusLabel,
 }: {
@@ -205,6 +223,7 @@ export function DeliverablesDeck({
   onRelease: (artifact: CdsProtectedArtifact) => void;
   onRegenerate: (outputType: CdsProtectedOutputType) => void;
   onDraft?: (outputType: CdsProtectedOutputType) => void;
+  onDiscard?: (outputType: CdsProtectedOutputType) => void;
   intake?: BookingIntakeForm | null;
   gateStatusLabel?: string;
 }) {
@@ -260,6 +279,7 @@ export function DeliverablesDeck({
 
   const [batchSigningOpen, setBatchSigningOpen] = useState(false);
   const [batchSigningInProgress, setBatchSigningInProgress] = useState(false);
+  const [discardTarget, setDiscardTarget] = useState<CdsProtectedOutputType | null>(null);
 
   const unsignedEntries = entries.filter(
     (entry) => (entry.status === "draft" || entry.status === "edited") && entry.artifact,
@@ -275,6 +295,19 @@ export function DeliverablesDeck({
     currentIndex >= 0 && currentIndex < entries.length - 1
       ? entries[currentIndex + 1]
       : null;
+
+  const handleDiscardWithFallback = (outputType: CdsProtectedOutputType) => {
+    if (!onDiscard) return;
+    if (current.outputType === outputType) {
+      const remaining = entries.filter((e) => e.outputType !== outputType);
+      if (remaining.length > 0) {
+        const idx = entries.findIndex((e) => e.outputType === outputType);
+        const fallback = idx > 0 ? entries[idx - 1] : remaining[0];
+        onActiveChange(fallback.outputType);
+      }
+    }
+    onDiscard(outputType);
+  };
 
   const handleFinalize = async (signature: ArtifactSignatureInput) => {
     if (!current.artifact) return;
@@ -299,6 +332,12 @@ export function DeliverablesDeck({
         }
       }
       setBatchSigningOpen(false);
+      if (unsignedEntries.length > 1) {
+        toast.success(
+          `Signed all ${unsignedEntries.length} documents. The patient cannot see them until released.`,
+          { id: "finalize-signature" },
+        );
+      }
     } finally {
       setBatchSigningInProgress(false);
     }
@@ -316,11 +355,12 @@ export function DeliverablesDeck({
             Plan &amp; deliverables
           </h2>
           {outstanding > 0 ? (
-            <span className="rounded-full bg-(--ai-bg-strong) px-2.5 py-0.5 text-xs font-bold text-(--ai-fg)">
+            <span className="flex items-center gap-1 rounded-full border border-(--status-soon-fg)/30 bg-(--status-soon-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-soon-fg)">
+              <Clock className="size-3" />
               {outstanding} awaiting your signature
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
+            <span className="flex items-center gap-1 rounded-full border border-(--teal-500)/30 bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
               <CheckCircle2 className="size-3" /> All reviewed &amp; signed
             </span>
           )}
@@ -337,9 +377,10 @@ export function DeliverablesDeck({
               type="button"
               variant="outline"
               size="sm"
-              className="h-6 gap-1 rounded-full px-2 text-[11px] font-bold text-(--teal-800) border-(--border-subtle) hover:bg-(--surface-accent-soft)"
+              className="h-6 gap-1.5 rounded-full px-2.5 text-[11px] font-bold text-(--status-soon-fg) border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40 hover:bg-(--status-soon-bg)"
               onClick={() => onActiveChange(nextUnsigned.outputType)}
             >
+              <Clock className="size-3 text-(--status-soon-fg)" />
               <span>Next to sign: {OUTPUT_LABELS[nextUnsigned.outputType]}</span>
               <ArrowRight className="size-3" />
             </Button>
@@ -364,25 +405,78 @@ export function DeliverablesDeck({
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={busy || !canRegenerate}
-              className="flex items-center gap-1.5 rounded-full border border-dashed border-teal-600/40 bg-teal-50/40 px-3 py-1 text-xs font-bold text-(--teal-800) hover:bg-teal-50 disabled:opacity-50 transition-colors cursor-pointer"
+              className={cn(
+                "group flex items-center gap-2 rounded-xl border border-(--teal-600)/30 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-(--teal-800) dark:text-teal-300 shadow-2xs hover:bg-(--teal-50)/80 dark:hover:bg-slate-800 hover:border-(--teal-600)/50 disabled:opacity-50 transition-all cursor-pointer select-none",
+              )}
             >
-              <Plus className="size-3.5" />
-              Add Document
+              <div className="flex size-5 shrink-0 items-center justify-center rounded-md bg-(--teal-50) text-(--teal-700) dark:bg-teal-950/60 dark:text-teal-300 border border-(--teal-500)/25 group-hover:bg-(--teal-700) group-hover:text-white transition-colors">
+                <Plus className="size-3.5 stroke-[2.5]" />
+              </div>
+              <span className="font-bold tracking-tight">Add Document</span>
+              <span className="inline-flex size-5 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/80 text-[10px] font-bold text-(--teal-800) dark:text-teal-200">
+                {undraftedTypes.length}
+              </span>
+              <ChevronDown className="size-3.5 text-(--teal-700)/70 group-hover:text-(--teal-700) transition-transform duration-200" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {undraftedTypes.map((type) => {
-                const Icon = TOOL_ICONS[type];
-                return (
-                  <DropdownMenuItem
-                    key={type}
-                    onClick={() => onDraft(type)}
-                    className="flex items-center gap-2 cursor-pointer text-xs py-2"
-                  >
-                    <Icon className="size-3.5 text-teal-700" />
-                    <span>+ {OUTPUT_LABELS[type]}</span>
-                  </DropdownMenuItem>
-                );
-              })}
+
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="w-80 sm:w-88 rounded-2xl border border-(--border-subtle) bg-white dark:bg-slate-900 p-2 shadow-xl"
+            >
+              {/* Menu Header */}
+              <div className="px-2.5 py-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-(--navy-800) dark:text-slate-100 uppercase tracking-wider">
+                  <FilePlus2 className="size-4 text-(--teal-700)" />
+                  <span>Add Clinical Deliverable</span>
+                </div>
+                <p className="text-[11px] font-normal text-(--text-muted) mt-0.5 leading-snug">
+                  Select a document template to draft for this patient encounter:
+                </p>
+              </div>
+
+              <DropdownMenuSeparator className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+              {/* Document Items List */}
+              <div className="flex flex-col gap-1 py-1">
+                {undraftedTypes.map((type) => {
+                  const Icon = TOOL_ICONS[type];
+                  const label = OUTPUT_LABELS[type];
+                  const desc = OUTPUT_DESCRIPTIONS[type];
+
+                  return (
+                    <DropdownMenuItem
+                      key={type}
+                      onClick={() => onDraft(type)}
+                      className="group flex items-start gap-3 rounded-xl p-2.5 cursor-pointer text-left transition-colors hover:bg-(--teal-50)/80 dark:hover:bg-slate-800 focus:bg-(--teal-50)/80 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex size-9.5 shrink-0 items-center justify-center rounded-lg bg-(--teal-50) text-(--teal-700) border border-(--teal-500)/25 group-hover:bg-(--teal-700) group-hover:text-white dark:bg-teal-950/60 dark:text-teal-300 dark:group-hover:bg-teal-600 transition-colors shadow-2xs mt-0.5">
+                        <Icon className="size-5" />
+                      </div>
+
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-xs font-bold text-(--text-heading) group-hover:text-(--navy-800) dark:group-hover:text-white leading-tight">
+                          {label}
+                        </span>
+                        <span className="text-[11px] text-(--text-muted) leading-snug mt-0.5">
+                          {desc}
+                        </span>
+                      </div>
+
+                      <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--teal-50) text-(--teal-700) group-hover:bg-(--teal-700) group-hover:text-white dark:bg-teal-950/60 dark:text-teal-300 dark:group-hover:bg-teal-600 dark:group-hover:text-white transition-colors self-center">
+                        <Plus className="size-3.5 stroke-[2.5]" />
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+
+              {/* Menu Footer */}
+              <DropdownMenuSeparator className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              <div className="px-2.5 py-1.5 text-[10px] text-(--text-muted) flex items-center gap-1.5 leading-snug">
+                <Info className="size-3 text-(--teal-700) shrink-0" />
+                <span>Documents generate as editable drafts for clinical review and attestation.</span>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -418,6 +512,12 @@ export function DeliverablesDeck({
               const Icon = TOOL_ICONS[entry.outputType];
               const selected = entry.outputType === current.outputType;
               const provenance = entry.artifact ? computeArtifactProvenance(entry.artifact) : null;
+              const isDraft = entry.status === "draft" || entry.status === "edited";
+              const isSigned = entry.status === "signed";
+              const isReleased = entry.status === "released";
+              const isStale = entry.status === "stale";
+              const isGenerating = entry.status === "generating";
+
               return (
                 <button
                   key={entry.outputType}
@@ -429,55 +529,83 @@ export function DeliverablesDeck({
                   data-status={entry.status}
                   onClick={() => onActiveChange(entry.outputType)}
                   className={cn(
-                    "relative flex shrink-0 items-center gap-2 rounded-t-lg border px-3 py-2 text-xs sm:text-sm transition-colors",
+                    "group relative flex shrink-0 items-center gap-2 rounded-t-xl px-3 py-2 text-xs sm:text-sm transition-all select-none",
                     selected
-                      ? "z-10 -mb-px border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading)"
-                      : "border-transparent text-(--text-muted) hover:text-(--text-heading)",
+                      ? "z-10 -mb-px border border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading) shadow-[0_-2px_6px_rgba(0,0,0,0.03)]"
+                      : "border border-transparent bg-transparent text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-card)/50 font-medium",
                   )}
                 >
-                  {entry.status === "generating" ? (
-                    <Spinner className="size-3.5 text-(--ai-fg)" />
-                  ) : (
-                    <Icon
-                      className={cn(
-                        "size-3.5 sm:size-4",
-                        entry.status === "released" || entry.status === "signed"
-                          ? "text-(--status-available-fg)"
-                          : entry.status === "stale"
-                            ? "text-(--status-soon-fg)"
-                            : "text-(--ai-fg)",
-                      )}
-                    />
-                  )}
-                  <span className="whitespace-nowrap">{OUTPUT_LABELS[entry.outputType]}</span>
+                  {/* Semantic Icon Avatar Tile */}
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md border transition-all",
+                      isDraft
+                        ? "bg-amber-500/12 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300 border-amber-500/25"
+                        : isSigned
+                          ? "bg-sky-500/12 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300 border-sky-500/25"
+                          : isReleased
+                            ? "bg-teal-500/12 text-teal-800 dark:bg-teal-400/15 dark:text-teal-300 border-teal-500/25"
+                            : isStale
+                              ? "bg-red-500/12 text-red-700 dark:bg-red-400/15 dark:text-red-300 border-red-500/25"
+                              : "bg-purple-500/12 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300 border-purple-500/25",
+                      selected ? "ring-1.5 ring-current/20 shadow-2xs" : "opacity-85 group-hover:opacity-100",
+                    )}
+                  >
+                    {isGenerating ? (
+                      <Spinner className="size-3 text-inherit" />
+                    ) : (
+                      <Icon className="size-3.5 text-inherit" />
+                    )}
+                  </span>
 
-                  {/* Explicit status badge on each tab */}
-                  {entry.status === "signed" ? (
-                    <span className="flex items-center gap-0.5 rounded-full bg-(--status-available-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--status-available-fg)">
-                      <Check className="size-2.5" /> Signed
+                  <span className="whitespace-nowrap font-bold text-inherit">{OUTPUT_LABELS[entry.outputType]}</span>
+
+                  {/* High-visibility Status Badge */}
+                  {isSigned ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-300/80 bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-900 dark:border-sky-700/50 dark:bg-sky-950/50 dark:text-sky-200">
+                      <PenLine className="size-2.5" /> Signed
                     </span>
-                  ) : entry.status === "released" ? (
-                    <span className="flex items-center gap-0.5 rounded-full bg-(--surface-accent-soft) px-1.5 py-0.5 text-[10px] font-bold text-(--teal-800)">
+                  ) : isReleased ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-300/80 bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-900 dark:border-teal-700/50 dark:bg-teal-950/50 dark:text-teal-200">
                       <Check className="size-2.5" /> Released
                     </span>
-                  ) : entry.status === "draft" || entry.status === "edited" ? (
-                    <span className="flex items-center gap-0.5 rounded-full bg-(--status-soon-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--status-soon-fg)">
-                      <Clock className="size-2.5" /> To sign
+                  ) : isDraft ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/50 dark:text-amber-200">
+                      <Clock className="size-2.5" /> {provenance === "edited" ? "Ready to sign" : "To sign"}
                     </span>
-                  ) : entry.status === "stale" ? (
-                    <span className="rounded-full bg-(--danger-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--danger-fg)">
-                      Outdated
+                  ) : isStale ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-red-300/80 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-900 dark:border-red-700/50 dark:bg-red-950/50 dark:text-red-200">
+                      <AlertCircle className="size-2.5" /> Outdated
                     </span>
                   ) : null}
 
-                  {/* The provenance chips ride on the active tab only */}
+                  {/* AI provenance badge on active tab if relevant */}
                   {selected && provenance && provenance !== "neutral" ? (
-                    <>
-                      <AiProvenanceChip />
-                      {!entry.artifact?.effectiveStale ? (
-                        <ReviewStatusChip provenance={provenance} />
-                      ) : null}
-                    </>
+                    <AiProvenanceChip />
+                  ) : null}
+
+                  {/* Discrete Close / Discard trigger on active tab for non-plan, non-released deliverables */}
+                  {selected && entry.outputType !== "plan" && entry.status !== "released" && onDiscard ? (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Discard ${OUTPUT_LABELS[entry.outputType]} draft`}
+                      title={`Discard ${OUTPUT_LABELS[entry.outputType]}`}
+                      className="ml-0.5 flex size-4.5 items-center justify-center rounded-full text-(--text-muted) hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDiscardTarget(entry.outputType);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setDiscardTarget(entry.outputType);
+                        }
+                      }}
+                    >
+                      <X className="size-3" />
+                    </span>
                   ) : null}
                 </button>
               );
@@ -531,6 +659,8 @@ export function DeliverablesDeck({
               onFinalize={handleFinalize}
               onRelease={() => onRelease(current.artifact!)}
               onRegenerate={() => onRegenerate(current.outputType)}
+              onDiscard={onDiscard ? () => handleDiscardWithFallback(current.outputType) : undefined}
+              canDiscard={current.outputType !== "plan" && current.status !== "released"}
               onNext={() => {
                 if (nextUnsigned) {
                   onActiveChange(nextUnsigned.outputType);
@@ -541,10 +671,45 @@ export function DeliverablesDeck({
               hasNext={Boolean(nextUnsigned || nextEntry)}
             />
           ) : (
-            <GeneratingPlaceholder outputType={current.outputType} />
+            <GeneratingPlaceholder
+              outputType={current.outputType}
+              onCancel={onDiscard ? () => handleDiscardWithFallback(current.outputType) : undefined}
+            />
           )}
         </div>
       </div>
+
+      {/* Tab-triggered discard confirmation modal */}
+      {discardTarget && onDiscard ? (
+        <AlertDialog open={Boolean(discardTarget)} onOpenChange={(open) => !open && setDiscardTarget(null)}>
+          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
+            <AlertDialogHeader className="space-y-1.5 text-left">
+              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
+                Discard {OUTPUT_LABELS[discardTarget]} draft?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+                Are you sure you want to remove this unreviewed {OUTPUT_LABELS[discardTarget].toLowerCase()} draft? It has not been signed or released, and the patient cannot see it. You can re-add it at any time from &ldquo;+ Add Document&rdquo;.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
+              <AlertDialogCancel className="rounded-full text-xs">
+                Keep draft
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs hover:bg-rose-700"
+                onClick={() => {
+                  const target = discardTarget;
+                  setDiscardTarget(null);
+                  handleDiscardWithFallback(target);
+                }}
+              >
+                <Trash2 className="size-3.5 mr-1" />
+                Discard draft
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
 
       {/* Batch sign confirmation modal */}
       {specimen && unsignedEntries.length > 1 ? (
@@ -561,10 +726,12 @@ export function DeliverablesDeck({
 
             <ul className="space-y-1.5 py-2 text-xs font-semibold text-(--text-body)">
               {unsignedEntries.map((e) => (
-                <li key={e.outputType} className="flex items-center gap-2 rounded-lg bg-(--surface-warm-soft) p-2">
-                  <Check className="size-3.5 text-(--teal-700)" />
+                <li key={e.outputType} className="flex items-center gap-2 rounded-lg border border-(--border-subtle) bg-(--surface-warm-soft) p-2">
+                  <Clock className="size-3.5 text-(--status-soon-fg)" />
                   <span>{OUTPUT_LABELS[e.outputType]}</span>
-                  <span className="ml-auto text-[10px] text-(--text-muted)">Ready to sign</span>
+                  <span className="ml-auto rounded-full border border-(--status-soon-fg)/30 bg-(--status-soon-bg) px-2 py-0.5 text-[10px] font-bold text-(--status-soon-fg)">
+                    Draft · To sign
+                  </span>
                 </li>
               ))}
             </ul>
@@ -612,7 +779,13 @@ export function DeliverablesDeck({
  * draft from a press that had not registered, and pressed again. This occupies
  * the space the document will fill, in the violet that says what is filling it.
  */
-function GeneratingPlaceholder({ outputType }: { outputType: CdsProtectedOutputType }) {
+function GeneratingPlaceholder({
+  outputType,
+  onCancel,
+}: {
+  outputType: CdsProtectedOutputType;
+  onCancel?: () => void;
+}) {
   return (
     <div
       data-slot="artifact-generating"
@@ -621,10 +794,24 @@ function GeneratingPlaceholder({ outputType }: { outputType: CdsProtectedOutputT
       aria-live="polite"
       className="flex flex-col gap-3 p-4"
     >
-      <p className="flex items-center gap-2 text-sm font-bold text-(--ai-fg)">
-        <PenLine className="size-4" />
-        Drafting {OUTPUT_LABELS[outputType].toLowerCase()}…
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="flex items-center gap-2 text-sm font-bold text-(--ai-fg)">
+          <PenLine className="size-4" />
+          Drafting {OUTPUT_LABELS[outputType].toLowerCase()}…
+        </p>
+        {onCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rounded-full text-xs text-(--text-muted) hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 gap-1 h-7 cursor-pointer"
+            onClick={onCancel}
+          >
+            <X className="size-3 text-rose-600" />
+            <span>Cancel drafting</span>
+          </Button>
+        ) : null}
+      </div>
       <p className="text-sm text-(--text-muted)">
         You can start another document while this one finishes — nothing is lost by
         moving on.

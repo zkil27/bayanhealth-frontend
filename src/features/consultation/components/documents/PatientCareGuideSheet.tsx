@@ -32,12 +32,12 @@ export function PatientCareGuideSheet({
   isDraft = false,
   className,
 }: PatientCareGuideSheetProps) {
-  const rawPatientName = patient?.name || "Maria Teresa D. Reyes";
-  const patientDisplayName = `Mahal naming ${rawPatientName}`;
+  const rawPatientName = patient?.name || "—";
+  const patientDisplayName = patient?.name ? `Mahal naming ${patient.name}` : "Gabay sa Pangangalaga";
   const patientAgeSex =
-    [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Babae"]
+    [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
-      .join(" / ");
+      .join(" / ") || "—";
   const dateOfConsultation =
     patient?.consultationDate ||
     new Date().toLocaleDateString("en-US", {
@@ -45,10 +45,10 @@ export function PatientCareGuideSheet({
       day: "numeric",
       year: "numeric",
     });
-  const caseId = patient?.caseId || "BH-25-05-20-10245";
-  const docId = verification?.documentId || `CG-${caseId}`;
+  const caseId = patient?.caseId || "—";
+  const docId = verification?.documentId || (patient?.caseId ? `CG-${patient.caseId}` : "—");
 
-  const diagnosisTitle = payload?.title || "GERD (Acid Reflux) at Ubo";
+  const diagnosisTitle = payload?.title || "Gabay sa Pangangalaga";
 
   return (
     <article
@@ -70,7 +70,7 @@ export function PatientCareGuideSheet({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 text-xs text-slate-700 divide-x divide-slate-300">
           <div className="pr-3">
             <span className="text-slate-500 block text-[11px]">Pasyente:</span>
-            <span className="font-bold text-slate-900">{patientDisplayName}</span>
+            <span className="font-bold text-slate-900">{rawPatientName}</span>
           </div>
           <div className="px-3">
             <span className="text-slate-500 block text-[11px]">Edad / Kasarian:</span>
@@ -99,108 +99,55 @@ export function PatientCareGuideSheet({
             <h2 className="font-bold text-sm text-(--navy-700)">
               Diagnosis: {diagnosisTitle}
             </h2>
-            <p className="text-slate-700 leading-relaxed font-medium">
-              Umaakyat ang asido mula sa tiyan papunta sa lalamunan o may pamamaga sa daluyan ng hangin. Kaya puwedeng makaramdam ng sikmura o dibdib na mahapdi, maasim ang lasa, tuyong ubo, at madalas na pagdighay.
-            </p>
+            {payload?.titleFilipino ? (
+              <p className="text-slate-600 text-xs italic font-medium">
+                {payload.titleFilipino}
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
 
-      {/* Numbered Steps 1 to 5 */}
+      {/* Dynamic Numbered Steps from Payload */}
       <section className="mb-4 flex flex-col divide-y divide-slate-200 text-xs">
-        {/* Step 1 */}
-        <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
-            1
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)_160px] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
-              INUMIN ANG GAMOT AYON SA RESETA
-            </span>
-            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
-              <li>Inumin ang niresetang gamot ayon sa iskedyul</li>
-              <li>Isang beses bawat araw, 30 minutes bago mag-almusal</li>
-              <li>Kumpletuhin ang buong bilang ng araw na itinakda</li>
-            </ul>
-            <p className="text-[11px] text-slate-500 italic">
-              Kung may ibang iniinom, sundin ang payo ng doktor. Huwag magdagdag nang walang paalam.
-            </p>
-          </div>
-        </div>
+        {payload?.sections && payload.sections.length > 0 ? (
+          payload.sections.map((section, idx) => (
+            <div key={idx} className="flex items-start gap-3 py-3">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
+                {idx + 1}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+                <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
+                  {section.heading}
+                </span>
+                <p className="text-slate-800 font-medium whitespace-pre-line text-xs leading-relaxed">
+                  {section.content}
+                </p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="py-4 text-center text-xs text-slate-500 italic">Walang partikular na gabay na nakasaad.</p>
+        )}
 
-        {/* Step 2 */}
-        <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
-            2
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
-              SA PAGKAIN
-            </span>
-            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
-              <li>Kumain nang kaunti pero mas madalas sa maghapon.</li>
-              <li>Iwas muna sa kape, soft drinks, alak, tsokolate, maanghang, maasim, at mamantikang pagkain.</li>
-              <li>Huwag humiga agad pagkatapos kumain. Maghintay ng 2 hanggang 3 oras.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Step 3 */}
-        <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
-            3
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
-              SA PAGTULOG
-            </span>
-            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
-              <li>Kung umiinit o sumasakit ang sikmura sa gabi, itaas nang kaunti ang ulunan ng kama (6–8 inches).</li>
-              <li>Iwasang matulog agad pagkagaling sa kainan.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Step 4 */}
-        <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
-            4
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
-              FOLLOW-UP
-            </span>
-            <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
-              <li>Mag-follow up sa loob ng 2 hanggang 4 na linggo para sa re-assessment.</li>
-              <li>Bumalik nang mas maaga kung hindi gumagaan ang pakiramdam o pabalik-balik ang sintomas.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Step 5: Red Flags in Red */}
-        <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
-            5
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-red-700 tracking-wider uppercase text-xs">
-              PUMUNTA AGAD SA ER KUNG MAY
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-red-700 font-medium">
-              <ul className="list-disc pl-5 space-y-0.5">
-                <li>Hirap o masakit na paghinga</li>
-                <li>Pagsusuka ng dugo o parang kape</li>
-                <li>Itim o malagkit na dumi</li>
-                <li>Matindi o lumalalang sakit ng tiyan</li>
-              </ul>
-              <ul className="list-disc pl-5 space-y-0.5">
-                <li>Nawawalan ng timbang nang hindi sinasadya</li>
-                <li>Paulit-ulit o matinding pagsusuka</li>
-                <li>Hirap lumunok o parang may nakabara sa lalamunan</li>
+        {/* Warning Signs from Payload */}
+        {payload?.warningSigns && payload.warningSigns.length > 0 ? (
+          <div className="flex items-start gap-3 py-3">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
+              !
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
+              <span className="font-bold text-red-700 tracking-wider uppercase text-xs">
+                PUMUNTA AGAD SA ER KUNG MAY / WARNING SIGNS
+              </span>
+              <ul className="list-disc pl-5 space-y-1 text-red-700 font-medium">
+                {payload.warningSigns.map((sign, i) => (
+                  <li key={i}>{sign}</li>
+                ))}
               </ul>
             </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
       {/* Two Outlined Callout Cards */}
@@ -244,7 +191,7 @@ export function PatientCareGuideSheet({
         verification={{
           qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/careplan/${docId}`,
           documentId: docId,
-          status: isDraft ? "SAMPLE" : "CARE PLAN AVAILABLE",
+          status: isDraft ? "DRAFT" : "CARE PLAN AVAILABLE",
         }}
         physicianRoleLabel="IMPORMASYON NG DOKTOR"
         verificationTitle="SCAN PARA BUMALIK SA CARE PLAN"

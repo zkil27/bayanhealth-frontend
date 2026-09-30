@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
+  Clock,
+  FileText,
   History,
   PenLine,
   RefreshCw,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
@@ -159,8 +162,7 @@ export function AssessmentFirstWorkspace({
   const [current, setCurrent] = useState<CdsProtectedArtifact[]>([]);
   const [history, setHistory] = useState<CdsProtectedArtifact[]>([]);
   const [historyCursor, setHistoryCursor] = useState<string | undefined>();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   /**
    * Which output types are being drafted right now.
@@ -174,6 +176,15 @@ export function AssessmentFirstWorkspace({
    */
   const [generating, setGenerating] = useState<ReadonlySet<CdsProtectedOutputType>>(new Set());
   const [activeDeliverable, setActiveDeliverable] = useState<CdsProtectedOutputType | null>(null);
+  /**
+   * Output types the physician explicitly discarded or removed during this session.
+   * Excluded from active tabs, deliverables deck, and finish-documentation warnings.
+   */
+  const [discardedTypes, setDiscardedTypes] = useState<Set<CdsProtectedOutputType>>(new Set());
+  const liveCurrent = useMemo(
+    () => current.filter((item) => !discardedTypes.has(item.outputType)),
+    [current, discardedTypes],
+  );
   /**
    * Whether the confirmed Assessment is expanded for editing. Confirmed state
    * collapses to a one-line summary bar; this re-opens the full editor. Always
@@ -270,9 +281,9 @@ export function AssessmentFirstWorkspace({
         if (cancelled) return;
         setAssessment(next);
         seedDraft(next);
-        setError(null);
+        setInitialLoadError(null);
       })
-      .catch((cause) => !cancelled && setError(physicianErrorMessage(cause)));
+      .catch((cause) => !cancelled && setInitialLoadError(physicianErrorMessage(cause)));
     void refreshOutputs().catch(() => undefined);
     return () => {
       cancelled = true;
@@ -332,7 +343,9 @@ export function AssessmentFirstWorkspace({
           }
         })
         .catch(() =>
-          setMessage("Draft status is temporarily unavailable. It will keep retrying on its own."),
+          toast.error("Draft status is temporarily unavailable. It will keep retrying on its own.", {
+            id: "draft-status-poll-error",
+          }),
         );
     }, 3_000);
     return () => window.clearInterval(timer);
@@ -341,19 +354,17 @@ export function AssessmentFirstWorkspace({
   const run = useCallback(
     async (action: () => Promise<void>) => {
       setBusy(true);
-      setError(null);
-      setMessage(null);
       try {
         await action();
       } catch (cause) {
         if (requiresAuthoritativeRefresh(cause)) {
           resetDerived();
           await refreshAssessment().catch(() => undefined);
-          setError(
+          toast.error(
             `${physicianErrorMessage(cause)} Authoritative state was refreshed; review it before retrying.`,
           );
         } else {
-          setError(physicianErrorMessage(cause));
+          toast.error(physicianErrorMessage(cause));
         }
       } finally {
         setBusy(false);
@@ -458,7 +469,7 @@ export function AssessmentFirstWorkspace({
       });
       setAssessment(next);
       resetDerived();
-      setMessage("Draft saved. Nothing can be drafted from it until you confirm it.");
+      toast.success("Draft saved. Nothing can be drafted from it until you confirm it.");
     });
 
   const confirm = () =>
@@ -505,21 +516,20 @@ export function AssessmentFirstWorkspace({
       // freshly returned state so the fences are the ones the server just wrote.
       try {
         await ensureGate(next);
-        setMessage(
-          `Assessment confirmed and drafting unlocked. Choose a document from Protected tools.`,
+        toast.success(
+          "Assessment confirmed and drafting unlocked. Choose a document from Protected tools.",
         );
       } catch (cause) {
         resetDerived();
         await refreshAssessment().catch(() => undefined);
         if (requiresRedFlagAcknowledgment(cause)) {
           setAcknowledgmentReady(true);
-          setMessage(
+          toast.warning(
             "Assessment confirmed and safety re-check complete. Acknowledge the current finding to continue.",
           );
         } else {
-          setError(physicianErrorMessage(cause));
-          setMessage(
-            "Assessment confirmed. Drafting could not be unlocked automatically — review the current state before retrying.",
+          toast.error(
+            `${physicianErrorMessage(cause)} Drafting could not be unlocked automatically — review the current state before retrying.`,
           );
         }
       }
@@ -551,7 +561,7 @@ export function AssessmentFirstWorkspace({
         await refreshAssessment().catch(() => undefined);
         if (requiresRedFlagAcknowledgment(cause)) setAcknowledgmentReady(true);
       }
-      setMessage(
+      toast.success(
         changeType === "reattest"
           ? "Assessment re-attested under your name."
           : "Assessment updated. Earlier drafts are now out of date and moved to history.",
@@ -576,7 +586,7 @@ export function AssessmentFirstWorkspace({
       setDraftDiagnosis("");
       resetDerived();
       await refreshOutputs();
-      setMessage("Assessment cleared. Drafting stays closed until you confirm a new Assessment.");
+      toast.info("Assessment cleared. Drafting stays closed until you confirm a new Assessment.");
     });
 
   const startEvaluation = () => {
@@ -673,13 +683,13 @@ export function AssessmentFirstWorkspace({
               setAssessment(authoritative);
               seedDraft(authoritative);
             }
-            setError(
+            toast.error(
               authoritative
                 ? `${physicianErrorMessage(cause)} Authoritative state was refreshed; review it before retrying.`
                 : `${physicianErrorMessage(cause)} Refresh to load current state before retrying.`,
             );
           } else {
-            setError(physicianErrorMessage(cause));
+            toast.error(physicianErrorMessage(cause));
           }
         })
         .finally(() => {
@@ -734,7 +744,7 @@ export function AssessmentFirstWorkspace({
           if (next.diagnosisName === diagnosisName) setPreview(next);
         })
         .catch((cause) => {
-          if (requestId === previewRequestRef.current) setError(physicianErrorMessage(cause));
+          if (requestId === previewRequestRef.current) toast.error(physicianErrorMessage(cause));
         })
         .finally(() => {
           if (requestId === previewRequestRef.current) setPreviewLoading(false);
@@ -768,7 +778,7 @@ export function AssessmentFirstWorkspace({
       setEvaluation(null);
       setPreview(null);
       setFocusedCandidate(null);
-      setMessage(
+      toast.info(
         `${diagnosisName} is now your working diagnosis. It is not confirmed yet — confirm it below when you are ready.`,
       );
     });
@@ -787,7 +797,7 @@ export function AssessmentFirstWorkspace({
       setAcknowledgmentReady(false);
       try {
         await ensureGate(assessment, true);
-        setMessage("Safety re-checked. Drafting is open again.");
+        toast.success("Safety re-checked. Drafting is open again.");
       } catch (cause) {
         if (!requiresRedFlagAcknowledgment(cause)) throw cause;
 
@@ -798,7 +808,7 @@ export function AssessmentFirstWorkspace({
         resetDerived();
         await refreshAssessment();
         setAcknowledgmentReady(true);
-        setMessage("Safety re-check complete. Acknowledge the current finding to continue.");
+        toast.warning("Safety re-check complete. Acknowledge the current finding to continue.");
       }
     });
 
@@ -822,7 +832,7 @@ export function AssessmentFirstWorkspace({
       });
       resetDerived();
       await refreshAssessment();
-      setMessage("Safety finding acknowledged. Re-check safety to unlock drafting.");
+      toast.info("Safety finding acknowledged. Re-check safety to unlock drafting.");
     }).finally(() => {
       acknowledgmentIssueRef.current = false;
     });
@@ -838,8 +848,13 @@ export function AssessmentFirstWorkspace({
   const generate = useCallback(
     async (outputType: CdsProtectedOutputType) => {
       if (!assessment?.confirmed || generating.has(outputType)) return;
-      setError(null);
-      setMessage(null);
+      // Re-enable this output type if it was previously discarded
+      setDiscardedTypes((prev) => {
+        if (!prev.has(outputType)) return prev;
+        const next = new Set(prev);
+        next.delete(outputType);
+        return next;
+      });
       markGenerating(outputType, true);
       setActiveDeliverable(outputType);
       try {
@@ -854,24 +869,24 @@ export function AssessmentFirstWorkspace({
           // The job keeps the type marked as generating; the poller clears it
           // when the job reaches a terminal state.
           setJobs((known) => ({ ...known, [result.job.jobId]: result.job }));
-          setMessage(
+          toast.info(
             `${outputLabels[outputType]} is taking longer than usual, so the server is finishing it in the background.`,
           );
         } else {
           markGenerating(outputType, false);
           await refreshOutputs();
-          setMessage(`${outputLabels[outputType]} drafted. Read it, edit if needed, then sign.`);
+          toast.success(`${outputLabels[outputType]} drafted. Read it, edit if needed, then sign.`);
         }
       } catch (cause) {
         markGenerating(outputType, false);
         if (requiresAuthoritativeRefresh(cause)) {
           resetDerived();
           await refreshAssessment().catch(() => undefined);
-          setError(
+          toast.error(
             `${physicianErrorMessage(cause)} Authoritative state was refreshed; review it before retrying.`,
           );
         } else {
-          setError(physicianErrorMessage(cause));
+          toast.error(physicianErrorMessage(cause));
         }
       }
     },
@@ -907,8 +922,6 @@ export function AssessmentFirstWorkspace({
   const amend = useCallback(
     async (artifact: CdsProtectedArtifact, payload: CdsProtectedArtifactPayload) => {
       if (!assessment) return;
-      setError(null);
-      setMessage(null);
       try {
         const next = await amendArtifact(consultationId, artifact.artifactId, token, {
           consultationId,
@@ -922,9 +935,9 @@ export function AssessmentFirstWorkspace({
         setCurrent((known) =>
           known.map((item) => (item.artifactId === next.artifactId ? next : item)),
         );
-        setMessage(`${outputLabels[artifact.outputType]} updated with your changes.`);
+        toast.success(`${outputLabels[artifact.outputType]} updated with your changes.`);
       } catch (cause) {
-        setError(physicianErrorMessage(cause));
+        toast.error(physicianErrorMessage(cause));
         throw cause;
       }
     },
@@ -934,8 +947,6 @@ export function AssessmentFirstWorkspace({
   const finalize = useCallback(
     async (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => {
       if (!assessment) return;
-      setError(null);
-      setMessage(null);
       try {
         const next = await finalizeArtifact(consultationId, artifact.artifactId, token, {
           consultationId,
@@ -953,9 +964,11 @@ export function AssessmentFirstWorkspace({
         setCurrent((known) =>
           known.map((item) => (item.artifactId === next.artifactId ? next : item)),
         );
-        setMessage("Signed. The patient cannot see it until you release it separately.");
+        toast.success("Signed. The patient cannot see it until you release it separately.", {
+          id: "finalize-signature",
+        });
       } catch (cause) {
-        setError(physicianErrorMessage(cause));
+        toast.error(physicianErrorMessage(cause));
         throw cause;
       }
     },
@@ -975,8 +988,32 @@ export function AssessmentFirstWorkspace({
         releaseAcknowledged: true,
       });
       setCurrent((known) => known.map((item) => (item.artifactId === next.artifactId ? next : item)));
-      setMessage("Released. Nothing else was changed.");
+      toast.success("Released. Nothing else was changed.");
     });
+
+  const handleDiscard = useCallback(
+    (outputType: CdsProtectedOutputType) => {
+      const target = current.find((a) => a.outputType === outputType);
+      setDiscardedTypes((prev) => new Set(prev).add(outputType));
+      markGenerating(outputType, false);
+      toast.success(`${outputLabels[outputType]} draft removed.`, {
+        action: target
+          ? {
+              label: "Undo",
+              onClick: () => {
+                setDiscardedTypes((prev) => {
+                  const next = new Set(prev);
+                  next.delete(outputType);
+                  return next;
+                });
+                setActiveDeliverable(outputType);
+              },
+            }
+          : undefined,
+      });
+    },
+    [current, markGenerating],
+  );
 
   const loadMoreHistory = () =>
     historyCursor &&
@@ -987,7 +1024,7 @@ export function AssessmentFirstWorkspace({
     });
 
   if (!assessment) {
-    if (error) {
+    if (initialLoadError) {
       return (
         <section
           role="alert"
@@ -998,7 +1035,7 @@ export function AssessmentFirstWorkspace({
             <ShieldAlert className="size-5 shrink-0" />
             Unable to load consultation
           </div>
-          <p className="text-sm font-medium">{error}</p>
+          <p className="text-sm font-medium">{initialLoadError}</p>
         </section>
       );
     }
@@ -1013,18 +1050,18 @@ export function AssessmentFirstWorkspace({
   // Drafting is permitted whenever the gate is not actively holding this
   // consultation. A lapsed token is not a hold — `generate` re-issues one.
   const draftingOpen = Boolean(assessment.confirmed) && assessment.lockReasons.length === 0;
-  const railState = deriveRailState({ assessment, draftingAuthorized: draftingOpen, artifacts: current });
-  const toolRows = deriveToolRows({ assessment, railState, artifacts: current });
+  const railState = deriveRailState({ assessment, draftingAuthorized: draftingOpen, artifacts: liveCurrent });
+  const toolRows = deriveToolRows({ assessment, railState, artifacts: liveCurrent });
   const railOutputTypeSet = new Set(RAIL_OUTPUT_TYPES);
   const railRows = toolRows.filter((row) => railOutputTypeSet.has(row.outputType));
-  const icdArtifact = current.find(
+  const icdArtifact = liveCurrent.find(
     (artifact) => !artifact.effectiveStale && artifact.outputType === "final_icd",
   );
   const icdPayload = readFinalIcdPayload(icdArtifact);
   // Plan is now unified as the premier tab of the deliverables deck.
   // Final ICD remains shown inside the Assessment card.
   const deckEntries = deriveDeckEntries({
-    artifacts: current,
+    artifacts: liveCurrent,
     generating,
     exclude: new Set<CdsProtectedOutputType>(["final_icd"]),
   });
@@ -1080,7 +1117,7 @@ export function AssessmentFirstWorkspace({
             </Button>
             <FinishDocumentationControl
               assessment={assessment}
-              artifacts={current}
+              artifacts={liveCurrent}
               size="sm"
             />
           </div>
@@ -1259,23 +1296,6 @@ export function AssessmentFirstWorkspace({
             </div>
           ) : null}
 
-          {message ? (
-            <p
-              role="status"
-              className="rounded-[14px] border border-(--border-subtle) bg-(--surface-accent-soft) p-3.5 text-sm text-(--text-body)"
-            >
-              {message}
-            </p>
-          ) : null}
-          {error ? (
-            <p
-              role="alert"
-              className="rounded-[14px] border border-(--danger-border) bg-(--danger-bg) p-3.5 text-sm text-(--danger-fg)"
-            >
-              {error}
-            </p>
-          ) : null}
-
           {/* Assessment includes its synchronized ICD coding above. */}
           {/* Plan is unified as the primary tab of DeliverablesDeck below. */}
 
@@ -1293,11 +1313,16 @@ export function AssessmentFirstWorkspace({
             onRelease={release}
             onRegenerate={(outputType) => void generate(outputType)}
             onDraft={(outputType) => void generate(outputType)}
+            onDiscard={handleDiscard}
             intake={intake}
             gateStatusLabel={railBadgeLabel(railState, railRows)}
           />
 
-          <CareContinuityPanel consultationId={consultationId} token={token} />
+          <CareContinuityPanel
+            consultationId={consultationId}
+            token={token}
+            doctorName={doctorProfile?.fullName || undefined}
+          />
 
           {Object.values(jobs).length ? (
             <section
@@ -1405,7 +1430,7 @@ export function AssessmentFirstWorkspace({
             </div>
             <FinishDocumentationControl
               assessment={assessment}
-              artifacts={current}
+              artifacts={liveCurrent}
               size="default"
               className="w-full sm:w-auto"
             />
@@ -1827,6 +1852,7 @@ function FinishDocumentationControl({
         <div className="space-y-3 text-sm text-(--text-body)">
           {readiness.missing.length > 0 ? (
             <DocumentationWarning
+              variant="neutral"
               title="Not generated"
               items={readiness.missing}
               detail="These documents will not exist unless you return and draft them."
@@ -1834,13 +1860,15 @@ function FinishDocumentationControl({
           ) : null}
           {readiness.unreviewed.length > 0 ? (
             <DocumentationWarning
+              variant="warning"
               title="Drafted but not signed"
               items={readiness.unreviewed}
-              detail="These remain physician-unreviewed drafts."
+              detail="These remain physician-unreviewed drafts awaiting your attestation."
             />
           ) : null}
           {readiness.unreleased.length > 0 ? (
             <DocumentationWarning
+              variant="signed"
               title="Signed but not released"
               items={readiness.unreleased}
               detail="Patient-facing documents in this group will remain unavailable to the patient."
@@ -1878,16 +1906,59 @@ function DocumentationWarning({
   title,
   items,
   detail,
+  variant = "warning",
 }: {
   title: string;
   items: readonly string[];
   detail: string;
+  variant?: "warning" | "signed" | "neutral";
 }) {
+  const isSigned = variant === "signed";
+  const isNeutral = variant === "neutral";
+
   return (
-    <div className="rounded-xl border border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40 p-3.5 sm:p-4">
+    <div
+      className={cn(
+        "rounded-xl border p-3.5 sm:p-4 transition-colors",
+        isSigned
+          ? "border-(--navy-400)/30 bg-(--navy-100)/50 dark:bg-(--navy-900)/30"
+          : isNeutral
+            ? "border-(--border-subtle) bg-(--surface-sunken)/60"
+            : "border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40",
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-bold uppercase tracking-wider text-(--status-soon-fg)">{title}</p>
-        <span className="rounded-md border border-(--status-soon-fg)/20 bg-white/90 dark:bg-(--surface-card) px-2.5 py-0.5 text-xs font-bold text-(--text-heading) shadow-2xs">
+        <div className="flex items-center gap-1.5">
+          {isSigned ? (
+            <PenLine className="size-3.5 text-(--navy-700) dark:text-(--navy-300)" />
+          ) : isNeutral ? (
+            <FileText className="size-3.5 text-(--text-muted)" />
+          ) : (
+            <Clock className="size-3.5 text-(--status-soon-fg)" />
+          )}
+          <p
+            className={cn(
+              "text-xs font-bold uppercase tracking-wider",
+              isSigned
+                ? "text-(--navy-800) dark:text-(--navy-200)"
+                : isNeutral
+                  ? "text-(--text-muted)"
+                  : "text-(--status-soon-fg)",
+            )}
+          >
+            {title}
+          </p>
+        </div>
+        <span
+          className={cn(
+            "rounded-md border bg-white/90 dark:bg-(--surface-card) px-2.5 py-0.5 text-xs font-bold shadow-2xs",
+            isSigned
+              ? "border-(--navy-300) text-(--navy-800) dark:text-(--navy-200)"
+              : isNeutral
+                ? "border-(--border-subtle) text-(--text-muted)"
+                : "border-(--status-soon-fg)/20 text-(--text-heading)",
+          )}
+        >
           {items.join(", ")}
         </span>
       </div>

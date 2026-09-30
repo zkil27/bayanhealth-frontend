@@ -30,15 +30,15 @@ export function DiagnosticRequestSheet({
   physician,
   verification,
   isDraft = false,
-  clinicalDiagnosis = "Persistent upper respiratory symptoms; evaluate for associated causes and baseline work-up as clinically indicated.",
+  clinicalDiagnosis = "Clinical diagnostic evaluation as clinically indicated.",
   priority = "Routine",
   className,
 }: DiagnosticRequestSheetProps) {
-  const patientName = patient?.name || "Maria Teresa D. Reyes";
+  const patientName = patient?.name || "—";
   const patientAgeSex =
-    [patient?.age ? `${patient.age}` : "28", patient?.sex ? `${patient.sex}` : "Female"]
+    [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
-      .join(" / ");
+      .join(" / ") || "—";
   const dateRequested =
     patient?.consultationDate ||
     new Date().toLocaleDateString("en-US", {
@@ -46,17 +46,11 @@ export function DiagnosticRequestSheet({
       day: "numeric",
       year: "numeric",
     });
-  const caseId = patient?.caseId || "BH-25-05-20-10245";
-  const docId = verification?.documentId || `LAB-${caseId}`;
+  const caseId = patient?.caseId || "—";
+  const docId = verification?.documentId || (patient?.caseId ? `LAB-${patient.caseId}` : "—");
 
-  const tests = labPayload?.tests ?? [
-    { testName: "Complete Blood Count (CBC) with Platelet Count", priority: "routine" as const, rationale: "Evaluate inflammatory response" },
-    { testName: "Routine Urinalysis (Clean-Catch Midstream)", priority: "routine" as const, rationale: "Screen for urinary involvement" },
-  ];
-
-  const studies = imagingPayload?.studies ?? [
-    { studyName: "Chest X-Ray PA View (Standing)", priority: "routine" as const, bodyRegion: "Chest", rationale: "Rule out consolidation" },
-  ];
+  const tests = labPayload?.tests ?? [];
+  const studies = imagingPayload?.studies ?? [];
 
   return (
     <article
@@ -135,13 +129,17 @@ export function DiagnosticRequestSheet({
             <h3 className="font-bold text-slate-900 text-xs uppercase">
               1. LABORATORY
             </h3>
-            <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800">
-              {tests.map((test, i) => (
-                <li key={i} className="font-medium">
-                  {test.testName}
-                </li>
-              ))}
-            </ul>
+            {tests.length > 0 ? (
+              <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800">
+                {tests.map((test, i) => (
+                  <li key={i} className="font-medium">
+                    {test.testName}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-500 italic pl-5">None requested</p>
+            )}
           </div>
         </div>
 
@@ -156,13 +154,17 @@ export function DiagnosticRequestSheet({
             <h3 className="font-bold text-slate-900 text-xs uppercase">
               2. IMAGING
             </h3>
-            <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800">
-              {studies.map((study, i) => (
-                <li key={i} className="font-medium">
-                  {study.studyName}
-                </li>
-              ))}
-            </ul>
+            {studies.length > 0 ? (
+              <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800">
+                {studies.map((study, i) => (
+                  <li key={i} className="font-medium">
+                    {study.studyName}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-500 italic pl-5">None requested</p>
+            )}
           </div>
         </div>
 
@@ -213,7 +215,7 @@ export function DiagnosticRequestSheet({
         verification={{
           qrValue: verification?.qrValue || `https://bayanhealth.ph/verify/lab/${docId}`,
           documentId: docId,
-          status: isDraft ? "SAMPLE" : "REQUEST ACTIVE",
+          status: isDraft ? "DRAFT" : "REQUEST ACTIVE",
         }}
         physicianRoleLabel="REQUESTING PHYSICIAN"
         verificationTitle="VERIFICATION"

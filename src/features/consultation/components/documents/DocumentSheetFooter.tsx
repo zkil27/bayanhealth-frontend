@@ -24,16 +24,16 @@ export function DocumentSheetFooter({
   verificationTitle = "VERIFICATION",
   scanInstruction = "Scan before dispensing",
 }: DocumentSheetFooterProps) {
-  const doctorName = physician?.name || "Dr. Andrea M. Santos, MD";
-  const doctorTitle = physician?.title || "General Practitioner";
-  const prcNumber = physician?.licenseNumber || "SAMPLE-0000000";
-  const ptrNumber = physician?.ptrNumber || "SAMPLE-0000000";
-  const signedAt = physician?.signedAt || "Signed May 20, 2025 10:35 AM";
+  const doctorName = physician?.name || "Attending Physician";
+  const doctorTitle = physician?.title || "Licensed Physician";
+  const prcNumber = physician?.licenseNumber || "—";
+  const ptrNumber = physician?.ptrNumber || "—";
+  const signedAt = physician?.signedAt || (physician?.signatureStrokes ? "Digital signature on file" : "—");
 
-  const qrValue = verification?.qrValue || "https://bayanhealth.ph/verify/sample";
-  const docId = verification?.documentId || "BH-25-05-20-10245";
+  const qrValue = verification?.qrValue || "https://bayanhealth.ph";
+  const docId = verification?.documentId || "—";
   const statusLabel = verification?.status || "VALID";
-  const validUntil = verification?.validUntil || "June 19, 2025";
+  const validUntil = verification?.validUntil;
 
   return (
     <footer className={cn("mt-6 flex flex-col select-text", className)}>
@@ -53,17 +53,28 @@ export function DocumentSheetFooter({
           </p>
 
           {/* Signature Specimen & Baseline */}
-          <div className="w-56 pb-0.5 border-b border-(--navy-700)/40 mb-1">
-            {physician?.signatureStrokes && physician.signatureStrokes.length > 0 ? (
-              <SignaturePreview strokes={physician.signatureStrokes} className="h-9" />
-            ) : (
-              <span className="font-serif italic text-xl text-blue-800 tracking-wide block py-0.5">
-                {doctorName.replace(/^Dr\.\s*/i, "")}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] text-slate-500">Digital signature applied</span>
-          <span className="text-[10px] text-slate-500">{signedAt}</span>
+          {physician?.signatureStrokes && physician.signatureStrokes.length > 0 ? (
+            <>
+              <div className="w-56 pb-0.5 border-b border-(--navy-700)/40 mb-1">
+                <SignaturePreview strokes={physician.signatureStrokes} className="h-9" />
+              </div>
+              <span className="text-[10px] text-slate-500">Digital signature applied</span>
+              {signedAt !== "—" ? <span className="text-[10px] text-slate-500">{signedAt}</span> : null}
+            </>
+          ) : (
+            <>
+              <div className="w-56 pb-0.5 border-b border-(--navy-700)/40 mb-1 min-h-[36px] flex items-end">
+                {doctorName !== "Attending Physician" && doctorName !== "—" ? (
+                  <span className="font-serif italic text-xl text-blue-800 tracking-wide block py-0.5">
+                    {doctorName.replace(/^Dr\.\s*/i, "")}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">Signature pending attestation</span>
+                )}
+              </div>
+              <span className="text-[10px] text-slate-400">Digital signature applied upon attestation</span>
+            </>
+          )}
         </div>
 
         {/* Right Column: Verification Box */}
@@ -77,7 +88,14 @@ export function DocumentSheetFooter({
                 <QRCodeSVG value={qrValue} size={70} level="M" />
               </div>
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="inline-flex items-center justify-center rounded-md bg-(--teal-800) px-2.5 py-0.5 text-[10px] font-bold text-white tracking-wider uppercase w-fit">
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-md px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase w-fit",
+                    statusLabel === "DRAFT" || statusLabel === "SAMPLE"
+                      ? "bg-amber-100 text-amber-800 border border-amber-300"
+                      : "bg-(--teal-800) text-white",
+                  )}
+                >
                   {statusLabel}
                 </span>
                 <div className="flex flex-col text-[11px]">
