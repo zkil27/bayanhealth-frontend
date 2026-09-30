@@ -9,6 +9,19 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Care Continuity: Save Errors Moved to Toast
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`CareContinuityPanel.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - Replaced the inline red error banner under the action footer with a Sonner `toast.error` ("Couldn't save the recommendation" + server message as description), matching the existing `toast.success` on save. The card no longer shifts height on failure, and the error is consistent with other consultation panels.
+  - Removed the now-unused local `error` state and its resets.
+- **Device Optimization**: Toast is viewport-anchored, so feedback stays visible in the thumb/desktop zone regardless of scroll position.
+- **Upstream Porting Notes**: UI-only; replace the `error` state and banner with `toast.error(...)` in the `catch` of `save`.
+
+---
+
 ### [2026-10-01] Care Continuity: 2-Column Clinical Proportions, Restored Identity, & Calendar Popover Redesign
 
 - **Target Route / Surface**: `/doctor/post-consultation/[id]` (`CareContinuityPanel.tsx`, `calendar.tsx`)

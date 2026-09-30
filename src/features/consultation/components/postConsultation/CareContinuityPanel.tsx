@@ -72,7 +72,6 @@ export function CareContinuityPanel({
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [initialData, setInitialData] = useState<{ date: string; reason: string }>({
     date: "",
@@ -158,7 +157,6 @@ export function CareContinuityPanel({
       if (!reason.trim()) {
         setReason("General follow-up");
       }
-      setError(null);
     },
     [reason],
   );
@@ -169,7 +167,6 @@ export function CareContinuityPanel({
       if (!reason.trim()) {
         setReason("General follow-up");
       }
-      setError(null);
     }
   }, [reason]);
 
@@ -186,13 +183,11 @@ export function CareContinuityPanel({
   const handleClear = useCallback(() => {
     setTargetDate("");
     setReason("");
-    setError(null);
   }, []);
 
   const save = async () => {
     if (!canSave) return;
     setSaving(true);
-    setError(null);
     try {
       const rec = await saveFollowUpRecommendation(consultationId, token, {
         targetDate,
@@ -202,7 +197,9 @@ export function CareContinuityPanel({
       setInitialData({ date: rec.targetDate, reason: rec.reason });
       toast.success("Care continuity recommendation saved.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save follow-up recommendation.");
+      toast.error("Couldn't save the recommendation", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setSaving(false);
     }
@@ -274,7 +271,6 @@ export function CareContinuityPanel({
                 type="button"
                 onClick={() => {
                   setTargetDate("");
-                  setError(null);
                 }}
                 className="text-[11px] font-medium text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
               >
@@ -428,7 +424,6 @@ export function CareContinuityPanel({
                 title="Clear date"
                 onClick={() => {
                   setTargetDate("");
-                  setError(null);
                 }}
                 className="p-1 rounded-md text-teal-700/60 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer shrink-0 ml-1"
               >
@@ -465,7 +460,6 @@ export function CareContinuityPanel({
             rows={2}
             onChange={(e) => {
               setReason(e.target.value);
-              setError(null);
             }}
             placeholder="Specify reason for follow-up (e.g. Return for symptom re-evaluation, review repeat lab results, or titrate medication if BP remains elevated)..."
             className="min-h-[72px] text-xs sm:text-sm rounded-xl border-(--border-default) bg-white dark:bg-slate-900 focus:border-(--teal-600) resize-none"
@@ -531,12 +525,6 @@ export function CareContinuityPanel({
               </Button>
             </div>
           </div>
-
-          {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400">
-              {error}
-            </div>
-          ) : null}
         </div>
       </div>
     </section>
