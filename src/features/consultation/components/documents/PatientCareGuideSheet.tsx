@@ -86,17 +86,17 @@ export function PatientCareGuideSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />
       </section>
 
       {/* Diagnosis Outlined Container */}
-      <section className="mb-4 rounded-xl border border-[#074972]/30 p-4">
+      <section className="mb-4 rounded-xl border border-(--navy-700)/30 p-4">
         <div className="flex items-start gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Stethoscope className="size-7" />
           </div>
           <div className="flex flex-col gap-1 text-xs">
-            <h2 className="font-bold text-sm text-[#074972]">
+            <h2 className="font-bold text-sm text-(--navy-700)">
               Diagnosis: {diagnosisTitle}
             </h2>
             <p className="text-slate-700 leading-relaxed font-medium">
@@ -110,11 +110,11 @@ export function PatientCareGuideSheet({
       <section className="mb-4 flex flex-col divide-y divide-slate-200 text-xs">
         {/* Step 1 */}
         <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
             1
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)_160px] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               INUMIN ANG GAMOT AYON SA RESETA
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
@@ -130,11 +130,11 @@ export function PatientCareGuideSheet({
 
         {/* Step 2 */}
         <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
             2
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               SA PAGKAIN
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
@@ -147,11 +147,11 @@ export function PatientCareGuideSheet({
 
         {/* Step 3 */}
         <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
             3
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               SA PAGTULOG
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
@@ -163,11 +163,11 @@ export function PatientCareGuideSheet({
 
         {/* Step 4 */}
         <div className="flex items-start gap-3 py-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white font-bold text-xs">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white font-bold text-xs">
             4
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               FOLLOW-UP
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
@@ -206,12 +206,12 @@ export function PatientCareGuideSheet({
       {/* Two Outlined Callout Cards */}
       <section className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Para Hindi Sayang Ang Gastos */}
-        <div className="rounded-xl border border-[#18a58c] p-3 text-xs flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+        <div className="rounded-xl border border-(--teal-700) p-3 text-xs flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Wallet className="size-5" />
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="font-bold text-xs text-[#074972] tracking-wider uppercase">
+            <h3 className="font-bold text-xs text-(--navy-700) tracking-wider uppercase">
               PARA HINDI SAYANG ANG GASTOS
             </h3>
             <ul className="list-disc pl-4 space-y-0.5 text-slate-700 text-[11px]">
@@ -223,12 +223,12 @@ export function PatientCareGuideSheet({
         </div>
 
         {/* Nahihirapan Sumunod Sa Plano? */}
-        <div className="rounded-xl border border-[#18a58c] p-3 text-xs flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+        <div className="rounded-xl border border-(--teal-700) p-3 text-xs flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Users className="size-5" />
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="font-bold text-xs text-[#074972] tracking-wider uppercase">
+            <h3 className="font-bold text-xs text-(--navy-700) tracking-wider uppercase">
               NAHIHIRAPAN SUMUNOD SA PLANO?
             </h3>
             <p className="text-slate-700 text-[11px] leading-relaxed">

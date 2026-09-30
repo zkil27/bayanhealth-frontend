@@ -8,6 +8,7 @@ import {
   ListChecks,
   Pill,
   ShieldAlert,
+  ShieldCheck,
   Stethoscope,
 } from "lucide-react";
 
@@ -206,7 +207,14 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
       />
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-[10px] border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
+        <div
+          className={cn(
+            "rounded-[10px] border p-2.5 shadow-2xs",
+            allergies && !isNegativeAllergy(allergies)
+              ? "border-(--danger-border) bg-(--danger-bg)/20"
+              : "border-(--border-subtle) bg-(--surface-card)",
+          )}
+        >
           <Section icon={<Pill className="size-3.5 shrink-0 text-(--teal-700)" />} label="Allergies">
             {allergies ? (
               <span className={isNegativeAllergy(allergies) ? "text-xs font-semibold text-(--text-body)" : "text-xs font-bold text-(--danger-fg)"}>
@@ -292,24 +300,53 @@ function ClinicalAlerts({
   return (
     <section
       data-slot="patient-clinical-alerts"
-      className={
+      className={cn(
+        "rounded-[12px] p-2.5 transition-colors shadow-2xs",
         alerts.length > 0
-          ? "rounded-[12px] border border-(--danger-border) bg-(--danger-bg) p-2.5 shadow-2xs"
-          : "rounded-[12px] border border-(--status-available-fg)/30 bg-(--status-available-bg) p-2.5 shadow-2xs"
-      }
+          ? "border border-(--danger-border) bg-(--danger-bg)"
+          : "border border-(--border-subtle) bg-(--surface-card)",
+      )}
       aria-label="Clinical alerts"
     >
-      <p className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
-        <AlertTriangle className={alerts.length > 0 ? "size-3.5 text-(--danger-fg)" : "size-3.5 text-(--status-available-fg)"} />
-        Clinical alerts ({alerts.length})
-      </p>
+      <div className="flex items-center gap-2">
+        {alerts.length > 0 ? (
+          <AlertTriangle className="size-4 shrink-0 text-(--danger-fg)" />
+        ) : (
+          <ShieldCheck className="size-4 shrink-0 text-(--teal-700)" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "text-xs font-bold",
+              alerts.length > 0 ? "text-(--danger-fg)" : "text-(--text-heading)",
+            )}
+          >
+            {alerts.length > 0
+              ? `Clinical alerts (${alerts.length})`
+              : "Safety screening clear"}
+          </p>
+          <p
+            className={cn(
+              "text-[11px] font-medium leading-tight",
+              alerts.length > 0 ? "text-(--danger-fg)" : "text-(--text-muted)",
+            )}
+          >
+            {alerts.length > 0
+              ? "Potential patient risk factors flagged below"
+              : "Zero patient-reported red flags or contraindications"}
+          </p>
+        </div>
+      </div>
       {alerts.length > 0 ? (
-        <ul className="mt-1.5 space-y-1 text-xs font-bold text-(--danger-fg)">
-          {alerts.map((alert) => <li key={alert}>• {alert}</li>)}
+        <ul className="mt-2 space-y-1 border-t border-(--danger-border)/40 pt-1.5 text-xs font-bold text-(--danger-fg)">
+          {alerts.map((alert) => (
+            <li key={alert} className="flex items-center gap-1.5">
+              <span className="size-1.5 shrink-0 rounded-full bg-(--danger-fg)" />
+              {alert}
+            </li>
+          ))}
         </ul>
-      ) : (
-        <p className="mt-1 text-xs font-medium text-(--status-available-fg)">No patient-reported alerts identified.</p>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -64,7 +64,13 @@ export function SignaturePadDialog({
     stroke.push(point);
     context.lineWidth = 2.5;
     context.lineCap = "round";
-    context.strokeStyle = "#074972"; // BayanHealth Navy
+    const strokeColor =
+      typeof window !== "undefined"
+        ? getComputedStyle(document.documentElement)
+            .getPropertyValue("--navy-700")
+            .trim() || "#074972"
+        : "#074972";
+    context.strokeStyle = strokeColor;
     context.lineTo(point.x * 500, point.y * 180);
     context.stroke();
   };

@@ -42,10 +42,10 @@ export function SoapSummaryCards({
   return (
     <div
       data-slot="soap-summary-cards"
-      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs md:flex-row md:items-center md:divide-x md:divide-(--border-subtle)"
+      className="flex flex-col gap-2.5 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-2xs lg:flex-row lg:items-center lg:justify-between lg:divide-x lg:divide-(--border-subtle)"
     >
       {/* S: Subjective */}
-      <div className="flex min-w-0 flex-1 items-start gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <span
           aria-hidden
           className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
@@ -53,29 +53,28 @@ export function SoapSummaryCards({
           S
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-(--text-heading)">Subjective</span>
-            <span className="text-[10px] font-semibold text-(--text-muted)">(Chief complaint)</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-heading)">Subjective:</span>
+            {intake === undefined ? (
+              <span className="text-xs text-(--text-muted)">Loading intake…</span>
+            ) : !purpose?.chiefComplaint?.trim() ? (
+              <span className="text-xs text-(--text-muted)">No chief complaint submitted</span>
+            ) : (
+              <p className="truncate text-xs font-semibold text-(--text-heading)" title={purpose.chiefComplaint}>
+                {purpose.chiefComplaint}
+                {purpose.patientVerbatim?.trim() ? (
+                  <span className="ml-1 font-normal text-(--text-muted) italic">
+                    &ldquo;{purpose.patientVerbatim}&rdquo;
+                  </span>
+                ) : null}
+              </p>
+            )}
           </div>
-          {intake === undefined ? (
-            <p className="mt-0.5 text-xs text-(--text-muted)">Loading intake…</p>
-          ) : !purpose?.chiefComplaint?.trim() ? (
-            <p className="mt-0.5 text-xs text-(--text-muted)">No chief complaint submitted</p>
-          ) : (
-            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-(--text-heading)">
-              {purpose.chiefComplaint}
-              {purpose.patientVerbatim?.trim() ? (
-                <span className="ml-1 font-normal text-(--text-muted) italic">
-                  &ldquo;{purpose.patientVerbatim}&rdquo;
-                </span>
-              ) : null}
-            </p>
-          )}
         </div>
       </div>
 
       {/* O: Objective */}
-      <div className="flex min-w-0 flex-1 items-start gap-2.5 md:pl-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 lg:pl-3.5">
         <span
           aria-hidden
           className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300)"
@@ -83,14 +82,10 @@ export function SoapSummaryCards({
           O
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-(--text-heading)">Objective</span>
-            <span className="text-[10px] font-semibold text-(--text-muted)">(Vitals)</span>
-          </div>
           {intake === undefined ? (
-            <p className="mt-0.5 text-xs text-(--text-muted)">Loading vitals…</p>
+            <p className="text-xs text-(--text-muted)">Loading vitals…</p>
           ) : hasVitals ? (
-            <div className="mt-1 flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               {VITALS.map((vital) => {
                 const flag = vital.sanityCheck(details!.vitals as IntakeVitals);
                 return (
@@ -106,7 +101,7 @@ export function SoapSummaryCards({
               })}
             </div>
           ) : (
-            <p className="mt-0.5 text-xs text-(--text-muted)">No vitals recorded for this consultation</p>
+            <p className="text-xs text-(--text-muted)">No vitals recorded for this consultation</p>
           )}
         </div>
       </div>
@@ -169,31 +164,21 @@ function VitalTile({
       data-vital={label}
       data-flagged={flagged ? "true" : undefined}
       className={cn(
-        "flex min-w-[6rem] flex-col gap-0.5 rounded-[9px] px-2.5 py-2",
+        "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors shadow-2xs",
         flagged
-          ? "border border-(--status-soon-fg)/40 bg-(--status-soon-bg)"
-          : "bg-(--surface-warm-soft)",
+          ? "border border-(--status-soon-fg)/40 bg-(--status-soon-bg) font-bold text-(--status-soon-fg)"
+          : "border border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-heading)",
       )}
     >
-      <span
-        className={cn(
-          "flex items-center gap-1 text-xs",
-          flagged ? "text-(--status-soon-fg)" : "text-(--text-muted)",
-        )}
-      >
-        <Icon className="size-3.5 shrink-0" />
-        {label}
-      </span>
-      <span
-        className={cn(
-          "flex items-center gap-1 text-sm font-bold",
-          flagged ? "text-(--status-soon-fg)" : "text-(--text-heading)",
-        )}
-      >
-        {flagged ? <TriangleAlert className="size-3.5 shrink-0" /> : null}
-        {value}
-        {flagged ? <span className="font-normal">({flagLabel})</span> : null}
-      </span>
+      <Icon className={cn("size-3.5 shrink-0", flagged ? "text-(--status-soon-fg)" : "text-(--teal-700)")} />
+      <span className="font-semibold text-(--text-muted) text-[11px]">{label}:</span>
+      <span className="font-bold text-xs">{value}</span>
+      {flagged ? (
+        <span className="flex items-center gap-0.5 text-[10px] font-bold text-(--status-soon-fg)">
+          <TriangleAlert className="size-3" />
+          ({flagLabel})
+        </span>
+      ) : null}
     </div>
   );
 }

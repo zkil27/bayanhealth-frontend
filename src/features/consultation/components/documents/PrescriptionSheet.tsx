@@ -78,7 +78,7 @@ export function PrescriptionSheet({
 
       {/* Patient Information Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PATIENT INFORMATION
         </h2>
         <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
@@ -128,28 +128,28 @@ export function PrescriptionSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />
       </section>
 
       {/* Prescription Table Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PRESCRIPTION
         </h2>
-        <div className="w-full overflow-hidden border border-[#074972]/40 rounded-xs">
+        <div className="w-full overflow-hidden border border-(--navy-700)/40 rounded-xs">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#074972] text-white">
-                <th className="py-2.5 px-3 font-semibold border-r border-[#074972]/50 w-[30%]">
+              <tr className="bg-(--navy-700) text-white">
+                <th className="py-2.5 px-3 font-semibold border-r border-(--navy-700)/50 w-[30%]">
                   Medication
                 </th>
-                <th className="py-2.5 px-3 font-semibold border-r border-[#074972]/50 w-[40%]">
+                <th className="py-2.5 px-3 font-semibold border-r border-(--navy-700)/50 w-[40%]">
                   Sig (Directions)
                 </th>
-                <th className="py-2.5 px-2 font-semibold border-r border-[#074972]/50 text-center w-[10%]">
+                <th className="py-2.5 px-2 font-semibold border-r border-(--navy-700)/50 text-center w-[10%]">
                   Qty
                 </th>
-                <th className="py-2.5 px-2 font-semibold border-r border-[#074972]/50 text-center w-[10%]">
+                <th className="py-2.5 px-2 font-semibold border-r border-(--navy-700)/50 text-center w-[10%]">
                   Route
                 </th>
                 <th className="py-2.5 px-2 font-semibold text-center w-[10%]">
@@ -157,12 +157,12 @@ export function PrescriptionSheet({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#074972]/20 bg-white">
+            <tbody className="divide-y divide-(--navy-700)/20 bg-white">
               {payload.medications && payload.medications.length > 0 ? (
                 payload.medications.map((med, index) => (
                   <tr key={index}>
-                    <td className="py-3 px-3 align-top border-r border-[#074972]/20">
-                      <p className="font-bold text-[#074972] text-xs leading-snug">
+                    <td className="py-3 px-3 align-top border-r border-(--navy-700)/20">
+                      <p className="font-bold text-(--navy-700) text-xs leading-snug">
                         {med.genericName}
                       </p>
                       {med.dose && !med.genericName.includes(med.dose) ? (
@@ -171,13 +171,13 @@ export function PrescriptionSheet({
                         </p>
                       ) : null}
                     </td>
-                    <td className="py-3 px-3 align-top border-r border-[#074972]/20 text-slate-800 leading-relaxed">
+                    <td className="py-3 px-3 align-top border-r border-(--navy-700)/20 text-slate-800 leading-relaxed">
                       {med.instructions}
                     </td>
-                    <td className="py-3 px-2 align-top border-r border-[#074972]/20 text-center font-medium text-slate-800">
+                    <td className="py-3 px-2 align-top border-r border-(--navy-700)/20 text-center font-medium text-slate-800">
                       {med.duration || "14 capsules"}
                     </td>
-                    <td className="py-3 px-2 align-top border-r border-[#074972]/20 text-center text-slate-700">
+                    <td className="py-3 px-2 align-top border-r border-(--navy-700)/20 text-center text-slate-700">
                       {med.route || "Oral"}
                     </td>
                     <td className="py-3 px-2 align-top text-center text-slate-700">
@@ -199,7 +199,7 @@ export function PrescriptionSheet({
 
       {/* Special Instructions Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-1.5">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-1.5">
           SPECIAL INSTRUCTIONS
         </h2>
         <ul className="list-disc pl-5 space-y-1 text-xs text-slate-800 leading-relaxed">
@@ -213,7 +213,7 @@ export function PrescriptionSheet({
           ) : null}
         </ul>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-2" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-2" />
       </section>
 
       {/* Sheet Footer */}

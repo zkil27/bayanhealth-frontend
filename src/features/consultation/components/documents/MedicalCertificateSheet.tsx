@@ -94,7 +94,7 @@ export function MedicalCertificateSheet({
 
       {/* Patient Information Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PATIENT INFORMATION
         </h2>
         <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
@@ -126,20 +126,20 @@ export function MedicalCertificateSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />
       </section>
 
       {/* Assessment / Diagnosis Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-3">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-3">
           ASSESSMENT / DIAGNOSIS
         </h2>
         <div className="flex items-start gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Stethoscope className="size-7" />
           </div>
           <div className="flex flex-col gap-1 text-xs">
-            <h3 className="font-bold text-sm text-[#074972]">
+            <h3 className="font-bold text-sm text-(--navy-700)">
               {diagnosis}
             </h3>
             <p className="text-slate-700 leading-relaxed">
@@ -148,19 +148,19 @@ export function MedicalCertificateSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-4" />
       </section>
 
       {/* Medical Recommendation Section */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-3">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-3">
           MEDICAL RECOMMENDATION
         </h2>
 
         <div className="flex flex-col gap-3 text-xs">
           {/* Rest / Suspension */}
           <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <Bed className="size-4" />
             </div>
             <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
@@ -173,7 +173,7 @@ export function MedicalCertificateSheet({
 
           {/* Fit to Return */}
           <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <PersonStanding className="size-4" />
             </div>
             <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
@@ -186,7 +186,7 @@ export function MedicalCertificateSheet({
 
           {/* Work / School Advice */}
           <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#18a58c] text-[#18a58c] bg-teal-50/20">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <ClipboardList className="size-4" />
             </div>
             <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
@@ -199,7 +199,7 @@ export function MedicalCertificateSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-2" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-2" />
       </section>
 
       {/* Sheet Footer */}

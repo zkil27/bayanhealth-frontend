@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardCheck, FileText, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ClipboardCheck, FileText, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export function PatientRail({
           title="Expand patient intake"
           aria-label="Expand patient intake"
         >
-          <PanelLeftOpen className="size-4.5" />
+          <PanelRightOpen className="size-4.5" />
         </Button>
         <span className="flex size-7 items-center justify-center rounded-md bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
           <FileText className="size-4" />
@@ -87,7 +87,7 @@ export function PatientRail({
             title="Collapse intake rail"
             aria-label="Collapse intake rail"
           >
-            <PanelLeftClose className="size-4" />
+            <PanelRightClose className="size-4" />
           </Button>
         ) : null}
       </div>

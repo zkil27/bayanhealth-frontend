@@ -29,7 +29,7 @@ export function PatientPageHeader({
     <header
       data-slot="patient-page-header"
       className={cn(
-        "w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]",
+        "w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-(--surface-nav) pt-[env(safe-area-inset-top,0px)]",
         className,
       )}
     >

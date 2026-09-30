@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import {
+  ArrowRight,
   BookOpen,
+  Check,
   CheckCircle2,
   ClipboardList,
+  Clock,
   FileBadge,
   FlaskConical,
   Hash,
@@ -14,6 +18,16 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -244,6 +258,52 @@ export function DeliverablesDeck({
     (type) => !entries.some((e) => e.outputType === type),
   );
 
+  const [batchSigningOpen, setBatchSigningOpen] = useState(false);
+  const [batchSigningInProgress, setBatchSigningInProgress] = useState(false);
+
+  const unsignedEntries = entries.filter(
+    (entry) => (entry.status === "draft" || entry.status === "edited") && entry.artifact,
+  );
+
+  const currentIndex = entries.findIndex((entry) => entry.outputType === current.outputType);
+  const nextUnsigned = entries.find(
+    (entry) =>
+      (entry.status === "draft" || entry.status === "edited") &&
+      entry.outputType !== current.outputType,
+  );
+  const nextEntry =
+    currentIndex >= 0 && currentIndex < entries.length - 1
+      ? entries[currentIndex + 1]
+      : null;
+
+  const handleFinalize = async (signature: ArtifactSignatureInput) => {
+    if (!current.artifact) return;
+    await onFinalize(current.artifact, signature);
+    if (nextUnsigned) {
+      onActiveChange(nextUnsigned.outputType);
+    } else if (nextEntry) {
+      onActiveChange(nextEntry.outputType);
+    }
+  };
+
+  const handleBatchSign = async () => {
+    if (!specimen) return;
+    setBatchSigningInProgress(true);
+    try {
+      for (const entry of unsignedEntries) {
+        if (entry.artifact) {
+          await onFinalize(entry.artifact, {
+            signerName: specimen.signerName,
+            strokes: specimen.strokes,
+          });
+        }
+      }
+      setBatchSigningOpen(false);
+    } finally {
+      setBatchSigningInProgress(false);
+    }
+  };
+
   return (
     <section
       data-slot="deliverables-deck"
@@ -261,7 +321,7 @@ export function DeliverablesDeck({
             </span>
           ) : (
             <span className="flex items-center gap-1 rounded-full bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
-              <CheckCircle2 className="size-3" /> All reviewed
+              <CheckCircle2 className="size-3" /> All reviewed &amp; signed
             </span>
           )}
 
@@ -269,6 +329,34 @@ export function DeliverablesDeck({
             <span className="rounded-full bg-(--surface-accent-soft) px-2.5 py-0.5 text-xs font-bold text-(--teal-800) dark:text-(--teal-300)">
               {gateStatusLabel}
             </span>
+          ) : null}
+
+          {/* Quick jump to next unsigned document */}
+          {nextUnsigned ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-6 gap-1 rounded-full px-2 text-[11px] font-bold text-(--teal-800) border-(--border-subtle) hover:bg-(--surface-accent-soft)"
+              onClick={() => onActiveChange(nextUnsigned.outputType)}
+            >
+              <span>Next to sign: {OUTPUT_LABELS[nextUnsigned.outputType]}</span>
+              <ArrowRight className="size-3" />
+            </Button>
+          ) : null}
+
+          {/* Batch sign action if doctor has registered specimen and multiple drafts exist */}
+          {specimen && unsignedEntries.length > 1 ? (
+            <Button
+              type="button"
+              size="sm"
+              className="h-6 gap-1.5 rounded-full px-2.5 text-[11px] font-bold bg-(--action-primary) text-white shadow-2xs hover:bg-(--action-primary-hover)"
+              onClick={() => setBatchSigningOpen(true)}
+              disabled={busy}
+            >
+              <PenLine className="size-3" />
+              <span>Sign all ({unsignedEntries.length})</span>
+            </Button>
           ) : null}
         </div>
 
@@ -312,15 +400,6 @@ export function DeliverablesDeck({
         outline. Inactive tabs carry no border of their own and sit flat on
         the strip -- there is nothing for them to visually attach to, which
         is the point.
-
-        The two provenance chips ("AI draft (dot) you own it", "Needs your
-        review") and the patient-visibility badge used to live inside the
-        document's own card header, repeating its name a second time right
-        below the tab that already states it. They ride on the tab strip now
-        instead -- the chips on the active tab itself, the visibility badge
-        pinned to the strip's far right -- so `ArtifactCard` embedded below
-        can drop its header entirely and its body can stay the plain white
-        the unified card calls for.
       */}
       <div className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs">
         <div className="flex items-end gap-2 border-b border-(--border-subtle) bg-(--surface-warm-soft)/40 px-2 pt-2">
@@ -333,12 +412,6 @@ export function DeliverablesDeck({
           <div
             role="tablist"
             aria-label="Drafted documents"
-            // `overflow-y-hidden` is load-bearing, not decorative: per the CSS
-            // overflow spec, setting only `overflow-x` to a non-`visible`
-            // value forces the browser to treat `overflow-y` as `auto` too, so
-            // a stray sub-pixel height mismatch here (icon + chip + dot rows
-            // do not all line-height identically) was enough to summon a
-            // vertical scrollbar the row never actually needed.
             className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto overflow-y-hidden"
           >
             {entries.map((entry) => {
@@ -356,18 +429,18 @@ export function DeliverablesDeck({
                   data-status={entry.status}
                   onClick={() => onActiveChange(entry.outputType)}
                   className={cn(
-                    "relative flex shrink-0 items-center gap-2 rounded-t-lg border px-3.5 py-2 text-sm transition-colors",
+                    "relative flex shrink-0 items-center gap-2 rounded-t-lg border px-3 py-2 text-xs sm:text-sm transition-colors",
                     selected
                       ? "z-10 -mb-px border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading)"
                       : "border-transparent text-(--text-muted) hover:text-(--text-heading)",
                   )}
                 >
                   {entry.status === "generating" ? (
-                    <Spinner className="size-4 text-(--ai-fg)" />
+                    <Spinner className="size-3.5 text-(--ai-fg)" />
                   ) : (
                     <Icon
                       className={cn(
-                        "size-4",
+                        "size-3.5 sm:size-4",
                         entry.status === "released" || entry.status === "signed"
                           ? "text-(--status-available-fg)"
                           : entry.status === "stale"
@@ -378,30 +451,33 @@ export function DeliverablesDeck({
                   )}
                   <span className="whitespace-nowrap">{OUTPUT_LABELS[entry.outputType]}</span>
 
-                  {/* The provenance chips ride on the active tab only -- this
-                      is what used to sit in this document's own card header,
-                      moved up here so its name is not stated twice. */}
+                  {/* Explicit status badge on each tab */}
+                  {entry.status === "signed" ? (
+                    <span className="flex items-center gap-0.5 rounded-full bg-(--status-available-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--status-available-fg)">
+                      <Check className="size-2.5" /> Signed
+                    </span>
+                  ) : entry.status === "released" ? (
+                    <span className="flex items-center gap-0.5 rounded-full bg-(--surface-accent-soft) px-1.5 py-0.5 text-[10px] font-bold text-(--teal-800)">
+                      <Check className="size-2.5" /> Released
+                    </span>
+                  ) : entry.status === "draft" || entry.status === "edited" ? (
+                    <span className="flex items-center gap-0.5 rounded-full bg-(--status-soon-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--status-soon-fg)">
+                      <Clock className="size-2.5" /> To sign
+                    </span>
+                  ) : entry.status === "stale" ? (
+                    <span className="rounded-full bg-(--danger-bg) px-1.5 py-0.5 text-[10px] font-bold text-(--danger-fg)">
+                      Outdated
+                    </span>
+                  ) : null}
+
+                  {/* The provenance chips ride on the active tab only */}
                   {selected && provenance && provenance !== "neutral" ? (
                     <>
                       <AiProvenanceChip />
-                      {!entry.artifact!.effectiveStale ? (
+                      {!entry.artifact?.effectiveStale ? (
                         <ReviewStatusChip provenance={provenance} />
                       ) : null}
                     </>
-                  ) : null}
-
-                  {/*
-                    A dot, not a count, on an inactive tab only -- the active
-                    tab already says the same thing with the chips above.
-                    There is exactly one live document per type, so a number
-                    here would always read "1" and mean nothing; the dot
-                    answers the only question an inactive tab is asked -- is
-                    this one done.
-                  */}
-                  {!selected && (entry.status === "draft" || entry.status === "edited") ? (
-                    <span aria-hidden className="size-1.5 rounded-full bg-(--ai-accent)" />
-                  ) : !selected && entry.status === "stale" ? (
-                    <span aria-hidden className="size-1.5 rounded-full bg-(--status-soon-fg)" />
                   ) : null}
                 </button>
               );
@@ -436,10 +512,6 @@ export function DeliverablesDeck({
           role="tabpanel"
           id={`deck-panel-${current.outputType}`}
           aria-labelledby={`deck-tab-${current.outputType}`}
-          // `key` forces a fresh mount on every switch, which is what makes
-          // `animate-in` fire again each time rather than only on the deck's
-          // own first render — CSS animation classes trigger on mount, not on
-          // a prop changing underneath an element that stays mounted.
           className="min-w-0 max-h-[min(640px,calc(100dvh-16rem))] overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-1 duration-200"
         >
           {STATUS_COPY[current.status] ? (
@@ -456,15 +528,75 @@ export function DeliverablesDeck({
               defaultSignerName={defaultSignerName}
               canRegenerate={canRegenerate}
               onAmend={(payload) => onAmend(current.artifact!, payload)}
-              onFinalize={(signature) => onFinalize(current.artifact!, signature)}
+              onFinalize={handleFinalize}
               onRelease={() => onRelease(current.artifact!)}
               onRegenerate={() => onRegenerate(current.outputType)}
+              onNext={() => {
+                if (nextUnsigned) {
+                  onActiveChange(nextUnsigned.outputType);
+                } else if (nextEntry) {
+                  onActiveChange(nextEntry.outputType);
+                }
+              }}
+              hasNext={Boolean(nextUnsigned || nextEntry)}
             />
           ) : (
             <GeneratingPlaceholder outputType={current.outputType} />
           )}
         </div>
       </div>
+
+      {/* Batch sign confirmation modal */}
+      {specimen && unsignedEntries.length > 1 ? (
+        <AlertDialog open={batchSigningOpen} onOpenChange={setBatchSigningOpen}>
+          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
+            <AlertDialogHeader className="space-y-1.5 text-left">
+              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
+                Sign all {unsignedEntries.length} reviewed documents?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+                This will finalize and apply your registered digital signature ({specimen.signerName}) to all currently drafted deliverables:
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <ul className="space-y-1.5 py-2 text-xs font-semibold text-(--text-body)">
+              {unsignedEntries.map((e) => (
+                <li key={e.outputType} className="flex items-center gap-2 rounded-lg bg-(--surface-warm-soft) p-2">
+                  <Check className="size-3.5 text-(--teal-700)" />
+                  <span>{OUTPUT_LABELS[e.outputType]}</span>
+                  <span className="ml-auto text-[10px] text-(--text-muted)">Ready to sign</span>
+                </li>
+              ))}
+            </ul>
+
+            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
+              <AlertDialogCancel
+                disabled={batchSigningInProgress}
+                className="rounded-full text-xs"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={batchSigningInProgress}
+                onClick={handleBatchSign}
+                className="rounded-full bg-(--action-primary) text-xs font-bold text-white shadow-2xs hover:bg-(--action-primary-hover)"
+              >
+                {batchSigningInProgress ? (
+                  <>
+                    <Spinner className="size-3.5 mr-1" />
+                    Signing documents…
+                  </>
+                ) : (
+                  <>
+                    <PenLine className="size-3.5 mr-1" />
+                    Sign all {unsignedEntries.length} documents
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </section>
   );
 }

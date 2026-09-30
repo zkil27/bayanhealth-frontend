@@ -9,6 +9,192 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-09-26] Clinical Workflow & Visual Hierarchy: Doctorflow Optimization & Guided Sign Queue
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientDetails.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadView.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PatientRail.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PostConsultationSkeleton.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/CareContinuityPanel.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Clinical Ergonomics: Inverted Cockpit Layout ("Canvas & Inspector")**:
+    - **Natural Eye Path (Foveal Focus)**: In clinical attestation, the physician's job is to review and sign active legal deliverables, not re-read intake data. Placing Patient Intake on the left forced the doctor's eye to bypass already-known intake cards on every saccade.
+    - **Left Action Canvas (70%)**: Dedicated to primary active work—Assessment, SOAP Summary ribbon, and the Deliverables Deck with guided signing. The physician's gaze lands naturally on the work that needs to be finalized.
+    - **Right Reference Dock (30%)**: Patient Intake is now docked on the right as a collapsible reference inspector (`lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]` or `[minmax(0,1fr)_3.5rem]` when collapsed). Retains full quick-reference access to patient demographics, safety screenings, and intake survey without obstructing the primary workflow.
+    - **Zero Cumulative Layout Shift (CLS)**: Updated `PostConsultationSkeleton` to match the 70/30 left-action / right-inspector layout, and updated collapse/expand toggles to `PanelRightClose` / `PanelRightOpen`.
+  - **Clinical Cognitive Ergonomics ("Doctorflow") Alignment**:
+    - **Root Cause of Cognitive Overload**: Research into EHR human factors reveals that competing primary buttons, ambiguous tab dots (`•`), and bulky retrospective context (S & O cards) create severe decision fatigue. Clinicians were forced to play "whack-a-mole" across 5 tabs, clicking each individually and hunting for sign buttons.
+    - **Guided Review & Sign Stepper**:
+      - Replaced ambiguous tab dots (`•`) with explicit status badges on every tab: `[✓ Signed]` (green), `[✓ Released]` (teal), `[Clock To sign]` (amber), `[Drafting]`, `[Outdated]`.
+      - Implemented automatic queue progression (`handleFinalize`): Signing a document automatically flips the deck to the next pending item, eliminating manual tab switching.
+      - Updated document action buttons to dynamically read `Sign & next →` when additional deliverables remain in the queue, with explicit `Next document →` buttons on signed and released items.
+      - Added a quick-jump shortcut: `Next to sign: [Document Name] →` in the deliverables header.
+    - **1-Click Batch Attestation ("Sign All Reviewed")**:
+      - When multiple drafts exist and the physician has a registered signature specimen, an accessible `Sign all (N)` button appears in the deck header.
+      - Opens an `AlertDialog` summarizing all deliverables being attested, applying the stored digital signature to all verified drafts in one click.
+    - **Reclaimed Vertical Real Estate (APSO Hierarchy)**:
+      - Refactored `SoapSummaryCards` from a bulky two-card vertical block into a sleek, single-row clinical status ribbon (`lg:flex-row lg:items-center`).
+      - Compact `S` chip with 1-line chief complaint + inline `O` vital chips (`Temp 38.2°C`, `BP 118/76`, `HR 82`, `SpO2 98%`). Reclaimed ~46px of vertical height, placing the active deliverables deck comfortably above the fold.
+    - **Calmed Left Rail False Alarms**:
+      - Replaced the large green "Clinical alerts (0)" box and warning triangle with a calm, neutral reassurance strip (`ShieldCheck` + "Safety screening clear: Zero patient-reported red flags").
+      - Highlighted positive drug allergies with high-priority danger styling (`border-(--danger-border) bg-(--danger-bg)/20 font-bold text-(--danger-fg)`).
+    - **Eliminated One-Sided Stroke Gradients in PlanView**:
+      - Replaced `border-l-3 border-l-(--teal-600)` with crisp 1px solid semantic card containers (`border border-(--border-subtle) bg-(--surface-card)`).
+    - **Harmonized Encounter Closure Hierarchy**:
+      - Updated `FinishDocumentationControl`: When documents remain unsigned, the button steps down to a calm outline button displaying `Finish (N pending)`, keeping primary visual momentum on the active deliverables queue.
+      - When all documents are signed and released, it lights up in solid green `Finish documentation ✓`.
+- **Anti-AI Slop Compliance**: Zero glowing gradient borders, zero platform emojis (clean Lucide SVG icons only: `ShieldCheck`, `Check`, `Clock`, `ArrowRight`, `PenLine`, `PanelRightClose`, `PanelRightOpen`), crisp 1px solid borders, BayanHealth brand tokens.
+- **Tokens & Primitives Used**: `var(--action-primary)`, `var(--teal-700)`, `var(--status-available-bg)`, `var(--status-soon-bg)`, `var(--surface-card)`, `Button`, `AlertDialog`.
+- **Upstream Porting Notes**: Changes are completely component-scoped to `src/features/consultation/components/postConsultation/`. All TanStack hooks, CDS contracts, and validation props remain untouched.
+
+---
+
+- **Target Route / Surface**: Global Application Canvas, Root Body, Doctor Cockpit, Patient Portal, Auth (`src/styles/bayanhealth-tokens.css`, `src/app/globals.css`, `public/background-pattern.svg`, `src/app/layout.tsx`, `src/app/doctor/post-consultation/layout.tsx`)
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css` [MODIFIED]
+  - `src/app/globals.css` [MODIFIED]
+  - `public/background-pattern.svg` [MODIFIED]
+  - `src/app/layout.tsx` [MODIFIED]
+  - `src/app/doctor/post-consultation/layout.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PostConsultationSkeleton.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Zero Hardcoded Colors Token Architecture**:
+    - **Root Cause of Missing Weave**: The original $3819 \times 978\text{px}$ herringbone vector pattern (`public/background-pattern.svg`) was squashed into a 1:1 square (`background-size: 320px 320px`), reduced to an invisible $4\%$ opacity (`opacity="0.04"`), and contained hardcoded dark teal (`fill="#0b3b43"`), which had zero contrast against dark mode obsidian backgrounds (`#0b1117`).
+    - **Neutral Stencil Vector**: Stripped all hardcoded hex colors (`fill="#0b3b43"` $\to$ `fill="currentColor"`) and baked opacities from `public/background-pattern.svg`, converting it into a clean, uncolored alpha stencil. Removed dead filter definitions.
+    - **Design System Tokens (`bayanhealth-tokens.css`)**:
+      - Light Mode: `--weave-color: var(--navy-700);` (Brand Navy `#074972`) with `--weave-opacity: 0.08;` over `--surface-page`.
+      - Dark Mode: `--weave-color: var(--teal-500);` (Clinical Teal `#20a38b`) with `--weave-opacity: 0.05;` over `--surface-page`.
+    - **CSS `mask-image` Stacking Engine (`globals.css`)**:
+      - Rebuilt `.bg-satin` to use `position: relative; isolation: isolate;` with a `::before` pseudo-element.
+      - Applied `background-color: var(--weave-color); opacity: var(--weave-opacity);` masked by `-webkit-mask-image: url('/background-pattern.svg')`.
+      - Proportional scaling: `-webkit-mask-size: 960px auto; mask-size: 960px auto;` preserving the natural $3.9:1$ herringbone geometry.
+      - Fixed viewport coverage: Configured `body.bg-satin::before { position: fixed; }` so the entire document ground is seamlessly textured without layout shifts or scroll clipping.
+  - **Universal Canvas Coverage**: Applied `bg-satin` to `<body>` in `src/app/layout.tsx` and the post-consultation layout (`src/app/doctor/post-consultation/layout.tsx`), unifying all clinician and patient routes under one cohesive cultural tactile surface.
+- **Anti-AI Slop Compliance**: Zero glowing gradients or arbitrary hex codes. Authentic Filipino textile watermark rendered with crisp 1px borders and clinical card surfaces floating on top.
+- **Tokens & Primitives Used**: `var(--weave-color)`, `var(--weave-opacity)`, `var(--surface-page)`, `var(--navy-700)`, `var(--teal-500)`.
+
+---
+
+### [2026-09-26] Brand Integrity & Dark Mode: Logomark Vector Silhouette Restoration
+
+- **Target Route / Surface**: Global Shell, Floating Navigation Sidebar, Document Headers (`src/components/layout/FloatingSidebar.tsx`, `src/components/primitives/Logo/AppLogo.tsx`, Document Sheets)
+- **Files Modified / Created**:
+  - `public/BayanHealthLogoWithTextDark.svg` [NEW]
+  - `src/components/primitives/Logo/AppLogo.tsx` [MODIFIED]
+  - `src/components/layout/FloatingSidebar.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetHeader.tsx` [MODIFIED]
+  - `src/features/consultation/components/A4Docs/PrescriptionPagedContent.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Destructive CSS Filter Silhouette Bug**:
+    - **Root Cause**: `src/components/layout/FloatingSidebar.tsx` applied `className="dark:brightness-0 dark:invert"` to `<AppLogo type="withText" />` to make the word "Bayan" visible against dark backgrounds. Because CSS filters apply globally across the rendered SVG image element, `brightness-0` collapsed every color to `#000000` and `invert` made every pixel `#FFFFFF`. This obliterated the brand artwork, turning the logomark (speech bubble with Brand Teal `#18A58C`, inner Brand Navy `#074972` stethoscope icon, and white `#FFFFFF` highlights) into a flat, washed-out monochrome white blob.
+    - **Dedicated Dark SVG Asset (`public/BayanHealthLogoWithTextDark.svg`)**:
+      - Authored a high-fidelity SVG where the "Bayan" wordmark path is crisp `#FFFFFF` (white), "Health" remains vibrant Brand Teal (`#18A58C`), and the complete logomark vector (speech bubble, stethoscope stroke, crossbar, and dot highlights) retains full brand coloration and clinical authority.
+    - **Intelligent `AppLogo` Component Theme Awareness**:
+      - Updated `AppLogo` with a `variant?: "auto" | "light" | "dark"` prop (defaulting to `"auto"`).
+      - Under `"auto"`, `AppLogo` renders both light and dark SVGs using zero-flicker Tailwind classes (`dark:hidden` / `hidden dark:block`), switching instantly without JavaScript runtime overhead or layout shifts.
+      - Enforced `variant="light"` on printed/paged clinical document sheets (`DocumentSheetHeader.tsx`, `PrescriptionPagedContent.tsx`) so that white paper/A4 sheets always print with the classic Navy/Teal logo regardless of the user's current app theme.
+    - Removed `dark:brightness-0 dark:invert` from `FloatingSidebar.tsx`.
+- **Anti-AI Slop Compliance**: Replaced destructive full-element CSS filter hacks with authentic multi-colored vector assets that preserve brand equity and design tokens.
+- **Tokens & Primitives Used**: BayanHealth Brand Navy (`#074972`), Brand Teal (`#18A58C`), `#FFFFFF`, `AppLogo`.
+
+---
+
+### [2026-09-26] Design System Modernization: Hardcoded Color Audit & CSS Token Replacement
+
+- **Target Route / Surface**: Document Sheets, Consultation Tabs, Patient Shell Headers (`/doctor/post-consultation/[id]`, `/consultation/room/[bookingId]`, `/patient/*`)
+- **Files Modified**:
+  - `src/features/consultation/components/documents/DocumentSheetHeader.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetFooter.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/MedicalCertificateSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DiagnosticRequestSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/ClinicalReferralSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PatientCareGuideSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PrescriptionSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/DoctorDeliverablesPreviewTab.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SignatureField.tsx` [MODIFIED]
+  - `src/features/patient/components/homepage/PatientHome.tsx` [MODIFIED]
+  - `src/features/patient/components/PatientPageHeader.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Replaced 100+ Arbitrary Hex Colors with Standard Tokens**:
+    - Eliminated hardcoded `#074972` (Brand Navy), `#18a58c` (Brand Teal), `#005f73` (Deep Teal), and `#0c1f1b` across clinical document print sheets, modals, and patient headers.
+    - Replaced with authoritative CSS variables from `bayanhealth-tokens.css`: `text-(--navy-700)`, `bg-(--navy-700)`, `border-(--navy-700)`, `text-(--teal-700)`, `bg-(--teal-700)`, `border-(--teal-700)`, `bg-(--teal-800)`, `bg-(--teal-100)/30`, and `dark:bg-(--surface-nav)`.
+    - Converted signature canvas drawing in `SignatureField.tsx` to dynamically query computed `--navy-700` token values.
+  - **Full Production Compliance**: Verified full build compilation (`npm run build`) and zero hardcoded arbitrary color regressions.
+- **Tokens & Primitives Used**: `var(--navy-700)`, `var(--teal-700)`, `var(--teal-800)`, `var(--teal-100)`, `var(--surface-nav)`, `bg-slate-900`.
+
+---
+
+### [2026-09-26] Header Layout & Responsiveness Fix: Post-Consultation "Finish Documentation" Overflow
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PostConsultationSkeleton.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Header Bar & "Finish Documentation" Overflow**:
+    - **Root Cause**: On screen widths <= 1280px (such as 1024px laptops/tablets or split screen viewports), the combined width of the patient context header (Back link + Avatar + Name/Identity + "Assessment confirmed" badge) and the right rail (full 3-step Stepper "Review" → "Assess" → "Deliver" + Refresh button + unconstrained `FinishDocumentationControl` with `w-full`) exceeded the viewport width (~1200px required vs 1024px available). Because `body` enforces `overflow-x-hidden`, the rightmost ~80px–180px of the header was silently clipped off, cutting off the "Finish documentation" CTA text and its right pill border.
+    - **Header Container Constraints**: Applied `w-full max-w-full min-w-0` to `WorkspaceHeader` and root `post-consultation-workspace` container, preventing horizontal blowout beyond the viewport.
+    - **Responsive Workspace Stepper**: Updated `WorkspaceStepper` so that on screens `< xl`, the active phase label is prominently displayed (e.g. `(✓) ── (✓) ── (3) Deliver`) while completed/pending step labels hide smoothly, saving ~180px of horizontal space while preserving crystal-clear clinical progress. On `>= xl` desktop viewports, all 3 phase labels display in full. Scaled connecting line widths adaptively (`w-3 sm:w-4 xl:w-6`).
+    - **Ergonomic Action Bar & Sizing**:
+      - Updated `FinishDocumentationControl` to accept configurable `size` (`"sm"` in the header, `"default"` at the bottom "Complete Consultation" card) and `className`.
+      - Replaced raw unstyled `<button>` in disabled state with shadcn `<Button size={size}>` with consistent `shrink-0 whitespace-nowrap rounded-full` styling, preventing rogue `w-full` blowout in flex containers.
+      - Refined the Refresh button with `size="sm" gap-1.5 shrink-0` and responsive label (`<span className="hidden sm:inline">Refresh</span>`).
+    - **Cockpit Grid Boundary Protection**: Added `min-w-0 max-w-full` to the 2-column cockpit grid container so large data tables or vitals cards cannot force the workspace width past the viewport.
+    - **Zero-Shift Skeleton Synchronization**: Aligned `PostConsultationSkeleton` with the exact responsive stepper and action bar button widths.
+- **Device Optimization**: Desktop-first density (Doctor Clinical Cockpit) + tablet/compact screen responsiveness down to 768px/1024px without truncation or horizontal clipping.
+- **Tokens & Primitives Used**: `bg-(--surface-card)`, `bg-(--action-primary)`, `text-(--text-heading)`, `text-(--text-muted)`, `border-(--border-subtle)`, `Button`, `Skeleton`.
+
+---
+
+### [2026-09-26] Component / View Redesign: Messages App Master-Detail Layout for Doctor Chat
+
+- **Target Route / Surface**: `/doctor/chat` and `/doctor/chat/[bookingId]`
+- **Files Modified**:
+  - `src/app/doctor/(homepage)/chat/layout.tsx` [NEW]
+  - `src/app/doctor/(homepage)/chat/page.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatShell.tsx` [NEW]
+  - `src/features/doctor/components/chat/DoctorChatSidebar.tsx` [NEW]
+  - `src/features/doctor/components/chat/DoctorChatEmptyPane.tsx` [NEW]
+  - `src/features/doctor/components/chat/DoctorChatRoom.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatList.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/chatDateUtils.ts` [NEW]
+- **Design Intent**:
+  - Relayouted the `/doctor/chat` tab from an isolated, low-density single-column list of wide cards into a modern, clinical master-detail Messages app layout inspired by Apple Messages, WhatsApp Web, and Telegram.
+  - **Desktop-First Ergonomics**: Two synchronized columns spanning the full height of the doctor viewport:
+    - **Left Pane (Conversation Sidebar)**: Fixed width (320px–384px) with real-time patient/message search, category triage filters ("All", "Live", "History"), active thread indicators with subtle warm surface ring, patient avatars with live status badges, last message previews, and relative timestamps.
+    - **Right Pane (Message Canvas)**: Active message thread with pinned top header (patient name resolved from conversation query cache, video call action CTA, live/connection transport status), grouped message bubbles with date divider pills ("Today", "Yesterday", long dates), timestamps, and pinned bottom composer.
+    - **Empty Selection State**: Clean clinical empty preview pane on desktop when no thread is selected with triage statistics and quick "Open recent conversation" action.
+  - **Mobile Ergonomics**: Responsive single-pane navigation: `/doctor/chat` displays the conversation list full width; tapping an item navigates to the chat room with a mobile back button (`md:hidden`) returning to the thread list.
+  - **Zero Anti-AI Slop**: Zero glowing gradient borders, zero side-tab borders, zero pulsing dots, zero emojis, verified with Impeccable mechanical detector pass (0 defects).
+- **Device Optimization**: Desktop-first density (Doctor Clinical Cockpit) + Mobile-responsive view navigation.
+- **Tokens & Primitives Used**: `bg-(--surface-card)`, `bg-(--surface-page)`, `bg-(--surface-warm)`, `bg-(--surface-warm-soft)`, `bg-(--action-primary)`, `text-(--text-heading)`, `text-(--text-muted)`, `text-(--text-subtle)`, `border-(--border-subtle)`.
+- **Upstream Porting Notes**: Self-contained within `src/features/doctor/components/chat/` and `src/app/doctor/(homepage)/chat/`. The upstream AI agent should copy the new files and update `DoctorChatRoom.tsx`, `DoctorChatList.tsx`, and `page.tsx`.
+
+---
+
+- **Target Route / Surface**:
+  - `/doctor/post-consultation/[id]` (Post-Consultation Assessment-First Clinical Workspace)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/PostConsultationSkeleton.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Balanced 30 / 70 Clinical Proportions**: Replaced the cramped fixed `18rem` (288px) left rail with a proportional `minmax(0, 3fr) minmax(0, 7fr)` grid template (`lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]`).
+    - **Patient Intake Rail (30%)**: Expands the left rail from 288px to a comfortable ~380px–570px (across typical desktop screens from 1280px to 1920px), eliminating awkward multiline text wrapping in the 2-column Allergies/Medications cards, providing proper whitespace for red-flag screening badges, and enabling effortless clinical scanning of patient history.
+    - **Main Documentation Stage (70%)**: Allocates 70% width to the active clinical workspace (SOAP Subjective/Objective cards, Confirmed/Editable Assessment, Deliverables Deck tabs, Care Continuity recommendations, and Authorized Artifact History), creating a balanced, high-density desktop clinical cockpit.
+  - **Collapsible Ergonomics Preserved**: When collapsed, the left rail cleanly shrinks to `3.5rem` (`lg:grid-cols-[3.5rem_minmax(0,1fr)]`), allowing the documentation stage to expand dynamically.
+  - **Zero-Shift Loading Skeleton**: Synchronized `PostConsultationSkeleton` to match the exact 2-column 30/70 layout, purging obsolete 3-column elements to prevent layout shifts during SSR and client suspense loading.
+
+---
+
 ### [2026-09-26] Impeccable Redesign: Professional Clinical Document Preview Lightbox Modal
 
 - **Target Route / Surface**:

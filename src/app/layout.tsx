@@ -77,7 +77,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${inter.className} h-full scroll-smooth antialiased`}
     >
-      <body className="flex min-h-screen w-full flex-col scroll-smooth">
+      <body className="bg-satin flex min-h-screen w-full flex-col scroll-smooth">
         <SessionGuard />
         <TapFeedback />
         <ThemeProvider

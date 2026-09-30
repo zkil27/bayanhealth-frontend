@@ -61,7 +61,7 @@ export function WorkspaceStepper({
               <span
                 aria-hidden
                 className={cn(
-                  "h-px w-6",
+                  "h-px w-3 sm:w-4 xl:w-6 transition-colors",
                   done || current ? "bg-(--action-primary)" : "bg-(--border-default)",
                 )}
               />
@@ -73,7 +73,7 @@ export function WorkspaceStepper({
               }
               aria-current={current ? "step" : undefined}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors",
+                "flex items-center gap-1.5 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs sm:text-sm font-semibold transition-colors",
                 done && "text-(--status-available-fg)",
                 current && "bg-(--surface-accent-soft) text-(--status-available-fg)",
                 !done && !current && "text-(--text-subtle)",
@@ -98,7 +98,9 @@ export function WorkspaceStepper({
                   index + 1
                 )}
               </span>
-              {step.label}
+              <span className={cn("transition-opacity", current ? "inline" : "hidden xl:inline")}>
+                {step.label}
+              </span>
             </span>
           </li>
         );
@@ -167,34 +169,34 @@ export function WorkspaceHeader({
   return (
     <header
       data-slot="workspace-header"
-      className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-(--border-subtle) bg-(--surface-card) px-4 py-3.5 shadow-xs md:px-6"
+      className="flex w-full max-w-full min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-xs sm:px-4 sm:py-3 md:px-6"
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 sm:flex-initial items-center gap-2.5 sm:gap-3">
         <Link
           href="/doctor/history"
           aria-label="Back to consultation history"
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
+          className="flex size-8.5 sm:size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
         >
           <ArrowLeft className="size-4" />
         </Link>
         <span
           aria-hidden
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-sm font-bold text-(--text-on-brand)"
+          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-xs sm:text-sm font-bold text-(--text-on-brand)"
         >
-          {name ? initials(name) : <Stethoscope className="size-5" />}
+          {name ? initials(name) : <Stethoscope className="size-4.5 sm:size-5" />}
         </span>
         <div className="flex min-w-0 flex-col">
-          <h1 className="truncate font-display text-lg font-bold text-(--text-heading)">
+          <h1 className="truncate font-display text-base sm:text-lg font-bold text-(--text-heading)">
             {heading}
           </h1>
-          <p className="truncate text-xs font-semibold text-(--text-muted)">
+          <p className="truncate text-[11px] sm:text-xs font-semibold text-(--text-muted)">
             {name ? identityParts.join(" · ") : `#${consultationId}`}
           </p>
         </div>
         <span
           data-slot="workspace-status"
           className={cn(
-            "ml-1 flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold",
+            "ml-1 hidden sm:flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold",
             statusTone === "active" && "bg-(--status-available-bg) text-(--status-available-fg)",
             statusTone === "danger" && "bg-(--danger-bg) text-(--danger-fg)",
             statusTone === "done" && "bg-(--gray-bg) text-(--gray-fg)",
@@ -210,7 +212,7 @@ export function WorkspaceHeader({
         {allergies ? (
           <span
             data-slot="header-allergy-tag"
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-(--danger-border) bg-(--danger-bg) px-2.5 py-0.5 text-xs font-bold text-(--danger-fg)"
+            className="hidden md:flex shrink-0 items-center gap-1.5 rounded-full border border-(--danger-border) bg-(--danger-bg) px-2.5 py-0.5 text-xs font-bold text-(--danger-fg)"
           >
             <AlertTriangle className="size-3.5 shrink-0" />
             Allergies: {allergies}
@@ -218,7 +220,7 @@ export function WorkspaceHeader({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 lg:gap-4">
         <WorkspaceStepper phase={phase} blocked={blocked} />
         {actions}
       </div>

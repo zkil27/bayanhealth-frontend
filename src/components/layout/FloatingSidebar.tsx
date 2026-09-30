@@ -73,7 +73,6 @@ export function SidebarContent() {
           type="withText"
           width={164}
           height={33}
-          className="dark:brightness-0 dark:invert"
         />
         <span className="sr-only">BayanHealth</span>
       </div>

@@ -8,6 +8,7 @@ import { ArrowLeft, SendHorizonal, Video } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { useIdToken } from "@/stores/useAuthStore";
@@ -17,22 +18,15 @@ import {
   type DisplayMessage,
 } from "@/features/consultation/hooks/useConsultationChat";
 import { fetchBookingDetail } from "@/features/booking/lib/api/bookingDetail";
+import {
+  fetchConversationPage,
+  type ConversationEntry,
+} from "@/features/consultation/lib/api/conversations";
+import { formatDateGroup, formatMessageClock } from "./chatDateUtils";
 
 /**
  * `/doctor/chat/{bookingId}` — the doctor's side of one conversation
  * (Task 9, mirrors `PatientChatRoom.tsx`).
- *
- * Same transport (`useConsultationChat`), same read-only-once-terminal rule
- * (ADR-20260909-01) as the patient room. The one real asymmetry: the patient
- * room resolves the counterpart's name via `GET /v1/doctors/{doctorId}`
- * (a public, PHI-free directory read), and there is no equivalent for a
- * doctor to resolve an arbitrary patient's name — `resolvePatientDisplayName`
- * only ever runs server-side, inside `GET /v1/conversations`. A doctor who
- * reaches this room directly (a refresh, a bookmark, a shared link) rather
- * than by clicking through `DoctorChatList` therefore sees the same `Ref
- * XXXXXX` reference every other doctor surface already falls back to
- * (`IntakeQueueEntry`/`ScheduledRequestEntry`/`ReadyToStartCard`) — not a
- * gap this component introduces, but a real, standing platform limitation.
  */
 export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
   const idToken = useIdToken();
@@ -48,11 +42,35 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
     throwOnError: false,
   });
 
-  // Read-only once the booking is terminal (ADR-20260909-01) — same rule and
-  // same "undefined reads as not-yet-read-only" tolerance `PatientChatRoom`
-  // applies while the booking read is still in flight.
+  // Cached conversations lookup to resolve patient display name
+  const convQuery = useQuery({
+    queryKey: ["doctor-conversations", idToken],
+    queryFn: () => fetchConversationPage(idToken ?? "", undefined, 50),
+    enabled: !!idToken,
+    staleTime: 1000 * 30,
+    retry: false,
+    throwOnError: false,
+  });
+
+  const matchedConv: ConversationEntry | undefined = convQuery.data?.conversations?.find(
+    (c) => c.booking.bookingId === bookingId,
+  );
+
+  const patientRef = shortRef(bookingId);
+  const resolvedPatientName = matchedConv?.patientName;
+  const displayName = resolvedPatientName ?? `Ref ${patientRef}`;
+  const avatarInitials = resolvedPatientName
+    ? resolvedPatientName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : patientRef.slice(0, 2);
+
   const bookingStatus = bookingQuery.data?.status;
   const isReadOnly = bookingStatus === "completed" || bookingStatus === "cancelled";
+  const isLive = bookingStatus === "in_progress";
 
   const chat = useConsultationChat({
     bookingId,
@@ -60,124 +78,170 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
     enabled: isDemo || !bookingQuery.isLoading,
   });
 
-  const patientRef = shortRef(bookingId);
-  const patientLabel = `Ref ${patientRef}`;
-
   return (
-    <section
+    <div
       data-slot="doctor-chat-room"
-      className="mx-auto flex h-[calc(100dvh-6rem)] min-h-[24rem] w-full max-w-3xl flex-col px-2 pt-2 md:px-4"
+      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-(--surface-page)"
     >
-      <header className="flex shrink-0 items-center gap-3 pb-3">
-        <Link
-          href="/doctor/chat"
-          aria-label="Back to conversations"
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs transition-transform duration-300 md:hover:-translate-x-0.5"
-        >
-          <ArrowLeft className="size-5" strokeWidth={1.75} />
-        </Link>
+      {/* Messages App Header */}
+      <header className="flex shrink-0 items-center justify-between border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/doctor/chat"
+            aria-label="Back to conversations"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-warm) text-(--text-heading) shadow-2xs md:hidden"
+          >
+            <ArrowLeft className="size-4" strokeWidth={2} />
+          </Link>
 
-        <Avatar className="size-10 border border-(--border-subtle)">
-          <AvatarFallback className="bg-(--surface-warm) font-bold text-(--text-heading)">
-            {patientRef.slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+          <Avatar className="size-10 shrink-0 border border-(--border-subtle)">
+            <AvatarFallback className="bg-(--surface-warm) text-xs font-bold text-(--text-heading)">
+              {avatarInitials}
+            </AvatarFallback>
+          </Avatar>
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[16px] leading-tight font-bold text-(--text-heading)">
-            {patientLabel}
-          </p>
-          {isReadOnly ? (
-            <p className="mt-0.5 truncate text-[13.5px] text-(--text-muted)">History</p>
-          ) : (
-            <TransportLine transport={chat.transport} />
-          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-sm font-bold text-(--text-heading)">
+                {displayName}
+              </h2>
+              {resolvedPatientName ? (
+                <span className="shrink-0 rounded-md bg-(--surface-warm) px-1.5 py-0.5 font-mono text-[10.5px] text-(--text-subtle)">
+                  {patientRef}
+                </span>
+              ) : null}
+            </div>
+
+            {isReadOnly ? (
+              <p className="mt-0.5 truncate text-xs text-(--text-muted)">
+                Consultation Ended · History (Read-only)
+              </p>
+            ) : (
+              <TransportLine transport={chat.transport} isLive={isLive} />
+            )}
+          </div>
         </div>
 
-        {isReadOnly ? null : (
-          <Link
-            href={`/consultation/room/${encodeURIComponent(bookingId)}`}
-            aria-label="Switch to video consultation"
-            title="Switch to video"
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs transition-colors hover:bg-(--surface-warm-soft)"
-          >
-            <Video className="size-5" strokeWidth={1.75} />
-          </Link>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {isReadOnly ? (
+            <Badge
+              variant="outline"
+              className="border-(--border-subtle) text-[11px] text-(--text-muted)"
+            >
+              Archived
+            </Badge>
+          ) : (
+            <Link
+              href={`/consultation/room/${encodeURIComponent(bookingId)}`}
+              aria-label="Switch to video consultation"
+              title="Switch to video consultation"
+              className="flex items-center gap-1.5 rounded-xl bg-(--action-primary) px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition-colors hover:bg-(--action-primary-hover) focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
+            >
+              <Video className="size-3.5" />
+              <span className="hidden sm:inline">Join Video</span>
+            </Link>
+          )}
+        </div>
       </header>
 
+      {/* Read-Only Status Banner */}
       {isReadOnly ? (
-        <p
+        <div
           data-slot="doctor-chat-read-only-banner"
-          className="mb-3 shrink-0 rounded-xl border border-(--border-subtle) bg-(--surface-warm) px-4 py-3 text-[14px] leading-[1.45] text-(--text-muted)"
+          className="shrink-0 border-b border-(--border-subtle) bg-(--surface-warm) px-4 py-2.5 text-xs text-(--text-muted)"
         >
-          <span className="font-bold text-(--text-heading)">
+          <span className="font-semibold text-(--text-heading)">
             {bookingStatus === "cancelled"
               ? "This booking was cancelled."
               : "This consultation has ended."}
           </span>{" "}
-          You can read the conversation below, but it&apos;s closed to new
-          messages.
-        </p>
+          This conversation is read-only and preserved for the clinical record.
+        </div>
       ) : null}
 
+      {/* Booking query error */}
       {bookingQuery.error ? (
-        <Alert variant="destructive" className="mb-3 shrink-0">
-          <AlertTitle>Couldn&apos;t load this consultation</AlertTitle>
-          <AlertDescription>
-            {bookingQuery.error instanceof Error
-              ? bookingQuery.error.message
-              : "Something went wrong."}
-          </AlertDescription>
-        </Alert>
+        <div className="shrink-0 p-3">
+          <Alert variant="destructive">
+            <AlertTitle className="text-xs font-semibold">
+              Couldn&apos;t load consultation details
+            </AlertTitle>
+            <AlertDescription className="text-xs">
+              {bookingQuery.error instanceof Error
+                ? bookingQuery.error.message
+                : "Something went wrong."}
+            </AlertDescription>
+          </Alert>
+        </div>
       ) : null}
 
-      <MessageList messages={chat.messages} isLoading={chat.isLoading} readOnly={isReadOnly} />
+      {/* Messages Canvas */}
+      <MessageList
+        messages={chat.messages}
+        isLoading={chat.isLoading}
+        readOnly={isReadOnly}
+        patientInitials={avatarInitials}
+      />
 
       {chat.sendError ? (
-        <Alert variant="destructive" className="mt-2 shrink-0" data-slot="doctor-chat-send-error">
-          <AlertDescription>{chat.sendError}</AlertDescription>
-        </Alert>
+        <div className="shrink-0 px-4 pt-1">
+          <Alert variant="destructive" className="py-2 text-xs" data-slot="doctor-chat-send-error">
+            <AlertDescription className="text-xs">{chat.sendError}</AlertDescription>
+          </Alert>
+        </div>
       ) : null}
 
+      {/* Message Composer (Bottom Pinned) */}
       {isReadOnly ? null : (
-        <Composer
-          input={chat.input}
-          setInput={chat.setInput}
-          send={chat.send}
-          validationError={chat.validationError}
-        />
+        <div className="shrink-0 border-t border-(--border-subtle) bg-(--surface-card) p-3 md:p-3.5">
+          <Composer
+            input={chat.input}
+            setInput={chat.setInput}
+            send={chat.send}
+            validationError={chat.validationError}
+          />
+        </div>
       )}
-    </section>
+    </div>
   );
 }
 
-function TransportLine({ transport }: { transport: ChatTransport }) {
-  const label =
-    transport === "ws"
+function TransportLine({
+  transport,
+  isLive,
+}: {
+  transport: ChatTransport;
+  isLive: boolean;
+}) {
+  const statusLabel = isLive
+    ? "Live Consultation"
+    : transport === "ws"
       ? "Connected"
       : transport === "http"
         ? "Connected · no live updates"
         : "Connecting…";
+
   return (
-    <p
+    <div
       data-slot="doctor-chat-transport"
       data-transport={transport}
-      className="mt-0.5 flex items-center gap-1.5 truncate text-[13.5px] text-(--text-muted)"
+      className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-(--text-muted)"
     >
       <span
         aria-hidden
         className={cn(
           "size-2 shrink-0 rounded-full",
-          transport === "ws"
-            ? "bg-primary"
-            : transport === "http"
-              ? "bg-(--status-soon-fg)"
-              : "bg-border",
+          isLive
+            ? "bg-(--status-available-fg)"
+            : transport === "ws"
+              ? "bg-primary"
+              : transport === "http"
+                ? "bg-(--status-soon-fg)"
+                : "bg-border",
         )}
       />
-      {label}
-    </p>
+      <span>{statusLabel}</span>
+    </div>
   );
 }
 
@@ -185,10 +249,12 @@ function MessageList({
   messages,
   isLoading,
   readOnly,
+  patientInitials,
 }: {
   messages: DisplayMessage[];
   isLoading: boolean;
   readOnly: boolean;
+  patientInitials: string;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -201,7 +267,7 @@ function MessageList({
         data-slot="doctor-chat-loading"
         role="status"
         aria-live="polite"
-        className="flex flex-1 items-center justify-center gap-2 text-[14px] text-muted-foreground"
+        className="flex flex-1 items-center justify-center gap-2 text-xs text-muted-foreground"
       >
         <Spinner className="size-4" />
         Loading conversation…
@@ -213,11 +279,13 @@ function MessageList({
     return (
       <div
         data-slot="doctor-chat-empty"
-        className="flex flex-1 items-center justify-center px-6 text-center text-[14.5px] text-muted-foreground"
+        className="flex flex-1 flex-col items-center justify-center p-6 text-center text-xs text-(--text-muted)"
       >
-        {readOnly
-          ? "No messages were sent in this conversation."
-          : "No messages yet. Send the first one — your patient will see it here."}
+        <p className="max-w-xs leading-relaxed">
+          {readOnly
+            ? "No messages were recorded during this consultation."
+            : "No messages yet. Send a clinical message to the patient below."}
+        </p>
       </div>
     );
   }
@@ -225,25 +293,71 @@ function MessageList({
   return (
     <ol
       data-slot="doctor-chat-messages"
-      className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto py-1"
+      className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-4 md:p-5"
     >
-      {messages.map((message) => (
-        <li
-          key={message.messageId}
-          data-slot="doctor-chat-message"
-          data-own={message.isOwn ? "true" : "false"}
-          data-pending={message.pending ? "true" : "false"}
-          className={cn(
-            "max-w-[82%] px-4 py-2.5 text-[15px] leading-[1.45]",
-            message.isOwn
-              ? "self-end rounded-2xl rounded-br-xs bg-(--action-primary) font-medium text-white shadow-xs"
-              : "self-start rounded-2xl rounded-bl-xs border border-(--border-subtle) bg-(--surface-card) text-(--text-heading) shadow-xs",
-            message.pending && "opacity-70",
-          )}
-        >
-          <span className="break-words whitespace-pre-wrap">{message.content}</span>
-        </li>
-      ))}
+      {messages.map((message, index) => {
+        const currentDateGroup = formatDateGroup(message.createdAt);
+        const prevMessage = messages[index - 1];
+        const prevDateGroup = prevMessage ? formatDateGroup(prevMessage.createdAt) : null;
+        const showDateSeparator = currentDateGroup && currentDateGroup !== prevDateGroup;
+
+        const clock = formatMessageClock(message.createdAt);
+
+        return (
+          <div key={message.messageId} className="flex flex-col gap-2.5">
+            {showDateSeparator ? (
+              <div className="my-2 flex justify-center">
+                <span className="rounded-full border border-(--border-subtle) bg-(--surface-warm) px-3 py-0.5 text-[11px] font-medium text-(--text-muted)">
+                  {currentDateGroup}
+                </span>
+              </div>
+            ) : null}
+
+            <li
+              data-slot="doctor-chat-message"
+              data-own={message.isOwn ? "true" : "false"}
+              data-pending={message.pending ? "true" : "false"}
+              className={cn(
+                "flex flex-col",
+                message.isOwn ? "items-end self-end" : "items-start self-start",
+                message.pending && "opacity-70",
+              )}
+            >
+              <div className="flex items-end gap-2 max-w-[85%] md:max-w-[75%]">
+                {!message.isOwn ? (
+                  <Avatar className="size-6 shrink-0 border border-(--border-subtle) mb-0.5">
+                    <AvatarFallback className="bg-(--surface-warm) text-[9px] font-bold text-(--text-heading)">
+                      {patientInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : null}
+
+                <div
+                  className={cn(
+                    "px-3.5 py-2.5 text-[13.5px] leading-relaxed shadow-2xs",
+                    message.isOwn
+                      ? "rounded-2xl rounded-br-xs bg-(--action-primary) font-medium text-white"
+                      : "rounded-2xl rounded-bl-xs border border-(--border-subtle) bg-(--surface-card) text-(--text-heading)",
+                  )}
+                >
+                  <span className="break-words whitespace-pre-wrap">{message.content}</span>
+                </div>
+              </div>
+
+              {clock ? (
+                <span
+                  className={cn(
+                    "mt-1 text-[10px] text-(--text-subtle)",
+                    message.isOwn ? "pr-1" : "pl-8",
+                  )}
+                >
+                  {clock}
+                </span>
+              ) : null}
+            </li>
+          </div>
+        );
+      })}
       <div ref={endRef} />
     </ol>
   );
@@ -266,7 +380,7 @@ function Composer({
   }
 
   return (
-    <form onSubmit={onSubmit} className="shrink-0 pt-2 pb-1">
+    <form onSubmit={onSubmit} className="flex flex-col gap-1.5">
       <div className="flex items-end gap-2">
         <textarea
           data-slot="doctor-chat-input"
@@ -279,17 +393,17 @@ function Composer({
             }
           }}
           rows={1}
-          placeholder="Type a message…"
+          placeholder="Type a clinical message… (Enter to send, Shift+Enter for new line)"
           aria-label="Message"
           aria-invalid={validationError ? true : undefined}
-          className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl border border-(--border-subtle) bg-(--surface-card) px-4 py-3 text-[15px] text-(--text-heading) placeholder:text-(--text-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="max-h-28 min-h-10 flex-1 resize-none rounded-xl border border-(--border-subtle) bg-(--surface-page) px-3.5 py-2.5 text-xs text-(--text-heading) placeholder:text-(--text-muted) focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--focus-ring)"
         />
         <button
           type="submit"
           aria-label="Send message"
-          className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-(--action-primary) text-white shadow-xs transition-colors hover:bg-(--action-primary-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-(--action-primary) text-white shadow-2xs transition-colors hover:bg-(--action-primary-hover) focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
         >
-          <SendHorizonal className="size-5" />
+          <SendHorizonal className="size-4" />
         </button>
       </div>
 
@@ -297,12 +411,12 @@ function Composer({
         <p
           data-slot="doctor-chat-length-error"
           role="alert"
-          className="mt-1.5 text-[13px] text-destructive"
+          className="text-[12px] text-destructive"
         >
           {validationError}
         </p>
       ) : input.length > MAX_CHAT_MESSAGE_LENGTH * 0.8 ? (
-        <p className="mt-1.5 text-right text-[12px] text-muted-foreground">
+        <p className="text-right text-[11px] text-muted-foreground">
           {input.length}/{MAX_CHAT_MESSAGE_LENGTH}
         </p>
       ) : null}

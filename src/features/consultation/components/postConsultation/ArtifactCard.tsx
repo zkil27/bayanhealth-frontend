@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   Clock,
   Eye,
@@ -176,6 +177,9 @@ export interface ArtifactCardProps {
    */
   embedded?: boolean;
   intake?: BookingIntakeForm | null;
+  /** Next document in review queue navigation */
+  onNext?: () => void;
+  hasNext?: boolean;
 }
 
 export function ArtifactCard(props: ArtifactCardProps) {
@@ -446,7 +450,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
                   disabled={props.busy || props.regenerating}
                   onClick={() => setSigning(true)}
                 >
-                  <PenLine className="size-4" /> Sign &amp; lock
+                  <PenLine className="size-4" /> {props.hasNext ? "Sign & next →" : "Sign & lock"}
                 </Button>
                 {amendable ? (
                   <Button
@@ -483,10 +487,10 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-[#074972] font-semibold cursor-pointer shadow-2xs"
+                className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-(--navy-700) font-semibold cursor-pointer shadow-2xs"
                 onClick={() => setFullModalOpen(true)}
               >
-                <Eye className="size-3.5 text-[#074972]" /> Preview Official Document
+                <Eye className="size-3.5 text-(--navy-700)" /> Preview Official Document
               </Button>
             </div>
 
@@ -577,11 +581,24 @@ export function ArtifactCard(props: ArtifactCardProps) {
                   <Maximize2 className="size-3.5" /> Full Sheet / Print
                 </Button>
               </div>
-              <HoldToReleaseButton
-                label={patientReadable ? "Release to patient" : "Release for records"}
-                disabled={props.busy}
-                onConfirm={props.onRelease}
-              />
+              <div className="flex items-center gap-2">
+                <HoldToReleaseButton
+                  label={patientReadable ? "Release to patient" : "Release for records"}
+                  disabled={props.busy}
+                  onConfirm={props.onRelease}
+                />
+                {props.hasNext && props.onNext ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full gap-1 text-xs border-(--border-subtle) hover:border-(--teal-600) hover:bg-(--surface-accent-soft)"
+                    onClick={props.onNext}
+                  >
+                    Next document <ArrowRight className="size-3.5" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </>
         ) : artifact.lifecycleStatus === "released" ? (
@@ -601,15 +618,28 @@ export function ArtifactCard(props: ArtifactCardProps) {
                 </span>
               </span>
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-[#074972] font-semibold cursor-pointer shadow-2xs"
-              onClick={() => setFullModalOpen(true)}
-            >
-              <Eye className="size-3.5 text-[#074972]" /> Preview Official Document
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1.5 text-xs border-(--border-subtle) bg-(--surface-card) hover:bg-(--surface-warm-soft) text-(--navy-700) font-semibold cursor-pointer shadow-2xs"
+                onClick={() => setFullModalOpen(true)}
+              >
+                <Eye className="size-3.5 text-(--navy-700)" /> Preview Official Document
+              </Button>
+              {props.hasNext && props.onNext ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-1 text-xs border-(--border-subtle) hover:border-(--teal-600) hover:bg-(--surface-accent-soft)"
+                  onClick={props.onNext}
+                >
+                  Next document <ArrowRight className="size-3.5" />
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : props.onRegenerate ? (
           <Button

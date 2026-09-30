@@ -98,17 +98,17 @@ export function DiagnosticRequestSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />
       </section>
 
       {/* Clinical Diagnosis / Indication */}
       <section className="mb-4">
         <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <ClipboardPlus className="size-6" />
           </div>
           <div className="flex flex-col gap-1 text-xs">
-            <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase">
+            <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase">
               CLINICAL DIAGNOSIS / INDICATION
             </h2>
             <p className="text-slate-800 leading-relaxed font-medium">
@@ -117,18 +117,18 @@ export function DiagnosticRequestSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-4" />
       </section>
 
       {/* Requested Investigations */}
       <section className="mb-4 flex flex-col gap-3">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase">
           REQUESTED INVESTIGATIONS
         </h2>
 
         {/* 1. Laboratory */}
         <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <FlaskConical className="size-6" />
           </div>
           <div className="flex flex-col gap-1 text-xs pt-1">
@@ -145,11 +145,11 @@ export function DiagnosticRequestSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/20 my-1" />
+        <div className="h-[1px] w-full bg-(--navy-700)/20 my-1" />
 
         {/* 2. Imaging */}
         <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Scan className="size-6" />
           </div>
           <div className="flex flex-col gap-1 text-xs pt-1">
@@ -166,11 +166,11 @@ export function DiagnosticRequestSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/20 my-1" />
+        <div className="h-[1px] w-full bg-(--navy-700)/20 my-1" />
 
         {/* 3. Other Diagnostics */}
         <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#18a58c] bg-teal-50/20 text-[#18a58c]">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <ClipboardList className="size-6" />
           </div>
           <div className="flex flex-col gap-1 text-xs pt-1">
@@ -181,30 +181,30 @@ export function DiagnosticRequestSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-2 mb-3" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-2 mb-3" />
       </section>
 
       {/* Patient Instructions */}
       <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-2">
+        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PATIENT INSTRUCTIONS
         </h2>
         <div className="flex flex-col gap-2 text-xs text-slate-800">
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="size-4 text-[#18a58c] shrink-0 mt-0.5" />
+            <CheckCircle2 className="size-4 text-(--teal-700) shrink-0 mt-0.5" />
             <span>If advised, fast for 8 to 10 hours before fasting blood tests; plain water is allowed.</span>
           </div>
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="size-4 text-[#18a58c] shrink-0 mt-0.5" />
+            <CheckCircle2 className="size-4 text-(--teal-700) shrink-0 mt-0.5" />
             <span>Bring this diagnostic request slip and a valid government-issued ID to the facility.</span>
           </div>
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="size-4 text-[#18a58c] shrink-0 mt-0.5" />
+            <CheckCircle2 className="size-4 text-(--teal-700) shrink-0 mt-0.5" />
             <span>Bring prior laboratory or radiology results if available for comparative evaluation.</span>
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-4 mb-2" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-2" />
       </section>
 
       {/* Footer */}

@@ -40,10 +40,10 @@ export function DocumentSheetFooter({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end pt-2">
         {/* Left Column: Physician Info & Signature */}
         <div className="flex flex-col text-xs leading-normal">
-          <span className="text-xs font-bold tracking-wider text-[#074972] uppercase mb-1">
+          <span className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-1">
             {physicianRoleLabel}
           </span>
-          <p className="font-bold text-sm text-[#074972]">{doctorName}</p>
+          <p className="font-bold text-sm text-(--navy-700)">{doctorName}</p>
           <p className="text-slate-600 italic text-[11px] mb-1">{doctorTitle}</p>
           <p className="text-slate-700 text-[11px]">
             PRC License No.: <span className="font-mono">{prcNumber}</span>
@@ -53,7 +53,7 @@ export function DocumentSheetFooter({
           </p>
 
           {/* Signature Specimen & Baseline */}
-          <div className="w-56 pb-0.5 border-b border-[#074972]/40 mb-1">
+          <div className="w-56 pb-0.5 border-b border-(--navy-700)/40 mb-1">
             {physician?.signatureStrokes && physician.signatureStrokes.length > 0 ? (
               <SignaturePreview strokes={physician.signatureStrokes} className="h-9" />
             ) : (
@@ -68,8 +68,8 @@ export function DocumentSheetFooter({
 
         {/* Right Column: Verification Box */}
         <div className="flex justify-start sm:justify-end">
-          <div className="flex flex-col rounded-2xl border border-[#18a58c] bg-white p-3 w-full sm:w-[270px]">
-            <span className="text-[11px] font-bold tracking-wider text-[#074972] uppercase text-center mb-2">
+          <div className="flex flex-col rounded-2xl border border-(--teal-700) bg-white p-3 w-full sm:w-[270px]">
+            <span className="text-[11px] font-bold tracking-wider text-(--navy-700) uppercase text-center mb-2">
               {verificationTitle}
             </span>
             <div className="flex items-center gap-3">
@@ -77,7 +77,7 @@ export function DocumentSheetFooter({
                 <QRCodeSVG value={qrValue} size={70} level="M" />
               </div>
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="inline-flex items-center justify-center rounded-md bg-[#005f73] px-2.5 py-0.5 text-[10px] font-bold text-white tracking-wider uppercase w-fit">
+                <span className="inline-flex items-center justify-center rounded-md bg-(--teal-800) px-2.5 py-0.5 text-[10px] font-bold text-white tracking-wider uppercase w-fit">
                   {statusLabel}
                 </span>
                 <div className="flex flex-col text-[11px]">

@@ -94,18 +94,18 @@ export function ClinicalReferralSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-3 mb-4" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />
       </section>
 
       {/* Structured Referral Rows */}
       <section className="mb-4 flex flex-col gap-3 text-xs">
         {/* Referred To */}
         <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
             <Building2 className="size-5" />
           </div>
           <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               REFERRED TO:
             </span>
             <span className="font-semibold text-slate-900">{referredSpecialty}</span>
@@ -116,11 +116,11 @@ export function ClinicalReferralSheet({
 
         {/* Urgency */}
         <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
             <Clock className="size-5" />
           </div>
           <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               URGENCY:
             </span>
             <span className="text-slate-800">{urgency}</span>
@@ -131,11 +131,11 @@ export function ClinicalReferralSheet({
 
         {/* Reason for Referral */}
         <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
             <FileText className="size-5" />
           </div>
           <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               REASON FOR REFERRAL:
             </span>
             <span className="text-slate-800 leading-relaxed font-medium">
@@ -148,11 +148,11 @@ export function ClinicalReferralSheet({
 
         {/* Clinical Summary */}
         <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
             <User className="size-5" />
           </div>
           <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               CLINICAL SUMMARY:
             </span>
             <div className="flex flex-col gap-1 text-slate-800">
@@ -176,11 +176,11 @@ export function ClinicalReferralSheet({
 
         {/* Recommendations / Red Flags */}
         <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#005f73] text-white">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
             <AlertTriangle className="size-5" />
           </div>
           <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
-            <span className="font-bold text-[#074972] tracking-wider uppercase text-xs">
+            <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               RECOMMENDATIONS / RED FLAGS TO MONITOR:
             </span>
             <ul className="list-disc pl-5 space-y-0.5 text-slate-800">
@@ -193,7 +193,7 @@ export function ClinicalReferralSheet({
           </div>
         </div>
 
-        <div className="h-[1px] w-full bg-[#074972]/30 mt-2 mb-2" />
+        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-2 mb-2" />
       </section>
 
       {/* Footer */}
@@ -211,7 +211,7 @@ export function ClinicalReferralSheet({
 
       {/* Receiving Clinic Note */}
       <div className="mt-4 flex items-center gap-2.5 border-t border-slate-200 pt-3 text-[11px] text-slate-600">
-        <Info className="size-4 text-[#005f73] shrink-0" />
+        <Info className="size-4 text-(--teal-800) shrink-0" />
         <span>
           <strong className="text-slate-800">Bring this document to the receiving clinic.</strong> Additional medical information may be requested by the receiving physician.
         </span>

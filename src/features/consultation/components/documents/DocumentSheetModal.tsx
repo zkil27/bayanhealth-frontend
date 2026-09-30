@@ -94,8 +94,8 @@ export function DocumentSheetModal({
         <header className="h-14 shrink-0 bg-slate-900 border-b border-slate-800 px-5 flex items-center justify-between z-10 select-none">
           {/* Left: Document Info */}
           <div className="flex items-center gap-3 min-w-0">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#074972] text-white shadow-xs">
-              <FileText className="size-4 text-[#18a58c]" />
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--navy-700) text-white shadow-xs">
+              <FileText className="size-4 text-(--teal-700)" />
             </span>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -121,7 +121,7 @@ export function DocumentSheetModal({
 
           {/* Center: Format specs */}
           <div className="hidden lg:flex items-center gap-2 bg-slate-800/90 border border-slate-700/60 rounded-full px-3 py-1 text-xs text-slate-300">
-            <FileCheck className="size-3.5 text-[#18a58c]" />
+            <FileCheck className="size-3.5 text-(--teal-700)" />
             <span>Standard Clinical Sheet · 8.5 × 11 in (Portrait)</span>
           </div>
 
@@ -130,7 +130,7 @@ export function DocumentSheetModal({
             <Button
               type="button"
               onClick={handlePrint}
-              className="bg-[#18a58c] hover:bg-[#158f79] text-white font-semibold text-xs h-8.5 px-3.5 gap-2 rounded-lg shadow-sm cursor-pointer transition-all"
+              className="bg-(--teal-700) hover:bg-(--teal-600) text-white font-semibold text-xs h-8.5 px-3.5 gap-2 rounded-lg shadow-sm cursor-pointer transition-all"
             >
               <Printer className="size-3.5" />
               <span>Print / Save PDF</span>
@@ -151,7 +151,7 @@ export function DocumentSheetModal({
         </header>
 
         {/* Document Lightbox Canvas */}
-        <div className="flex-1 min-h-0 bg-[#25282a] overflow-y-auto overflow-x-hidden p-6 sm:p-10 md:p-12 flex justify-center items-start">
+        <div className="flex-1 min-h-0 bg-slate-900 overflow-y-auto overflow-x-hidden p-6 sm:p-10 md:p-12 flex justify-center items-start">
           <div className="w-full max-w-[800px] flex flex-col items-center">
             {/* White Physical Paper Document */}
             <div

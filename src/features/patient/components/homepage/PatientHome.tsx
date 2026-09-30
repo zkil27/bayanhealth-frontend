@@ -183,7 +183,7 @@ export function PatientHome() {
       {/* ----------------------------- 1. Top Bar: Search & Notification */}
       <header
         data-slot="patient-home-topbar"
-        className="relative z-50 w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-[#0c1f1b] pt-[env(safe-area-inset-top,0px)]"
+        className="relative z-50 w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-(--surface-nav) pt-[env(safe-area-inset-top,0px)]"
       >
         <div className="w-full px-4 py-3 sm:px-6 md:px-8 lg:pl-[18rem] lg:pr-8">
           <div

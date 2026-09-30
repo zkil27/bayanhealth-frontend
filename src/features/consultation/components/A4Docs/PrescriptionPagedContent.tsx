@@ -94,7 +94,7 @@ export function PrescriptionPagedContent({
                 )}
               </div>
               <div className="flex shrink-0 flex-col items-center">
-                <AppLogo height={0} width={300} type="withText" />
+                <AppLogo height={0} width={300} type="withText" variant="light" />
                 {isDraft ? (
                   <p className="text-center text-xs font-semibold text-destructive">
                     NOT VERIFIED — NOT FOR DISPENSING

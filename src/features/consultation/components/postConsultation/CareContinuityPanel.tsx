@@ -129,7 +129,7 @@ function FollowUpSection({
         <Button
           type="button"
           size="sm"
-          className="rounded-full"
+          className="rounded-full bg-(--action-primary) text-white hover:bg-(--action-primary-hover) shadow-2xs"
           disabled={!canSave}
           onClick={() => void save()}
         >

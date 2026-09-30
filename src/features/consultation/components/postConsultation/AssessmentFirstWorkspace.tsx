@@ -1039,7 +1039,7 @@ export function AssessmentFirstWorkspace({
     <div
       data-slot="post-consultation-workspace"
       data-phase={phase}
-      className="flex min-h-full w-full flex-col"
+      className="flex min-h-full w-full max-w-full min-w-0 flex-col"
       aria-label="Assessment-first clinical decision support"
     >
       <WorkspaceHeader
@@ -1060,12 +1060,12 @@ export function AssessmentFirstWorkspace({
         }
         statusTone={safetyLock ? "danger" : assessment.confirmed ? "active" : "done"}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full"
+              className="rounded-full gap-1.5 shrink-0"
               disabled={busy}
               onClick={() =>
                 run(async () => {
@@ -1075,34 +1075,30 @@ export function AssessmentFirstWorkspace({
                 })
               }
             >
-              <RefreshCw className="size-4" /> Refresh
+              <RefreshCw className="size-3.5 shrink-0" />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
-            <FinishDocumentationControl assessment={assessment} artifacts={current} />
+            <FinishDocumentationControl
+              assessment={assessment}
+              artifacts={current}
+              size="sm"
+            />
           </div>
         }
       />
 
       {/*
-        2-Column Clinical Cockpit: Patient Intake on the left, full documentation stage on the right.
+        2-Column Clinical Cockpit: Active Documentation Stage on the left (70%), Patient Intake Reference Dock on the right (30%).
       */}
       <div
         className={cn(
-          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4",
+          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4 min-w-0 max-w-full",
           patientRailCollapsed
-            ? "lg:grid-cols-[3.5rem_minmax(0,1fr)]"
-            : "lg:grid-cols-[18rem_minmax(0,1fr)]",
+            ? "lg:grid-cols-[minmax(0,1fr)_3.5rem]"
+            : "lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]",
         )}
       >
-        <div className="order-2 min-w-0 lg:order-1 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
-          <PatientRail
-            bookingId={bookingId}
-            intake={intake}
-            collapsed={patientRailCollapsed}
-            onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
-          />
-        </div>
-
-        <main className="order-1 flex min-w-0 flex-col gap-4 lg:order-2">
+        <main className="order-1 flex min-w-0 flex-col gap-4">
           {/*
             Read-only Subjective / Objective context. It sits above the
             Assessment card because it is what the physician reads while writing
@@ -1407,9 +1403,23 @@ export function AssessmentFirstWorkspace({
                 Review and release all clinical documents, or complete this encounter.
               </p>
             </div>
-            <FinishDocumentationControl assessment={assessment} artifacts={current} />
+            <FinishDocumentationControl
+              assessment={assessment}
+              artifacts={current}
+              size="default"
+              className="w-full sm:w-auto"
+            />
           </div>
         </main>
+
+        <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
+          <PatientRail
+            bookingId={bookingId}
+            intake={intake}
+            collapsed={patientRailCollapsed}
+            onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
+          />
+        </div>
       </div>
     </div>
   );
@@ -1734,9 +1744,13 @@ function AssessmentCard({
 function FinishDocumentationControl({
   assessment,
   artifacts,
+  size = "sm",
+  className,
 }: {
   assessment: CdsAssessment;
   artifacts: readonly CdsProtectedArtifact[];
+  size?: "default" | "sm" | "lg";
+  className?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -1744,16 +1758,20 @@ function FinishDocumentationControl({
 
   if (!readiness.canFinish) {
     return (
-      <button
+      <Button
         type="button"
         disabled
+        size={size}
         data-slot="finish-documentation"
         aria-disabled="true"
-        className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-(--action-primary) px-4 py-2.5 text-[15px] font-bold text-white opacity-50 shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)]"
+        className={cn(
+          "rounded-full bg-(--action-primary) text-white opacity-50 shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] cursor-not-allowed shrink-0 whitespace-nowrap",
+          className,
+        )}
       >
-        <CheckCircle2 className="size-4" />
-        Finish documentation
-      </button>
+        <CheckCircle2 className="size-3.5 sm:size-4 shrink-0" />
+        <span>Finish documentation</span>
+      </Button>
     );
   }
 
@@ -1762,16 +1780,35 @@ function FinishDocumentationControl({
     || readiness.unreviewed.length > 0
     || readiness.unreleased.length > 0;
 
+  const pendingCount = readiness.unreviewed.length + readiness.unreleased.length;
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <Button
         type="button"
+        size={size}
+        variant={hasOutstanding ? "outline" : "default"}
         data-slot="finish-documentation"
-        className="w-full rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
+        className={cn(
+          "rounded-full shrink-0 whitespace-nowrap transition-colors",
+          hasOutstanding
+            ? "border-(--border-default) bg-(--surface-card) text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-warm-soft)"
+            : "bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)",
+          className,
+        )}
         onClick={() => setOpen(true)}
       >
-        <CheckCircle2 className="size-4" />
-        Finish documentation
+        <CheckCircle2
+          className={cn(
+            "size-3.5 sm:size-4 shrink-0",
+            hasOutstanding ? "text-(--text-muted)" : "text-white",
+          )}
+        />
+        <span>
+          {hasOutstanding && pendingCount > 0
+            ? `Finish (${pendingCount} pending)`
+            : "Finish documentation"}
+        </span>
       </Button>
       <AlertDialogContent
         size="lg"

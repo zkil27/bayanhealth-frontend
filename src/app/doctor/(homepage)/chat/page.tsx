@@ -1,15 +1,12 @@
-import { DoctorChatList } from "@/features/doctor/components/chat/DoctorChatList";
+import { DoctorChatEmptyPane } from "@/features/doctor/components/chat/DoctorChatEmptyPane";
 
 /**
- * `/doctor/chat` — the doctor's conversation list (Task 9).
+ * `/doctor/chat` — Messages App view (Task 9).
  *
- * The route stays live — only the nav entry point is gated `comingSoon` in
- * `@/components/layout/nav-items` (alongside Med Ed). Nested under
- * `(homepage)` like every other top-level doctor section (`history`,
- * `schedule`, `profile`, `kyc`), so the sidebar and header stay visible — the
- * same nav-chrome-stays choice `PatientChatRoom.tsx` documents for the
- * patient side.
+ * Inside `ChatLayout`, the conversation sidebar stays mounted on the left.
+ * This page renders the right-pane empty / selection state on desktop,
+ * while mobile viewports automatically present the conversation list full-width.
  */
 export default function Page() {
-  return <DoctorChatList />;
+  return <DoctorChatEmptyPane />;
 }

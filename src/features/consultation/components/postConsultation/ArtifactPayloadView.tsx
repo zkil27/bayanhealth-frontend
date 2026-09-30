@@ -96,12 +96,12 @@ function renderPayload(
 function PlanView({ payload }: { payload: CdsPlanPayload }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="rounded-lg border-l-3 border-l-(--teal-600) bg-(--surface-brand-soft)/40 p-3 text-xs font-semibold leading-relaxed text-(--text-heading)">
+      <div className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-3 text-xs font-semibold leading-relaxed text-(--text-heading) shadow-2xs">
         {payload.summary}
       </div>
 
       <div className="grid gap-2.5 sm:grid-cols-2">
-        <div className="rounded-lg bg-(--surface-warm-soft)/60 p-2.5">
+        <div className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
           <p className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
             <Target className="size-3.5 text-(--teal-700)" />
             Clinical goals
@@ -111,7 +111,7 @@ function PlanView({ payload }: { payload: CdsPlanPayload }) {
           </div>
         </div>
 
-        <div className="rounded-lg bg-(--surface-warm-soft)/60 p-2.5">
+        <div className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
           <p className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
             <Activity className="size-3.5 text-(--teal-700)" />
             Interventions
@@ -122,7 +122,7 @@ function PlanView({ payload }: { payload: CdsPlanPayload }) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-(--border-subtle) bg-(--surface-warm-soft)/30 p-2.5">
+      <div className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
         <p className="flex items-center gap-1.5 text-xs font-bold text-(--text-heading)">
           <Clock className="size-3.5 text-(--teal-700)" />
           Follow-up &amp; red flags

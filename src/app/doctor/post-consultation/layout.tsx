@@ -24,7 +24,7 @@ export default function PostConsultationLayout({
 }) {
   return (
     <QueryClientProviders>
-      <div className="min-h-dvh bg-(--surface-page) text-(--text-body)">{children}</div>
+      <div className="min-h-dvh bg-satin text-(--text-body)">{children}</div>
     </QueryClientProviders>
   );
 }

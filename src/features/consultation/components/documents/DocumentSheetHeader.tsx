@@ -22,9 +22,9 @@ export function DocumentSheetHeader({
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <AppLogo width={150} height={36} type="withText" />
+            <AppLogo width={150} height={36} type="withText" variant="light" />
           </div>
-          <span className="text-[11px] font-semibold text-[#18a58c] tracking-tight pl-0.5">
+          <span className="text-[11px] font-semibold text-(--teal-700) tracking-tight pl-0.5">
             Care that continues
           </span>
         </div>
@@ -35,7 +35,7 @@ export function DocumentSheetHeader({
               SAMPLE • NOT VALID
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-md border border-[#18a58c] bg-white px-3 py-0.5 text-[11px] font-bold tracking-wider text-[#18a58c] uppercase">
+            <span className="inline-flex items-center rounded-md border border-(--teal-700) bg-white px-3 py-0.5 text-[11px] font-bold tracking-wider text-(--teal-700) uppercase">
               OFFICIAL • VALID
             </span>
           )}
@@ -44,18 +44,18 @@ export function DocumentSheetHeader({
 
       {/* Main Document Title */}
       <div className="pt-3">
-        <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-[#074972] uppercase font-sans">
+        <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--navy-700) uppercase font-sans">
           {title}
         </h1>
         {subtitle ? (
-          <p className="mt-0.5 text-xs sm:text-[13px] font-semibold text-[#18a58c]">
+          <p className="mt-0.5 text-xs sm:text-[13px] font-semibold text-(--teal-700)">
             {subtitle}
           </p>
         ) : null}
       </div>
 
       {/* Crisp Solid Teal Divider Line */}
-      <div className="h-[1.5px] w-full bg-[#18a58c] mt-2 mb-3" />
+      <div className="h-[1.5px] w-full bg-(--teal-700) mt-2 mb-3" />
     </header>
   );
 }

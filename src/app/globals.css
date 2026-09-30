@@ -294,10 +294,29 @@
    Tune the SVG's group `opacity` and `background-size` together. */
 .bg-satin {
   background-color: var(--surface-page);
-  background-image: url('/background-pattern.svg');
-  background-size: 320px 320px;
-  background-repeat: repeat;
-  background-attachment: local;
+  position: relative;
+  isolation: isolate;
+}
+
+.bg-satin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--weave-color);
+  opacity: var(--weave-opacity);
+  -webkit-mask-image: url('/background-pattern.svg');
+  mask-image: url('/background-pattern.svg');
+  -webkit-mask-size: 960px auto;
+  mask-size: 960px auto;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+/* Viewport-fixed ground for the root body */
+body.bg-satin::before {
+  position: fixed;
 }
 
 /* Off-screen rendering and layout skipping for below-the-fold sections */

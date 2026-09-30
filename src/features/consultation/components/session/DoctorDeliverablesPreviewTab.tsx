@@ -246,7 +246,7 @@ export function DoctorDeliverablesPreviewTab({
       <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#074972]/10 text-[#074972]">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-(--navy-700)/10 text-(--navy-700)">
               <FileText className="size-4" />
             </span>
             <div>
@@ -263,7 +263,7 @@ export function DoctorDeliverablesPreviewTab({
             size="sm"
             variant="outline"
             onClick={() => openPreview("prescription")}
-            className="h-7 gap-1 px-2.5 text-[11px] font-semibold text-[#074972] border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
+            className="h-7 gap-1 px-2.5 text-[11px] font-semibold text-(--navy-700) border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
           >
             <Printer className="size-3" />
             Print Specimen
@@ -283,11 +283,11 @@ export function DoctorDeliverablesPreviewTab({
           return (
             <div
               key={item.type}
-              className="flex flex-col gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs hover:border-[#074972]/30 transition-all"
+              className="flex flex-col gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 shadow-2xs hover:border-(--navy-700)/30 transition-all"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#074972] mt-0.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-(--navy-700) mt-0.5">
                     <Icon className="size-4" />
                   </span>
                   <div className="min-w-0">
@@ -314,7 +314,7 @@ export function DoctorDeliverablesPreviewTab({
                   size="sm"
                   variant="outline"
                   onClick={() => openPreview(item.type)}
-                  className="h-6.5 gap-1 px-2.5 text-[11px] font-semibold text-[#074972] border-[#074972]/30 hover:bg-[#074972]/5 cursor-pointer shadow-2xs"
+                  className="h-6.5 gap-1 px-2.5 text-[11px] font-semibold text-(--navy-700) border-(--navy-700)/30 hover:bg-(--navy-700)/5 cursor-pointer shadow-2xs"
                 >
                   <Eye className="size-3" />
                   Preview Document

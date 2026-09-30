@@ -112,6 +112,10 @@
   --surface-brand-soft: var(--navy-100);
   --surface-accent-soft: var(--teal-100);
 
+  /* Woven herringbone background texture tokens (Zero hardcoded colors) */
+  --weave-color: var(--navy-700);
+  --weave-opacity: 0.08;
+
   /* Text */
   --text-heading: var(--navy-700);
   --text-body: var(--ink-800);
@@ -248,6 +252,10 @@
   --surface-brand: #0e3753;
   --surface-brand-soft: #122c3d;
   --surface-accent-soft: #102a24;
+
+  /* Woven herringbone background texture tokens (Zero hardcoded colors) */
+  --weave-color: var(--teal-500);
+  --weave-opacity: 0.05;
 
   /* Inverted brand & neutral ramps for high-contrast dark mode readability */
   --navy-900: #f8f4e3;
