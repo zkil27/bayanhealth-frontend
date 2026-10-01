@@ -38,6 +38,10 @@ import {
   fetchBookingConsultationState,
   type ConsultationSessionSummary,
 } from "../../lib/api/consultSession";
+import {
+  setActiveConsultation,
+  clearActiveConsultation,
+} from "@/lib/patient/activeConsultationStorage";
 
 /** Poll cadence while waiting for the other participant to start the session. */
 const POLL_INTERVAL_MS = 4000;
@@ -115,13 +119,46 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
 
   const [dismissedCompletionRedirect, setDismissedCompletionRedirect] = useState(false);
 
+  // Synchronize active consultation session into client storage
+  useEffect(() => {
+    if (isDemo) return;
+    const status = bookingQuery.data?.status;
+    if (status === "completed" || status === "cancelled") {
+      clearActiveConsultation(bookingId);
+      return;
+    }
+    const hasSession = !!stateQuery.data?.session;
+    setActiveConsultation({
+      bookingId,
+      status: status || (hasSession ? "in_progress" : "confirmed"),
+      stage: hasSession ? "room" : "waiting_queue",
+      startedAt: stateQuery.data?.session?.startedAt,
+    });
+  }, [bookingId, isDemo, bookingQuery.data?.status, stateQuery.data?.session]);
+
+  // Protect against accidental back-swipes, back clicks, or tab closures during active live consults
+  useEffect(() => {
+    const isLive = !!stateQuery.data?.session || bookingQuery.data?.status === "in_progress";
+    if (!isLive) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [stateQuery.data?.session, bookingQuery.data?.status]);
+
   const complete = useMutation({
     mutationFn: () => completeConsultation(idToken ?? "", bookingId),
     onSuccess: () => {
       setCompletionError(null);
       setDismissedCompletionRedirect(true);
+      clearActiveConsultation(bookingId);
       void queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
       void queryClient.invalidateQueries({ queryKey: ["doctor-intake-queue"] });
+      void queryClient.invalidateQueries({ queryKey: ["patient-home-bookings"] });
       const consultationId = bookingQuery.data?.consultationId ?? stateQuery.data?.session?.consultationId;
       router.push(
         consultationId
@@ -507,7 +544,14 @@ function PreConsultHeader({
               "Start Consultation"
             )}
           </Button>
-        ) : null}
+        ) : (
+          <Link href={`/patient/booking/getBooking/${encodeURIComponent(bookingId)}`}>
+            <Button size="sm" variant="outline" className="rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100">
+              <span className="sm:hidden">Iwanan</span>
+              <span className="hidden sm:inline">Pumunta sa Dashboard</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="hidden items-center gap-1.5 pl-13 text-xs text-slate-500 sm:flex">

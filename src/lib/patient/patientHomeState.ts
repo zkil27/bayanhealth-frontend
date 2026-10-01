@@ -15,6 +15,8 @@ import type { BookingListItem } from "@/features/booking/lib/api/bookingList";
  */
 export type PatientHomeState =
   | "LIVE_ROOM"
+  | "ON_DEMAND_WAITING"
+  | "UNFINISHED_INTAKE"
   | "SCHEDULED"
   | "POST_CONSULT"
   | "IDLE";
@@ -49,7 +51,7 @@ export interface PatientHomeDerivation {
    * once a session has started (hence `consultationId` being optional on it).
    */
   activeBooking?: BookingListItem;
-  /** Present for `SCHEDULED` only. */
+  /** Present for `SCHEDULED`, `ON_DEMAND_WAITING`, and `UNFINISHED_INTAKE`. */
   readiness?: ScheduledReadiness;
 }
 
@@ -62,6 +64,8 @@ const UPCOMING_STATUSES: ReadonlySet<string> = new Set([
 
 /** How recently a finished consultation still leads the page. */
 export const POST_CONSULT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+/** Window for an on-demand consult without a scheduled time to remain active (18 hours). */
+export const ON_DEMAND_ACTIVE_WINDOW_MS = 18 * 60 * 60 * 1000;
 
 /** Epoch ms, or `null` when the value is absent or unparseable. */
 function toMs(value?: string): number | null {
@@ -77,21 +81,76 @@ function toMs(value?: string): number | null {
  * is not something the patient can act on, and letting one reach the hero — or
  * the dashboard list — is what filled the page with "Cancelled" rows.
  *
+ * Order of Priority:
+ * 1. LIVE_ROOM: Any booking with status "in_progress" (consultation room is open right now).
+ * 2. ON_DEMAND_WAITING: An on-demand consultation (no future scheduledAt) that is "confirmed"
+ *    or "payment_submitted", waiting for doctor matching or pre-consult room entry.
+ * 3. UNFINISHED_INTAKE: A recent on-demand booking in "pending_payment" needing intake or hold.
+ * 4. SCHEDULED: A future appointment with an appointed calendar time.
+ * 5. POST_CONSULT: A recently completed consultation with care summary/prescriptions.
+ * 6. IDLE: No active bookings -> prompts user to consult now.
+ *
  * @param bookings - The patient's bookings, in any order.
- * @param now      - Injectable clock, so the seven-day window is testable.
+ * @param now      - Injectable clock, so windows are testable.
  */
 export function derivePatientHomeState(
   bookings: BookingListItem[],
   now: number = Date.now(),
 ): PatientHomeDerivation {
+  // 1. Live consultation in progress right now
   const live = bookings.find((booking) => booking.status === "in_progress");
   if (live) return { state: "LIVE_ROOM", activeBooking: live };
 
-  // Soonest first, so "your next appointment" means the next one. A booking with
-  // no `scheduledAt` (on-demand, which has no appointed time) sorts last rather
-  // than being treated as the imminent one.
+  // 2. Active on-demand booking (no appointed future scheduledAt, created/updated recently)
+  const activeOnDemand = bookings
+    .filter((booking) => {
+      if (!UPCOMING_STATUSES.has(booking.status ?? "")) return false;
+      const scheduledMs = toMs(booking.scheduledAt);
+      // If there is an appointed time more than 30 mins in the future, it's a scheduled appointment
+      if (scheduledMs && scheduledMs - now > 30 * 60 * 1000) return false;
+      // Check freshness of on-demand booking
+      const createdMs = toMs(booking.createdAt) ?? toMs(booking.updatedAt);
+      if (createdMs && now - createdMs > ON_DEMAND_ACTIVE_WINDOW_MS) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const bTime = toMs(b.updatedAt) ?? toMs(b.createdAt) ?? 0;
+      const aTime = toMs(a.updatedAt) ?? toMs(a.createdAt) ?? 0;
+      return bTime - aTime;
+    })[0];
+
+  if (activeOnDemand) {
+    const readiness: ScheduledReadiness = {
+      needsPayment: activeOnDemand.status === "pending_payment",
+      paymentUnderReview: activeOnDemand.status === "payment_submitted",
+      doctorAssigned: !!activeOnDemand.doctorId,
+    };
+
+    if (activeOnDemand.status === "confirmed" || activeOnDemand.status === "payment_submitted") {
+      return {
+        state: "ON_DEMAND_WAITING",
+        activeBooking: activeOnDemand,
+        readiness,
+      };
+    }
+
+    if (activeOnDemand.status === "pending_payment") {
+      return {
+        state: "UNFINISHED_INTAKE",
+        activeBooking: activeOnDemand,
+        readiness,
+      };
+    }
+  }
+
+  // 3. Upcoming scheduled appointments (with explicit future scheduledAt)
   const upcoming = bookings
-    .filter((booking) => UPCOMING_STATUSES.has(booking.status ?? ""))
+    .filter(
+      (booking) =>
+        UPCOMING_STATUSES.has(booking.status ?? "") &&
+        toMs(booking.scheduledAt) !== null &&
+        (toMs(booking.scheduledAt) ?? 0) >= now - 60 * 60 * 1000,
+    )
     .sort(
       (a, b) =>
         (toMs(a.scheduledAt) ?? Number.POSITIVE_INFINITY) -
@@ -110,9 +169,7 @@ export function derivePatientHomeState(
     };
   }
 
-  // Most recently finished first. `updatedAt` stands in for a completion
-  // timestamp, which the booking list does not carry: the transition to
-  // `completed` is the last write a finished booking receives.
+  // 4. Most recently finished consultation
   const recentlyCompleted = bookings
     .filter((booking) => booking.status === "completed")
     .map((booking) => ({
@@ -129,6 +186,7 @@ export function derivePatientHomeState(
     return { state: "POST_CONSULT", activeBooking: recentlyCompleted.booking };
   }
 
+  // 5. Default idle state
   return { state: "IDLE" };
 }
 

@@ -23,8 +23,10 @@ import {
 import { AnimatedFieldError } from "@/components/blocks/AnimatedFieldErrorWrapper";
 import { useCreateBooking } from "../../hooks/useCreateBooking";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useIdToken } from "@/stores/useAuthStore";
 import ToastForTesting from "@/components/primitives/ToastForTesting";
+import { setActiveConsultation } from "@/lib/patient/activeConsultationStorage";
 
 interface OnDemandBookingProps {
   defaultServiceType?: string | null;
@@ -48,6 +50,7 @@ const cardClass =
  */
 export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { submit, status, error } = useCreateBooking();
   const idToken = useIdToken();
   const form = usePatientBookingForm(defaultServiceType);
@@ -88,6 +91,13 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
         serviceValue: data.serviceType,
         bookingMode: "on_demand",
       });
+      setActiveConsultation({
+        bookingId: createdBooking.bookingId,
+        stage: "waiting_queue",
+        serviceType: data.serviceType,
+        status: createdBooking.status ?? "pending_payment",
+      });
+      void queryClient.invalidateQueries({ queryKey: ["patient-home-bookings"] });
       router.push(`/patient/booking/getBooking/${createdBooking.bookingId}`);
     } catch {
       // useCreateBooking sets status="error" and surfaces code/message.

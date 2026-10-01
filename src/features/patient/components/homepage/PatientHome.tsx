@@ -12,6 +12,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronRight,
+  Clock,
   FileText,
   FlaskConical,
   HeartPulse,
@@ -36,6 +37,7 @@ import { fetchDoctorPublicProfile } from "@/features/booking/lib/api/doctors";
 import { formatConsultationDateTime } from "@/lib/consultation-time";
 import { BrandLinkButton } from "@/features/patient/components/redesign/primitives";
 import { patientPageClass } from "@/features/patient/components/PatientPage";
+import { getActiveConsultation } from "@/lib/patient/activeConsultationStorage";
 
 /** Quick triage symptoms tailored for Taglish elderly and family users (text-only, no emojis). */
 const QUICK_SYMPTOMS = [
@@ -162,14 +164,29 @@ export function PatientHome() {
     queryKey: ["patient-home-bookings", idToken],
     queryFn: () => fetchBookingPage(idToken ?? "", undefined, 20),
     enabled: !!idToken,
-    staleTime: 1000 * 20,
-    refetchInterval: 1000 * 30,
+    staleTime: 1000 * 5,
+    refetchInterval: 1000 * 15,
     refetchIntervalInBackground: true,
+    refetchOnMount: "always",
     retry: false,
     throwOnError: false,
   });
 
-  const bookings = useMemo(() => data?.bookings ?? [], [data?.bookings]);
+  const cachedActive = useMemo(() => getActiveConsultation(), []);
+  const bookings = useMemo(() => {
+    const list = data?.bookings ?? [];
+    if (list.length === 0 && cachedActive?.bookingId) {
+      const mock: BookingListItem = {
+        bookingId: cachedActive.bookingId,
+        status: cachedActive.status || (cachedActive.stage === "room" ? "in_progress" : "confirmed"),
+        serviceType: cachedActive.serviceType || "teleconsult",
+        updatedAt: new Date(cachedActive.updatedAt).toISOString(),
+      };
+      return [mock];
+    }
+    return list;
+  }, [data?.bookings, cachedActive]);
+
   const derivation = useMemo(
     () => derivePatientHomeState(bookings),
     [bookings],
@@ -588,11 +605,11 @@ function LiveActivityCard({
             </span>
           </div>
 
-          <h3 className="mt-2 text-[17px] font-bold text-(--text-heading)">
+          <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-(--text-heading)">
             Nagsimula na ang iyong konsulta
           </h3>
           <p className="mt-0.5 text-[14px] text-(--text-body)">
-            Naghihintay si {doctorName} sa consultation room.
+            Naghihintay si {doctorName} sa consultation room. I-tap upang bumalik agad.
           </p>
         </div>
 
@@ -601,9 +618,96 @@ function LiveActivityCard({
             href={`/consultation/room/${encodeURIComponent(active.bookingId)}`}
             size="md"
             iconRight={<ArrowRight className="size-4" />}
-            className="w-full sm:w-56 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm)"
+            className="w-full sm:w-56 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm) font-bold"
           >
-            Pumasok sa Consultation Room
+            Bumalik sa Consultation Room
+          </BrandLinkButton>
+        </div>
+      </div>
+    );
+  }
+
+  if (derivation.state === "ON_DEMAND_WAITING" && active) {
+    const isDoctorAssigned = !!active.doctorId;
+    const isRoomReady = active.status === "confirmed";
+
+    return (
+      <div
+        data-slot="patient-home-hero"
+        data-state="ON_DEMAND_WAITING"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-(--radius-card) border-2 border-teal-600 bg-teal-50/80 dark:bg-teal-950/30 p-4 sm:p-5 shadow-(--shadow-card)"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-2 rounded-full bg-teal-100 dark:bg-teal-900/60 px-2.5 py-1 text-[11px] font-bold text-teal-800 dark:text-teal-200 uppercase tracking-wide">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-2 rounded-full bg-teal-500 opacity-75 motion-safe:animate-ping" />
+                <span className="relative inline-flex size-2 rounded-full bg-teal-600" />
+              </span>
+              {isRoomReady ? "Handa na ang Silid" : "Nasa Pila ng Konsulta"}
+            </span>
+            <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">
+              {isDoctorAssigned ? `Nakatalaga si ${doctorName}` : "Naghahanap ng available na doktor…"}
+            </span>
+          </div>
+
+          <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-slate-900 dark:text-slate-100">
+            {isRoomReady
+              ? "Kasalukuyang bukas ang iyong telekonsulta"
+              : "Aktibo ang iyong request para sa telekonsulta"}
+          </h3>
+          <p className="mt-0.5 text-[13.5px] text-slate-600 dark:text-slate-300">
+            {isRoomReady
+              ? `Maaari ka nang pumasok sa consultation waiting room upang makausap si ${doctorName}.`
+              : "Manatili sa linya. Ikokonekta ka namin sa unang available na lisensyadong manggagamot."}
+          </p>
+        </div>
+
+        <div className="shrink-0 w-full sm:w-auto">
+          <BrandLinkButton
+            href={`/patient/booking/getBooking/${encodeURIComponent(active.bookingId)}`}
+            size="md"
+            iconRight={<ArrowRight className="size-4" />}
+            className="w-full sm:w-56 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm) font-bold"
+          >
+            {isRoomReady ? "Pumasok sa Waiting Room" : "Bumalik sa Status ng Konsulta"}
+          </BrandLinkButton>
+        </div>
+      </div>
+    );
+  }
+
+  if (derivation.state === "UNFINISHED_INTAKE" && active) {
+    return (
+      <div
+        data-slot="patient-home-hero"
+        data-state="UNFINISHED_INTAKE"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-(--radius-card) border-2 border-amber-500/80 bg-amber-50/80 dark:bg-amber-950/30 p-4 sm:p-5 shadow-(--shadow-card)"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 text-[11px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
+              <Clock className="size-3 text-amber-700 dark:text-amber-400" />
+              Hindi Pa Natatapos na Konsulta
+            </span>
+          </div>
+
+          <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-slate-900 dark:text-slate-100">
+            Kailangan pa ng iyong impormasyon
+          </h3>
+          <p className="mt-0.5 text-[13.5px] text-slate-600 dark:text-slate-300">
+            May nasimulan kang booking. Kumpletuhin ang intake form o payment hold upang makapasok sa pila ng doktor.
+          </p>
+        </div>
+
+        <div className="shrink-0 w-full sm:w-auto">
+          <BrandLinkButton
+            href={`/patient/booking/getBooking/${encodeURIComponent(active.bookingId)}`}
+            size="md"
+            iconRight={<ArrowRight className="size-4" />}
+            className="w-full sm:w-56 bg-amber-600 hover:bg-amber-700 text-white justify-center shadow-(--shadow-sm) font-bold"
+          >
+            Ipagpatuloy ang Booking
           </BrandLinkButton>
         </div>
       </div>

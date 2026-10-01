@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   AlertCircleIcon,
@@ -8,6 +9,10 @@ import {
   MessageSquare,
   Video,
 } from "lucide-react";
+import {
+  setActiveConsultation,
+  clearActiveConsultation,
+} from "@/lib/patient/activeConsultationStorage";
 
 import {
   Empty,
@@ -223,6 +228,21 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         : { kind: "undisclosed" };
   const wizardBooking = toWizardBooking(booking, intakeGate, doctorResolution);
   const isIntake = wizardBooking?.step === "intake";
+
+  useEffect(() => {
+    if (!booking) return;
+    if (booking.status === "completed" || booking.status === "cancelled") {
+      clearActiveConsultation(booking.bookingId);
+      return;
+    }
+    setActiveConsultation({
+      bookingId: booking.bookingId,
+      status: booking.status,
+      stage: isIntake ? "intake" : booking.status === "in_progress" ? "room" : "waiting_queue",
+      serviceType: booking.serviceType,
+      doctorName: doctorResolution.kind === "resolved" ? doctorResolution.doctor.fullName : undefined,
+    });
+  }, [booking, isIntake, doctorResolution]);
 
   return (
     <div
