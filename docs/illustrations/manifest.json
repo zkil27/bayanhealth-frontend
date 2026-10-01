@@ -119,5 +119,148 @@
     "bytes": 5114,
     "attempts": 1,
     "status": "ok"
+  },
+  {
+    "id": "patient/no-doctors",
+    "file": "/illustrations/patient/no-doctors.webp",
+    "width": 288,
+    "height": 288,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 16662,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/no-articles",
+    "file": "/illustrations/patient/no-articles.webp",
+    "width": 192,
+    "height": 172,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 10514,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/standby-on-duty",
+    "file": "/illustrations/doctor/standby-on-duty.webp",
+    "width": 192,
+    "height": 178,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 13278,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/standby-offline",
+    "file": "/illustrations/doctor/standby-offline.webp",
+    "width": 192,
+    "height": 134,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 8184,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/all-clear",
+    "file": "/illustrations/doctor/all-clear.webp",
+    "width": 192,
+    "height": 133,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 7662,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/day-open",
+    "file": "/illustrations/doctor/day-open.webp",
+    "width": 192,
+    "height": 137,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 6738,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/moonlight",
+    "file": "/illustrations/doctor/moonlight.webp",
+    "width": 288,
+    "height": 267,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 20190,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/kyc-under-review",
+    "file": "/illustrations/doctor/kyc-under-review.webp",
+    "width": 288,
+    "height": 209,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 14562,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/kyc-upload",
+    "file": "/illustrations/doctor/kyc-upload.webp",
+    "width": 192,
+    "height": 196,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 6262,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/no-history",
+    "file": "/illustrations/doctor/no-history.webp",
+    "width": 288,
+    "height": 299,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 14662,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "doctor/no-documents",
+    "file": "/illustrations/doctor/no-documents.webp",
+    "width": 192,
+    "height": 133,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 7148,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "shared/no-conversations",
+    "file": "/illustrations/shared/no-conversations.webp",
+    "width": 288,
+    "height": 271,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 13116,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "shared/video-waiting",
+    "file": "/illustrations/shared/video-waiting.webp",
+    "width": 288,
+    "height": 161,
+    "sizeClass": "md",
+    "onDark": true,
+    "bytes": 19646,
+    "attempts": 1,
+    "status": "ok"
   }
 ]
