@@ -194,8 +194,17 @@ export function MultiSelectDropdown({
               onOpenChange={setOpen}
               title={label}
               description="Tap to select or deselect"
+              footer={
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
+                >
+                  Done
+                </button>
+              }
             >
-              <div className="space-y-3 pb-2">
+              <div className="space-y-3">
                 {/* Search / Add Input */}
                 <div className="relative">
                   <input
@@ -240,7 +249,7 @@ export function MultiSelectDropdown({
                 )}
 
                 {/* Options List */}
-                <div className="max-h-[50dvh] space-y-1.5 overflow-y-auto pr-0.5">
+                <div className="space-y-1.5">
                   {/* None Option */}
                   <button
                     type="button"
@@ -280,15 +289,6 @@ export function MultiSelectDropdown({
                     );
                   })}
                 </div>
-
-                {/* Done Button */}
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
-                >
-                  Done
-                </button>
               </div>
             </CustomBottomModal>
           </>

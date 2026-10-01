@@ -370,8 +370,17 @@ function MainConcern() {
           onOpenChange={setSymptomsModalOpen}
           title="Related Symptoms"
           description="Select all symptoms that apply to your visit"
+          footer={
+            <button
+              type="button"
+              onClick={() => setSymptomsModalOpen(false)}
+              className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
+            >
+              Done {tags.length > 0 ? `(${tags.length} selected)` : ""}
+            </button>
+          }
         >
-          <div className="space-y-4 pb-2 max-h-[60vh] overflow-y-auto px-0.5">
+          <div className="space-y-4 px-0.5">
             {SYMPTOM_GROUPS.map((group) => (
               <div key={group.title} className="space-y-2">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
@@ -400,14 +409,6 @@ function MainConcern() {
                 </div>
               </div>
             ))}
-
-            <button
-              type="button"
-              onClick={() => setSymptomsModalOpen(false)}
-              className="mt-3 flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-(--action-primary) font-semibold text-white transition-opacity active:opacity-90"
-            >
-              Done {tags.length > 0 ? `(${tags.length} selected)` : ""}
-            </button>
           </div>
         </CustomBottomModal>
       </div>

@@ -9,6 +9,30 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Patient Shell: Page Content No Longer Shrinks Under Bottom Nav
+
+- **Target Route / Surface**: `/patient/booking/createBooking` (Consult Now) and any patient page using a `min-h-full` root
+- **Files Modified**:
+  - `src/features/patient/components/PatientShell.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - `<main>` is a flex column and its page roots use `min-h-full`. An explicit `min-height` disables the flex item's automatic content minimum, so the root could shrink to viewport height and its bottom padding no longer extended the scroll area. The last card (emergency notice) stayed hidden behind the mobile nav.
+  - Added `[&>*]:shrink-0` on `<main>` so page roots keep their content height and the existing bottom clearance scrolls into view.
+- **Upstream Porting Notes**: Pure layout change, one class. No logic or contract changes.
+
+### [2026-10-01] Mobile Intake Bottom Sheets: Single Scroll Container
+
+- **Target Route / Surface**: `/patient/booking/getBooking/[bookingId]` intake, mobile bottom sheets (Related Symptoms, medical-history multi-selects)
+- **Files Modified**:
+  - `src/components/ui/custom-bottom-modal.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/ConcernSafetyStep.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/MultiSelectDropdown.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - `CustomBottomModal` wrapped its children in `overflow-y-auto`, and both intake sheets nested a second scroller inside it (`max-h-[60vh] overflow-y-auto` and `max-h-[50dvh] overflow-y-auto`). On mobile that produced two independently scrolling regions in one sheet, with scroll chaining between them.
+  - The modal body is now the only scroller (`min-h-0 flex-1 overflow-y-auto overscroll-contain`). Inner `max-h`/`overflow` removed.
+  - New optional `footer` prop pins the **Done** button below the scrolling body (safe-area padded), so it stays reachable without a second scroller.
+- **Tokens & Primitives Used**: `--border-subtle`, `--action-primary`, `env(safe-area-inset-bottom)`.
+- **Upstream Porting Notes**: Pure UI/layout change. `footer` is additive and optional; other `CustomBottomModal` consumers are unaffected.
+
 ### [2026-10-01] Patient App Shell Viewport Scrollability & Mobile Bottom Navigation Clearance
 
 - **Target Route / Surface**: `/patient/booking` (`BookingPathChooser.tsx`), `/patient/booking/search` (`search/page.tsx`), `/patient/booking/createBooking` (`OnDemandBooking.tsx`), `/patient/booking/doctor/[doctorId]` (`DoctorBooking.tsx`, `page.tsx`), `/patient` (`PatientHome.tsx`), `/patient/chat` (`PatientChatList.tsx`), `/patient/health` (`PatientHealthView.tsx`), `/patient/profile` (`PatientProfileSettings.tsx`, `ProfileSubPage.tsx`), App Shell (`PatientShell.tsx`, `PatientPage.tsx`)
