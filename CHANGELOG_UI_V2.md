@@ -9,6 +9,42 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Active Consultation Recovery, Hero Fallback Remediation & Accidental Back Protection
+
+- **Target Route / Surface**: `/patient`, `/consultation/room/[bookingId]`, `/patient/booking/createBooking`, `/patient/booking/getBooking/[bookingId]`, App-wide (`PatientShell.tsx`)
+- **Files Modified / Added**:
+  - `src/lib/patient/activeConsultationStorage.ts` [NEW]
+  - `src/features/patient/components/ActiveConsultationBanner.tsx` [NEW]
+  - `src/lib/patient/patientHomeState.ts` [MODIFIED]
+  - `src/features/patient/components/homepage/PatientHome.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/patient/components/PatientShell.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/OnDemandBooking.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/PatientBookingDetail.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Hero Fallback to Generic "Kailangan mo ng doktor ngayon? Kumonsulta Agad"**:
+    - Previously, when an on-demand consultation was in-flight, `patientHomeState.ts` sorted on-demand bookings (with `scheduledAt: undefined`) as `Infinity`, pushing them behind old scheduled appointments. Furthermore, when `status === "confirmed"`, it rendered a static "Paparating na Konsulta" card with "Time pending" and a tiny "Tingnan" button.
+    - Added first-class `ON_DEMAND_WAITING` and `UNFINISHED_INTAKE` states in `patientHomeState.ts`. Recent on-demand bookings are sorted by descending `updatedAt`/`createdAt` so active encounters always take priority over distant calendar appointments.
+    - Updated `LiveActivityCard` in `PatientHome.tsx` with high-contrast, attention-commanding recovery cards:
+      - `LIVE_ROOM`: Displays *"Nagsimula na ang iyong konsulta ... Naghihintay si Dr. [Name]"* with a prominent **"Bumalik sa Consultation Room"** button.
+      - `ON_DEMAND_WAITING`: Displays *"Kasalukuyang bukas ang iyong telekonsulta / Aktibo ang iyong request"* with pulsing indicator and **"Pumasok sa Waiting Room / Bumalik sa Status ng Konsulta"** CTA.
+      - `UNFINISHED_INTAKE`: Displays *"Hindi Pa Natatapos na Konsulta"* with **"Ipagpatuloy ang Booking"** CTA.
+  - **Zero-Latency Client-Side Session Recovery (`activeConsultationStorage`)**:
+    - Created lightweight `activeConsultationStorage.ts` to track active consultation metadata in `localStorage` across room entry, booking creation, and status transitions.
+    - `PatientHome.tsx` immediately reconciles with local storage on mount, preventing any flash of the generic `IDLE` state while network queries resolve or if React Query cache is stale.
+  - **In-Room Accidental Navigation Guard**:
+    - Added standard browser `beforeunload` guard in `ConsultationRoom.tsx` during live calls, preventing accidental swipe gestures or tab closures from dropping the call without confirmation.
+    - Added an explicit "Pumunta sa Dashboard" button in `PreConsultHeader` for patients to navigate safely while waiting.
+  - **Omnipresent Rejoin Banner across Patient Routes (`ActiveConsultationBanner`)**:
+    - Mounted `<ActiveConsultationBanner />` in `PatientShell.tsx` so patients exploring other tabs (`/patient/health`, `/patient/records`, etc.) during an active consultation always have a sticky 1-tap **"Bumalik sa Konsulta"** button in their viewport.
+  - **Query Cache Invalidation & Freshness**:
+    - Invalidate `["patient-home-bookings"]` immediately upon booking creation in `OnDemandBooking.tsx` and upon consult completion in `ConsultationRoom.tsx`. Set `refetchOnMount: "always"` and reduced `staleTime` on Patient Home bookings query.
+- **Device Optimization**: Mobile-first touch ergonomics (48px+ targets), iOS Safari gesture resilience, desktop clinical layout.
+- **Tokens & Primitives Used**: Bayan Teal, Emerald live pulse indicators, Lucide SVG icons (`Video`, `Clock`, `ArrowRight`, `X`), `BrandLinkButton`, `cn`.
+- **Upstream Porting Notes**: UI and client persistence only. 100% preservation of backend contracts, Daily Call Object handling, and OpenAPI schemas. Zero breaking changes.
+
+---
+
 ### [2026-10-01] Clinical Documents Mobile Layout & Cramped Text Remediation
 
 - **Target Route / Surface**: `/doctor/post-consultation/[id]` (`DocumentSheetModal.tsx`, `DocumentSheetHeader.tsx`, `PrescriptionSheet.tsx`, `MedicalCertificateSheet.tsx`, `DiagnosticRequestSheet.tsx`, `ClinicalReferralSheet.tsx`, `PatientCareGuideSheet.tsx`)
