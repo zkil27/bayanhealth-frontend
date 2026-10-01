@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { Moon, Clock, Stethoscope } from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
@@ -57,7 +58,7 @@ export default function Page() {
         {(shifts) =>
           shifts.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 p-12 text-center text-muted-foreground">
-              <Moon className="h-10 w-10 opacity-40" />
+              <Illustration name="doctor/moonlight" size="md" />
               <p className="text-sm font-medium">No patients in the queue</p>
               <p className="text-xs">
                 After-hours requests will appear here when Moonlight mode is

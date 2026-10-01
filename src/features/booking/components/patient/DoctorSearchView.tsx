@@ -1,7 +1,8 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useMemo } from "react";
-import { Stethoscope } from "lucide-react";
+
 
 import { AsyncView } from "@/components/async-view";
 import {
@@ -155,8 +156,8 @@ function FilteredDoctorList({
       return (
         <Empty data-slot="doctor-search-only-excluded-doctor">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Stethoscope />
+            <EmptyMedia variant="illustration">
+              <Illustration name="patient/no-doctors" size="md" />
             </EmptyMedia>
             <EmptyTitle>No other doctors available right now</EmptyTitle>
             <EmptyDescription>
@@ -172,8 +173,8 @@ function FilteredDoctorList({
     return (
       <Empty data-slot="doctor-search-no-matches">
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Stethoscope />
+          <EmptyMedia variant="illustration">
+            <Illustration name="patient/no-doctors" size="md" />
           </EmptyMedia>
           <EmptyTitle>No doctors match your filters</EmptyTitle>
           <EmptyDescription>
@@ -192,8 +193,8 @@ function DoctorSearchEmpty() {
   return (
     <Empty data-slot="doctor-search-empty">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Stethoscope />
+        <EmptyMedia variant="illustration">
+          <Illustration name="patient/no-doctors" size="md" />
         </EmptyMedia>
         <EmptyTitle>No doctors available</EmptyTitle>
         <EmptyDescription>

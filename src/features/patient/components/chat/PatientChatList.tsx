@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -190,8 +191,8 @@ function ChatListEmpty() {
   return (
     <Empty data-slot="patient-chat-empty">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <MessageSquareText />
+        <EmptyMedia variant="illustration">
+          <Illustration name="shared/no-conversations" size="md" />
         </EmptyMedia>
         <EmptyTitle>No open conversations</EmptyTitle>
         <EmptyDescription>

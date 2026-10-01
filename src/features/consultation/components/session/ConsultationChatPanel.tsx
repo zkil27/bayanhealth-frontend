@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useRef } from "react";
 import { AlertCircleIcon, SendHorizonal, Wifi, WifiOff } from "lucide-react";
 
@@ -170,9 +171,10 @@ function MessageList({
     return (
       <div
         data-slot="chat-empty"
-        className="flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500"
+        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-sm text-slate-500"
       >
-        No messages yet. Say hello to start the consultation.
+        <Illustration name="shared/no-conversations" size="sm" />
+        <p>No messages yet. Say hello to start the consultation.</p>
       </div>
     );
   }

@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarClock, ClipboardList } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
 import { Badge } from "@/components/ui/badge";
@@ -135,8 +136,8 @@ function PatientBookingListEmpty() {
   return (
     <Empty data-slot="patient-booking-list-empty">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <ClipboardList />
+        <EmptyMedia variant="illustration">
+          <Illustration name="patient/no-bookings" size="md" />
         </EmptyMedia>
         <EmptyTitle>No bookings yet</EmptyTitle>
         <EmptyDescription>

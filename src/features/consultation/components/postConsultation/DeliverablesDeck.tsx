@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useState } from "react";
 import {
   AlertCircle,
@@ -233,9 +234,7 @@ export function DeliverablesDeck({
         data-slot="deliverables-deck-empty"
         className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-(--border-subtle) bg-(--surface-card) p-8 text-center"
       >
-        <span className="flex size-11 items-center justify-center rounded-2xl bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
-          <ClipboardList className="size-6" />
-        </span>
+        <Illustration name="doctor/no-documents" size="sm" />
         <h3 className="mt-3 text-base font-bold text-(--text-heading)">No clinical documents drafted yet</h3>
         <p className="mt-1 max-w-md text-xs text-(--text-muted) leading-relaxed">
           Generate official patient-facing documents, electronic prescriptions, or medical certificates below:

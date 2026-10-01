@@ -1,9 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { addDays, format, parseISO, startOfWeek } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -149,8 +149,8 @@ export function UpcomingTodayCard() {
         ) : entries.length === 0 ? (
           <Empty data-slot="upcoming-today-empty" className="gap-2 p-2">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CalendarIcon />
+              <EmptyMedia variant="illustration">
+                <Illustration name="doctor/day-open" size="sm" />
               </EmptyMedia>
               <EmptyTitle>Nothing scheduled today</EmptyTitle>
               <EmptyDescription>

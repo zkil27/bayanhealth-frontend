@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import {
   AlertCircle,
   UserSearch,
@@ -128,6 +129,12 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
 
   return (
     <div className="animate-in duration-300 fade-in">
+      <Illustration
+        name="patient/finding-doctor"
+        size="lg"
+        priority
+        className="mb-3"
+      />
       <div className="flex items-center gap-2.5">
         <span className="flex size-[38px] shrink-0 items-center justify-center rounded-[12px] bg-(--teal-100) text-(--teal-800)">
           <UserSearch className="size-5" />
@@ -409,14 +416,14 @@ function DoctorReviewCard({ booking }: { booking: Booking }) {
 
   return (
     <Card className="relative mx-auto flex w-full flex-col overflow-hidden pt-0 shadow-lg">
-      <div className="relative aspect-video w-full overflow-hidden">
+      <div className="relative aspect-video w-full overflow-hidden bg-(--surface-warm-soft)">
         <Image
-          src="/medicinePlaceholder.jpg"
+          src="/illustrations/patient/doctor-matched.webp"
           alt=""
           aria-hidden="true"
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="z-20 object-cover brightness-80 dark:brightness-40"
+          className="z-20 object-contain p-2"
           loading="eager"
         />
       </div>

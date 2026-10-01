@@ -1,16 +1,10 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useCallback } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CalendarClock,
-  CircleCheck,
-  Clock,
-  HeartPulse,
-  Stethoscope,
-  Video,
-} from "lucide-react";
+import { CalendarClock, CircleCheck, Clock, Stethoscope, Video } from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
 import {
@@ -180,8 +174,8 @@ function PatientHomeEmpty() {
   return (
     <Empty data-slot="patient-home-empty">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HeartPulse />
+        <EmptyMedia variant="illustration">
+          <Illustration name="patient/home-welcome" size="lg" />
         </EmptyMedia>
         <EmptyTitle>Nothing on your home yet</EmptyTitle>
         <EmptyDescription>

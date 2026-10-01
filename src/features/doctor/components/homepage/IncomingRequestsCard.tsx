@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useState } from "react";
 import { Clock, MessageSquare, Ticket } from "lucide-react";
 
@@ -89,8 +90,8 @@ export function IncomingRequestsCard() {
         ) : items.length === 0 ? (
           <Empty data-slot="incoming-requests-empty" className="gap-2 p-2">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Ticket />
+              <EmptyMedia variant="illustration">
+                <Illustration name="doctor/all-clear" size="sm" />
               </EmptyMedia>
               <EmptyTitle>No incoming requests</EmptyTitle>
               <EmptyDescription>

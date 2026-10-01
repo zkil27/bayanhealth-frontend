@@ -9,6 +9,23 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-02] Custom Illustrations Replace Icons In Empty, Success & Waiting States (Patient, Doctor, Shared)
+
+- **Target Route / Surface**: Patient booking wizard (Finding, Confirmation, Completed steps), Book tab path chooser (`/patient/booking`), patient home / health / chart / chat empties, doctor homepage queue and request cards, doctor KYC, Moonlight, completed consultations, post-consultation deliverables, chat panels, consultation video waiting stage
+- **Files Modified**:
+  - `src/components/primitives/Illustration/{Illustration.tsx,registry.ts,index.ts}` [NEW]
+  - `public/illustrations/{patient,doctor,shared}/*.webp` [NEW] (24 assets) and `docs/illustrations/manifest.json` [NEW]
+  - `src/components/ui/empty.tsx` [MODIFIED] (`illustration` variant on `EmptyMedia`)
+  - `FindingStep.tsx`, `ConfirmationStep.tsx`, `CompletedStep.tsx`, `BookingPathChooser.tsx`, `DoctorSearchView.tsx`, `PatientBookingList.tsx`, `PatientChatList.tsx`, `PatientChatRoom.tsx`, `PatientMedicinesTab.tsx`, `PatientRecordsTab.tsx`, `PatientChartView.tsx`, `PatientHomeView.tsx`, `HealthGuidancePanel.tsx` [MODIFIED]
+  - `DoctorPatientQueue.tsx`, `IncomingRequestsCard.tsx`, `ReadyToStartCard.tsx`, `ScheduledRequestsCard.tsx`, `UpcomingTodayCard.tsx`, `RequestPool.tsx`, `DoctorChatSidebar.tsx`, `DoctorChatRoom.tsx`, `DoctorKycView.tsx`, `CompletedConsultations.tsx`, `moonlight/page.tsx`, `DeliverablesDeck.tsx`, `ConsultationChatPanel.tsx`, `ConsultationVideo.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - Twenty-odd empty and waiting screens all showed the same small Lucide icon in a tinted square, so they read as identical and cold. They now use one flat navy-line illustration set (teal/cream fills, Filipino characters on the patient side, object-only on the doctor side).
+  - Added a typed `Illustration` primitive. It is decorative (`alt=""`, `aria-hidden`), sized xs/sm/md/lg, and sits on a cream plate in dark mode so the navy line art stays readable. `shared/video-waiting` is drawn for the dark video stage and skips the plate.
+  - Replaced the stock `medicinePlaceholder.jpg` banner on the matched-doctor card with `patient/doctor-matched`.
+  - Deliberately kept on icons: emergency and safety UI, triage badges, vitals, prescriptions and certificates, compact one-line empties (`CarePlanPanel`, `CareActivityPanel`, `DoctorTodayStrip`), and the dark `TriageBookingCard` hero.
+  - Not placed yet (assets not generated): `shared/intake-submitted`, `link-expired`, `role-patient`, `role-doctor`, `no-access`, `something-went-wrong`, `empty-generic`.
+- **Handoff notes**: copy `src/components/primitives/Illustration/`, `public/illustrations/` and the `illustration` variant in `empty.tsx`. Each call site changes only the icon/media block; copy, hooks and data wiring are untouched.
+
 ### [2026-10-01] Toast Notification Standardization Across Patient Booking, Intake, Chat & Profile Workspaces
 
 - **Target Route / Surface**: Patient On-Demand Booking (`/patient/booking/createBooking`), Scheduled Doctor Booking (`/patient/booking/createBooking/[id]`), Clinical Intake Forms (`/patient/booking/intake/[bookingId]`), Patient Consultation Chat (`/patient/chat/[bookingId]`), Payment Proof Upload & Staff Review (`PaymentProofUpload.tsx`, `PaymentProofReview.tsx`), Patient Personal & Doctor Preferences Profile (`/patient/profile/details`, `/patient/profile/doctor-preferences`)

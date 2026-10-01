@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -408,9 +409,7 @@ function CompletedConsultationsEmpty({
       data-slot="completed-consultations-empty"
       className="my-auto flex min-h-[300px] w-full flex-1 flex-col items-center justify-center p-8 text-center"
     >
-      <div className="mb-3.5 flex size-12 items-center justify-center rounded-2xl border border-(--border-subtle) bg-(--surface-warm) text-(--text-muted)">
-        <ClipboardCheck className="size-6 text-(--text-muted)" />
-      </div>
+      <Illustration name="doctor/no-history" size="md" className="mb-3" />
       <h3 className="font-display text-base font-semibold text-(--text-heading)">
         No recent consults
       </h3>

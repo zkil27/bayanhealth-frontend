@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -154,6 +155,12 @@ export function CompletedStep({ booking }: { booking: Booking }) {
       className="animate-in duration-300 fade-in"
       data-slot="wizard-completed"
     >
+      <Illustration
+        name="patient/consult-complete"
+        size="lg"
+        priority
+        className="mb-3"
+      />
       <div className="mb-2 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
         <CheckCircle2 className="size-5 text-(--teal-800)" />
         <span>Consultation complete</span>

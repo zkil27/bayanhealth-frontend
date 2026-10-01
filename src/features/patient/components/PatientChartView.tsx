@@ -1,15 +1,8 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useCallback } from "react";
-import {
-  Activity,
-  CalendarClock,
-  ClipboardList,
-  FileText,
-  FlaskConical,
-  HeartPulse,
-  Stethoscope,
-} from "lucide-react";
+import { Activity, CalendarClock, ClipboardList, FileText, FlaskConical, Stethoscope } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { AsyncView } from "@/components/async-view";
@@ -146,8 +139,8 @@ function PatientChartEmpty() {
   return (
     <Empty data-slot="patient-chart-empty">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HeartPulse />
+        <EmptyMedia variant="illustration">
+          <Illustration name="patient/no-records" size="md" />
         </EmptyMedia>
         <EmptyTitle>Your health timeline is empty</EmptyTitle>
         <EmptyDescription>

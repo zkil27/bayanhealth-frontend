@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, RefreshCw, Satellite, UserRoundX, Video } from "lucide-react";
+import { Eye, RefreshCw, UserRoundX, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -675,9 +676,12 @@ function StandbyPanel({ isOnDuty }: { isOnDuty: boolean }) {
       className="flex flex-col items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-warm) px-5 py-6 text-center sm:flex-row sm:justify-between sm:text-left"
     >
       <div className="flex items-center gap-3.5">
-        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-(--status-available-fg)/20 bg-(--status-available-bg) text-(--status-available-fg)">
-          <Satellite className="size-4.5" aria-hidden />
-        </span>
+        <div className="w-20 shrink-0">
+          <Illustration
+            name={isOnDuty ? "doctor/standby-on-duty" : "doctor/standby-offline"}
+            size="sm"
+          />
+        </div>
         <div>
           <h4 className="text-[13px] font-bold tracking-wide text-(--text-heading) uppercase">
             {isOnDuty ? "Triage radar active · ready for patients" : "Offline · walk-ins paused"}

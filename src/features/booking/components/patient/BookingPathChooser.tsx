@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import type { IllustrationName } from "@/components/primitives/Illustration";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { cn } from "@/lib/utils";
@@ -94,6 +96,7 @@ export function BookingPathChooser() {
           <PathCard
             href="/patient/booking/createBooking?mode=on-demand"
             icon={<Zap />}
+            illustration="patient/consult-now"
             eyebrow="On demand"
             badge="Pinakamabilis"
             title="Consult Now"
@@ -110,6 +113,7 @@ export function BookingPathChooser() {
           <PathCard
             href="/patient/booking/search"
             icon={<CalendarClock />}
+            illustration="patient/book-later"
             eyebrow="Scheduled"
             title="Book for later"
             blurb="Maghanap ayon sa pangalan o specialty, suriin ang kalendaryo, at pumili ng oras."
@@ -217,6 +221,7 @@ function ContextCard({
 function PathCard({
   href,
   icon,
+  illustration,
   eyebrow,
   badge,
   title,
@@ -228,6 +233,7 @@ function PathCard({
 }: {
   href: string;
   icon: React.ReactNode;
+  illustration: IllustrationName;
   eyebrow: string;
   badge?: string;
   title: string;
@@ -273,6 +279,10 @@ function PathCard({
             {title}
           </p>
         </div>
+      </div>
+
+      <div className="flex justify-center rounded-(--radius-md) bg-(--surface-warm-soft) py-3">
+        <Illustration name={illustration} size="md" />
       </div>
 
       <p className="text-[14.5px] leading-[1.5] text-(--text-body)">{blurb}</p>

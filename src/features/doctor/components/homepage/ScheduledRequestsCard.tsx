@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, Calendar, CalendarClock, MessageSquare, XCircle } from "lucide-react";
+import { AlertCircleIcon, CalendarClock, MessageSquare, XCircle } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -176,8 +177,8 @@ export function ScheduledRequestsCard() {
         ) : requests.length === 0 ? (
           <Empty data-slot="scheduled-requests-empty">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Calendar />
+              <EmptyMedia variant="illustration">
+                <Illustration name="doctor/all-clear" size="sm" />
               </EmptyMedia>
               <EmptyTitle>No scheduled requests</EmptyTitle>
               <EmptyDescription>

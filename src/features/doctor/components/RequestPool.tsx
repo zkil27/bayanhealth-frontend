@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, Clock, Inbox, MessageSquare, Zap } from "lucide-react";
+import { AlertCircleIcon, Clock, MessageSquare, Zap } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -155,8 +156,8 @@ export function RequestPool() {
         ) : requests.length === 0 ? (
           <Empty data-slot="request-pool-empty" className="gap-2 p-2">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Inbox />
+              <EmptyMedia variant="illustration">
+                <Illustration name="doctor/all-clear" size="sm" />
               </EmptyMedia>
               <EmptyTitle>No open requests</EmptyTitle>
               <EmptyDescription>
