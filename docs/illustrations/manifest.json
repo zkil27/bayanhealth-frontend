@@ -1,0 +1,123 @@
+[
+  {
+    "id": "patient/home-welcome",
+    "file": "/illustrations/patient/home-welcome.webp",
+    "width": 448,
+    "height": 339,
+    "sizeClass": "lg",
+    "onDark": false,
+    "bytes": 28514,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/finding-doctor",
+    "file": "/illustrations/patient/finding-doctor.webp",
+    "width": 448,
+    "height": 359,
+    "sizeClass": "lg",
+    "onDark": false,
+    "bytes": 27544,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/doctor-matched",
+    "file": "/illustrations/patient/doctor-matched.webp",
+    "width": 1200,
+    "height": 972,
+    "sizeClass": "banner",
+    "onDark": false,
+    "bytes": 82900,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/booking-confirmed",
+    "file": "/illustrations/patient/booking-confirmed.webp",
+    "width": 448,
+    "height": 358,
+    "sizeClass": "lg",
+    "onDark": false,
+    "bytes": 19780,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/consult-complete",
+    "file": "/illustrations/patient/consult-complete.webp",
+    "width": 448,
+    "height": 374,
+    "sizeClass": "lg",
+    "onDark": false,
+    "bytes": 22006,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/consult-now",
+    "file": "/illustrations/patient/consult-now.webp",
+    "width": 288,
+    "height": 308,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 12460,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/book-later",
+    "file": "/illustrations/patient/book-later.webp",
+    "width": 288,
+    "height": 262,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 21412,
+    "attempts": 2,
+    "status": "ok"
+  },
+  {
+    "id": "patient/no-bookings",
+    "file": "/illustrations/patient/no-bookings.webp",
+    "width": 288,
+    "height": 187,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 11348,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/no-records",
+    "file": "/illustrations/patient/no-records.webp",
+    "width": 288,
+    "height": 288,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 12466,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/no-medicines",
+    "file": "/illustrations/patient/no-medicines.webp",
+    "width": 288,
+    "height": 204,
+    "sizeClass": "md",
+    "onDark": false,
+    "bytes": 14798,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "patient/care-plan-pending",
+    "file": "/illustrations/patient/care-plan-pending.webp",
+    "width": 192,
+    "height": 205,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 5114,
+    "attempts": 1,
+    "status": "ok"
+  }
+]
