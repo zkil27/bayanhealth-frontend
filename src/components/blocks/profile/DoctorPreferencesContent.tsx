@@ -5,6 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Check, Pencil, X } from "lucide-react";
+import { toast } from "sonner";
 import {
   UserDoctorPreferencesValues,
   userDoctorPreferencesSchema,
@@ -54,8 +55,15 @@ export function DoctorPreferencesContent() {
   }, [doctorPreferences, reset]);
 
   const onSubmit = async (data: UserDoctorPreferencesValues) => {
-    await updateDoctorPreferences(data);
-    setIsEditing(false);
+    try {
+      await updateDoctorPreferences(data);
+      toast.success("Doctor preferences updated.");
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not update preferences.",
+      );
+    }
   };
 
   const handleCancel = () => {

@@ -5,6 +5,7 @@ import { CheckCircle2, CircleAlert, ShieldCheck, XCircle } from "lucide-react";
 
 import AppButton from "@/components/primitives/AppButton";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 import { newIdempotencyKey } from "@/lib/idempotency";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -31,7 +32,9 @@ export function PaymentProofReview({ bookingId, onReviewed }: PaymentProofReview
 
   async function review(decision: PaymentProofDecision) {
     if (!idToken) {
-      setError("Your session has expired. Please sign in again.");
+      const msg = "Your session has expired. Please sign in again.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setPending(decision);
@@ -43,13 +46,19 @@ export function PaymentProofReview({ bookingId, onReviewed }: PaymentProofReview
         decision,
         newIdempotencyKey(),
       );
+      toast.success(
+        decision === "confirmed"
+          ? "Payment confirmed."
+          : "Payment marked rejected.",
+      );
       onReviewed?.(updated);
     } catch (err) {
-      setError(
+      const msg =
         err instanceof ApiError
           ? err.message
-          : "Could not submit the review. Please try again.",
-      );
+          : "Could not submit the review. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(null);
     }
@@ -69,10 +78,9 @@ export function PaymentProofReview({ bookingId, onReviewed }: PaymentProofReview
       </p>
 
       {error && (
-        <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
-          <CircleAlert className="size-4" />
+        <span role="alert" className="sr-only">
           {error}
-        </p>
+        </span>
       )}
 
       <div className="flex items-center gap-3">

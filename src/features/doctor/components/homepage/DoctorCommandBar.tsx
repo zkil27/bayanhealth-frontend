@@ -13,6 +13,7 @@ import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
 import { useDoctorShiftMetrics } from "@/features/doctor/hooks/useDoctorShiftMetrics";
 import { useDoctorQueueSummary } from "@/features/doctor/hooks/useDoctorQueueSummary";
 import { updateDoctorProfile } from "@/features/doctor/lib/api/kyc";
+import { toast } from "sonner";
 import { DoctorNotification } from "../notification/DoctorNotification";
 
 export const DOCTOR_ME_PROFILE_QUERY_KEY = "doctor-me-profile";
@@ -36,7 +37,6 @@ export function DoctorCommandBar() {
   const { metrics, completedToday, isLoading: metricsLoading } = useDoctorShiftMetrics();
   const { totalActive, isLoading: queueLoading } = useDoctorQueueSummary();
 
-  const [error, setError] = useState<string | null>(null);
   const keyRef = useRef(createIdempotencyKeyManager());
 
   const name = profile?.fullName?.trim() || "Doctor";
@@ -74,12 +74,16 @@ export function DoctorCommandBar() {
       );
       keyRef.current.reset();
     },
-    onSuccess: () => {
-      setError(null);
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables
+          ? "You are now on-duty and accepting walk-ins."
+          : "You are now offline. Walk-ins paused.",
+      );
       void queryClient.invalidateQueries({ queryKey: [DOCTOR_ME_PROFILE_QUERY_KEY] });
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Couldn't update your duty status.");
+      toast.error(err instanceof Error ? err.message : "Couldn't update your duty status.");
     },
   });
 
@@ -198,12 +202,6 @@ export function DoctorCommandBar() {
           </div>
         </div>
       </div>
-
-      {error ? (
-        <p role="alert" className="text-xs font-semibold text-(--danger-fg)">
-          {error}
-        </p>
-      ) : null}
 
       {/* Bottom Row: Shift Overview Metrics Ribbon */}
       <dl className="grid grid-cols-2 gap-3 border-t border-(--border-subtle) pt-3 sm:grid-cols-4 md:gap-4">

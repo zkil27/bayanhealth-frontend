@@ -14,6 +14,7 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { MAX_CHAT_MESSAGE_LENGTH, isChatWritable } from "@/lib/chat";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { cn, initialsOf } from "@/lib/utils";
@@ -110,6 +111,12 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
       scroll: false,
     });
   }, [searchParams, chat, router, bookingId]);
+
+  useEffect(() => {
+    if (chat.sendError) {
+      toast.error(chat.sendError);
+    }
+  }, [chat.sendError]);
 
   const doctorName = doctorQuery.data?.fullName;
   const doctorLabel = doctorId
@@ -216,9 +223,9 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
         real HTTP hydration failure `hydrateFromHttp` reports, in both modes.
       */}
       {chat.sendError ? (
-        <Alert variant="destructive" className="mt-2 shrink-0" data-slot="chat-send-error">
-          <AlertDescription>{chat.sendError}</AlertDescription>
-        </Alert>
+        <span data-slot="chat-send-error" className="sr-only">
+          {chat.sendError}
+        </span>
       ) : null}
 
       {isReadOnly ? null : (

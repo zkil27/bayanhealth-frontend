@@ -6,6 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
+import { toast } from "sonner";
 import {
   computeCompletionStatus,
   useIntakeStore,
@@ -275,11 +276,12 @@ export function IntakeForm({
           values: getValues(),
         });
       } catch (error) {
-        setSubmitError(
+        const msg =
           error instanceof Error
             ? error.message
-            : "We could not save this section. Please try again.",
-        );
+            : "We could not save this section. Please try again.";
+        setSubmitError(msg);
+        toast.error(msg);
         return;
       } finally {
         setIsSaving(false);
@@ -316,11 +318,12 @@ export function IntakeForm({
     } catch (error) {
       // Surface the backend message (409 already submitted, 422 incomplete)
       // rather than a generic failure the patient cannot act on.
-      setSubmitError(
+      const msg =
         error instanceof Error
           ? error.message
-          : "We could not submit your intake form. Please try again.",
-      );
+          : "We could not submit your intake form. Please try again.";
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setIsSaving(false);
     }
@@ -476,13 +479,13 @@ export function IntakeForm({
             }
           >
             {submitError && (
-              <p
+              <span
                 role="alert"
                 data-slot="intake-form-error"
-                className="mb-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                className="sr-only"
               >
                 {submitError}
-              </p>
+              </span>
             )}
           </IntakeNavFooter>
         )}

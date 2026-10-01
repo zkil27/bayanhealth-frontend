@@ -5,6 +5,7 @@ import { CheckCircle2, CircleAlert, ReceiptText, UploadCloud } from "lucide-reac
 
 import AppButton from "@/components/primitives/AppButton";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { usePaymentProofUpload } from "../../hooks/usePaymentProofUpload";
 import {
   ALLOWED_PROOF_CONTENT_TYPES,
@@ -40,11 +41,18 @@ export function PaymentProofUpload({ bookingId, onSubmitted }: PaymentProofUploa
   useEffect(() => {
     if (status === "submitted" && booking && !notifiedRef.current) {
       notifiedRef.current = true;
+      toast.success("Payment proof submitted. Awaiting review.");
       onSubmitted?.(booking);
     } else if (status !== "submitted") {
       notifiedRef.current = false;
     }
   }, [status, booking, onSubmitted]);
+
+  useEffect(() => {
+    if (status === "error" && error) {
+      toast.error(error.message);
+    }
+  }, [status, error]);
 
   function onPick(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -52,7 +60,9 @@ export function PaymentProofUpload({ bookingId, onSubmitted }: PaymentProofUploa
     reset();
     if (file && !isAllowedProofContentType(file.type)) {
       setSelected(null);
-      setTypeError("Unsupported file type. Allowed: JPEG, PNG, or WebP.");
+      const msg = "Unsupported file type. Allowed: JPEG, PNG, or WebP.";
+      setTypeError(msg);
+      toast.error(msg);
       return;
     }
     setSelected(file);
@@ -85,10 +95,9 @@ export function PaymentProofUpload({ bookingId, onSubmitted }: PaymentProofUploa
       />
 
       {typeError && (
-        <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
-          <CircleAlert className="size-4" />
+        <span role="alert" className="sr-only">
           {typeError}
-        </p>
+        </span>
       )}
 
       {status !== "submitted" && (
@@ -120,21 +129,9 @@ export function PaymentProofUpload({ bookingId, onSubmitted }: PaymentProofUploa
       )}
 
       {status === "error" && error && (
-        <div role="alert" className="flex flex-col gap-2">
-          <p className="flex items-center gap-2 text-sm text-destructive">
-            <CircleAlert className="size-4" />
-            {error.message}
-          </p>
-          <AppButton
-            type="button"
-            variant="outline"
-            className="self-start"
-            onClick={onSubmit}
-            disabled={!selected}
-          >
-            Retry
-          </AppButton>
-        </div>
+        <span role="alert" className="sr-only">
+          {error.message}
+        </span>
       )}
     </div>
   );

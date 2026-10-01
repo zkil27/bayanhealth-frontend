@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { ArrowUpRightIcon, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, FormProvider } from "react-hook-form";
+import { toast } from "sonner";
 import {
   Field,
   FieldContent,
@@ -70,6 +72,12 @@ export function DoctorBookingPage({
     initialScheduledAt,
   );
   const { submit, status, error } = useCreateBooking();
+
+  useEffect(() => {
+    if (status === "error" && error) {
+      toast.error(error.message || "Could not complete your booking. Please try again.");
+    }
+  }, [status, error]);
 
   const {
     control,
@@ -242,12 +250,12 @@ export function DoctorBookingPage({
               {isCreating ? "Creating Booking..." : "Book Appointment"}
             </AppButton>
             {error && (
-              <p
+              <span
                 role="alert"
-                className="mt-2 text-center text-xs text-destructive"
+                className="sr-only"
               >
                 {error.message}
-              </p>
+              </span>
             )}
           </div>
         </div>

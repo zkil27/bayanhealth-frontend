@@ -1,6 +1,7 @@
 "use client";
 
 import { Save } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { useConsultationDocument } from "../../hooks/useConsultationDocument";
@@ -19,6 +20,15 @@ export function SOAPContext({ consultationId }: { consultationId?: string }) {
     document.setContent({ ...document.content, [section]: value });
   const busy = document.status === "saving" || document.isHydrating;
 
+  const handleSave = async () => {
+    const ok = await document.save();
+    if (ok) {
+      toast.success("SOAP notes draft saved.");
+    } else {
+      toast.error(document.error?.message ?? "Could not save SOAP notes.");
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-2 rounded-xl ">
       <div className="flex w-full items-center justify-between gap-1">
@@ -30,11 +40,10 @@ export function SOAPContext({ consultationId }: { consultationId?: string }) {
       <AssessmentTextEditor value={read("assessment")} onChange={(v) => write("assessment", v)} />
       <SOAPTextEditor title="plan" value={read("plan")} onChange={(v) => write("plan", v)} />
       {consultationId && !document.isFinalized ? (
-        <Button type="button" variant="outline" disabled={busy} onClick={() => void document.save()}>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void handleSave()}>
           <Save className="size-4" />{busy ? "Loading…" : "Save SOAP draft"}
         </Button>
       ) : null}
-      {document.error ? <p className="text-sm text-destructive">{document.error.message}</p> : null}
     </div>
   );
 }

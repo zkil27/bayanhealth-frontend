@@ -5,6 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Pencil, Save, X } from "lucide-react";
+import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { PersonDataSection } from "@/components/blocks/profile/PersonDataSection";
 import { profileSchema, ProfileFormValues } from "@/schemas/userSchema";
@@ -53,15 +54,17 @@ export function ProfileContent() {
     setSaveError(null);
     try {
       await updateProfile(data);
+      toast.success("Profile updated.");
       setIsEditing(false);
     } catch (err) {
       // A failed save must not read as a successful one — keep the form open and
       // say so, rather than closing the editor over unsaved changes.
-      setSaveError(
+      const msg =
         err instanceof Error
           ? err.message
-          : "We could not save your profile. Please try again.",
-      );
+          : "We could not save your profile. Please try again.";
+      setSaveError(msg);
+      toast.error(msg);
     }
   };
 
@@ -129,12 +132,12 @@ export function ProfileContent() {
         </div>
 
         {saveError && (
-          <p
+          <span
             role="alert"
-            className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            className="sr-only"
           >
             {saveError}
-          </p>
+          </span>
         )}
 
         <PersonDataSection

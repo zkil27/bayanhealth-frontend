@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -124,7 +125,13 @@ export function ScheduledRequestsCard() {
 
   const accept = useMutation({
     mutationFn: (bookingId: string) => acceptScheduledRequest(idToken ?? "", bookingId),
-    onSuccess: invalidateAfterResponse,
+    onSuccess: () => {
+      toast.success("Scheduled booking accepted.");
+      invalidateAfterResponse();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Could not accept request.");
+    },
   });
 
   // Flag off for this environment: render nothing rather than an empty card —
@@ -357,15 +364,19 @@ function DeclineDialog({
     onSuccess: (outcome) => {
       if (outcome.kind === "refund_failed") {
         setRefundFailed(true);
+        toast.error("Refund could not be completed. The booking remains confirmed and assigned to you.");
         return;
       }
+      toast.success("Request declined and slot released.");
       setNote("");
       setRefundFailed(false);
       onDeclined();
       onClose();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Could not decline this request.");
+      const msg = err instanceof Error ? err.message : "Could not decline this request.";
+      setError(msg);
+      toast.error(msg);
     },
   });
 
@@ -412,18 +423,13 @@ function DeclineDialog({
         </div>
 
         {refundFailed ? (
-          <Alert variant="destructive" data-slot="decline-refund-failed">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertTitle>Refund could not be completed</AlertTitle>
-            <AlertDescription>
-              This booking has not been changed — it is still confirmed and
-              assigned to you. Try declining again in a moment.
-            </AlertDescription>
-          </Alert>
+          <span data-slot="decline-refund-failed" className="sr-only">
+            Refund could not be completed
+          </span>
         ) : error ? (
-          <Alert variant="destructive" data-slot="decline-error">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <span data-slot="decline-error" className="sr-only">
+            {error}
+          </span>
         ) : null}
 
         <DialogFooter>

@@ -8,6 +8,7 @@ import { ArrowLeft, SendHorizonal, Video } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/chat";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,12 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
     readOnly: isReadOnly,
     enabled: isDemo || !bookingQuery.isLoading,
   });
+
+  useEffect(() => {
+    if (chat.sendError) {
+      toast.error(chat.sendError);
+    }
+  }, [chat.sendError]);
 
   return (
     <div
@@ -184,11 +191,9 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
       />
 
       {chat.sendError ? (
-        <div className="shrink-0 px-4 pt-1">
-          <Alert variant="destructive" className="py-2 text-xs" data-slot="doctor-chat-send-error">
-            <AlertDescription className="text-xs">{chat.sendError}</AlertDescription>
-          </Alert>
-        </div>
+        <span data-slot="doctor-chat-send-error" className="sr-only">
+          {chat.sendError}
+        </span>
       ) : null}
 
       {/* Message Composer (Bottom Pinned) */}

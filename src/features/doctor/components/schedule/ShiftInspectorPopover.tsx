@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Lock, LockOpen, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -99,18 +100,21 @@ export function ShiftInspectorPopover({
   const endTime = entry ? formatMinutesToTime(entry.endMinutes) : "";
 
   const runWrite = useCallback(
-    async (action: () => Promise<unknown>) => {
+    async (action: () => Promise<unknown>, successMsg?: string) => {
       setOutcome({ kind: "busy" });
       try {
         await action();
         setOutcome({ kind: "idle" });
+        if (successMsg) toast.success(successMsg);
         onMutated();
       } catch (err) {
+        const msg =
+          err instanceof ApiError ? err.message : "Action failed. Please try again.";
         setOutcome({
           kind: "error",
-          message:
-            err instanceof ApiError ? err.message : "Action failed. Please try again.",
+          message: msg,
         });
+        toast.error(msg);
       }
     },
     [onMutated],
@@ -130,22 +134,28 @@ export function ShiftInspectorPopover({
       // way; the popover only stays open when something was held back.
       onMutated();
       if (result.retained.length === 0) {
+        toast.success("Shift deleted.");
         onClose();
         return;
       }
+      toast.warning(
+        `Removed ${result.deleted.length} slots. ${result.retained.length} booked slots stayed.`,
+      );
       setOutcome({
         kind: "partial",
         removed: result.deleted.length,
         retained: result.retained,
       });
     } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : "The shift could not be removed. Please try again.";
       setOutcome({
         kind: "error",
-        message:
-          err instanceof ApiError
-            ? err.message
-            : "The shift could not be removed. Please try again.",
+        message: msg,
       });
+      toast.error(msg);
     }
   }, [entry, idToken, doctorId, date, startTime, endTime, onMutated, onClose]);
 
@@ -206,27 +216,32 @@ export function ShiftInspectorPopover({
             slot={slot}
             busy={busy}
             onToggleBlock={() =>
-              runWrite(() =>
-                updateSlot(idToken, doctorId, slot.slotId, slot.date, {
-                  status: slot.status === "blocked" ? "available" : "blocked",
-                }),
+              runWrite(
+                () =>
+                  updateSlot(idToken, doctorId, slot.slotId, slot.date, {
+                    status: slot.status === "blocked" ? "available" : "blocked",
+                  }),
+                slot.status === "blocked" ? "Slot unblocked." : "Slot blocked.",
               )
             }
             onDelete={() =>
-              runWrite(() => deleteSlot(idToken, doctorId, slot.slotId, slot.date))
+              runWrite(
+                () => deleteSlot(idToken, doctorId, slot.slotId, slot.date),
+                "Slot deleted.",
+              )
             }
           />
         ))}
       </ul>
 
       {outcome.kind === "error" ? (
-        <p
+        <span
           data-slot="shift-inspector-error"
           role="alert"
-          className="rounded-lg bg-(--danger-bg) px-2.5 py-2 text-xs text-(--danger-fg)"
+          className="sr-only"
         >
           {outcome.message}
-        </p>
+        </span>
       ) : null}
 
       {outcome.kind === "partial" ? (

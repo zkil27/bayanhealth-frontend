@@ -15,6 +15,7 @@ import { AsyncView } from "@/components/async-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -171,9 +172,12 @@ export function DoctorCredentialsSection({
     try {
       await submitDoctorKyc(idToken, submitKeyRef.current.current());
       submitKeyRef.current.reset();
+      toast.success("Credentials submitted for admin review.");
       onChanged();
     } catch {
-      setSubmitError("Could not submit for review. Please try again.");
+      const err = "Could not submit for review. Please try again.";
+      setSubmitError(err);
+      toast.error(err);
     } finally {
       setSubmitting(false);
     }
@@ -273,10 +277,9 @@ export function DoctorCredentialsSection({
           </Button>
         </div>
         {submitError ? (
-          <p role="alert" className="flex items-center gap-2 text-sm text-(--danger-fg)">
-            <CircleAlert className="size-4" />
+          <span role="alert" className="sr-only">
             {submitError}
-          </p>
+          </span>
         ) : null}
       </section>
     </div>
@@ -315,7 +318,9 @@ function KycDocumentUpload({
     setUploadError(null);
     if (file && !isAllowedKycContentType(file.type)) {
       setSelected(null);
-      setTypeError("Unsupported file type. Allowed: JPEG, PNG, WebP, or PDF.");
+      const msg = "Unsupported file type. Allowed: JPEG, PNG, WebP, or PDF.";
+      setTypeError(msg);
+      toast.error(msg);
       return;
     }
     setSelected(file);
@@ -338,9 +343,12 @@ function KycDocumentUpload({
       presignKeyRef.current.reset();
       confirmKeyRef.current.reset();
       setSelected(null);
+      toast.success(`${title} uploaded successfully.`);
       onUploaded();
     } catch {
-      setUploadError("The upload failed. Please try again.");
+      const msg = "The upload failed. Please try again.";
+      setUploadError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
@@ -403,10 +411,9 @@ function KycDocumentUpload({
       </label>
 
       {typeError ? (
-        <p role="alert" className="flex items-center gap-2 text-sm text-(--danger-fg)">
-          <CircleAlert className="size-4" />
+        <span role="alert" className="sr-only">
           {typeError}
-        </p>
+        </span>
       ) : null}
 
       {selected ? (
@@ -429,21 +436,9 @@ function KycDocumentUpload({
       ) : null}
 
       {uploadError ? (
-        <div role="alert" className="flex flex-col gap-2">
-          <p className="flex items-center gap-2 text-sm text-(--danger-fg)">
-            <CircleAlert className="size-4" />
-            {uploadError}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="self-start"
-            onClick={onUpload}
-            disabled={!selected || uploading}
-          >
-            Retry
-          </Button>
-        </div>
+        <span role="alert" className="sr-only">
+          {uploadError}
+        </span>
       ) : null}
     </section>
   );

@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { CheckCircle2, Ticket } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { useCreateBooking } from "../../hooks/useCreateBooking";
 import type { BookingFormInput } from "../../lib/createBookingRequest";
 
@@ -33,6 +35,12 @@ function humanizeStatus(status: string): string {
 export function BookingCreateButton({ formInput }: BookingCreateButtonProps) {
   const { submit, status, booking, error } = useCreateBooking();
 
+  useEffect(() => {
+    if (status === "error" && error) {
+      toast.error("Couldn't create your booking", { description: error.message });
+    }
+  }, [status, error]);
+
   if (status === "success" && booking) {
     return (
       <Alert data-slot="booking-create-success">
@@ -49,10 +57,13 @@ export function BookingCreateButton({ formInput }: BookingCreateButtonProps) {
   return (
     <div className="w-full space-y-2">
       {status === "error" && error ? (
-        <Alert variant="destructive" data-slot="booking-create-error">
-          <AlertTitle>Couldn&apos;t create your booking</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-        </Alert>
+        <span
+          role="alert"
+          data-slot="booking-create-error"
+          className="sr-only"
+        >
+          {error.message}
+        </span>
       ) : null}
 
       <button

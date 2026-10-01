@@ -5,6 +5,7 @@ import { CalendarPlus, Lock, LockOpen, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 
 import {
@@ -108,18 +109,20 @@ function SlotRow({
   const [error, setError] = useState<string | null>(null);
 
   const runWrite = useCallback(
-    async (action: () => Promise<unknown>) => {
+    async (action: () => Promise<unknown>, successMsg?: string) => {
       setBusy(true);
       setError(null);
       try {
         await action();
+        if (successMsg) toast.success(successMsg);
         onMutated();
       } catch (err) {
-        setError(
+        const msg =
           err instanceof ApiError
             ? err.message
-            : "Action failed. Please try again.",
-        );
+            : "Action failed. Please try again.";
+        setError(msg);
+        toast.error(msg);
         setBusy(false);
       }
     },
@@ -129,15 +132,21 @@ function SlotRow({
   const handleToggleBlock = useCallback(() => {
     const nextStatus: SlotStatus =
       slot.status === "blocked" ? "available" : "blocked";
-    return runWrite(() =>
-      updateSlot(idToken, doctorId, slot.slotId, slot.date, {
-        status: nextStatus,
-      }),
+    return runWrite(
+      () =>
+        updateSlot(idToken, doctorId, slot.slotId, slot.date, {
+          status: nextStatus,
+        }),
+      nextStatus === "blocked" ? "Slot blocked." : "Slot unblocked.",
     );
   }, [runWrite, slot.status, slot.slotId, slot.date, idToken, doctorId]);
 
   const handleDelete = useCallback(
-    () => runWrite(() => deleteSlot(idToken, doctorId, slot.slotId, slot.date)),
+    () =>
+      runWrite(
+        () => deleteSlot(idToken, doctorId, slot.slotId, slot.date),
+        "Slot deleted.",
+      ),
     [runWrite, idToken, doctorId, slot.slotId, slot.date],
   );
 
@@ -164,7 +173,7 @@ function SlotRow({
           </span>
         ) : null}
         {error ? (
-          <span role="alert" className="text-xs text-destructive">
+          <span role="alert" className="sr-only">
             {error}
           </span>
         ) : null}

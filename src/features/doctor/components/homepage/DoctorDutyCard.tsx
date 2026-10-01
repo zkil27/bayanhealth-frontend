@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
@@ -31,7 +32,6 @@ export function DoctorDutyCard() {
   const idToken = useIdToken();
   const queryClient = useQueryClient();
   const { profile, isLoading } = useMyDoctorProfile();
-  const [error, setError] = useState<string | null>(null);
   const keyRef = useRef(createIdempotencyKeyManager());
 
   const isOnDuty = profile?.onDemandAvailable ?? false;
@@ -53,12 +53,16 @@ export function DoctorDutyCard() {
       );
       keyRef.current.reset();
     },
-    onSuccess: () => {
-      setError(null);
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables
+          ? "You are now on-duty and accepting walk-ins."
+          : "You are now offline. Walk-ins paused.",
+      );
       void queryClient.invalidateQueries({ queryKey: [DOCTOR_ME_PROFILE_QUERY_KEY] });
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Couldn't update your duty status.");
+      toast.error(err instanceof Error ? err.message : "Couldn't update your duty status.");
     },
   });
 
@@ -129,12 +133,6 @@ export function DoctorDutyCard() {
           ? "New on-demand requests will be routed to you. Your scheduled appointments are unaffected."
           : "You will not receive new on-demand requests. Scheduled appointments still go ahead."}
       </p>
-
-      {error ? (
-        <p role="alert" className="text-[11.5px] font-semibold text-(--danger-fg)">
-          {error}
-        </p>
-      ) : null}
     </div>
   );
 }

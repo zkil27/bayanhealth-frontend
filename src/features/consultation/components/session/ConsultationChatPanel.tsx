@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/chat";
 
 import {
@@ -54,6 +55,12 @@ export function ConsultationChatPanel({
     isLoading,
   } = useConsultationChat({ bookingId, sessionId, deps });
 
+  useEffect(() => {
+    if (sendError) {
+      toast.error(sendError);
+    }
+  }, [sendError]);
+
   return (
     <section
       data-slot="consultation-chat"
@@ -77,10 +84,9 @@ export function ConsultationChatPanel({
       <MessageList messages={messages} isLoading={isLoading} />
 
       {sendError ? (
-        <Alert variant="destructive" data-slot="chat-send-error" className="shrink-0">
-          <AlertCircleIcon />
-          <AlertDescription>{sendError}</AlertDescription>
-        </Alert>
+        <span data-slot="chat-send-error" className="sr-only">
+          {sendError}
+        </span>
       ) : null}
 
       <ChatComposer

@@ -19,6 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useProfile } from "@/hooks/useProfile";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useIdToken, useUserId } from "@/stores/useAuthStore";
 
 import { useQuestionnaireV2Intake, type QuestionnaireV2UiStep } from "../../../hooks/useSubmitIntake";
@@ -252,6 +253,7 @@ export function AuthenticatedIntakeForm({
     try {
       if (currentStep === reviewPage) {
         await intake.submit.mutateAsync(methods.getValues());
+        toast.success("Intake submitted successfully.");
         onComplete?.();
         return;
       }
@@ -276,7 +278,9 @@ export function AuthenticatedIntakeForm({
       setCurrentStep(next);
       focusHeading();
     } catch (error) {
-      setSaveError(errorMessage(error));
+      const msg = errorMessage(error);
+      setSaveError(msg);
+      toast.error(msg);
     }
   };
 
@@ -411,10 +415,9 @@ export function AuthenticatedIntakeForm({
            * which read as an alarming amount of red for a "try again" message.
            */}
           {saveError ? (
-            <p role="alert" className="mb-2 flex items-center gap-1.5 text-xs font-medium text-(--danger-fg)">
-              <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+            <span role="alert" className="sr-only">
               {saveError}
-            </p>
+            </span>
           ) : null}
         </IntakeNavFooter>
       </form>

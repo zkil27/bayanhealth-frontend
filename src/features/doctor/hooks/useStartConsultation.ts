@@ -9,6 +9,7 @@ import {
   startConsultation,
 } from "@/features/consultation/lib/api/consultSession";
 import { useIdToken } from "@/stores/useAuthStore";
+import { toast } from "sonner";
 
 export type StartConsultationStatus = "idle" | "starting" | "error";
 
@@ -49,8 +50,10 @@ export function useStartConsultation() {
   const start = useCallback(
     async (bookingId: string): Promise<boolean> => {
       if (!idToken) {
+        const msg = "Your session has expired. Please sign in again.";
         setStatus("error");
-        setError("Your session has expired. Please sign in again.");
+        setError(msg);
+        toast.error(msg);
         return false;
       }
 
@@ -84,27 +87,21 @@ export function useStartConsultation() {
         await startConsultation(idToken, bookingId, keyRef.current);
         return enterRoom();
       } catch (err) {
+        let msg = "Could not start the consultation. Please try again.";
         if (err instanceof ApiError) {
           if (err.status === 409) {
-            setStatus("error");
-            setError(
-              "This booking is not ready to start. It must be confirmed, and it may have been cancelled or already started elsewhere.",
-            );
-            return false;
+            msg =
+              "This booking is not ready to start. It must be confirmed, and it may have been cancelled or already started elsewhere.";
+          } else if (err.code === "KYC_VERIFICATION_REQUIRED") {
+            msg =
+              "Your KYC verification must be approved before you can start consultations.";
+          } else {
+            msg = err.message;
           }
-          if (err.code === "KYC_VERIFICATION_REQUIRED") {
-            setStatus("error");
-            setError(
-              "Your KYC verification must be approved before you can start consultations.",
-            );
-            return false;
-          }
-          setStatus("error");
-          setError(err.message);
-          return false;
         }
         setStatus("error");
-        setError("Could not start the consultation. Please try again.");
+        setError(msg);
+        toast.error(msg);
         return false;
       }
     },

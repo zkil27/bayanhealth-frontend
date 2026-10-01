@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { useIdToken, useUserId } from "@/stores/useAuthStore";
 
 import { fetchBookingDetail } from "@/features/booking/lib/api/bookingDetail";
@@ -167,9 +168,9 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       );
     },
     onError: (err) => {
-      setCompletionError(
-        err instanceof Error ? err.message : "Could not complete the consultation.",
-      );
+      const msg = err instanceof Error ? err.message : "Could not complete the consultation.";
+      setCompletionError(msg);
+      toast.error(msg);
     },
   });
 
@@ -251,14 +252,9 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       </header>
 
       {completionError ? (
-        <Alert
-          variant="destructive"
-          data-slot="consultation-room-complete-error"
-          className="shrink-0 rounded-2xl border-rose-200 bg-rose-50 text-rose-800"
-        >
-          <AlertCircleIcon className="h-4 w-4" />
-          <AlertDescription>{completionError}</AlertDescription>
-        </Alert>
+        <span data-slot="consultation-room-complete-error" className="sr-only">
+          {completionError}
+        </span>
       ) : null}
 
       {/*
@@ -560,9 +556,6 @@ function PreConsultHeader({
           ? "Chat is open — you can message your patient now. New messages appear within a few seconds."
           : "Chat is open — you can message your doctor now. New messages appear within a few seconds."}
       </div>
-      {startConsultation.error ? (
-        <span className="pl-13 text-xs text-destructive">{startConsultation.error}</span>
-      ) : null}
     </div>
   );
 }

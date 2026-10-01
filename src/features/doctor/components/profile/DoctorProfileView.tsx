@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -416,9 +417,12 @@ function ProfileDetailsSection({
       );
       keyRef.current.reset();
       setSaved(true);
+      toast.success("Profile saved successfully.");
       onSaved();
     } catch {
-      setError("Could not save your profile. Please try again.");
+      const msg = "Could not save your profile. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -516,17 +520,12 @@ function ProfileDetailsSection({
         >
           {saving ? <Spinner /> : <Save className="size-4" />} Save changes
         </Button>
-        {saved && !dirty ? (
-          <span role="status" className="text-sm text-(--status-available-fg)">
-            Saved.
-          </span>
-        ) : null}
       </div>
 
       {error ? (
-        <p role="alert" className="flex items-center gap-2 text-sm text-(--danger-fg)">
-          <CircleAlert className="size-4" /> {error}
-        </p>
+        <span role="alert" className="sr-only">
+          {error}
+        </span>
       ) : null}
     </section>
   );
@@ -568,9 +567,12 @@ function SignatureSection({
       await updateDoctorProfile(idToken, toUpsertBody(profile, { signature }), keyRef.current.current());
       keyRef.current.reset();
       setStrokes([]);
+      toast.success("Digital signature specimen saved.");
       onSaved();
     } catch {
-      setError("Could not save your signature. Please try again.");
+      const msg = "Could not save your signature. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -654,9 +656,9 @@ function SignatureSection({
       </div>
 
       {error ? (
-        <p role="alert" className="flex items-center gap-2 text-sm text-(--danger-fg)">
-          <CircleAlert className="size-4" /> {error}
-        </p>
+        <span role="alert" className="sr-only">
+          {error}
+        </span>
       ) : null}
     </section>
   );

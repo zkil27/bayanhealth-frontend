@@ -212,7 +212,8 @@ function UnifiedQueueList() {
         // as success and closing on a request that was never actually claimed.
         const outcome = await acceptPool.mutateAsync(confirmTarget.item.bookingId);
         if (outcome.kind === "claimed") {
-          setConfirmError("Another doctor accepted this request first.");
+          setConfirmTarget(null);
+          toast.info("Another doctor accepted this request first.");
           return;
         }
         isOnDemand = true;
@@ -236,11 +237,12 @@ function UnifiedQueueList() {
           : `${name} accepted — now on your calendar.`,
       );
     } catch (err) {
-      setConfirmError(
+      const msg =
         err instanceof Error
           ? err.message
-          : "This consultation is no longer available in the queue.",
-      );
+          : "This consultation is no longer available in the queue.";
+      setConfirmError(msg);
+      toast.error(msg);
     } finally {
       setIsConfirming(false);
     }
@@ -637,7 +639,7 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
         {isAsserting ? <Spinner className="size-3.5" /> : <UserRoundX className="size-3.5" />}
       </Button>
       {errorMessage ? (
-        <span data-slot="no-show-error" className="text-[10.5px] text-(--danger-fg)">
+        <span data-slot="no-show-error" className="sr-only">
           {errorMessage}
         </span>
       ) : null}

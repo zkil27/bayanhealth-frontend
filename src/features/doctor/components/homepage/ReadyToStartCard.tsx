@@ -266,9 +266,9 @@ function ReadyRow({
       </div>
 
       {startConsultation.error ? (
-        <Alert variant="destructive" data-slot="ready-to-start-row-error">
-          <AlertDescription>{startConsultation.error}</AlertDescription>
-        </Alert>
+        <span data-slot="ready-to-start-row-error" className="sr-only">
+          {startConsultation.error}
+        </span>
       ) : null}
     </li>
   );
@@ -376,11 +376,7 @@ function NoShowControl({ item }: { item: ReadyToStartItem }) {
       </AlertDialog>
 
       {errorMessage ? (
-        <span
-          data-slot="no-show-error"
-          className="flex items-center gap-1 text-[11px] text-(--danger-fg)"
-        >
-          <TriangleAlert className="size-3 shrink-0" />
+        <span data-slot="no-show-error" className="sr-only">
           {errorMessage}
         </span>
       ) : null}

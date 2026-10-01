@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 import { ApiError, newIdempotencyKey } from "@/lib/api";
 import { useIdToken } from "@/stores/useAuthStore";
@@ -65,7 +66,19 @@ export function useAssertNoShow(bookingId: string): AssertNoShowState {
       return assertBookingNoShow(idToken ?? "", bookingId, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      toast.success("Patient recorded as a no-show.");
       void queryClient.invalidateQueries({ queryKey: [DOCTOR_INTAKE_QUEUE_QUERY_KEY] });
+    },
+    onError: (err) => {
+      const msg =
+        err instanceof ApiError && err.status === 409
+          ? typeof err.details?.retryAfterMs === "number"
+            ? NO_SHOW_TOO_EARLY_MESSAGE
+            : NO_SHOW_CONFLICT_MESSAGE
+          : err instanceof Error && err.message
+            ? err.message
+            : NO_SHOW_ERROR_MESSAGE;
+      toast.error(msg);
     },
     retry: false,
   });

@@ -6,6 +6,7 @@ import { ExternalLink, Link2, Loader2, TriangleAlert } from "lucide-react";
 import AppButton from "@/components/primitives/AppButton";
 import { CopySpan } from "@/components/primitives/CopySpan";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -48,10 +49,8 @@ export function IssueIntakeLinkButton({ bookingId }: IssueIntakeLinkButtonProps)
 
   const handleIssue = async () => {
     if (!idToken) {
-      setStatus({
-        kind: "error",
-        message: "Your session has expired. Please sign in again.",
-      });
+      toast.error("Your session has expired. Please sign in again.");
+      setStatus({ kind: "idle" });
       return;
     }
     setStatus({ kind: "loading" });
@@ -59,6 +58,7 @@ export function IssueIntakeLinkButton({ bookingId }: IssueIntakeLinkButtonProps)
       const res = await issueIntakeLink(bookingId, idToken, keys.current());
       // Success: this logical issue is done; the next click mints a fresh key.
       keys.reset();
+      toast.success("Intake link generated.");
       setStatus({
         kind: "issued",
         link: res.data,
@@ -69,7 +69,8 @@ export function IssueIntakeLinkButton({ bookingId }: IssueIntakeLinkButtonProps)
         err instanceof ApiError
           ? err.message
           : "Could not issue the intake link. Please try again.";
-      setStatus({ kind: "error", message });
+      toast.error(message);
+      setStatus({ kind: "idle" });
     }
   };
 
@@ -100,13 +101,6 @@ export function IssueIntakeLinkButton({ bookingId }: IssueIntakeLinkButtonProps)
 
   return (
     <div className="flex flex-col gap-2">
-      {status.kind === "error" && (
-        <Alert variant="destructive">
-          <TriangleAlert className="size-4" />
-          <AlertTitle>Couldn&apos;t issue intake link</AlertTitle>
-          <AlertDescription>{status.message}</AlertDescription>
-        </Alert>
-      )}
       <AppButton
         type="button"
         variant="business"

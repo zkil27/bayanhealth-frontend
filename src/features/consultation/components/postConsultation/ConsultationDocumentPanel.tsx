@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 import {
   useConsultationDocument,
@@ -59,6 +60,15 @@ export function ConsultationDocumentPanel({
 
   const notes = typeof content.notes === "string" ? content.notes : "";
   const busy = status === "saving" || isHydrating;
+
+  const handleSave = async () => {
+    const ok = await save();
+    if (ok) {
+      toast.success("Document draft saved.");
+    } else {
+      toast.error(error?.message ?? "Could not save the document.");
+    }
+  };
 
   return (
     <section
@@ -117,7 +127,7 @@ export function ConsultationDocumentPanel({
               type="button"
               variant="outline"
               data-slot="document-save"
-              onClick={() => void save()}
+              onClick={() => void handleSave()}
               disabled={busy}
             >
               {busy ? (
@@ -132,11 +142,9 @@ export function ConsultationDocumentPanel({
       )}
 
       {error ? (
-        <Alert variant="destructive" data-slot="document-error">
-          <AlertCircleIcon />
-          <AlertTitle>Could not save the document</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-        </Alert>
+        <span data-slot="document-error" className="sr-only">
+          {error.message}
+        </span>
       ) : null}
     </section>
   );

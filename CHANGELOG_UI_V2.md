@@ -9,6 +9,87 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Toast Notification Standardization Across Patient Booking, Intake, Chat & Profile Workspaces
+
+- **Target Route / Surface**: Patient On-Demand Booking (`/patient/booking/createBooking`), Scheduled Doctor Booking (`/patient/booking/createBooking/[id]`), Clinical Intake Forms (`/patient/booking/intake/[bookingId]`), Patient Consultation Chat (`/patient/chat/[bookingId]`), Payment Proof Upload & Staff Review (`PaymentProofUpload.tsx`, `PaymentProofReview.tsx`), Patient Personal & Doctor Preferences Profile (`/patient/profile/details`, `/patient/profile/doctor-preferences`)
+- **Files Modified**:
+  - `src/features/booking/components/patient/OnDemandBooking.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/BookingCreateButton.tsx` [MODIFIED]
+  - `src/features/booking/components/doctor/DoctorBooking.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/IntakeForm.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/AuthenticatedIntakeForm.tsx` [MODIFIED]
+  - `src/features/patient/components/chat/PatientChatRoom.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/PaymentProofUpload.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/PaymentProofReview.tsx` [MODIFIED]
+  - `src/components/blocks/profile/ProfileContent.tsx` [MODIFIED]
+  - `src/components/blocks/profile/DoctorPreferencesContent.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Wall-of-Text Diagnostic Inline Errors & Layout Shifting**:
+    - Previously, when an API/network/CORS error or submission conflict occurred during on-demand queue entry (`"Kumpirmahin at pumasok sa queue"`), the raw verbose error message from `src/lib/api.ts` was dumped as multi-line red text (`<p role="alert" className="text-destructive">`) directly under the primary CTA. This severely stretched the container card, pushed preparation notes and emergency warnings off-screen, and presented raw internal diagnostic details as unstyled inline text.
+    - The same anti-pattern existed in scheduled doctor booking (`DoctorBooking.tsx`), booking submission buttons (`BookingCreateButton.tsx`), clinical intake step navigation and final submission footers (`IntakeForm.tsx`, `AuthenticatedIntakeForm.tsx`), patient chat send failures (`PatientChatRoom.tsx`), payment proof upload and review cards (`PaymentProofUpload.tsx`, `PaymentProofReview.tsx`), and profile editing forms (`ProfileContent.tsx`, `DoctorPreferencesContent.tsx`).
+  - **Standardized on Sonner Toast Notifications**:
+    - Replaced generic inline error dumps and raw paragraphs with reactive Sonner toast notifications (`toast.error`, `toast.success`).
+    - Standardized feedback across all primary patient interactions:
+      - On-demand queue confirmation (`OnDemandBooking.tsx`): Replaced `ToastForTesting` and inline `<p role="alert">` with `toast.error(error.message || "Please check your information and try again.")`.
+      - Scheduled doctor booking (`DoctorBooking.tsx`): Fired `toast.error` on submission failure.
+      - Intake form progress & completion (`IntakeForm.tsx`, `AuthenticatedIntakeForm.tsx`): Fired `toast.error(error.message)` on step persistence or submission failures, and `toast.success("Intake submitted successfully.")` on final completion.
+      - Patient chat room (`PatientChatRoom.tsx`): Replaced destructive inline `<Alert data-slot="chat-send-error">` with reactive `toast.error(chat.sendError)`, matching the doctor chat implementation.
+      - Payment proof receipt submission (`PaymentProofUpload.tsx`): Fired `toast.error` for invalid file types or upload errors, and `toast.success("Payment proof submitted. Awaiting review.")` on success.
+      - Payment proof review decision (`PaymentProofReview.tsx`): Fired `toast.success("Payment confirmed." / "Payment marked rejected.")` and `toast.error`.
+      - Patient profile & preferences updates (`ProfileContent.tsx`, `DoctorPreferencesContent.tsx`): Fired `toast.success("Profile updated.")` and `toast.success("Doctor preferences updated.")`.
+  - **Preserved Upstream Test Contracts & Accessibility**:
+    - Converted all inline error containers and alerts to `<span role="alert" className="sr-only">` (and retained data attributes like `data-slot="booking-create-error"`, `data-slot="intake-form-error"`, and `data-slot="chat-send-error"`), ensuring automated test suites and screen readers continue functioning without visual layout distortion.
+- **Tokens & Primitives Used**: Sonner `toast`, Tailwind `sr-only` accessibility classes. Zero regressions on design tokens.
+- **Upstream Porting Notes**: Component-scoped presentation refinement. Zero changes to booking contracts, validation schemas, or API endpoints.
+
+### [2026-10-01] Toast Notification Standardization Across Doctor Cockpit, Consultation & Schedule Workspaces
+
+- **Target Route / Surface**: Doctor Cockpit (`/doctor`), Doctor Consultation Room (`/consultation/room/[id]`), Post-Consultation Workspaces (`/doctor/post-consultation/[id]`), Doctor Schedule (`/doctor/schedule`), Doctor KYC (`/doctor/kyc`), Doctor Profile (`/doctor/profile`)
+- **Files Modified**:
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorDutyCard.tsx` [MODIFIED]
+  - `src/features/doctor/hooks/useStartConsultation.ts` [MODIFIED]
+  - `src/features/doctor/components/homepage/ReadyToStartCard.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/doctor/hooks/useAssertNoShow.ts` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx` [MODIFIED]
+  - `src/features/doctor/components/RequestPool.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/ScheduledRequestsCard.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/IssueIntakeLinkButton.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationChatPanel.tsx` [MODIFIED]
+  - `src/features/doctor/components/chat/DoctorChatRoom.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/ConsultationDocumentPanel.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SOAPContext.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/SignatureField.tsx` [MODIFIED]
+  - `src/features/doctor/components/profile/DoctorProfileView.tsx` [MODIFIED]
+  - `src/features/doctor/components/kyc/DoctorKycView.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/ActiveDaySlotList.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/ShiftInspectorPopover.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/BlockTimeDialog.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Disruptive Inline Error Banners & Layout Shifting**:
+    - Previously, doctor screens rendered inline `<Alert variant="destructive">` banners, raw `<p role="alert">` text paragraphs, and unstyled static inline notices beneath action controls (e.g. duty toggles, suggestion chips, post-consultation document panels, slot inspection popovers, and KYC upload forms).
+    - These inline banners caused severe layout jank, pushed critical action buttons out of clinical reach, and broke spatial hierarchy in compact cockpits and multi-column panels.
+  - **Standardized on Sonner Toast Notifications**:
+    - Upgraded error handling and action confirmations to use non-disruptive, highly visible Sonner toasts (`toast.success`, `toast.error`, `toast.warning`, `toast.info`).
+    - Standardized feedback across all primary doctor actions:
+      - Duty toggle status (`"You are now on duty."` / `"You are now off duty."`) and duty update failures.
+      - Consultation initiation errors (409 conflicts, session expirations, KYC approval requirements).
+      - No-show assertions (`"Patient recorded as a no-show."` / retry-after cooldowns).
+      - Queue triage & concurrency conflicts (`"Another doctor accepted this request first."`).
+      - Intake link generation (`"Intake link generated."`).
+      - In-session and asynchronous chat send failures.
+      - SOAP notes, referral recommendations, and post-consultation document saves (`"SOAP notes saved."`, `"Referral saved."`).
+      - Canvas drawing limits on doctor signature specimens (`toast.warning`).
+      - Doctor profile and signature specimen persistence (`"Profile saved."`, `"Signature specimen saved."`).
+      - KYC credential submissions for admin review and document uploads.
+      - Schedule slot mutations (blocking, unblocking, deleting slots, shift removals, and block-time bulk dialogs).
+  - **Preserved Upstream Test Contracts & Accessibility**:
+    - Retained all existing testing and screen-reader data attributes (`data-slot="ready-to-start-row-error"`, `data-slot="no-show-error"`, `data-slot="document-error"`, `data-slot="shift-inspector-error"`, `data-slot="block-time-error"`, `role="alert"`) inside `<span className="sr-only">`.
+    - This ensures upstream automated headless tests and screen readers maintain full functional parity without inducing visual layout shifts or clipping in compact doctor surfaces.
+- **Tokens & Primitives Used**: Sonner `toast`, Tailwind `sr-only` accessibility utilities, semantic color tokens.
+- **Upstream Porting Notes**: Component-scoped presentation & feedback improvements. Zero changes to backend APIs, data queries, or validation logic.
+
 ### [2026-10-01] Mobile Bug Pass: Consultation Chat Composer, Calendar Dropdowns, Verify Back Button
 
 - **Target Route / Surface**: `/consultation/room/[bookingId]` (patient chat tab), every `Calendar` with `captionLayout="dropdown"` (`DateTimePicker.tsx`), `/verify`

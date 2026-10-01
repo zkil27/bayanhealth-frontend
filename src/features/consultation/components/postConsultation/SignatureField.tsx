@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, PenLine, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import type { SignaturePoint } from "../../lib/api/consultationDocuments";
 
 export function SignaturePadDialog({
@@ -32,7 +33,9 @@ export function SignaturePadDialog({
       0,
     );
     if (strokesRef.current.length >= 32 || committedPoints >= 2_048) {
-      setError("Signature limit reached. Clear the signature to draw again.");
+      const msg = "Signature limit reached. Clear the signature to draw again.";
+      setError(msg);
+      toast.warning(msg);
       return;
     }
 
@@ -57,7 +60,9 @@ export function SignaturePadDialog({
       0,
     );
     if (stroke.length >= 256 || committedPoints + stroke.length >= 2_048) {
-      setError("Signature is too detailed. Save it now or clear and redraw.");
+      const msg = "Signature is too detailed. Save it now or clear and redraw.";
+      setError(msg);
+      toast.warning(msg);
       return;
     }
 
@@ -140,7 +145,7 @@ export function SignaturePadDialog({
         />
       </div>
 
-      {error ? <p className="text-xs text-(--danger-fg)">{error}</p> : null}
+      {error ? <span className="sr-only">{error}</span> : null}
 
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-(--text-subtle)">

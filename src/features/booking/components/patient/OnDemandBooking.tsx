@@ -25,6 +25,7 @@ import { useCreateBooking } from "../../hooks/useCreateBooking";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIdToken } from "@/stores/useAuthStore";
+import { toast } from "sonner";
 import ToastForTesting from "@/components/primitives/ToastForTesting";
 import { setActiveConsultation } from "@/lib/patient/activeConsultationStorage";
 
@@ -66,10 +67,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
   useEffect(() => {
     if (status === "error" && error && error.code !== "AUTH_REQUIRED") {
-      ToastForTesting({
-        description: "Please check your information and try again.",
-        duration: 5000,
-      });
+      toast.error(error.message || "Please check your information and try again.");
     }
   }, [status, error]);
 
@@ -186,12 +184,12 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
               <ArrowRight className="size-4.5" />
             </BrandCtaButton>
             {error && (
-              <p
+              <span
                 role="alert"
-                className="mt-1 text-center text-xs font-semibold text-destructive"
+                className="sr-only"
               >
                 {error.message}
-              </p>
+              </span>
             )}
           </div>
 

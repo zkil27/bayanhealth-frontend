@@ -15,6 +15,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { useIdToken } from "@/stores/useAuthStore";
 import { NumberTicker } from "@/components/primitives/NumberTicker";
 
@@ -76,7 +77,6 @@ const VISIBLE_REQUEST_CAP = 4;
 export function RequestPool() {
   const idToken = useIdToken();
   const queryClient = useQueryClient();
-  const [notice, setNotice] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   const poolQuery = useQuery({
@@ -91,17 +91,20 @@ export function RequestPool() {
   const accept = useMutation({
     mutationFn: (bookingId: string) => acceptRequest(idToken ?? "", bookingId),
     onSuccess: (outcome) => {
-      setNotice(
-        outcome.kind === "claimed"
-          ? "Another doctor accepted that request first."
-          : null,
-      );
+      if (outcome.kind === "claimed") {
+        toast.info("Another doctor accepted that request first.");
+      } else {
+        toast.success("Consultation request accepted.");
+      }
       void queryClient.invalidateQueries({ queryKey: ["doctor-request-pool"] });
       // Shared constant, not a string literal: `usePatientBoard` reads its board
       // through this exact key, and a typo or drift here silently breaks the
       // handoff again — an accepted request would leave the pool and never appear
       // on the board (ADR-20260809-08).
       void queryClient.invalidateQueries({ queryKey: [DOCTOR_INTAKE_QUEUE_QUERY_KEY] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Could not accept request.");
     },
   });
 
@@ -125,11 +128,6 @@ export function RequestPool() {
       </h3>
 
       <div className="flex flex-col gap-3">
-        {notice ? (
-          <Alert data-slot="request-pool-notice">
-            <AlertDescription>{notice}</AlertDescription>
-          </Alert>
-        ) : null}
 
         {poolQuery.isLoading ? (
           <div

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import type { Slot, SlotDuration } from "../../lib/api/schedule";
@@ -94,13 +95,20 @@ export function BlockTimeDialog({
       setResult(outcome);
       if (outcome.blocked.length > 0) onBlocked();
       if (outcome.blocked.length > 0 && outcome.partial.length === 0 && outcome.failures.length === 0) {
-        // Clean run: nothing left to explain, close and let the calendar behind
-        // this dialog — now re-read — be the confirmation.
+        toast.success(
+          `Blocked ${outcome.blocked.length} ${
+            outcome.blocked.length === 1 ? "slot" : "slots"
+          }.`,
+        );
         onOpenChange(false);
         setNotes("");
+      } else if (outcome.failures.length > 0 || outcome.partial.length > 0) {
+        toast.warning("Some time slots could not be blocked.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not block this time.");
+      const msg = err instanceof Error ? err.message : "Could not block this time.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -236,9 +244,9 @@ function BlockTimeStatus({
 }) {
   if (error) {
     return (
-      <p role="alert" className="text-xs text-destructive" data-slot="block-time-error">
+      <span role="alert" className="sr-only" data-slot="block-time-error">
         {error}
-      </p>
+      </span>
     );
   }
 
