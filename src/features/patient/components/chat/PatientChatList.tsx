@@ -78,7 +78,7 @@ export function PatientChatList() {
   return (
     <div
       data-slot="patient-chat-list"
-      className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
+      className="flex min-h-full w-full flex-col justify-start"
     >
       <PatientPageHeader title="Chat" />
 

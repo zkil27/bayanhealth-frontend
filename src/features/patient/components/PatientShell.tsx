@@ -25,7 +25,7 @@ export function PatientShell({ children, className }: PatientShellProps) {
           </aside>
           <main
             className={cn(
-              "bg-satin relative z-10 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden p-0 m-0 h-full min-h-0 lg:overflow-y-auto lg:pb-2",
+              "bg-satin relative z-10 flex min-w-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden p-0 m-0 h-full min-h-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-4",
               className,
             )}
           >

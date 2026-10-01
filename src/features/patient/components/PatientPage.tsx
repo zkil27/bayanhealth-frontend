@@ -33,7 +33,7 @@ export function patientPageClass(
   extra?: string,
 ): string {
   return cn(
-    "mx-auto flex w-full min-w-0 max-w-lg flex-col gap-5 px-4 pt-2 pb-8 sm:px-6 md:px-8",
+    "mx-auto flex w-full min-w-0 max-w-lg flex-col gap-5 px-4 pt-2 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-12 lg:pb-8 sm:px-6 md:px-8",
     // `wide` fills modern widescreen space, spanning across the full available
     // width beside the floating rail.
     width === "wide"

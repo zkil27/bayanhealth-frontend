@@ -77,7 +77,7 @@ function DoctorDetailContent({
   const availableSlots = selectableSlots(data.slots);
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col justify-start pb-8">
+    <div className="flex min-h-full w-full flex-col justify-start">
       {/*
        * Back to the directory, not to `/patient/booking` — that is the path chooser
        * now, and a patient who has drilled into a doctor came from the search
@@ -89,7 +89,7 @@ function DoctorDetailContent({
       />
 
       {/* Slots section */}
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pt-4 pb-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-8">
         <div className="mx-4 flex flex-col gap-4 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 shadow-(--shadow-card) md:mx-0">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-[16px] font-bold tracking-[-0.01em] text-(--text-heading)">

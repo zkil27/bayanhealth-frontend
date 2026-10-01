@@ -115,7 +115,7 @@ export function DoctorBookingPage({
 
   return (
     <FormProvider {...form}>
-      <div className="flex h-full min-h-0 w-full flex-col justify-start pb-4">
+      <div className="flex min-h-full w-full flex-col justify-start">
         {/*
          * This screen is only ever reached from the doctor's own page
          * (`/patient/booking/doctor/{doctorId}` → "Book appointment"), so the back
@@ -129,7 +129,7 @@ export function DoctorBookingPage({
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="mx-auto flex w-full max-w-2xl flex-col gap-y-1 pt-4 pb-10 md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-4"
+          className="mx-auto flex w-full max-w-2xl flex-col gap-y-1 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-12 md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-8"
         >
 
         <div className="flex w-full flex-col items-center justify-center gap-4 p-4">

@@ -75,7 +75,7 @@ export function PatientProfileSettings() {
   return (
     <div
       data-slot="patient-profile-page"
-      className="flex h-full min-h-0 w-full min-w-0 flex-col justify-start pb-4"
+      className="flex min-h-full w-full min-w-0 flex-col justify-start"
     >
       <PatientPageHeader title="Profile" />
       <section

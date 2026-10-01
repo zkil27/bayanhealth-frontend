@@ -39,6 +39,8 @@ This document serves as the active single source of truth for the **upstream AI 
     - Mounted `<ActiveConsultationBanner />` in `PatientShell.tsx` so patients exploring other tabs (`/patient/health`, `/patient/records`, etc.) during an active consultation always have a sticky 1-tap **"Bumalik sa Konsulta"** button in their viewport.
   - **Query Cache Invalidation & Freshness**:
     - Invalidate `["patient-home-bookings"]` immediately upon booking creation in `OnDemandBooking.tsx` and upon consult completion in `ConsultationRoom.tsx`. Set `refetchOnMount: "always"` and reduced `staleTime` on Patient Home bookings query.
+  - **React Rules of Hooks Hardening in `PatientBookingDetail.tsx`**:
+    - Positioned active consultation synchronization `useEffect` strictly at top of component alongside query declarations, before any conditional `isLoading` or `error` early return statements, eliminating Turbopack/Next.js hook order drift warnings.
 - **Device Optimization**: Mobile-first touch ergonomics (48px+ targets), iOS Safari gesture resilience, desktop clinical layout.
 - **Tokens & Primitives Used**: Bayan Teal, Emerald live pulse indicators, Lucide SVG icons (`Video`, `Clock`, `ArrowRight`, `X`), `BrandLinkButton`, `cn`.
 - **Upstream Porting Notes**: UI and client persistence only. 100% preservation of backend contracts, Daily Call Object handling, and OpenAPI schemas. Zero breaking changes.

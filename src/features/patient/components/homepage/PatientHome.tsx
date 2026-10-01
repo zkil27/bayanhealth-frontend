@@ -378,7 +378,7 @@ export function PatientHome() {
       <div
         className={patientPageClass(
           "wide",
-          "h-full min-h-0 justify-start gap-4 pt-4 pb-4",
+          "min-h-full justify-start gap-4 pt-4",
         )}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 lg:max-w-none lg:mx-0 lg:gap-5">

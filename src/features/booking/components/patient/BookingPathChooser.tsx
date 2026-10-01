@@ -77,7 +77,7 @@ export function BookingPathChooser() {
   return (
     <div
       data-slot="booking-path-chooser"
-      className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
+      className="flex min-h-full w-full flex-col justify-start"
     >
       <PatientPageHeader title="Book a consultation" />
 

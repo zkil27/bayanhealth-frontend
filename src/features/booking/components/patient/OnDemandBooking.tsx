@@ -107,7 +107,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
   return (
     <FormProvider {...form}>
-      <div className="flex h-full min-h-0 w-full flex-col justify-start pb-4">
+      <div className="flex min-h-full w-full flex-col justify-start">
         <PatientPageHeader
           title="Konsulta Ngayon (Consult Now)"
           backHref="/patient/booking"
@@ -115,7 +115,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-6 px-4 py-4 md:px-8 lg:grid-cols-12 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none"
+          className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-6 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-12 md:px-8 lg:grid-cols-12 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-8"
         >
 
         {/* Left: clinical preferences. */}

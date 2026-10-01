@@ -11,13 +11,13 @@ import { ON_DEMAND_WAIT_ESTIMATE } from "@/features/booking/constants/bookingCon
  */
 export default function Page() {
   return (
-    <div className="flex h-full min-h-0 w-full flex-col justify-start pb-8">
+    <div className="flex min-h-full w-full flex-col justify-start">
       <PatientPageHeader
         title="Book for later"
         backHref="/patient/booking"
       />
 
-      <section className="mx-auto flex w-full max-w-5xl flex-col gap-y-4 px-4 pt-4 pb-8 md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-y-4 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:px-8 lg:mx-0 lg:pl-[18rem] lg:pr-8 lg:max-w-none lg:pb-8">
         <OtherPathNote
           href="/patient/booking/createBooking?mode=on-demand"
           label="Need care now? Consult Now instead"
