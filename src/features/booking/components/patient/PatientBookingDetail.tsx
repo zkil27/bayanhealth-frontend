@@ -182,6 +182,30 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
     throwOnError: false,
   });
 
+  const currentBooking = result?.kind === "found" ? result.booking : undefined;
+  const isIntakeOpen =
+    intakeQuery.isSuccess && intakeQuery.data?.status !== "submitted";
+  const doctorName = doctorQuery.data?.fullName;
+
+  useEffect(() => {
+    if (!currentBooking) return;
+    if (currentBooking.status === "completed" || currentBooking.status === "cancelled") {
+      clearActiveConsultation(currentBooking.bookingId);
+      return;
+    }
+    setActiveConsultation({
+      bookingId: currentBooking.bookingId,
+      status: currentBooking.status,
+      stage: isIntakeOpen
+        ? "intake"
+        : currentBooking.status === "in_progress"
+          ? "room"
+          : "waiting_queue",
+      serviceType: currentBooking.serviceType,
+      doctorName,
+    });
+  }, [currentBooking, isIntakeOpen, doctorName]);
+
   if (isLoading || (!error && !result)) {
     return (
       <PageFrame bookingId={bookingId}>
@@ -228,21 +252,6 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         : { kind: "undisclosed" };
   const wizardBooking = toWizardBooking(booking, intakeGate, doctorResolution);
   const isIntake = wizardBooking?.step === "intake";
-
-  useEffect(() => {
-    if (!booking) return;
-    if (booking.status === "completed" || booking.status === "cancelled") {
-      clearActiveConsultation(booking.bookingId);
-      return;
-    }
-    setActiveConsultation({
-      bookingId: booking.bookingId,
-      status: booking.status,
-      stage: isIntake ? "intake" : booking.status === "in_progress" ? "room" : "waiting_queue",
-      serviceType: booking.serviceType,
-      doctorName: doctorResolution.kind === "resolved" ? doctorResolution.doctor.fullName : undefined,
-    });
-  }, [booking, isIntake, doctorResolution]);
 
   return (
     <div
