@@ -1,9 +1,7 @@
-# BayanHealth UI/UX Changelog (V2)
+# BayanHealth UI/UX Changelog (V2) [ARCHIVED]
 
-All design, layout, styling, and UX modifications made in this fork must be logged here.  
-This document serves as the active single source of truth for the **upstream AI agent** that will synchronize and apply these UI improvements to the main repository, superseding the original [`CHANGELOG_UI.md`](./CHANGELOG_UI.md).
-
-> **Note**: For historical entries prior to 2026-09-26, refer to the archived [`CHANGELOG_UI.md`](./CHANGELOG_UI.md).
+> **ARCHIVED / SUPERSEDED**: All current and future UI/UX changes are now logged in **[`CHANGELOG_UI_V3.md`](./CHANGELOG_UI_V3.md)**.  
+> This document preserves the changelog history from 2026-09-26 up to 2026-10-01. For historical entries prior to 2026-09-26, refer to [`CHANGELOG_UI.md`](./CHANGELOG_UI.md).
 
 ---
 

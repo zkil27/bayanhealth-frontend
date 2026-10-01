@@ -25,7 +25,7 @@
    - `npx skills add wshobson/agents/tailwind-design-system`
    - `npx skills add pbakaus/impeccable`
 5. **Mandatory Logging**:
-   - Every single UI change MUST be logged in **[`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md)** (supersedes `CHANGELOG_UI.md`).
+   - Every single UI change MUST be logged in **[`CHANGELOG_UI_V3.md`](./CHANGELOG_UI_V3.md)** (supersedes `CHANGELOG_UI_V2.md` and `CHANGELOG_UI.md`).
    - Maintain clean, component-scoped diffs so the AI agent in the main repository can seamlessly mirror your work.
 6. **Main Repository Handoff**:
    - Follow **[`UI_HANDOFF.md`](./UI_HANDOFF.md)** to ensure all components are packaged for clean, zero-bloat upstream adoption by the main repo AI agent.
