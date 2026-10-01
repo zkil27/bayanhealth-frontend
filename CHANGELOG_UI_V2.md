@@ -9,7 +9,36 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
-### [2026-10-01] Active Consultation Recovery, Hero Fallback Remediation & Accidental Back Protection
+### [2026-10-01] Patient App Shell Viewport Scrollability & Mobile Bottom Navigation Clearance
+
+- **Target Route / Surface**: `/patient/booking` (`BookingPathChooser.tsx`), `/patient/booking/search` (`search/page.tsx`), `/patient/booking/createBooking` (`OnDemandBooking.tsx`), `/patient/booking/doctor/[doctorId]` (`DoctorBooking.tsx`, `page.tsx`), `/patient` (`PatientHome.tsx`), `/patient/chat` (`PatientChatList.tsx`), `/patient/health` (`PatientHealthView.tsx`), `/patient/profile` (`PatientProfileSettings.tsx`, `ProfileSubPage.tsx`), App Shell (`PatientShell.tsx`, `PatientPage.tsx`)
+- **Files Modified**:
+  - `src/features/patient/components/PatientShell.tsx` [MODIFIED]
+  - `src/features/patient/components/PatientPage.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/BookingPathChooser.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/OnDemandBooking.tsx` [MODIFIED]
+  - `src/features/booking/components/doctor/DoctorBooking.tsx` [MODIFIED]
+  - `src/app/patient/booking/search/page.tsx` [MODIFIED]
+  - `src/app/patient/booking/doctor/[doctorId]/page.tsx` [MODIFIED]
+  - `src/features/patient/components/homepage/PatientHome.tsx` [MODIFIED]
+  - `src/features/patient/components/chat/PatientChatList.tsx` [MODIFIED]
+  - `src/features/patient/components/health/PatientHealthView.tsx` [MODIFIED]
+  - `src/features/patient/components/profile/PatientProfileSettings.tsx` [MODIFIED]
+  - `src/features/patient/components/profile/ProfileSubPage.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Resolved Mobile Viewport Scroll Lock & Emergency Disclaimer Occlusion**:
+    - Previously, on the patient consultation booking screen (`/patient/booking`), patients on mobile and tablet devices could not scroll down to the bottom of the page. The critical emergency warning (*"Hindi para sa emergency — kung nakakaranas ka ng matinding sintomas, tumawag sa 911 o pumunta sa pinakamalapit na ER"*) and the **"Call 911"** action button were obscured behind the fixed mobile bottom navigation bar (`NavBar.tsx`).
+    - In `PatientShell.tsx`, `<main>` had `lg:overflow-y-auto`, which unintentionally omitted vertical overflow scrolling on mobile viewports (`< lg`), while wrapped in parent containers that had `overflow-hidden`.
+    - Enabled `overflow-y-auto` across all breakpoints on `<main>` with safe clearance (`pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-4`).
+  - **Standardized Mobile Bottom Safe-Area Clearance across Patient Column (`patientPageClass`)**:
+    - Updated `patientPageClass` in `PatientPage.tsx` from default `pb-8`/`pb-12` (which ended beneath the 64px–98px fixed bottom navbar) to `pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-12 lg:pb-8`.
+    - Removed rigid `h-full min-h-0 pb-4` constraints across `BookingPathChooser.tsx`, `OnDemandBooking.tsx`, `DoctorBooking.tsx`, `PatientChatList.tsx`, `PatientHealthView.tsx`, `PatientProfileSettings.tsx`, `ProfileSubPage.tsx`, and `PatientHome.tsx`, upgrading them to fluid `min-h-full` containers so that content expands naturally and outer scroll height calculations preserve the full bottom margin.
+  - **Enhanced Mobile Touch Ergonomics**:
+    - Guaranteed at least 24px–32px of clean visual breathing room between the bottom-most interactive elements (e.g., Call 911, Submit booking, or Disclaimer notes) and the floating mobile bottom navigation bar on all iOS and Android form factors, including devices with home-indicator gesture bars (`env(safe-area-inset-bottom)`).
+- **Tokens & Primitives Used**: `calc(6rem+env(safe-area-inset-bottom,0px))`, `min-h-full`, `overflow-y-auto`, `patientPageClass`.
+- **Upstream Porting Notes**: Pure UI/UX layout adjustment. Zero changes to API endpoints, data models, or backend contracts.
+
+---
 
 - **Target Route / Surface**: `/patient`, `/consultation/room/[bookingId]`, `/patient/booking/createBooking`, `/patient/booking/getBooking/[bookingId]`, App-wide (`PatientShell.tsx`)
 - **Files Modified / Added**:
