@@ -42,7 +42,7 @@ export function SoapSummaryCards({
   return (
     <div
       data-slot="soap-summary-cards"
-      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 shadow-2xs divide-y divide-(--border-subtle) lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
+      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 shadow-2xs divide-y divide-(--border-subtle) lg:flex-row lg:items-stretch lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
     >
       {/* S: Subjective */}
       <div className="flex min-w-0 flex-1 lg:flex-[1.25] items-start gap-2.5 pb-2.5 lg:pb-0">
@@ -84,7 +84,7 @@ export function SoapSummaryCards({
       </div>
 
       {/* O: Objective */}
-      <div className="flex min-w-0 flex-1 items-start gap-2.5 pt-2.5 lg:pt-0 lg:pl-3.5">
+      <div className="flex min-w-0 flex-1 items-start gap-2.5 pt-2.5 lg:w-[25rem] lg:flex-none lg:pt-0 lg:pl-3.5">
         <span
           aria-hidden
           className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
@@ -100,7 +100,7 @@ export function SoapSummaryCards({
           {intake === undefined ? (
             <p className="text-xs text-(--text-muted)">Loading vitals…</p>
           ) : hasVitals ? (
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 lg:grid lg:grid-cols-2">
               {VITALS.map((vital) => {
                 const vitalsData = details!.vitals as IntakeVitals;
                 const sanityFlag = vital.sanityCheck(vitalsData);

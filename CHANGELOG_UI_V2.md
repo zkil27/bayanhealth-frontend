@@ -9,6 +9,16 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] SOAP Summary Strip: Balanced Subjective / Objective Columns
+
+- **Target Route / Surface**: Doctor post-consultation workspace, SOAP summary strip
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - Vitals wrapped as a free flow of pills, leaving SpO₂ orphaned on a second row, and the S/O divider was only as tall as the shorter column.
+  - Desktop (`lg`): Objective column is a fixed `25rem` and vitals sit in a 2×2 grid (Temp/BP, HR/SpO₂); Subjective takes the remaining width; columns stretch so the divider spans the full card height. Mobile keeps the wrapping flow.
+- **Upstream Porting Notes**: Class-only change, no logic or data changes.
+
 ### [2026-10-01] Root Body: Remove Document-Level Scroll on iOS Safari (Double Scroll)
 
 - **Target Route / Surface**: All patient routes on mobile Safari (seen on `/patient/booking`)
