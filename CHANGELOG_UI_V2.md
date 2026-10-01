@@ -9,6 +9,16 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Root Body: Remove Document-Level Scroll on iOS Safari (Double Scroll)
+
+- **Target Route / Surface**: All patient routes on mobile Safari (seen on `/patient/booking`)
+- **Files Modified**:
+  - `src/app/layout.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - `<body>` used `min-h-screen` (`100vh`, the large viewport on iOS), while `PatientShell` is `h-[100dvh]`. The document was taller than the shell, so the page scrolled at document level *and* inside `<main>`. The inner scroller's bottom edge then sat above the fixed bottom nav, clipping the last card.
+  - Changed to `min-h-dvh` so the document matches the visible viewport and only `<main>` scrolls.
+- **Upstream Porting Notes**: One class. `min-height` only, so non-shell pages that scroll the document are unaffected.
+
 ### [2026-10-01] Patient Shell: Page Content No Longer Shrinks Under Bottom Nav
 
 - **Target Route / Surface**: `/patient/booking/createBooking` (Consult Now) and any patient page using a `min-h-full` root
