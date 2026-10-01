@@ -65,6 +65,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const [isChatFocused, setIsChatFocused] = useState(false);
 
   const stateQuery = useQuery({
     queryKey: ["consultation-state", bookingId, idToken],
@@ -195,7 +196,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   return (
     <div
       data-slot="consultation-room"
-      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-2 overflow-hidden p-2 text-slate-900 antialiased sm:p-2.5 md:gap-3 md:p-3.5 lg:gap-3 lg:p-4"
+      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-2 overflow-hidden p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] px-[max(0.5rem,env(safe-area-inset-left))] text-slate-900 antialiased sm:p-2.5 md:gap-3 md:p-3.5 lg:gap-3 lg:p-4"
     >
       <header className="min-h-12 shrink-0 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2 shadow-2xs md:min-h-14 md:rounded-2xl md:border md:px-5 md:py-2.5">
         {session ? (
@@ -233,11 +234,26 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
         this section's own `min-h-0` are what makes that possible).
       */}
       <main className="flex flex-col lg:flex-row min-h-0 flex-1 h-full w-full gap-2.5 md:gap-3.5 lg:gap-4 overflow-hidden">
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950 shadow-sm md:rounded-3xl h-[40dvh] lg:h-full lg:flex-[7] min-w-0 shrink-0 lg:shrink">
+        <div
+          className={cn(
+            "flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950 shadow-sm md:rounded-3xl lg:h-full lg:flex-[7] min-w-0 shrink-0 lg:shrink transition-all duration-300",
+            isChatFocused ? "h-[74px] shrink-0" : "h-[38dvh] sm:h-[42dvh]",
+          )}
+        >
           {isDemo ? (
             <DemoVideoStage onEndCall={handleComplete} />
           ) : (
-            <ConsultationVideo bookingId={bookingId} bookingStatus={bookingQuery.data?.status} />
+            <ConsultationVideo
+              bookingId={bookingId}
+              bookingStatus={bookingQuery.data?.status}
+              compact={isChatFocused}
+              onExpand={() => setIsChatFocused(false)}
+              onLeaveCall={
+                !isAssignedDoctor
+                  ? () => router.push(`/patient/booking/getBooking/${encodeURIComponent(bookingId)}`)
+                  : undefined
+              }
+            />
           )}
         </div>
 
@@ -258,6 +274,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
               bookingId={bookingId}
               sessionId={session?.sessionId}
               doctorId={booking.doctorId}
+              onChatFocusChange={setIsChatFocused}
             />
           )}
         </aside>

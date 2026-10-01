@@ -91,7 +91,7 @@ function KnownConditions() {
         aria-pressed={noneReported}
         onClick={() => setNoneReported(!noneReported)}
         className={cn(
-          "flex min-h-12 w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition-all sm:text-sm",
+          "flex min-h-12 w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-all sm:text-base",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
           noneReported
             ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
@@ -101,17 +101,17 @@ function KnownConditions() {
         <span
           aria-hidden
           className={cn(
-            "flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] transition-colors",
+            "flex size-5.5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors",
             noneReported
               ? "border-transparent bg-(--surface-nav-accent) text-white"
               : "border-(--border-strong) bg-(--surface-canvas)",
           )}
         >
-          {noneReported ? <Check className="size-3.5 stroke-[2.5]" /> : null}
+          {noneReported ? <Check className="size-4 stroke-[2.5]" /> : null}
         </span>
         <div className="min-w-0 flex-1">
-          <span className="block font-bold">No pre-existing medical conditions</span>
-          <span className="block text-[11px] font-normal text-(--text-muted)">
+          <span className="block font-bold text-sm sm:text-base">No pre-existing medical conditions</span>
+          <span className="block text-xs sm:text-sm font-normal text-(--text-muted)">
             I have not been diagnosed with any chronic or long-term conditions
           </span>
         </div>
@@ -122,7 +122,7 @@ function KnownConditions() {
         aria-labelledby="conditions-heading"
         aria-disabled={noneReported || undefined}
         className={cn(
-          "grid grid-cols-2 gap-2 transition-opacity sm:grid-cols-3",
+          "grid grid-cols-2 gap-2.5 transition-opacity sm:grid-cols-3",
           noneReported && "pointer-events-none opacity-40",
         )}
       >
@@ -148,7 +148,7 @@ function KnownConditions() {
           control={control}
           render={({ field, fieldState }) => (
             <div className="pt-2">
-              <label htmlFor="other-condition-input" className="mb-1 block text-[11px] font-semibold text-(--text-muted) uppercase">
+              <label htmlFor="other-condition-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
                 Other condition specification
               </label>
               <input
@@ -158,7 +158,7 @@ function KnownConditions() {
                 aria-label="Other condition"
                 aria-invalid={fieldState.invalid || undefined}
                 placeholder="Specify any other diagnosed conditions..."
-                className={cn(COMPACT_INPUT, "min-h-11")}
+                className={cn(COMPACT_INPUT, "min-h-12")}
               />
               {fieldState.error ? (
                 <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p>
@@ -217,7 +217,7 @@ function MedicationsToggle() {
           control={control}
           render={({ field }) => (
             <div className="pt-2">
-              <label htmlFor="medications-input" className="mb-1 block text-[11px] font-semibold text-(--text-muted) uppercase">
+              <label htmlFor="medications-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
                 Medication name and daily dose
               </label>
               <textarea
@@ -253,7 +253,7 @@ function SurgeriesToggle() {
     <section aria-labelledby="surgeries-heading" className="space-y-2.5 border-t border-(--border-subtle) pt-5">
       <div>
         <BlockLabel id="surgeries-heading">Prior surgeries / hospitalizations</BlockLabel>
-        <p className="mt-0.5 text-xs text-(--text-muted)">
+        <p className="mt-0.5 text-xs sm:text-sm text-(--text-muted)">
           Any hospitalizations or major surgeries in the past 2 years?
         </p>
       </div>
@@ -283,7 +283,7 @@ function SurgeriesToggle() {
           control={control}
           render={({ field }) => (
             <div className="pt-2">
-              <label htmlFor="surgeries-input" className="mb-1 block text-[11px] font-semibold text-(--text-muted) uppercase">
+              <label htmlFor="surgeries-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
                 Procedure details and hospital
               </label>
               <textarea

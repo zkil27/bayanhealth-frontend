@@ -173,14 +173,14 @@ function RedFlagGate({
             <p className="mt-0.5 text-sm text-(--text-body)">
               Are you experiencing chest pain or tightness, sudden shortness of breath, or severe uncontrollable bleeding?
             </p>
-            <div role="radiogroup" aria-labelledby="red-flag-heading" className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <div role="radiogroup" aria-labelledby="red-flag-heading" className="mt-3.5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 role="radio"
                 aria-checked={answer === "no"}
                 onClick={answerNo}
                 className={cn(
-                  "min-h-11 rounded-xl border px-4 text-xs font-bold transition-all",
+                  "min-h-12 rounded-xl border px-4 py-3 text-sm font-bold transition-all sm:text-base",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                   answer === "no"
                     ? "border-(--surface-nav-accent) bg-(--surface-raised) text-(--safe-fg) shadow-sm ring-1 ring-(--surface-nav-accent)"
@@ -195,14 +195,14 @@ function RedFlagGate({
                 aria-checked={answer === "yes"}
                 onClick={answerYes}
                 className={cn(
-                  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-4 text-xs font-bold transition-all",
+                  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition-all sm:text-base",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                   answer === "yes"
                     ? "border-(--danger-border) bg-(--danger-border) text-(--text-inverse) shadow-sm"
                     : "border-(--danger-border)/40 bg-(--surface-raised)/60 text-(--danger-fg) hover:bg-(--danger-bg)",
                 )}
               >
-                <Siren aria-hidden className="size-4" /> Yes, I have severe symptoms
+                <Siren aria-hidden className="size-4.5" /> Yes, I have severe symptoms
               </button>
             </div>
           </div>
@@ -290,7 +290,7 @@ function MainConcern() {
               value={typeof field.value === "string" ? field.value : ""}
               aria-describedby="chief-complaint-hint"
               aria-invalid={fieldState.invalid || undefined}
-              className="min-h-[85px] w-full rounded-2xl border border-(--border-default) bg-(--surface-raised) p-3 text-sm text-(--text-body) outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)"
+              className="min-h-[100px] w-full rounded-2xl border border-(--border-default) bg-(--surface-raised) p-3.5 text-base text-(--text-body) outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)"
             />
             {fieldState.error ? <p className="text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
           </div>
@@ -301,13 +301,13 @@ function MainConcern() {
         <div className="flex items-center justify-between px-0.5">
           <div>
             <BlockLabel>Related symptoms</BlockLabel>
-            <span className="text-[11px] text-(--text-subtle)">Optional · select all that apply</span>
+            <span className="text-xs text-(--text-subtle)">Optional · select all that apply</span>
           </div>
           {tags.length > 0 && (
             <button
               type="button"
               onClick={() => setValue("requestDetails.complaintTags" as FieldPath<DynamicIntakeFormValues>, [] as never, opts)}
-              className="text-[11px] font-semibold text-(--danger-fg) hover:underline"
+              className="text-xs font-semibold text-(--danger-fg) hover:underline"
             >
               Clear all
             </button>
@@ -319,12 +319,12 @@ function MainConcern() {
           type="button"
           onClick={() => setSymptomsModalOpen(true)}
           className={cn(
-            "flex h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3 text-left text-xs sm:text-sm transition-colors hover:bg-(--surface-canvas)",
+            "flex h-12 w-full cursor-pointer items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-sm sm:text-base transition-colors hover:bg-(--surface-canvas)",
             "focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--focus-ring)/30 outline-none",
           )}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Activity className="size-4 shrink-0 text-(--action-primary)" />
+            <Activity className="size-4.5 shrink-0 text-(--action-primary)" />
             <span className={cn("truncate font-medium", tags.length === 0 ? "text-muted-foreground" : "text-(--text-heading)")}>
               {tags.length === 0
                 ? "Select related symptoms..."
@@ -333,11 +333,11 @@ function MainConcern() {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {tags.length > 0 && (
-              <span className="rounded-full bg-(--teal-100) px-2 py-0.5 text-[10px] font-bold text-(--teal-800)">
+              <span className="rounded-full bg-(--teal-100) px-2.5 py-0.5 text-xs font-bold text-(--teal-800)">
                 {tags.length}
               </span>
             )}
-            <ChevronDown className="size-4 text-muted-foreground" />
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
           </div>
         </button>
 
@@ -427,7 +427,7 @@ function MainConcern() {
                 max={60}
                 placeholder="e.g. 2"
                 aria-invalid={fieldState.invalid || undefined}
-                className={cn(COMPACT_INPUT, "min-h-11")}
+                className={cn(COMPACT_INPUT, "min-h-12")}
                 value={field.value == null ? "" : String(field.value)}
                 // Empty stays "not answered", never 0.
                 onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
@@ -459,7 +459,7 @@ function HomeVitals() {
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
           <BlockLabel id="home-vitals-heading">Home vitals</BlockLabel>
-          <span className="text-[11px] text-(--text-subtle)">Optional · only if you measured them today</span>
+          <span className="text-xs text-(--text-subtle)">Optional · only if you measured them today</span>
         </div>
         <SegmentedToggle
           label="Home vitals"
@@ -518,7 +518,7 @@ function VitalCard({
 }) {
   return (
     <div className={cn("min-w-0 rounded-xl border border-(--border-default) bg-(--surface-raised) p-3", className)}>
-      <span id={id} className="mb-2 flex items-center gap-1.5 text-[11px] font-bold text-nowrap text-(--text-muted) uppercase">
+      <span id={id} className="mb-2 flex items-center gap-1.5 text-xs sm:text-sm font-bold text-nowrap text-(--text-muted) uppercase">
         <span aria-hidden className="shrink-0 text-(--text-subtle)">{icon}</span>
         <span className="truncate">{label}</span>
       </span>
@@ -556,7 +556,7 @@ function VitalInput({
       control={control}
       render={({ field, fieldState }) => (
         <div className={bare ? "min-w-0 flex-1" : undefined}>
-          <label htmlFor={id} className={bare ? "sr-only" : "mb-1 block text-[10px] font-bold text-(--text-muted) uppercase"}>
+          <label htmlFor={id} className={bare ? "sr-only" : "mb-1 block text-xs font-bold text-(--text-muted) uppercase"}>
             {label}
           </label>
           <div className="relative">
@@ -569,17 +569,17 @@ function VitalInput({
               step={step}
               placeholder={placeholder}
               aria-invalid={fieldState.invalid || undefined}
-              className={cn(COMPACT_INPUT, "min-h-11 text-sm font-medium", bare && "text-center", unitSuffix && "pr-11")}
+              className={cn(COMPACT_INPUT, "min-h-12 text-base font-semibold", bare && "text-center", unitSuffix && "pr-11")}
               value={field.value == null ? "" : String(field.value)}
               onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
             />
             {unitSuffix ? (
-              <span aria-hidden className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] font-semibold text-(--text-subtle)">
+              <span aria-hidden className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs font-semibold text-(--text-subtle)">
                 {unitSuffix}
               </span>
             ) : null}
           </div>
-          {fieldState.error ? <p className="mt-1 text-[10px] text-(--danger-fg)">{fieldState.error.message}</p> : null}
+          {fieldState.error ? <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
         </div>
       )}
     />

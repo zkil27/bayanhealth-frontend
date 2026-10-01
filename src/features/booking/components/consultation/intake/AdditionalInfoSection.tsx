@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { Check, MessageSquare, X } from "lucide-react";
 import { useFormContext, Controller } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "../../DateTimePicker";
@@ -179,7 +179,7 @@ export function AdditionalInfoSection() {
                 onChange={(event) =>
                   field.onChange(withTimeSegment(field.value, event.target.value))
                 }
-                className="w-full rounded-lg border p-2 focus:ring-2 focus:ring-primary/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-base focus:ring-2 focus:ring-primary/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             {fieldState.invalid && (
@@ -195,7 +195,7 @@ export function AdditionalInfoSection() {
         control={control}
         render={({ field }) => (
           <Field>
-            <FieldLegend className="mb-1 flex items-center gap-1 text-sm font-medium">
+            <FieldLegend className="mb-1 flex items-center gap-1.5 text-sm sm:text-base font-medium">
               <MessageSquare className="size-4 text-muted-foreground" />
               Additional Concerns or Notes
             </FieldLegend>
@@ -204,7 +204,7 @@ export function AdditionalInfoSection() {
             </FieldDescription>
             <Textarea
               placeholder={`Examples:\n- Recent travel history\n- Family medical history\n- Lifestyle factors (smoking, alcohol, exercise)\n- Specific questions for the doctor`}
-              className="h-32 w-full rounded-lg p-2 text-xs"
+              className="h-32 w-full rounded-xl p-3 text-base"
               {...field}
               value={field.value || ""}
             />
@@ -297,7 +297,15 @@ export function ReadOnlyAdditionalInfoSection({
               : "border border-rose-100 bg-rose-50 text-rose-700 shadow-none",
           )}
         >
-          {data?.consent ? "Consent Given" : "❌ Consent Not Given"}
+          {data?.consent ? (
+            <>
+              <Check className="mr-1 size-3.5" /> Consent Given
+            </>
+          ) : (
+            <>
+              <X className="mr-1 size-3.5" /> Consent Not Given
+            </>
+          )}
         </Badge>
       </div>
 

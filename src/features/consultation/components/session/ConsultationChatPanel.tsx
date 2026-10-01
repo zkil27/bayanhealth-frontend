@@ -30,6 +30,7 @@ export function ConsultationChatPanel({
   sessionId,
   deps,
   embedded = false,
+  onFocusChange,
 }: {
   bookingId: string;
   sessionId?: string;
@@ -40,6 +41,7 @@ export function ConsultationChatPanel({
    * chat rendered as a card inside a card.
    */
   embedded?: boolean;
+  onFocusChange?: (focused: boolean) => void;
 }) {
   const {
     messages,
@@ -82,6 +84,7 @@ export function ConsultationChatPanel({
         setInput={setInput}
         send={send}
         validationError={validationError}
+        onFocusChange={onFocusChange}
       />
     </section>
   );
@@ -194,43 +197,48 @@ function ChatComposer({
   setInput,
   send,
   validationError,
+  onFocusChange,
 }: {
   input: string;
   setInput: (v: string) => void;
   send: () => Promise<boolean>;
   validationError: string | null;
+  onFocusChange?: (focused: boolean) => void;
 }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     await send();
+    onFocusChange?.(false);
   }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-2.5">
         <Textarea
           data-slot="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={() => onFocusChange?.(true)}
+          onBlur={() => onFocusChange?.(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              void send();
+              void send().then(() => onFocusChange?.(false));
             }
           }}
-          placeholder="Type a message…"
-          aria-label="Message"
+          placeholder="Type a message to your doctor…"
+          aria-label="Message to doctor"
           aria-invalid={validationError ? true : undefined}
           rows={2}
-          className="min-h-10 flex-1 resize-none rounded-2xl border-slate-200 focus-visible:border-(--surface-nav-accent) focus-visible:ring-(--surface-nav-accent)/30"
+          className="min-h-12 flex-1 resize-none rounded-2xl border-slate-200 bg-(--surface-card) text-base text-(--text-heading) placeholder:text-(--text-muted) focus-visible:border-(--surface-nav-accent) focus-visible:ring-(--surface-nav-accent)/30"
         />
         <Button
           type="submit"
           size="icon"
           aria-label="Send message"
-          className="rounded-xl bg-(--action-primary) text-(--action-primary-text) hover:bg-(--action-primary-hover)"
+          className="size-12 shrink-0 rounded-2xl bg-(--action-primary) text-(--action-primary-text) hover:bg-(--action-primary-hover) shadow-sm"
         >
-          <SendHorizonal className="h-4 w-4" />
+          <SendHorizonal className="h-5 w-5" />
         </Button>
       </div>
       {validationError ? (

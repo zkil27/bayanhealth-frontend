@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, FileCheck, FileText, Printer, X } from "lucide-react";
+import { Archive, Eye, FileCheck, FileText, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +21,7 @@ interface DocumentSheetModalProps {
   intake?: BookingIntakeForm | null;
   specimen?: DoctorSignatureSpecimen | undefined;
   doctorName?: string;
+  isHistoricalArchive?: boolean;
 }
 
 export function DocumentSheetModal({
@@ -30,6 +31,7 @@ export function DocumentSheetModal({
   intake,
   specimen,
   doctorName,
+  isHistoricalArchive = false,
 }: DocumentSheetModalProps) {
   if (!artifact) return null;
 
@@ -107,10 +109,16 @@ export function DocumentSheetModal({
                     "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
                     isDraft
                       ? "bg-red-950/80 text-red-400 border border-red-800/60"
-                      : "bg-teal-950/80 text-teal-400 border border-teal-800/60",
+                      : isHistoricalArchive
+                        ? "bg-amber-950/80 text-amber-300 border border-amber-800/60"
+                        : "bg-teal-950/80 text-teal-400 border border-teal-800/60",
                   )}
                 >
-                  {isDraft ? "DRAFT SPECIMEN" : "OFFICIAL RECORD"}
+                  {isDraft
+                    ? "DRAFT SPECIMEN"
+                    : isHistoricalArchive
+                      ? "HISTORICAL ARCHIVE (READ-ONLY)"
+                      : "OFFICIAL RECORD"}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -151,8 +159,24 @@ export function DocumentSheetModal({
         </header>
 
         {/* Document Lightbox Canvas */}
-        <div className="flex-1 min-h-0 bg-slate-900 overflow-y-auto overflow-x-hidden p-6 sm:p-10 md:p-12 flex justify-center items-start">
+        <div className="flex-1 min-h-0 bg-slate-900 overflow-y-auto overflow-x-hidden p-2.5 sm:p-6 md:p-10 flex justify-center items-start">
           <div className="w-full max-w-[800px] flex flex-col items-center">
+            {/* Historical Archive Notice Banner */}
+            {isHistoricalArchive && (
+              <div className="w-full mb-3 px-4 py-2.5 rounded-lg bg-amber-950/60 border border-amber-800/70 text-amber-200 text-xs flex items-center justify-between gap-3 shadow-sm print:hidden">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Archive className="size-4 text-amber-400 shrink-0" />
+                  <span className="font-medium truncate">
+                    Historical Artifact Archive — Read-Only Clinical Audit Mode
+                  </span>
+                </div>
+                <span className="text-[11px] text-amber-300/80 font-mono shrink-0">
+                  {artifact.assessmentVersion ? `Assessment v${artifact.assessmentVersion}` : "Historical Record"}
+                  {artifact.artifactRevision ? ` · rev ${artifact.artifactRevision}` : ""}
+                </span>
+              </div>
+            )}
+
             {/* White Physical Paper Document */}
             <div
               id="printable-document-sheet"
@@ -163,12 +187,12 @@ export function DocumentSheetModal({
                 intake={intake}
                 specimen={specimen}
                 doctorName={doctorName}
-                className="p-8 sm:p-12"
+                className="p-4 sm:p-8 md:p-12"
               />
             </div>
 
             {/* Bottom helper tip */}
-            <p className="text-[11px] text-slate-400 text-center mt-4 select-none">
+            <p className="text-[11px] text-slate-400 text-center mt-3 sm:mt-4 select-none px-2">
               This preview reflects the exact layout and typography formatted for patient printing and pharmacy scanning.
             </p>
           </div>

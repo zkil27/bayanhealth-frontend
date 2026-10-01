@@ -56,7 +56,7 @@ export function DiagnosticRequestSheet({
     <article
       data-slot="diagnostic-request-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-4 sm:p-8 md:p-12 text-slate-800 select-text leading-normal",
         "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
@@ -69,24 +69,24 @@ export function DiagnosticRequestSheet({
 
       {/* Patient / Priority Banner */}
       <section className="mb-4">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-y-2 text-xs text-slate-700 divide-x divide-slate-300">
-          <div className="pr-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-0 sm:divide-x sm:divide-slate-300 text-xs text-slate-700">
+          <div className="col-span-2 sm:col-span-1 sm:pr-3">
             <span className="text-slate-500 block text-[11px]">Patient:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div className="px-3">
+          <div className="sm:px-3">
             <span className="text-slate-500 block text-[11px]">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div className="px-3">
+          <div className="sm:px-3">
             <span className="text-slate-500 block text-[11px]">Date Requested:</span>
             <span className="font-medium text-slate-900">{dateRequested}</span>
           </div>
-          <div className="px-3">
+          <div className="sm:px-3">
             <span className="text-slate-500 block text-[11px]">Priority:</span>
             <span className="font-medium text-slate-900">{priority}</span>
           </div>
-          <div className="pl-3">
+          <div className="col-span-2 sm:col-span-1 sm:pl-3">
             <span className="text-slate-500 block text-[11px]">Case ID:</span>
             <span className="font-mono font-medium text-slate-900">{docId}</span>
           </div>

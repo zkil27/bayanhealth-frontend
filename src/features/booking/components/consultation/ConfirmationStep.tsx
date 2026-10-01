@@ -78,58 +78,57 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
 
   return (
     <div className="animate-in duration-300 fade-in">
-      <div className="mb-3 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
-        <CheckCircle2 className="size-5 text-(--teal-800)" />
+      <div className="mb-3.5 flex items-center gap-2.5 text-lg font-bold text-(--text-heading)">
+        <CheckCircle2 className="size-5 text-(--teal-800) shrink-0" />
         Booking confirmed
       </div>
 
-      <div className="rounded-[14px] border border-(--border-subtle) p-3.5">
-        <p className="text-[16px] font-bold text-(--text-heading)">
+      <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4 shadow-2xs">
+        <p className="text-base sm:text-lg font-bold text-(--text-heading)">
           {doctorLabel}
         </p>
-        <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-(--text-muted)">
-          <Stethoscope className="size-3.5 shrink-0" />
-          {specialty || "Specialty not listed"}
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-(--text-muted)">
+          <Stethoscope className="size-4 shrink-0 text-(--teal-700)" />
+          {specialty || "General Medicine"}
         </p>
         {booking.doctorId ? (
           <Link
             href={`/patient/booking/doctor/${booking.doctorId}`}
-            className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-(--text-link) hover:text-(--text-link-hover)"
+            className="mt-2.5 inline-flex items-center gap-1.5 text-sm font-semibold text-(--text-link) hover:text-(--text-link-hover)"
           >
             <LinkIcon className="size-3.5" strokeWidth={1.5} />
-            View doctor
+            View doctor profile
           </Link>
         ) : null}
       </div>
 
-      <dl className="mt-3 flex flex-col gap-2.5 rounded-[12px] bg-(--surface-warm) px-3.5 py-3 text-[14px] text-(--text-body)">
-        <div className="flex items-center gap-2.5">
-          <Stethoscope className="size-4 shrink-0 text-(--teal-800)" />
+      <dl className="mt-3.5 flex flex-col gap-3 rounded-xl bg-(--surface-warm) p-4 text-sm text-(--text-body) border border-(--border-subtle)/50">
+        <div className="flex items-center gap-3">
+          <Stethoscope className="size-4.5 shrink-0 text-(--teal-800)" />
           <dt className="sr-only">Assigned doctor</dt>
-          <dd>{doctorLabel}</dd>
+          <dd className="font-medium">{doctorLabel}</dd>
         </div>
 
         {scheduledLabel ? (
-          <div className="flex items-center gap-2.5">
-            <CalendarClock className="size-4 shrink-0 text-(--teal-800)" />
+          <div className="flex items-center gap-3">
+            <CalendarClock className="size-4.5 shrink-0 text-(--teal-800)" />
             <dt className="sr-only">Scheduled for</dt>
-            <dd>{scheduledLabel}</dd>
+            <dd className="font-medium">{scheduledLabel}</dd>
           </div>
         ) : null}
 
         {amount ? (
-          <div className="flex items-center gap-2.5">
-            <CreditCard className="size-4 shrink-0 text-(--teal-800)" />
+          <div className="flex items-center gap-3">
+            <CreditCard className="size-4.5 shrink-0 text-(--teal-800)" />
             <dt className="sr-only">Payment</dt>
-            <dd>{amount} held — captured after your consultation</dd>
+            <dd className="font-medium">{amount} held — captured after consultation</dd>
           </div>
         ) : null}
       </dl>
 
       {!isReview ? (
-        <p className="mt-3 text-[14px] text-(--text-muted)">
-          Your doctor has your intake details. You&apos;ll be able to join the
-          consultation from here when it starts.
+        <p className="mt-3.5 text-sm text-(--text-muted) leading-relaxed">
+          Your doctor has received your intake information. You can enter the consultation room above to wait or speak with your doctor.
         </p>
       ) : null}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { CheckCircle2, Info } from "lucide-react";
 import { useState } from "react";
 import {
   type FieldPath,
@@ -8,44 +8,102 @@ import {
   useWatch,
 } from "react-hook-form";
 
+import type { z } from "zod";
+
 import { cn } from "@/lib/utils";
 
-import type { DynamicIntakeFormValues } from "../../../schemas/intakeSchema";
-import { BlockLabel, ChipButton, COMPACT_INPUT, Reveal, SegmentedToggle } from "./IntakeChoice";
+import type { DynamicIntakeFormValues, symptomReviewSchema } from "../../../schemas/intakeSchema";
+import { BlockLabel, ChipButton, ChoiceCard, COMPACT_INPUT, Reveal, SegmentedToggle } from "./IntakeChoice";
+
+type SymptomReviewValues = z.infer<typeof symptomReviewSchema>;
 
 const REVIEW = "requestDetails.symptomReview";
 
-/**
- * PQRST pain assessment (Provocation/Palliation, Quality, Region/Radiation,
- * Severity, Timing) — the clinical framework doctors already use, offered as
- * chips instead of the six blank textareas the old Symptom Review page asked
- * for. It is entirely optional: skipping it just leaves `symptomReview` empty,
- * the same as never having answered the old free-text version.
- *
- * The contract's `symptomReview` fields (onset, pattern, location,
- * characteristics, aggravatingFactors, relievingFactors) are each a single
- * string, and several of the questions here let the patient pick more than
- * one chip. Rather than change the contract, each question group composes its
- * own answers into one readable sentence and writes it into the matching
- * field on every change — the same "compose, don't restructure" approach
- * `ReviewConsentStep`'s ledger already uses. The tradeoff: on resuming a saved
- * draft, the composed sentences come back, but which individual chips
- * produced them does not — a returning patient sees their prior answers as
- * text, not as re-selected chips. Only `painSeverity`, already a plain
- * number, round-trips exactly.
- */
 export function PainAssessmentStep() {
+  const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
+  const review = useWatch({ control, name: REVIEW as FieldPath<DynamicIntakeFormValues> }) as
+    | SymptomReviewValues
+    | undefined;
+
+  const hasAnyPainData = Boolean(
+    typeof review?.painSeverity === "number" ||
+    review?.characteristics?.trim() ||
+    review?.location?.trim() ||
+    review?.aggravatingFactors?.trim() ||
+    review?.relievingFactors?.trim() ||
+    review?.onset?.trim() ||
+    review?.pattern?.trim()
+  );
+
+  const [hasPain, setHasPain] = useState<"no" | "yes" | undefined>(() =>
+    hasAnyPainData ? "yes" : undefined
+  );
+
+  const handlePainGate = (answer: "no" | "yes") => {
+    setHasPain(answer);
+    if (answer === "no") {
+      setValue(REVIEW as FieldPath<DynamicIntakeFormValues>, undefined as never, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      <ProvocationPalliation />
-      <Quality />
-      <RegionRadiation />
-      <Severity />
-      <Timing />
-      <p className="flex items-start gap-2 text-xs text-(--text-subtle)">
-        <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-        You can skip this. It&apos;s shown to your doctor as a pain assessment summary alongside your other answers.
-      </p>
+    <div className="space-y-6 sm:space-y-7">
+      {/* Upfront Pain Gate */}
+      <section aria-labelledby="pain-gate-heading" className="space-y-3">
+        <div>
+          <BlockLabel id="pain-gate-heading">Pain assessment</BlockLabel>
+          <p className="mt-1 text-sm text-(--text-body)">
+            Are you currently experiencing physical pain or bodily discomfort?
+          </p>
+        </div>
+
+        <div
+          role="radiogroup"
+          aria-labelledby="pain-gate-heading"
+          className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+        >
+          <ChoiceCard
+            selected={hasPain === "no"}
+            onClick={() => handlePainGate("no")}
+            title="No, I am not in pain"
+            description="Proceed directly to review without pain questions"
+          />
+          <ChoiceCard
+            selected={hasPain === "yes"}
+            onClick={() => handlePainGate("yes")}
+            title="Yes, I am experiencing pain"
+            description="Rate pain intensity and location for your doctor"
+          />
+        </div>
+      </section>
+
+      {hasPain === "no" ? (
+        <div className="rounded-2xl border border-(--teal-200) bg-(--teal-100)/50 p-5 text-center">
+          <CheckCircle2 className="mx-auto size-8 text-(--action-primary)" />
+          <h3 className="mt-2 text-base font-bold text-(--text-heading)">No pain reported</h3>
+          <p className="mt-1 text-sm text-(--text-muted)">
+            Your response has been recorded. Tap <strong>Continue</strong> below to proceed to the final review and consent step.
+          </p>
+        </div>
+      ) : hasPain === "yes" ? (
+        <div className="space-y-8 animate-in duration-200 fade-in">
+          <Severity />
+          <Quality />
+          <RegionRadiation />
+          <ProvocationPalliation />
+          <Timing />
+        </div>
+      ) : (
+        <p className="flex items-start gap-2 text-xs text-(--text-subtle)">
+          <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <span>
+            Please select whether you are experiencing pain so we can tailor the intake questions to your condition.
+          </span>
+        </p>
+      )}
     </div>
   );
 }
@@ -314,10 +372,10 @@ function Severity() {
   const severity = useWatch({ control, name: `${REVIEW}.painSeverity` as FieldPath<DynamicIntakeFormValues> }) as number | undefined;
 
   return (
-    <section aria-labelledby="pqrst-s-heading" className="space-y-3 border-t border-(--border-subtle) pt-6">
+    <section aria-labelledby="pqrst-s-heading" className="space-y-3.5 border-t border-(--border-subtle) pt-6">
       <div>
-        <BlockLabel id="pqrst-s-heading">How intense, 0–10</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">Severity — optional</p>
+        <BlockLabel id="pqrst-s-heading">How intense is your pain? (0–10 scale)</BlockLabel>
+        <p className="mt-1 text-xs sm:text-sm text-(--text-muted)">Severity — optional</p>
       </div>
       <div role="radiogroup" aria-labelledby="pqrst-s-heading" className="grid grid-cols-6 gap-2 sm:grid-cols-11">
         {Array.from({ length: 11 }, (_, value) => (
@@ -333,24 +391,30 @@ function Severity() {
               })
             }
             className={cn(
-              "min-h-11 rounded-xl border text-sm font-bold transition-colors",
+              "min-h-12 rounded-xl border text-base font-bold transition-all active:scale-[0.97]",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
               severity === value
-                ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg)"
-                : "border-(--border-default) bg-(--surface-canvas) text-(--text-body) hover:bg-(--gray-bg)",
+                ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) shadow-sm ring-1 ring-(--surface-nav-accent)"
+                : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
             )}
           >
             {value}
           </button>
         ))}
       </div>
-      <div className="flex justify-between text-[11px] font-semibold text-(--text-subtle)">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-(--text-subtle)">
         <span>0 · No pain</span>
-        <span>5 · Moderate</span>
+        <span>1–3 · Mild</span>
+        <span>4–6 · Moderate</span>
+        <span>7–9 · Severe</span>
         <span>10 · Worst possible</span>
       </div>
       {typeof severity === "number" ? (
-        <p className="text-sm font-bold text-(--safe-fg)">{severity}/10 — {severityLabel(severity)}</p>
+        <div className="rounded-xl border border-(--surface-nav-accent) bg-(--safe-bg) p-3 text-center">
+          <p className="text-sm sm:text-base font-bold text-(--safe-fg)">
+            Selected: {severity} / 10 · {severityLabel(severity)}
+          </p>
+        </div>
       ) : null}
     </section>
   );

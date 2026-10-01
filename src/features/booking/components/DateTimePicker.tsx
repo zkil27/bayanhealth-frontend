@@ -522,13 +522,25 @@ export function DatePicker({
     />
   );
 
+  const formattedDisplay = isValidDate(parsedDate) ? (
+    format(parsedDate, "PPP")
+  ) : (
+    <span>{placeholder}</span>
+  );
+
+  const rawDateString = typeof date === "string" && date
+    ? date
+    : parsedDate && isValidDate(parsedDate)
+      ? format(parsedDate, "yyyy-MM-dd")
+      : "";
+
   const triggerButton = (
     <Button
       type="button"
       variant="outline"
       disabled={disabled}
       className={cn(
-        "h-12 w-full justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-sm sm:text-base font-medium text-(--text-body) hover:bg-(--surface-canvas) shadow-xs",
+        "h-12 sm:h-11 w-full justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-base sm:text-sm font-medium text-(--text-body) hover:bg-(--surface-canvas) shadow-xs",
         !parsedDate && "text-muted-foreground",
         error && "border-(--danger-fg) focus:ring-(--danger-fg)",
         triggerClassName,
@@ -536,13 +548,7 @@ export function DatePicker({
     >
       <div className="flex items-center gap-2 min-w-0">
         {Icon && <Icon className="size-4.5 shrink-0 text-(--action-primary)" />}
-        <span className="truncate">
-          {isValidDate(parsedDate) ? (
-            format(parsedDate, "PPP")
-          ) : (
-            <span>{placeholder}</span>
-          )}
-        </span>
+        <span className="truncate">{formattedDisplay}</span>
       </div>
       <ChevronDown className="size-4 shrink-0 text-muted-foreground ml-1" />
     </Button>
@@ -552,22 +558,33 @@ export function DatePicker({
     <Field className={cn("w-full", className)}>
       <FieldContent>
         {isMobile ? (
-          <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger render={triggerButton} />
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle>Select Date</DrawerTitle>
-              </DrawerHeader>
-              <div className="p-4 pb-8">
-                {calendarView}
-                <div className="mt-6 flex justify-end gap-2">
-                  <AppButton variant="outline" onClick={() => setOpen(false)}>
-                    Cancel
-                  </AppButton>
-                </div>
+          <div className="relative w-full">
+            <div
+              className={cn(
+                "relative flex h-12 sm:h-11 w-full items-center justify-between rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-left text-base sm:text-sm font-medium text-(--text-body) shadow-xs transition-colors hover:bg-(--surface-canvas)",
+                !parsedDate && "text-muted-foreground",
+                error && "border-(--danger-fg) ring-1 ring-(--danger-fg)",
+                disabled && "cursor-not-allowed opacity-50",
+                triggerClassName,
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {Icon && <Icon className="size-4.5 shrink-0 text-(--action-primary)" />}
+                <span className="truncate">{formattedDisplay}</span>
               </div>
-            </DrawerContent>
-          </Drawer>
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground ml-1" />
+            </div>
+            <input
+              type="date"
+              disabled={disabled}
+              value={rawDateString}
+              min={format(minDate, "yyyy-MM-dd")}
+              max={format(maxDate, "yyyy-MM-dd")}
+              onChange={(e) => onDateChange?.(e.target.value)}
+              aria-label={placeholder}
+              className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 text-base"
+            />
+          </div>
         ) : (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger render={triggerButton} />

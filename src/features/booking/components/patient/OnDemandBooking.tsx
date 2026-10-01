@@ -3,6 +3,7 @@
 import {
   ArrowRight,
   ClipboardCheck,
+  LogIn,
   Stethoscope,
   UserCog,
   Zap,
@@ -22,6 +23,7 @@ import {
 import { AnimatedFieldError } from "@/components/blocks/AnimatedFieldErrorWrapper";
 import { useCreateBooking } from "../../hooks/useCreateBooking";
 import { useEffect } from "react";
+import { useIdToken } from "@/stores/useAuthStore";
 import ToastForTesting from "@/components/primitives/ToastForTesting";
 
 interface OnDemandBookingProps {
@@ -47,6 +49,7 @@ const cardClass =
 export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
   const router = useRouter();
   const { submit, status, error } = useCreateBooking();
+  const idToken = useIdToken();
   const form = usePatientBookingForm(defaultServiceType);
 
   const {
@@ -59,7 +62,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
     isSubmitting || form.formState.isSubmitSuccessful || status === "submitting";
 
   useEffect(() => {
-    if (status === "error" && error) {
+    if (status === "error" && error && error.code !== "AUTH_REQUIRED") {
       ToastForTesting({
         description: "Please check your information and try again.",
         duration: 5000,
@@ -70,16 +73,26 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
   const onSubmit = async (data: BookingFormValues) => {
     if (isLoading) return;
 
-    // This is the on-demand route (`/patient/booking/createBooking`, no doctor chosen):
-    // the request is broadcast to the consult-approved pool once paid and the
-    // first doctor to accept is assigned. Stated explicitly because the backend
-    // defaults an absent mode to `scheduled` — which is what silently happened
-    // here before, leaving the pool empty and the waiting screen unreachable.
-    const createdBooking = await submit({
-      serviceValue: data.serviceType,
-      bookingMode: "on_demand",
-    });
-    router.push(`/patient/booking/getBooking/${createdBooking.bookingId}`);
+    if (!idToken) {
+      router.push(`/signIn?next=${encodeURIComponent("/patient/booking/createBooking")}`);
+      return;
+    }
+
+    try {
+      // This is the on-demand route (`/patient/booking/createBooking`, no doctor chosen):
+      // the request is broadcast to the consult-approved pool once paid and the
+      // first doctor to accept is assigned. Stated explicitly because the backend
+      // defaults an absent mode to `scheduled` — which is what silently happened
+      // here before, leaving the pool empty and the waiting screen unreachable.
+      const createdBooking = await submit({
+        serviceValue: data.serviceType,
+        bookingMode: "on_demand",
+      });
+      router.push(`/patient/booking/getBooking/${createdBooking.bookingId}`);
+    } catch {
+      // useCreateBooking sets status="error" and surfaces code/message.
+      // Handled here so unhandled promise rejections do not trigger the Next.js runtime error overlay.
+    }
   };
 
   return (
@@ -131,16 +144,30 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
 
           {/* What "on-demand" actually means, stated where the patient reads it
               before committing — the doctor sees the intake first. */}
-          <p className="rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[12.5px] leading-[1.5] text-(--status-available-fg)">
-            <span className="font-semibold">⚡ {ON_DEMAND_WAIT_ESTIMATE}.</span>{" "}
-            Susuriin muna ng doktor ang iyong profile at mga iniulat na sintomas bago ka papasukin sa consultation room.
-          </p>
+          <div className="flex items-start gap-2.5 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[12.5px] leading-[1.5] text-(--status-available-fg)">
+            <Zap className="size-4 shrink-0 mt-0.5 text-(--status-available-fg)" />
+            <span>
+              <span className="font-semibold">{ON_DEMAND_WAIT_ESTIMATE}.</span>{" "}
+              Susuriin muna ng doktor ang iyong profile at mga iniulat na sintomas bago ka papasukin sa consultation room.
+            </span>
+          </div>
         </div>
 
         {/* Right: fee summary + action, kept in view as the left column scrolls. */}
         <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-6">
           <div className="space-y-3">
             <BookingSummary />
+            {!idToken && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-950 flex items-start gap-2.5">
+                <LogIn className="size-4 shrink-0 text-amber-700 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-900">Sign in required</p>
+                  <p className="mt-0.5 text-amber-800 leading-relaxed">
+                    You must be signed in to confirm and join the consult queue. Submitting will take you to sign in.
+                  </p>
+                </div>
+              </div>
+            )}
             <BrandCtaButton
               type="submit"
               disabled={!isValid || isSubmitting || isLoading}
@@ -148,6 +175,14 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
               {isSubmitting ? "Pumapasok sa queue…" : "Kumpirmahin at pumasok sa queue"}
               <ArrowRight className="size-4.5" />
             </BrandCtaButton>
+            {error && (
+              <p
+                role="alert"
+                className="mt-1 text-center text-xs font-semibold text-destructive"
+              >
+                {error.message}
+              </p>
+            )}
           </div>
 
           <div className="rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-sunken) p-3 text-[12.5px] leading-[1.5] text-(--text-muted)">

@@ -65,7 +65,7 @@ export function PrescriptionSheet({
     <article
       data-slot="prescription-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-4 sm:p-8 md:p-12 text-slate-800 select-text leading-normal",
         "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
@@ -81,35 +81,35 @@ export function PrescriptionSheet({
         <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs text-slate-800">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Name:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Date issued:</span>
             <span className="font-medium text-slate-900">{dateIssued}</span>
           </div>
 
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Date of Birth:</span>
             <span className="font-medium text-slate-900">{patientDob}</span>
           </div>
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Time issued:</span>
             <span className="font-medium text-slate-900">{timeIssued}</span>
           </div>
 
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Valid until:</span>
             <span className="font-medium text-slate-900">{validUntil}</span>
           </div>
 
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Allergies:</span>
             <span
               className={cn(
@@ -122,7 +122,7 @@ export function PrescriptionSheet({
               {allergies}
             </span>
           </div>
-          <div className="grid grid-cols-[90px_minmax(0,1fr)] items-baseline">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Rx ID:</span>
             <span className="font-mono font-medium text-slate-900">{rxId}</span>
           </div>
@@ -136,8 +136,8 @@ export function PrescriptionSheet({
         <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PRESCRIPTION
         </h2>
-        <div className="w-full overflow-hidden border border-(--navy-700)/40 rounded-xs">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="w-full overflow-x-auto [scrollbar-width:thin] border border-(--navy-700)/40 rounded-xs">
+          <table className="w-full min-w-[500px] sm:min-w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-(--navy-700) text-white">
                 <th className="py-2.5 px-3 font-semibold border-r border-(--navy-700)/50 w-[30%]">

@@ -59,9 +59,9 @@ export function IntakeNavFooter({
       data-slot="intake-nav-footer"
       className={cn(
         placement === "pinned"
-          ? "sticky bottom-0 z-30 shrink-0 border-t border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-sm sm:px-8 sm:py-3"
+          ? "sticky bottom-0 z-30 shrink-0 border-t border-(--border-subtle) bg-(--surface-card) px-3.5 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-sm sm:px-8 sm:py-3"
           : cn(
-              "fixed inset-x-0 bottom-0 z-30 border-t border-(--border-subtle) bg-(--surface-card) px-4 py-3 shadow-(--shadow-md)",
+              "fixed inset-x-0 bottom-0 z-30 border-t border-(--border-subtle) bg-(--surface-card) px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-(--shadow-md)",
               "lg:sticky lg:bottom-0 lg:z-30 lg:mt-0 lg:px-6 lg:py-3",
             ),
         className,
@@ -69,7 +69,7 @@ export function IntakeNavFooter({
     >
       {children}
       {blockedReason ? (
-        <p id={reasonId} className="mb-2 text-right text-xs text-(--text-muted)">
+        <p id={reasonId} className="mb-2 text-right text-xs sm:text-sm font-medium text-(--text-muted)">
           {blockedReason}
         </p>
       ) : null}

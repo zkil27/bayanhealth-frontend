@@ -315,9 +315,9 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
             control={control}
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLegend>Kwento ang iyong nararamdaman</FieldLegend>
+                <FieldLegend>Primary Health Concern</FieldLegend>
                 <FieldDescription>
-                  Ano ang iyong mga hinanakit?
+                  Describe your main symptoms and reason for consultation.
                 </FieldDescription>
                 <SuggestionPills
                   suggestions={[
@@ -339,7 +339,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldContent>
                   <Textarea
                     placeholder="e.g., Fever, cough, headache"
-                    className="min-h-[100px] bg-background"
+                    className="min-h-[100px] bg-background text-base sm:text-sm"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -352,12 +352,6 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
             )}
           />
 
-          {/*
-            Progressive disclosure, collapsed state. The heading is Tagalog and
-            the supporting line English — the same split the disclosed header
-            and the field labels below already use, so the two states read as
-            one bilingual section instead of switching language on expand.
-          */}
           {/*
             Red-flag screening sits directly under the chief complaint and
             OUTSIDE the optional-details disclosure. It is the only structured
@@ -395,7 +389,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                 <ClipboardPlus className="size-8 shrink-0 text-primary" />
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-primary">
-                    Bigyan ng Konteksto ang Doktor
+                    Provide Context for Your Doctor
                   </p>
                   <p className="text-xs whitespace-break-spaces text-muted-foreground">
                     Add onset, duration and timing details — {OPTIONAL_FIELDS.length}{" "}
@@ -413,10 +407,9 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                 <div className="flex items-start gap-3">
                   <ClipboardPlus className="mt-0.5 size-6 shrink-0 text-primary" />
                   <div>
-                    <FieldLegend>Bigyan ng Konteksto ang Doktor</FieldLegend>
+                    <FieldLegend>Provide Context for Your Doctor</FieldLegend>
                     <FieldDescription>
-                      Sa pag sagot ng mga forms ay mapapabilis ang diagnosis sa
-                      iyo.
+                      Answering these optional questions helps your doctor prepare an accurate diagnosis.
                     </FieldDescription>
                   </div>
                 </div>
@@ -437,7 +430,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
               </div>
               <FormSection
                 icon={<Apple className="size-4" />}
-                title="Ang Simula"
+                title="Symptom Onset & Timing"
               />
 
               {/*
@@ -456,7 +449,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., 2 days ago, gradually over a week"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -471,7 +464,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                       icon={<Clock className="size-3" />}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Onset timing can change the diagnosis.
+                       Onset timing can change the diagnosis.
                     </p>
                   </Field>
                 )}
@@ -486,7 +479,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., 3 days, on and off for a week"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -517,7 +510,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., every morning, after meals, at night"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -539,7 +532,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
               />
               <FormSection
                 icon={<Apple className="size-4" />}
-                title="Ang Nararamdaman"
+                title="Symptom Characteristics & Location"
               />
 
               <Controller
@@ -554,7 +547,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., lower back, behind the eyes"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -581,7 +574,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Textarea
                         placeholder="e.g., sharp, dull, throbbing, burning, comes in waves"
-                        className="min-h-[100px] bg-background"
+                        className="min-h-[90px] sm:min-h-[85px] bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -598,9 +591,10 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                   </Field>
                 )}
               />
+
               <FormSection
                 icon={<Apple className="size-4" />}
-                title="Ang Nagpapalala/Nagpapagaling"
+                title="Aggravating & Relieving Factors"
               />
 
               <Controller
@@ -612,7 +606,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., movement, deep breathing, eating"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}
@@ -639,7 +633,7 @@ export function Teleconsult({ readOnly = false }: { readOnly?: boolean }) {
                     <FieldContent>
                       <Input
                         placeholder="e.g., rest, pain relievers, cold compress"
-                        className="h-11 bg-background"
+                        className="h-12 sm:h-11 bg-background text-base sm:text-sm"
                         value={field.value || ""}
                         onChange={field.onChange}
                         disabled={readOnly}

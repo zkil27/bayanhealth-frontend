@@ -48,10 +48,12 @@ export function PatientCompanionSuite({
   bookingId,
   sessionId,
   doctorId,
+  onChatFocusChange,
 }: {
   bookingId: string;
   sessionId?: string;
   doctorId?: string;
+  onChatFocusChange?: (focused: boolean) => void;
 }) {
   const idToken = useIdToken();
 
@@ -80,49 +82,53 @@ export function PatientCompanionSuite({
   return (
     <div data-slot="patient-companion-suite" className="flex h-full min-h-0 flex-1 flex-col text-(--text-body)">
       <Tabs defaultValue="chat" className="flex min-h-0 flex-1 flex-col gap-0">
-        <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-2 sm:p-3">
-          <TabsList className="h-auto w-full gap-1 rounded-xl bg-(--border-subtle)/50 p-1 sm:rounded-2xl">
+        <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-2 sm:p-2.5">
+          <TabsList className="h-auto w-full gap-1 rounded-xl bg-(--surface-warm) p-1 sm:rounded-2xl border border-(--border-subtle)">
             <TabsTrigger
               value="chat"
-              className="flex-1 gap-1.5 rounded-xl py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-xs"
+              className="flex-1 gap-2 min-h-11 rounded-lg py-2 text-xs sm:text-sm font-bold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--navy-700) data-active:shadow-xs data-active:border data-active:border-(--border-subtle)"
             >
-              <MessageSquare className="size-3.5" />
-              <span className="sm:hidden">Chat</span>
-              <span className="hidden sm:inline">Conversation</span>
+              <MessageSquare className="size-4 shrink-0" />
+              <span className="xs:hidden">Chat</span>
+              <span className="hidden xs:inline">Doctor Chat</span>
             </TabsTrigger>
             <TabsTrigger
               value="intake"
-              className="flex-1 gap-1.5 rounded-xl py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-xs"
+              className="flex-1 gap-2 min-h-11 rounded-lg py-2 text-xs sm:text-sm font-bold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--navy-700) data-active:shadow-xs data-active:border data-active:border-(--border-subtle)"
             >
-              <FileText className="size-3.5" />
-              <span className="sm:hidden">Shared</span>
-              <span className="hidden sm:inline">What You Shared</span>
+              <FileText className="size-4 shrink-0" />
+              <span className="xs:hidden">My Info</span>
+              <span className="hidden xs:inline">My Health Info</span>
             </TabsTrigger>
             <TabsTrigger
               value="nextSteps"
-              className="flex-1 gap-1.5 rounded-xl py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-xs"
+              className="flex-1 gap-2 min-h-11 rounded-lg py-2 text-xs sm:text-sm font-bold text-(--text-muted) hover:text-(--text-heading) data-active:bg-(--surface-card) data-active:text-(--navy-700) data-active:shadow-xs data-active:border data-active:border-(--border-subtle)"
             >
-              <CheckCircle2 className="size-3.5" />
-              Next Steps
+              <CheckCircle2 className="size-4 shrink-0" />
+              <span>Next Steps</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {doctorName ? (
-            <p className="shrink-0 px-4 pt-3 text-xs text-(--text-muted)">
-              You are connected with{" "}
-              <span className="font-medium text-(--text-heading)">{formatDoctorName(doctorName)}</span>.
-              Any medicine names, instructions, or follow-up links your doctor sends will
-              appear here.
-            </p>
+            <div className="shrink-0 border-b border-(--border-subtle)/60 bg-(--surface-warm)/40 px-3.5 py-2 text-xs sm:text-sm text-(--text-muted)">
+              Connected with{" "}
+              <span className="font-bold text-(--navy-700)">{formatDoctorName(doctorName)}</span>.
+              Messages, medication names, and advice will appear here.
+            </div>
           ) : null}
           <div className="min-h-0 flex-1">
-            <ConsultationChatPanel bookingId={bookingId} sessionId={sessionId} embedded />
+            <ConsultationChatPanel
+              bookingId={bookingId}
+              sessionId={sessionId}
+              embedded
+              onFocusChange={onChatFocusChange}
+            />
           </div>
         </TabsContent>
 
-        <TabsContent value="intake" className="min-h-0 flex-1 overflow-y-auto p-4">
+        <TabsContent value="intake" className="min-h-0 flex-1 overflow-y-auto p-3.5 sm:p-4">
           <IntakeSummary
             isLoading={intakeQuery.isLoading}
             chiefComplaint={purpose?.chiefComplaint}
@@ -137,23 +143,23 @@ export function PatientCompanionSuite({
 
       <details
         data-slot="patient-companion-failsafe-mobile"
-        className="group shrink-0 border-t border-amber-200/70 bg-amber-50 text-xs text-amber-900 sm:hidden"
+        className="group shrink-0 border-t border-amber-200/80 bg-amber-50 text-sm text-amber-950 sm:hidden"
       >
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 marker:hidden">
-          <PhoneCall className="size-3.5 shrink-0" />
-          <span className="font-semibold">If video disconnects</span>
-          <span className="ml-auto text-[10px] group-open:hidden">View</span>
-          <span className="ml-auto hidden text-[10px] group-open:inline">Close</span>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-3.5 font-semibold marker:hidden">
+          <PhoneCall className="size-4 shrink-0 text-amber-800" />
+          <span>If video disconnects</span>
+          <span className="ml-auto rounded-md bg-amber-200/60 px-2 py-0.5 text-xs font-bold text-amber-900 group-open:hidden">View details</span>
+          <span className="ml-auto hidden rounded-md bg-amber-200/60 px-2 py-0.5 text-xs font-bold text-amber-900 group-open:inline">Close</span>
         </summary>
-        <p className="border-t border-amber-200/60 px-3 py-2.5 leading-relaxed">
-          Your doctor will reach out on your verified mobile number — no need to redial.
+        <p className="border-t border-amber-200/60 px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed text-amber-900">
+          Your doctor will reach out directly on your verified mobile number — no need to redial or worry.
         </p>
       </details>
       <div
         data-slot="patient-companion-failsafe"
-        className="hidden shrink-0 items-center gap-2 border-t border-amber-200/70 bg-amber-50 p-3 text-xs text-amber-900 sm:flex"
+        className="hidden shrink-0 items-center gap-2.5 border-t border-amber-200/80 bg-amber-50 p-3 text-xs sm:text-sm text-amber-950 sm:flex"
       >
-        <PhoneCall className="size-3.5 shrink-0" />
+        <PhoneCall className="size-4 shrink-0 text-amber-800" />
         <span>
           If the video disconnects, your doctor will reach out on your verified mobile
           number — no need to redial.
@@ -381,9 +387,9 @@ function ReproductiveHealthSummary({ health }: { health?: IntakeReproductiveHeal
 
 function VitalTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2">
-      <span className="block text-[10px] font-bold text-(--text-subtle) uppercase">{label}</span>
-      <span className="text-xs font-bold text-(--text-heading)">{value}</span>
+    <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
+      <span className="block text-xs font-bold text-(--text-muted) uppercase tracking-wider">{label}</span>
+      <span className="mt-0.5 block text-sm font-bold text-(--text-heading)">{value}</span>
     </div>
   );
 }

@@ -9,6 +9,156 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-01] Clinical Documents Mobile Layout & Cramped Text Remediation
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`DocumentSheetModal.tsx`, `DocumentSheetHeader.tsx`, `PrescriptionSheet.tsx`, `MedicalCertificateSheet.tsx`, `DiagnosticRequestSheet.tsx`, `ClinicalReferralSheet.tsx`, `PatientCareGuideSheet.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetHeader.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PrescriptionSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/MedicalCertificateSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DiagnosticRequestSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/ClinicalReferralSheet.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/PatientCareGuideSheet.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Mobile Document Viewport Cramping**:
+    - Previously, `DocumentSheetModal` applied `p-6` around `ClinicalDocumentSheet`'s `p-8`, compounding to 112px of total horizontal padding. On 360px–390px mobile screens, this left as little as 248px for the physical document canvas, severely crunching table columns, physician headers, and patient demographics.
+    - Reduced outer canvas padding to fluid `p-2.5 sm:p-6 md:p-10` and inner sheet padding to `p-4 sm:p-8 md:p-12`.
+  - **Responsive Patient Demographic Grids**:
+    - Converted rigid, inflexible multi-column patient detail blocks to mobile-first responsive stacks (`grid-cols-1 sm:grid-cols-2`), ensuring patient name, DOB, age, sex, address, and allergies wrap cleanly without horizontal truncation.
+  - **Scrollable Prescription & Diagnostic Tabular Data**:
+    - Wrapped tabular medication rows (`PrescriptionSheet.tsx`) in an overflow-safe horizontal scroll container (`min-w-[500px] sm:min-w-full`), preventing drug dosage and frequency columns from squishing together on small devices.
+  - **Fluid Diagnostic, Referral, and Certificate Layouts**:
+    - Stacked clinical recommendations, referral urgency rows, and diagnostic tests vertically on mobile while preserving high-density side-by-side clinical layouts on desktop.
+- **Device Optimization**: Mobile viewports (<640px) prioritized with generous breathing room, preserving exact 8.5x11 portrait paper proportions on desktop and print.
+- **Tokens & Primitives Used**: `Dialog`, `Button`, `FileText`, `Printer`, `cn`, Bayan Brand Navy (`--navy-700`) & Teal (`--teal-700`).
+- **Upstream Porting Notes**: UI styling improvements across document sheets. 100% preservation of `ClinicalDocumentArtifact` model contracts and print media queries. Zero backend breaking changes.
+
+---
+
+### [2026-10-01] Patient Intake Form: iOS Safari Auto-Zoom Remediation & Fluid Typography Scaling
+
+- **Target Route / Surface**: `/patient/booking/createBooking`, `/intake/[token]` (`PersonDataSection.tsx`, `IntakeChoice.tsx`, `Teleconsult.tsx`, `DateTimePicker.tsx`)
+- **Files Modified**:
+  - `src/components/blocks/profile/PersonDataSection.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/IntakeChoice.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/services/Teleconsult.tsx` [MODIFIED]
+  - `src/features/booking/components/DateTimePicker.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **iOS Safari Auto-Zoom Remediation**:
+    - Enforced strict `text-base` (16px) minimum font size on mobile viewports (<640px) across vital sign inputs, date pickers, chief complaint narrative fields, and optional symptom textareas, eliminating iOS Safari's disruptive auto-zooming on input focus.
+    - Paired with `sm:text-sm` (14px) and proportional input heights (`h-12 sm:h-11`, `min-h-[90px] sm:min-h-[85px]`) on desktop screens to retain clinical cockpit density.
+  - **Ergonomic Touch Targets for Intake Choices**:
+    - Upgraded `ConditionTile`, `ChoiceCard`, and `SegmentedToggle` touch targets to a minimum height of 48px (`min-h-12 sm:min-h-11`) with active tactile feedback (`active:scale-[0.98]`), facilitating accurate interaction for patients with motor limitations.
+- **Device Optimization**: Mobile-first for patient inputs; crisp desktop scaling.
+- **Tokens & Primitives Used**: `Input`, `Textarea`, `Button`, `CalendarIcon`, `cn`.
+- **Upstream Porting Notes**: Styling and typography adjustments only. 100% preservation of form validation, zod schemas, and submission payloads.
+
+---
+
+### [2026-10-01] Post-Consultation: Authorized Artifact History Modernization & Specimen Lightbox Inspection
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` (`AuthorizedArtifactHistory.tsx`, `AssessmentFirstWorkspace.tsx`, `DocumentSheetModal.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AuthorizedArtifactHistory.tsx` [NEW]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/documents/DocumentSheetModal.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Replaced Raw HTML Details List with Dedicated Clinical Audit Component**:
+    - Previously, authorized artifact history was rendered as an unstyled `<details data-slot="artifact-history">` HTML list with basic text bullets.
+    - Extracted and designed `<AuthorizedArtifactHistory />`, featuring semantic document icons (`Pill`, `Award`, `FlaskConical`, `Scan`, `BookOpen`, `FileText`), status badges (`Active Baseline`, `Superseded / Stale`), Assessment version tags (`Assessment vX · rev Y`), and relative timestamps.
+  - **Interactive Historical Specimen Inspection**:
+    - Added an "Inspect specimen" action button on every historical artifact row that opens `<DocumentSheetModal />` with `isHistoricalArchive={true}`.
+    - Integrated an amber audit notice banner (*"Historical Artifact Archive — Read-Only Clinical Audit Mode"*) and a distinct `HISTORICAL ARCHIVE (READ-ONLY)` badge in `DocumentSheetModal.tsx`, clearly demarcating superseded drafts from active legal records while allowing doctors to review earlier clinical formulations.
+- **Device Optimization**: Desktop clinical cockpit multi-column list, responsive stacking on mobile viewports.
+- **Tokens & Primitives Used**: `History`, `Eye`, `Archive`, `Pill`, `Award`, `FlaskConical`, `Scan`, `BookOpen`, `FileText`, `AlertCircle`, `CheckCheck`, `Button`, `Spinner`, `cn`.
+- **Upstream Porting Notes**: Drop-in replacement for the raw `<details data-slot="artifact-history">` block in `AssessmentFirstWorkspace.tsx`. `CdsProtectedArtifact` fully satisfies `ClinicalDocumentArtifact` for modal preview. Zero CDS contract or backend changes.
+
+---
+
+### [2026-10-01] On-Demand Booking: Authentication Guarding, Unhandled Error Remediation & Sign-In Flow
+
+- **Target Route / Surface**: `/patient/booking/createBooking` (`OnDemandBooking.tsx`)
+- **Files Modified**:
+  - `src/features/booking/components/patient/OnDemandBooking.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Next.js `AUTH_REQUIRED` Unhandled Exception Crash**:
+    - Previously, `onSubmit` called `await submit(...)` without a `try/catch` wrapper. When an unauthenticated user or guest submitted the form, `useCreateBooking` threw `new Error("AUTH_REQUIRED")`, which surfaced as a fatal Next.js dev runtime crash overlay.
+    - Wrapped `await submit(...)` in `try/catch` to match `DoctorBooking.tsx` conventions.
+  - **Seamless Authentication Guidance & Bounced Redirect**:
+    - Integrated `useIdToken` to detect unauthenticated state up-front.
+    - If a user clicks submit while unauthenticated, they are cleanly redirected to `/signIn?next=${encodeURIComponent("/patient/booking/createBooking")}` so they can sign in and immediately return without losing their place.
+    - Added an inline, high-contrast amber callout above the CTA button clarifying that sign-in is required before joining the queue.
+  - **Error Feedback & Anti-AI Slop Polish**:
+    - Rendered explicit error feedback (`role="alert"`) beneath the CTA button for network and booking failures.
+    - Replaced native platform emoji (`⚡`) with Lucide vector icon (`Zap`).
+- **Device Optimization**: Mobile and desktop friendly error alerts and thumb-zone CTA notices.
+- **Tokens & Primitives Used**: `useIdToken`, `LogIn`, `Zap`, `BrandCtaButton`, `cn`.
+- **Upstream Porting Notes**: Component-scoped updates to `OnDemandBooking.tsx`. 100% preservation of `useCreateBooking` mutation contract and idempotency keys. Zero backend breaking changes.
+
+---
+
+### [2026-10-01] Patient Live Consult & Mobile iOS Safari Modernization: Viewport Resiliency, Senior-Friendly Controls, & 1-Tap Lobby
+
+- **Target Route / Surface**: `/consultation/room/[bookingId]`, `/patient/booking/getBooking/[bookingId]` (`ConsultationRoom.tsx`, `ConsultationVideo.tsx`, `PatientCompanionSuite.tsx`, `ConsultationChatPanel.tsx`, `PatientBookingDetail.tsx`, `ConfirmationStep.tsx`)
+- **Files Modified**:
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/media/components/ConsultationVideo.tsx` [MODIFIED]
+  - `src/components/consultation/PatientCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationChatPanel.tsx` [MODIFIED]
+  - `src/features/booking/components/patient/PatientBookingDetail.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/ConfirmationStep.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **iOS Safari Viewport & Keyboard Resiliency**: Added `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)` clearance across consultation room containers. Implemented auto-collapse video behaviour (`h-[74px]` compact audio stage) when the chat composer is focused on mobile, preventing on-screen keyboard from crushing the chat thread.
+  - **Senior-Centered In-Call Controls**: Enlarged touch targets to 52px with high-contrast semantic color coding. Replaced ambiguous icon slashes with explicit text pills (`Mic On` / `Muted` in alert red, `Camera On` / `Camera Off`). Added dedicated `SwitchCamera` button for physical symptom inspections, and added a safe `Leave Call` action in the thumb zone with accidental-disconnect confirmation.
+  - **Frictionless 1-Tap Pre-Join Lobby**: Replaced alarming third-party warning (`ShieldAlert`) with a reassuring clinical privacy badge (`ShieldCheck`). Eliminated nested confirmation modals in favor of a direct 1-tap `Connect with Doctor` action, while preserving inline camera/mic test.
+  - **Clean Single-Host Video Lifecycle**: Removed redundant inline `<ConsultationVideo>` mount from `PatientBookingDetail.tsx`, ensuring Daily Call Object is mounted exclusively within the dedicated `/consultation/room/[bookingId]` surface.
+  - **Companion Suite Typography & Contrast**: Raised tab typography to 14px with conversational labels (`Doctor Chat`, `My Health Info`, `Next Steps`). Enhanced vital signs contrast and failsafe banner readability.
+- **Device Optimization**: Mobile-first for patients (iOS Safari home bar avoidance, large 48px–52px tap targets, thumb-zone controls).
+- **Tokens & Primitives Used**: `Button`, `Dialog`, `Tabs`, `Alert`, `SwitchCamera`, `ShieldCheck`, `PhoneOff`, `Mic`, `MicOff`, `Video`, `VideoOff`, `Maximize2`, `cn`, Bayan Teal (`--teal-700`), Brand Navy (`--navy-700`).
+- **Upstream Porting Notes**: 100% UI and UX layout improvements. All existing props and TanStack Query / Daily Call Object contracts preserved. Zero backend or API contract changes.
+
+### [2026-10-01] Patient Intake Flow: Mobile Web (iOS Safari) & Senior-Centered Ergonomic Modernization
+
+- **Target Route / Surface**: `/book` (`BookingWizard.tsx`, `IntakeNavFooter.tsx`, `IntakeChoice.tsx`, `DateTimePicker.tsx`, `PersonDataSection.tsx`, `MultiSelectDropdown.tsx`, `MedicalHistoryStep.tsx`, `ConcernSafetyStep.tsx`, `Teleconsult.tsx`, `PainAssessmentStep.tsx`, `ReviewConsentStep.tsx`, `AdditionalInfoSection.tsx`)
+- **Files Modified**:
+  - `src/features/booking/components/consultation/BookingWizard.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/IntakeNavFooter.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/IntakeChoice.tsx` [MODIFIED]
+  - `src/features/booking/components/DateTimePicker.tsx` [MODIFIED]
+  - `src/components/blocks/profile/PersonDataSection.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/MultiSelectDropdown.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/MedicalHistoryStep.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/ConcernSafetyStep.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/services/Teleconsult.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/PainAssessmentStep.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/ReviewConsentStep.tsx` [MODIFIED]
+  - `src/features/booking/components/consultation/intake/AdditionalInfoSection.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated iOS Safari Auto-Zoom Bug**:
+    - Enforced standard `text-base` (16px) minimum font size across all text inputs, textareas, search bars, and numeric inputs (`COMPACT_INPUT`, vital inputs, DOB, search, chief complaint, etc.), completely eliminating iOS Safari's disruptive auto-zooming on focus that previously distorted wizard layouts and trapped elderly users.
+  - **Solved iOS Caret Selection & Magnifier Trap**:
+    - Removed `select-none` from the outer wizard container (`BookingWizard.tsx`), restoring iOS Safari's native text selection, loupe magnifier, cursor placement, and native copy-paste capabilities critical for elderly users editing narrative fields.
+  - **Home Indicator Occlusion & Safe Area Inset Support**:
+    - Updated `IntakeNavFooter.tsx` with dynamic safe-area insets (`pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`), preventing fixed sticky action buttons ("Next: Symptoms", "Confirm and continue") from overlapping the iPhone home indicator swipe bar.
+  - **Senior-Friendly Native Date of Birth Picker**:
+    - In `DateTimePicker.tsx`, integrated a native `<input type="date">` overlay on mobile viewports while preserving the rich desktop calendar popover. Mobile Safari triggers the familiar native iOS scroll wheel picker with high-contrast text and tactile feedback, eliminating awkward calendar grid navigation for seniors.
+  - **Cognitive Load Reduction via Upfront Pain Gate (Step 4)**:
+    - Redesigned `PainAssessmentStep.tsx` to lead with a high-contrast binary gate: *"Are you currently experiencing physical pain or bodily discomfort?"*
+    - Patients answering "No" are spared the cognitive exhaustion of evaluating 0–10 numeric ratings and multi-question PQRST symptom matrices. If "Yes", the step unfolds a tactile 0–10 scale with 48px touch targets, colored severity badges, and accessible descriptive anchors.
+  - **Touch Target Ergonomics (>= 48px)**:
+    - Expanded touch targets across `ChipButton`, `ConditionTile`, `ChoiceCard`, `SegmentedToggle`, and red-flag urgency buttons to a minimum height of 48px (`min-h-12`) with active touch response feedback (`active:scale-[0.98]`), accommodating tremors and reduced motor precision.
+  - **Plain, Dignified English Localization (Tagalog Clean-up)**:
+    - Remediated broken or out-of-place Filipino translations (e.g., *"Kwento ang iyong nararamdaman"*, *"hinanakit"*, *"Ang Simula"*, *"Ang Nararamdaman"*) in `Teleconsult.tsx` to plain, dignified, and clinically authoritative English (*"Tell us what you are experiencing"*, *"Onset: When did it begin?"*, *"Character: What does it feel like?"*, *"Aggravating/Alleviating: What makes it better or worse?"*).
+  - **Anti-AI Slop & Contrast Hardening**:
+    - Removed native platform emoji (`❌`) in `AdditionalInfoSection.tsx`, replacing it with a Lucide `X` icon.
+    - Upgraded review step consent checkbox to a generous 24px box with readable 14px text and high-contrast clinical card surface.
+- **Device Optimization**: Mobile Safari (iOS) priority, safe-area compliance, 48px touch ergonomics, responsive adaptation to desktop.
+- **Tokens & Primitives Used**: `--surface-card`, `--border-subtle`, `--surface-brand-soft`, `--navy-700`, `--teal-700`, Lucide icons (`Check`, `ShieldCheck`, `AlertCircle`, `CalendarIcon`, `X`, `ChevronRight`), Tailwind CSS v4 safe-area utilities.
+- **Upstream Porting Notes**: Component-scoped modifications only across the 12 intake components. 100% preservation of `bookingWizardSchema`, form state structure, step indices, and submission payload contracts. Zero backend, schema, or API breaking changes.
+
+---
+
 ### [2026-10-01] Care Continuity: Save Errors Moved to Toast
 
 - **Target Route / Surface**: `/doctor/post-consultation/[id]` (`CareContinuityPanel.tsx`)

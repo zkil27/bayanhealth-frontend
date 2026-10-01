@@ -9,8 +9,6 @@ import {
   Video,
 } from "lucide-react";
 
-import { ConsultationVideo } from "@/features/media/components/ConsultationVideo";
-
 import {
   Empty,
   EmptyDescription,
@@ -269,13 +267,6 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         <ChatHistoryCard bookingId={booking.bookingId} />
       ) : null}
       {/*
-        `<ConsultationVideo />` gates its own credential requests on
-        `booking.status` (Requirement 20.6) and renders nothing while
-        ineligible, so a pre-consult or unconfigured booking shows the page
-        without a dead control.
-      */}
-      <ConsultationVideo bookingId={booking.bookingId} bookingStatus={booking.status} />
-      {/*
         Released education sits above the wizard because it is post-consult
         content the patient is meant to act on, while the wizard has already
         collapsed to its terminal step by then. It renders nothing until a
@@ -330,30 +321,43 @@ function JoinConsultationCard({
   return (
     <section
       data-slot="join-consultation"
-      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4"
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-teal-200/80 bg-teal-50/70 p-4 sm:p-5 shadow-xs"
     >
-      <div className="flex items-center gap-2">
-        {hasStarted ? (
-          <Video className="size-5 shrink-0 text-primary" />
-        ) : (
-          <MessageSquare className="size-5 shrink-0 text-primary" />
-        )}
+      <div className="flex items-start sm:items-center gap-3.5">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-white shadow-xs">
+          {hasStarted ? (
+            <Video className="size-6 shrink-0" />
+          ) : (
+            <MessageSquare className="size-6 shrink-0" />
+          )}
+        </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">
+          <div className="flex items-center gap-2">
+            <p className="text-base font-bold text-slate-900">
+              {hasStarted
+                ? "Your consultation is live now"
+                : "Consultation room ready"}
+            </p>
+            {hasStarted ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-emerald-900">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
             {hasStarted
-              ? "Your consultation has started"
-              : "Enter the consultation room"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {hasStarted
-              ? "Join the conversation with your doctor."
-              : "Chat with your doctor, test your camera and mic, and join when you're ready."}
+              ? "Your doctor is in the room. Tap below to connect to your live visit."
+              : "Speak with your doctor, review intake notes, or test your audio before joining."}
           </p>
         </div>
       </div>
-      <Link href={`/consultation/room/${encodeURIComponent(bookingId)}`}>
-        <Button size="sm">
-          {hasStarted ? "Join consultation" : "Enter room"}
+      <Link href={`/consultation/room/${encodeURIComponent(bookingId)}`} className="w-full sm:w-auto shrink-0">
+        <Button
+          size="default"
+          className="h-12 w-full sm:w-auto min-w-36 rounded-xl bg-(--action-primary) text-base font-bold text-(--action-primary-text) hover:bg-(--action-primary-hover) shadow-xs transition-colors"
+        >
+          {hasStarted ? "Join Call with Doctor" : "Enter Room"}
         </Button>
       </Link>
     </section>

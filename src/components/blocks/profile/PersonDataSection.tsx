@@ -660,7 +660,7 @@ export function PersonDataSection({
                       minDate={new Date("1900-01-01")}
                       maxDate={new Date()}
                       icon={CalendarIcon}
-                      triggerClassName="h-12 sm:h-12.5 text-sm sm:text-base font-medium"
+                      triggerClassName="h-12 sm:h-11 text-base sm:text-sm font-medium"
                     />
                     {fieldState.invalid && (
                       <AnimatedFieldError error={fieldState.error} />
@@ -705,10 +705,11 @@ export function PersonDataSection({
                           <Icon className="absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
                           <Input
                             type="number"
+                            inputMode="decimal"
                             step={fieldItem.step}
                             placeholder={fieldItem.placeholder}
                             className={cn(
-                              "h-12 sm:h-12.5 rounded-xl pl-10 pr-3.5 text-sm sm:text-base font-medium text-(--text-heading) bg-(--surface-card) shadow-xs placeholder:text-muted-foreground/70",
+                              "h-12 sm:h-11 rounded-xl pl-10 pr-3.5 text-base sm:text-sm font-medium text-(--text-heading) bg-(--surface-card) shadow-xs placeholder:text-muted-foreground/70",
                               fieldState.error
                                 ? "border-(--danger-fg) focus:ring-(--danger-fg)"
                                 : "border-(--border-default) focus:border-(--action-primary) focus:ring-1 focus:ring-(--action-primary)",

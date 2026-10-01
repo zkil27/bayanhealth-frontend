@@ -70,7 +70,7 @@ export function BookingWizard({ booking }: BookingWizardProps) {
   return (
     <div
       className={cn(
-        "flex w-full flex-col select-none",
+        "flex w-full flex-col",
         isActivelyFillingIntake ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "gap-4",
       )}
     >

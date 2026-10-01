@@ -81,7 +81,7 @@ export function MedicalCertificateSheet({
     <article
       data-slot="medical-certificate-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-4 sm:p-8 md:p-12 text-slate-800 select-text leading-normal",
         "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
@@ -97,7 +97,7 @@ export function MedicalCertificateSheet({
         <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-2">
           PATIENT INFORMATION
         </h2>
-        <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-xs text-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs text-slate-800">
           <div className="grid grid-cols-[130px_minmax(0,1fr)] items-baseline">
             <span className="text-slate-600 font-medium">Name:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
@@ -163,7 +163,7 @@ export function MedicalCertificateSheet({
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <Bed className="size-4" />
             </div>
-            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
               <span className="font-semibold text-slate-900">Rest / Work Suspension</span>
               <span className="text-slate-800 font-medium">
                 {validFromFormatted} to {validThroughFormatted}
@@ -176,7 +176,7 @@ export function MedicalCertificateSheet({
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <PersonStanding className="size-4" />
             </div>
-            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
               <span className="font-semibold text-slate-900">Fit to Return</span>
               <span className="text-slate-800">
                 {fitToReturnDate}, if symptoms improve and no red flags are present.
@@ -189,7 +189,7 @@ export function MedicalCertificateSheet({
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
               <ClipboardList className="size-4" />
             </div>
-            <div className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-2 pt-1.5">
+            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
               <span className="font-semibold text-slate-900">Work / School Advice</span>
               <span className="text-slate-800 leading-relaxed">
                 {payload.restrictions ||

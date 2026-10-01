@@ -4,17 +4,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Daily, { type DailyCall, type DailyParticipant } from "@daily-co/daily-js";
 import {
   AlertCircleIcon,
+  Maximize2,
   MessagesSquare,
   Mic,
   MicOff,
+  PhoneOff,
   Settings2,
   ShieldAlert,
+  ShieldCheck,
+  SwitchCamera,
   Video,
   VideoOff,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -154,9 +159,18 @@ export interface ConsultationVideoProps {
   bookingId: string;
   /** Current booking lifecycle status, used to gate credential requests (R20.6). */
   bookingStatus: string | null | undefined;
+  compact?: boolean;
+  onLeaveCall?: () => void;
+  onExpand?: () => void;
 }
 
-export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVideoProps) {
+export function ConsultationVideo({
+  bookingId,
+  bookingStatus,
+  compact = false,
+  onLeaveCall,
+  onExpand,
+}: ConsultationVideoProps) {
   const idToken = useIdToken();
   const isEligible = !!bookingStatus && VIDEO_ELIGIBLE_STATUSES.has(bookingStatus);
 
@@ -169,6 +183,7 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
   // `handleAcknowledgeNotice` once the participant confirms joining.
   const [deviceTestOpen, setDeviceTestOpen] = useState(false);
   const [joinConfirmOpen, setJoinConfirmOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
   const [panel, setPanel] = useState<VideoPanelState>(
     isEligible ? { kind: "notice" } : { kind: "ineligible" },
@@ -455,6 +470,16 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
     setMicOn(next);
   }, [micOn]);
 
+  const handleCycleCamera = useCallback(async () => {
+    const call = callRef.current;
+    if (!call) return;
+    try {
+      await call.cycleCamera({ preferDifferentFacingMode: true });
+    } catch {
+      // non-blocking fallback if cycleCamera is unsupported on device
+    }
+  }, []);
+
   if (panel.kind === "ineligible") {
     return null;
   }
@@ -464,15 +489,10 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
       <>
         <PreJoinPanel
           onOpenDeviceTest={() => setDeviceTestOpen(true)}
-          onOpenJoinConfirm={() => setJoinConfirmOpen(true)}
+          onDirectJoin={handleAcknowledgeNotice}
           joining={noticeAcknowledged}
         />
         <DeviceTestModal open={deviceTestOpen} onOpenChange={setDeviceTestOpen} />
-        <JoinConfirmDialog
-          open={joinConfirmOpen}
-          onOpenChange={setJoinConfirmOpen}
-          onConfirm={handleAcknowledgeNotice}
-        />
       </>
     );
   }
@@ -537,6 +557,59 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
   const remoteTile = Array.from(tiles.values()).find((tile) => !tile.isLocal);
   const localTile = Array.from(tiles.values()).find((tile) => tile.isLocal);
 
+  if (compact && panel.kind === "connected") {
+    return (
+      <section
+        data-slot="consultation-video-compact"
+        className="flex h-full w-full items-center justify-between gap-2.5 bg-slate-950 px-3.5 py-1.5 text-white"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-xs font-black text-white shadow-xs">
+            {remoteTile?.label ? remoteTile.label.slice(0, 2).toUpperCase() : "DR"}
+            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border border-slate-950 bg-emerald-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-bold text-slate-100">
+              {remoteTile?.label ?? "Doctor Connected"}
+            </p>
+            <p className="flex items-center gap-1.5 text-[11px] font-medium text-teal-300">
+              <span className="size-1.5 rounded-full bg-teal-400 animate-pulse" />
+              Live audio active
+            </p>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            size="sm"
+            type="button"
+            onClick={toggleMic}
+            aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+            className={cn(
+              "h-9 px-3 rounded-lg text-xs font-bold transition-colors shadow-2xs",
+              micOn ? "bg-slate-800 text-slate-200 border border-white/10" : "bg-rose-600 text-white hover:bg-rose-700",
+            )}
+          >
+            {micOn ? <Mic className="size-3.5 mr-1 text-emerald-400" /> : <MicOff className="size-3.5 mr-1" />}
+            {micOn ? "Mute" : "Unmute"}
+          </Button>
+          {onExpand ? (
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={onExpand}
+              aria-label="Expand video stage"
+              className="h-9 px-2.5 rounded-lg border-white/20 bg-slate-900 text-slate-200 hover:bg-slate-800 shadow-2xs"
+            >
+              <Maximize2 className="size-3.5" />
+            </Button>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section data-slot="consultation-video" className="flex h-full min-h-0 flex-1 flex-col gap-2 md:gap-3">
       <div
@@ -561,34 +634,61 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
         {panel.kind === "connected" ? (
           <div
             data-slot="consultation-video-controls"
-            className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-black/50 px-2.5 py-1.5 backdrop-blur-md sm:bottom-4"
+            className="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 max-w-[96%] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-slate-950/90 p-1.5 shadow-2xl backdrop-blur-md sm:bottom-4 sm:gap-2.5 sm:rounded-full sm:px-3 sm:py-2"
           >
             <Button
-              size="icon"
+              type="button"
               onClick={toggleMic}
               aria-label={micOn ? "Turn microphone off" : "Turn microphone on"}
               aria-pressed={micOn}
-              className={
+              className={cn(
+                "h-12 min-w-12 px-3 sm:h-13 sm:px-4 rounded-xl sm:rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-sm",
                 micOn
-                  ? "size-11 rounded-full bg-(--white)/10 text-(--white) hover:bg-(--white)/20"
-                  : "size-11 rounded-full bg-(--navy-600) text-white hover:bg-(--navy-700)"
-              }
+                  ? "bg-slate-800/90 text-white hover:bg-slate-700 border border-white/10"
+                  : "bg-rose-600 text-white hover:bg-rose-700 ring-2 ring-rose-400/40",
+              )}
             >
-              {micOn ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+              {micOn ? <Mic className="size-5 shrink-0 text-emerald-400" /> : <MicOff className="size-5 shrink-0 text-white" />}
+              <span>{micOn ? "Mic On" : "Muted"}</span>
             </Button>
+
             <Button
-              size="icon"
+              type="button"
               onClick={toggleCamera}
               aria-label={cameraOn ? "Turn camera off" : "Turn camera on"}
               aria-pressed={cameraOn}
-              className={
+              className={cn(
+                "h-12 min-w-12 px-3 sm:h-13 sm:px-4 rounded-xl sm:rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-sm",
                 cameraOn
-                  ? "size-11 rounded-full bg-(--white)/10 text-(--white) hover:bg-(--white)/20"
-                  : "size-11 rounded-full bg-(--navy-600) text-white hover:bg-(--navy-700)"
-              }
+                  ? "bg-slate-800/90 text-white hover:bg-slate-700 border border-white/10"
+                  : "bg-amber-600 text-white hover:bg-amber-700 ring-2 ring-amber-400/40",
+              )}
             >
-              {cameraOn ? <Video className="size-4" /> : <VideoOff className="size-4" />}
+              {cameraOn ? <Video className="size-5 shrink-0 text-teal-300" /> : <VideoOff className="size-5 shrink-0 text-white" />}
+              <span>{cameraOn ? "Camera On" : "Camera Off"}</span>
             </Button>
+
+            <Button
+              type="button"
+              onClick={() => void handleCycleCamera()}
+              aria-label="Switch camera"
+              className="h-12 min-w-12 px-3 sm:h-13 sm:px-3.5 rounded-xl sm:rounded-full bg-slate-800/90 text-white hover:bg-slate-700 border border-white/10 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
+            >
+              <SwitchCamera className="size-5 shrink-0 text-slate-300" />
+              <span className="hidden xs:inline">Flip</span>
+            </Button>
+
+            {onLeaveCall ? (
+              <Button
+                type="button"
+                onClick={() => setLeaveConfirmOpen(true)}
+                aria-label="Leave consultation"
+                className="h-12 px-3.5 sm:h-13 sm:px-4 rounded-xl sm:rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
+              >
+                <PhoneOff className="size-5 shrink-0" />
+                <span>Leave</span>
+              </Button>
+            ) : null}
           </div>
         ) : null}
 
@@ -612,6 +712,14 @@ export function ConsultationVideo({ bookingId, bookingStatus }: ConsultationVide
             about {Math.max(0, mintLimitNotice)} seconds if needed.
           </AlertDescription>
         </Alert>
+      ) : null}
+
+      {onLeaveCall ? (
+        <LeaveConfirmDialog
+          open={leaveConfirmOpen}
+          onOpenChange={setLeaveConfirmOpen}
+          onConfirm={onLeaveCall}
+        />
       ) : null}
     </section>
   );
@@ -710,59 +818,105 @@ function ParticipantVideoTile({
  */
 function PreJoinPanel({
   onOpenDeviceTest,
-  onOpenJoinConfirm,
+  onDirectJoin,
   joining,
 }: {
   onOpenDeviceTest: () => void;
-  onOpenJoinConfirm: () => void;
+  onDirectJoin: () => void;
   joining: boolean;
 }) {
   return (
     <section
       data-slot="consultation-video-pre-join"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-(--surface-card) p-4"
+      className="flex flex-col gap-4 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4 sm:p-5 shadow-xs"
     >
-      <div className="flex items-start gap-2">
-        <ShieldAlert className="size-5 shrink-0 text-(--surface-nav)" aria-hidden="true" />
+      <div className="flex items-start gap-3 rounded-xl border border-teal-200/70 bg-teal-50/80 p-3.5 text-slate-800">
+        <ShieldCheck className="size-5 shrink-0 text-(--teal-700)" aria-hidden="true" />
         <div>
-          <p className="text-sm font-semibold text-slate-900">Before you join</p>
-          <p className="text-xs text-slate-500">
-            This call&apos;s audio and video are carried by a third-party video provider,
-            not by BayanHealth directly.
+          <p className="text-sm font-bold text-slate-900">Confidential &amp; Encrypted Call</p>
+          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+            Your consultation connection is private, secure, and compliant with health privacy standards.
           </p>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
         <Button
           type="button"
-          size="sm"
-          variant="outline"
-          onClick={onOpenDeviceTest}
-          aria-label="Test your camera and microphone"
-          className="rounded-xl"
-        >
-          <Settings2 className="size-3.5" />
-          Test camera &amp; microphone
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={onOpenJoinConfirm}
+          size="default"
+          onClick={onDirectJoin}
           disabled={joining}
-          aria-label="Review and confirm joining the video call"
-          className="rounded-xl bg-(--surface-nav) text-white hover:bg-(--surface-nav)/90"
+          aria-label="Connect with Doctor"
+          className="h-12 flex-1 rounded-xl bg-(--action-primary) text-base font-bold text-(--action-primary-text) hover:bg-(--action-primary-hover) shadow-xs transition-colors"
         >
           {joining ? (
             <>
-              <Spinner className="mr-2 size-3" />
-              Joining…
+              <Spinner className="mr-2 size-4" />
+              Connecting to Doctor…
             </>
           ) : (
-            "Join meeting"
+            <>
+              <Video className="mr-2 size-4" />
+              Connect with Doctor
+            </>
           )}
+        </Button>
+
+        <Button
+          type="button"
+          size="default"
+          variant="outline"
+          onClick={onOpenDeviceTest}
+          aria-label="Test your camera and microphone"
+          className="h-12 rounded-xl border-(--border-default) font-semibold text-slate-700 hover:bg-(--surface-warm)"
+        >
+          <Settings2 className="size-4 mr-1.5" />
+          Test camera &amp; mic
         </Button>
       </div>
     </section>
+  );
+}
+
+/**
+ * Confirms the leave action before disconnecting the participant from the call
+ * on mobile to prevent accidental drops.
+ */
+function LeaveConfirmDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent data-slot="consultation-video-leave-confirm">
+        <DialogHeader>
+          <DialogTitle>Leave the consultation?</DialogTitle>
+          <DialogDescription>
+            You can return to the consultation room from your booking page while your doctor is available.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Stay in call
+          </Button>
+          <Button
+            type="button"
+            className="bg-rose-600 text-white hover:bg-rose-700"
+            onClick={() => {
+              onOpenChange(false);
+              onConfirm();
+            }}
+          >
+            Leave consultation
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

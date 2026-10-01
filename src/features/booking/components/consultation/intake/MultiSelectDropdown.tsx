@@ -209,13 +209,13 @@ export function MultiSelectDropdown({
                         addCustom();
                       }
                     }}
-                    className="h-11 w-full rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 text-sm text-(--text-body) placeholder:text-(--text-muted) focus:border-(--action-primary) focus:outline-none"
+                    className="h-12 w-full rounded-xl border border-(--border-default) bg-(--surface-card) px-3.5 pr-16 text-base text-(--text-body) placeholder:text-(--text-muted) focus:border-(--action-primary) focus:outline-none"
                   />
                   {inputValue.trim() && (
                     <button
                       type="button"
                       onClick={addCustom}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-(--surface-accent-soft) px-2.5 py-1 text-xs font-bold text-(--action-primary)"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-(--surface-accent-soft) px-3 py-1.5 text-sm font-bold text-(--action-primary)"
                     >
                       Add
                     </button>
@@ -257,7 +257,7 @@ export function MultiSelectDropdown({
                   </button>
 
                   {/* Preset Options */}
-                  <span className="block pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-(--text-subtle)">
+                  <span className="block pt-2 pb-1 text-xs sm:text-sm font-bold uppercase tracking-wider text-(--text-subtle)">
                     {presetHeading}
                   </span>
                   {filteredPresets.map((preset) => {

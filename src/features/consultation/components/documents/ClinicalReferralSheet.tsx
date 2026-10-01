@@ -62,7 +62,7 @@ export function ClinicalReferralSheet({
     <article
       data-slot="clinical-referral-sheet"
       className={cn(
-        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-8 sm:p-12 text-slate-800 select-text leading-normal",
+        "relative mx-auto flex w-full max-w-[760px] flex-col bg-white p-4 sm:p-8 md:p-12 text-slate-800 select-text leading-normal",
         "print:p-0 print:max-w-none print:shadow-none",
         className,
       )}
@@ -75,20 +75,20 @@ export function ClinicalReferralSheet({
 
       {/* Patient Demographic Bar */}
       <section className="mb-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 text-xs text-slate-700 divide-x divide-slate-300">
-          <div className="pr-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-0 sm:divide-x sm:divide-slate-300 text-xs text-slate-700">
+          <div className="col-span-2 sm:col-span-1 sm:pr-3">
             <span className="text-slate-500 block text-[11px]">Patient:</span>
             <span className="font-bold text-slate-900">{patientName}</span>
           </div>
-          <div className="px-3">
+          <div className="sm:px-3">
             <span className="text-slate-500 block text-[11px]">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
-          <div className="px-3">
+          <div className="sm:px-3">
             <span className="text-slate-500 block text-[11px]">Date of Referral:</span>
             <span className="font-medium text-slate-900">{dateOfReferral}</span>
           </div>
-          <div className="pl-3">
+          <div className="col-span-2 sm:col-span-1 sm:pl-3">
             <span className="text-slate-500 block text-[11px]">Case ID:</span>
             <span className="font-mono font-medium text-slate-900">{docId}</span>
           </div>
@@ -100,11 +100,11 @@ export function ClinicalReferralSheet({
       {/* Structured Referral Rows */}
       <section className="mb-4 flex flex-col gap-3 text-xs">
         {/* Referred To */}
-        <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
-            <Building2 className="size-5" />
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
+            <Building2 className="size-4.5 sm:size-5" />
           </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-[180px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1 sm:pt-2 min-w-0 flex-1">
             <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               REFERRED TO:
             </span>
@@ -115,11 +115,11 @@ export function ClinicalReferralSheet({
         <div className="h-[1px] w-full bg-slate-200" />
 
         {/* Urgency */}
-        <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
-            <Clock className="size-5" />
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
+            <Clock className="size-4.5 sm:size-5" />
           </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-[180px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1 sm:pt-2 min-w-0 flex-1">
             <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               URGENCY:
             </span>
@@ -130,11 +130,11 @@ export function ClinicalReferralSheet({
         <div className="h-[1px] w-full bg-slate-200" />
 
         {/* Reason for Referral */}
-        <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
-            <FileText className="size-5" />
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
+            <FileText className="size-4.5 sm:size-5" />
           </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-[180px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1 sm:pt-2 min-w-0 flex-1">
             <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               REASON FOR REFERRAL:
             </span>
@@ -147,11 +147,11 @@ export function ClinicalReferralSheet({
         <div className="h-[1px] w-full bg-slate-200" />
 
         {/* Clinical Summary */}
-        <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
-            <User className="size-5" />
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--teal-800) text-white">
+            <User className="size-4.5 sm:size-5" />
           </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-baseline gap-2 pt-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-[180px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1 sm:pt-2 min-w-0 flex-1">
             <span className="font-bold text-(--navy-700) tracking-wider uppercase text-xs">
               CLINICAL SUMMARY:
             </span>

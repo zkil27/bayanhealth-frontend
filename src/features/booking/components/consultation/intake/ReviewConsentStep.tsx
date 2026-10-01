@@ -212,9 +212,9 @@ export function ReviewConsentStep({
                   A preference only. Your confirmed time comes from the doctor&apos;s booked slot.
                 </p>
               </div>
-              <div className="grid gap-3 rounded-2xl bg-(--surface-canvas) p-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <span className="block text-[10px] font-bold text-(--text-muted) uppercase">Date</span>
+              <div className="grid gap-3 rounded-2xl bg-(--surface-canvas) p-3.5 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <span className="block text-xs sm:text-sm font-bold text-(--text-muted) uppercase">Preferred Date</span>
                   <DatePicker
                     date={dateSegmentOf(field.value)}
                     onDateChange={(date) => field.onChange(withDateSegment(field.value, date))}
@@ -225,8 +225,8 @@ export function ReviewConsentStep({
                     error={fieldState.error?.message}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label htmlFor="preferred-consultation-time" className="block text-[10px] font-bold text-(--text-muted) uppercase">
+                <div className="space-y-1.5">
+                  <label htmlFor="preferred-consultation-time" className="block text-xs sm:text-sm font-bold text-(--text-muted) uppercase">
                     Time window (optional)
                   </label>
                   <input
@@ -237,7 +237,7 @@ export function ReviewConsentStep({
                     // A bare time with no date is not a preference anyone can act on.
                     disabled={!dateSegmentOf(field.value)}
                     onChange={(event) => field.onChange(withTimeSegment(field.value, event.target.value))}
-                    className={cn(COMPACT_INPUT, "min-h-11 disabled:cursor-not-allowed disabled:opacity-50")}
+                    className={cn(COMPACT_INPUT, "min-h-12 text-base disabled:cursor-not-allowed disabled:opacity-50")}
                   />
                 </div>
               </div>
@@ -260,10 +260,10 @@ export function ReviewConsentStep({
               rows={3}
               aria-describedby="doctor-notes-hint"
               placeholder="Anything else the attending doctor should know before calling? (optional)"
-              className={cn(COMPACT_INPUT, "block resize-y")}
+              className={cn(COMPACT_INPUT, "block resize-y text-base")}
             />
-            <p id="doctor-notes-hint" className="text-[11px] text-(--text-subtle)">
-              Documents can&apos;t be attached here. Bring lab results or prescriptions to the consultation.
+            <p id="doctor-notes-hint" className="text-xs sm:text-sm text-(--text-subtle)">
+              Documents cannot be attached here. Please bring lab results or past prescriptions to your consultation.
             </p>
           </section>
         )}
@@ -276,13 +276,14 @@ export function ReviewConsentStep({
         control={control}
         render={({ field, fieldState }) => (
           <div className="border-t border-(--border-subtle) pt-6">
+            <BlockLabel id="consent-heading" required>Clinical Consent & Authorization</BlockLabel>
             <label
               htmlFor="intake-consent"
               className={cn(
-                "flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm text-(--text-body) transition-colors",
+                "mt-2 flex min-h-14 cursor-pointer items-start gap-3.5 rounded-2xl border p-4 text-sm sm:text-base text-(--text-body) transition-all active:scale-[0.99]",
                 field.value
-                  ? "border-(--surface-nav-accent) bg-(--safe-bg)"
-                  : "border-(--border-default) hover:bg-(--surface-canvas)",
+                  ? "border-(--surface-nav-accent) bg-(--safe-bg) shadow-xs ring-1 ring-(--surface-nav-accent)"
+                  : "border-(--border-default) bg-(--surface-card) hover:bg-(--surface-canvas)",
               )}
             >
               <input
@@ -292,10 +293,10 @@ export function ReviewConsentStep({
                 onChange={(event) => field.onChange(event.target.checked)}
                 onBlur={field.onBlur}
                 aria-invalid={fieldState.invalid || undefined}
-                className="mt-0.5 size-5 shrink-0 cursor-pointer accent-(--surface-nav)"
+                className="mt-0.5 size-6 shrink-0 cursor-pointer rounded-md accent-(--surface-nav)"
               />
-              <span>
-                I confirm that the details provided are accurate and consent to teleconsult evaluation under the BayanHealth Clinical Terms of Service.
+              <span className="leading-relaxed">
+                I confirm that the details provided are accurate and complete to the best of my knowledge. I consent to telemedicine clinical evaluation and record sharing under the BayanHealth Clinical Terms of Service.
               </span>
             </label>
             {fieldState.error ? <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}

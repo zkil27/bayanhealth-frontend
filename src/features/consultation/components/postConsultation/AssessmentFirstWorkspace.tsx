@@ -29,12 +29,14 @@ import { PostConsultationSkeleton } from "./PostConsultationSkeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ArtifactCard, type ArtifactSignatureInput } from "./ArtifactCard";
+import { AuthorizedArtifactHistory } from "./AuthorizedArtifactHistory";
 import { CandidatePicker } from "./CandidatePicker";
 import { CareContinuityPanel } from "./CareContinuityPanel";
 import { DeliverablesDeck, deriveDeckEntries } from "./DeliverablesDeck";
 import { PatientRail } from "./PatientRail";
 import { SoapSummaryCards } from "./SoapSummaryCards";
 import { WorkspaceHeader } from "./WorkspaceChrome";
+import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import {
   deriveFinishReadiness,
   deriveRailState,
@@ -181,6 +183,8 @@ export function AssessmentFirstWorkspace({
    * Excluded from active tabs, deliverables deck, and finish-documentation warnings.
    */
   const [discardedTypes, setDiscardedTypes] = useState<Set<CdsProtectedOutputType>>(new Set());
+  const [inspectingHistoricalArtifact, setInspectingHistoricalArtifact] =
+    useState<CdsProtectedArtifact | null>(null);
   const liveCurrent = useMemo(
     () => current.filter((item) => !discardedTypes.has(item.outputType)),
     [current, discardedTypes],
@@ -1371,55 +1375,13 @@ export function AssessmentFirstWorkspace({
           {/* Kept out of the pre-confirmation scroll: with no confirmed
               Assessment there is nothing that could have been authorized. */}
           {assessment.confirmed || history.length > 0 ? (
-            <details
-              data-slot="artifact-history"
-              className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
-            >
-              <summary className="flex cursor-pointer items-center gap-2 px-4 py-3.5 text-[15px] font-bold text-(--text-heading)">
-                <History className="size-4.5 shrink-0 text-(--text-muted)" />
-                Authorized artifact history
-                {history.length ? (
-                  <span className="ml-auto rounded-full bg-(--gray-bg) px-2.5 py-0.5 text-xs font-bold text-(--gray-fg)">
-                    {history.length}
-                  </span>
-                ) : null}
-              </summary>
-              <div className="border-t border-(--border-subtle) p-4">
-                <p className="text-sm text-(--text-muted)">
-                  Earlier and out-of-date drafts are kept for the record. They cannot be edited,
-                  signed or released.
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {history.map((artifact) => (
-                    <li
-                      key={`${artifact.artifactId}-${artifact.artifactRevision}`}
-                      className="rounded-[14px] border border-(--border-subtle) p-3 text-sm text-(--text-body)"
-                    >
-                      <span className="font-semibold text-(--text-heading)">
-                        {outputLabels[artifact.outputType]}
-                      </span>{" "}
-                      · Assessment v{artifact.assessmentVersion} ·{" "}
-                      {artifact.effectiveStale
-                        ? (staleReasonLabel(artifact.staleReason) ?? "Out of date")
-                        : "Current"}{" "}
-                      · {artifact.lifecycleStatus}
-                      {artifact.physicianEdited ? " · edited by you" : ""}
-                    </li>
-                  ))}
-                </ul>
-                {historyCursor ? (
-                  <Button
-                    className="mt-3 rounded-full"
-                    type="button"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={loadMoreHistory}
-                  >
-                    Load more history
-                  </Button>
-                ) : null}
-              </div>
-            </details>
+            <AuthorizedArtifactHistory
+              history={history}
+              cursor={historyCursor}
+              busy={busy}
+              onLoadMore={loadMoreHistory}
+              onInspectArtifact={(art) => setInspectingHistoricalArtifact(art)}
+            />
           ) : null}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
             <div>
@@ -1446,6 +1408,18 @@ export function AssessmentFirstWorkspace({
           />
         </div>
       </div>
+
+      <DocumentSheetModal
+        open={Boolean(inspectingHistoricalArtifact)}
+        onOpenChange={(open) => {
+          if (!open) setInspectingHistoricalArtifact(null);
+        }}
+        artifact={inspectingHistoricalArtifact ?? undefined}
+        intake={intake}
+        specimen={doctorProfile?.signature}
+        doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+        isHistoricalArchive={true}
+      />
     </div>
   );
 }

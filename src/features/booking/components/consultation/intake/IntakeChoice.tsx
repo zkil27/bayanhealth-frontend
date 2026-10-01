@@ -25,7 +25,7 @@ export function ChipButton({
       type="button"
       aria-pressed={selected}
       className={cn(
-        "inline-flex min-h-11 items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-medium transition-colors sm:min-h-9",
+        "inline-flex min-h-12 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors sm:min-h-11",
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-45",
         selected
@@ -35,7 +35,7 @@ export function ChipButton({
       )}
       {...props}
     >
-      {selected ? <Check aria-hidden className="size-3.5" /> : null}
+      {selected ? <Check aria-hidden className="size-4 shrink-0" /> : null}
       {children}
     </button>
   );
@@ -66,7 +66,7 @@ export function ConditionTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "group relative flex min-h-[44px] w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-xs font-medium transition-all sm:min-h-11 sm:text-[13px]",
+        "group relative flex min-h-12 w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition-all sm:min-h-11 sm:py-2 sm:text-sm",
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-40",
         selected
@@ -78,13 +78,13 @@ export function ConditionTile({
       <span
         aria-hidden
         className={cn(
-          "flex size-4 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors",
+          "flex size-5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors",
           selected
             ? "border-transparent bg-(--surface-nav-accent) text-white"
             : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
         )}
       >
-        {selected ? <Check className="size-3 stroke-[3]" /> : null}
+        {selected ? <Check className="size-3.5 stroke-[3]" /> : null}
       </span>
       <span className="min-w-0 flex-1 truncate">{children}</span>
     </button>
@@ -119,7 +119,7 @@ export function ChoiceCard({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "group relative flex min-h-[52px] w-full items-center gap-3 rounded-xl border p-3 text-left transition-all sm:min-h-[56px]",
+        "group relative flex min-h-[56px] w-full items-center gap-3.5 rounded-xl border p-3.5 text-left transition-all sm:min-h-[52px] sm:p-3",
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-45",
         selected
@@ -131,25 +131,25 @@ export function ChoiceCard({
       <span
         aria-hidden
         className={cn(
-          "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+          "flex size-5.5 shrink-0 items-center justify-center rounded-full border transition-colors",
           selected
             ? "border-(--surface-nav-accent) bg-(--surface-nav-accent) text-white"
             : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
         )}
       >
-        {selected ? <span className="size-2 rounded-full bg-white" /> : null}
+        {selected ? <span className="size-2.5 rounded-full bg-white" /> : null}
       </span>
       <div className="min-w-0 flex-1">
         <span
           className={cn(
-            "block text-xs sm:text-[13px]",
-            selected ? "font-bold text-(--text-heading)" : "font-medium text-(--text-body)",
+            "block text-sm sm:text-sm",
+            selected ? "font-bold text-(--text-heading)" : "font-semibold text-(--text-body)",
           )}
         >
           {title}
         </span>
         {description ? (
-          <span className="mt-0.5 block text-[11px] text-(--text-muted) sm:text-xs">
+          <span className="mt-0.5 block text-xs text-(--text-muted) sm:text-xs">
             {description}
           </span>
         ) : null}
@@ -181,7 +181,7 @@ export function SegmentedToggle<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        "grid w-full rounded-xl border border-(--border-subtle) bg-(--surface-canvas) p-1 text-xs sm:inline-grid sm:w-auto",
+        "grid w-full rounded-xl border border-(--border-subtle) bg-(--surface-canvas) p-1 text-sm sm:inline-grid sm:w-auto",
         options.length === 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-4",
         className,
       )}
@@ -196,11 +196,11 @@ export function SegmentedToggle<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex min-h-11 items-center justify-center rounded-lg px-3.5 text-center text-xs font-semibold transition-all sm:min-h-9",
+              "flex min-h-12 items-center justify-center rounded-lg px-4 text-center text-sm font-bold transition-all sm:min-h-10 sm:px-3 sm:text-xs",
               FOCUS,
               selected
                 ? "bg-(--safe-bg) font-bold text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
-                : "font-medium text-(--text-muted) hover:text-(--text-body)",
+                : "font-semibold text-(--text-muted) hover:text-(--text-body)",
             )}
           >
             {option.label}
@@ -228,7 +228,7 @@ export function BlockLabel({
     <Tag
       id={id}
       htmlFor={htmlFor}
-      className="block text-xs font-bold tracking-wider text-(--text-muted) uppercase"
+      className="block text-xs sm:text-[13px] font-bold tracking-wider text-(--text-muted) uppercase"
     >
       {children}
       {required ? (
@@ -275,4 +275,4 @@ export function Reveal({
 }
 
 export const COMPACT_INPUT =
-  "w-full rounded-xl border border-(--border-default) bg-(--surface-raised) px-3 py-2 text-sm text-(--text-body) outline-none placeholder:text-(--text-subtle) focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)";
+  "w-full min-h-12 sm:min-h-10.5 rounded-xl border border-(--border-default) bg-(--surface-raised) px-3.5 py-2.5 sm:py-2 text-base sm:text-sm text-(--text-body) outline-none placeholder:text-(--text-subtle) focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)";
