@@ -1,9 +1,12 @@
 "use client";
 
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
+  Activity,
+  Clock,
   Gauge,
   HeartPulse,
+  MapPin,
   Thermometer,
   TriangleAlert,
   Wind,
@@ -30,6 +33,82 @@ import type {
  * persistent tag in the workspace header (`WorkspaceHeader`), visible regardless
  * of which SOAP card or patient-rail tab is in view.
  */
+interface ClinicalHighlight {
+  icon?: ReactNode;
+  label: string;
+  tone?: "normal" | "warning" | "critical";
+}
+
+function getClinicalHighlights(
+  intake: BookingIntakeForm | null | undefined,
+): ClinicalHighlight[] {
+  if (!intake) return [];
+  const details = intake.sections?.details;
+  const purpose = intake.sections?.purpose;
+  const symptomReview = details?.symptomReview;
+  const safetyScreen = details?.safetyScreen;
+  const highlights: ClinicalHighlight[] = [];
+
+  if (symptomReview?.onset?.trim()) {
+    highlights.push({
+      icon: <Clock className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
+      label: `Onset: ${symptomReview.onset.trim()}`,
+      tone: "normal",
+    });
+  }
+
+  if (symptomReview?.characteristics?.trim()) {
+    highlights.push({
+      icon: <Activity className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
+      label: symptomReview.characteristics.trim(),
+      tone: "normal",
+    });
+  }
+
+  if (symptomReview?.location?.trim()) {
+    highlights.push({
+      icon: <MapPin className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
+      label: symptomReview.location.trim(),
+      tone: "normal",
+    });
+  }
+
+  if (safetyScreen?.feverDays && safetyScreen.feverDays > 0) {
+    highlights.push({
+      icon: <Thermometer className="size-3 text-amber-700 dark:text-amber-400 shrink-0" />,
+      label: `Fever: ${safetyScreen.feverDays}d`,
+      tone: "warning",
+    });
+  }
+
+  if (safetyScreen?.chestPain === true) {
+    highlights.push({
+      icon: <TriangleAlert className="size-3 text-(--danger-fg) shrink-0" />,
+      label: "Chest pain reported",
+      tone: "critical",
+    });
+  }
+
+  if (safetyScreen?.dyspnea === true) {
+    highlights.push({
+      icon: <Wind className="size-3 text-amber-700 dark:text-amber-400 shrink-0" />,
+      label: "Dyspnea reported",
+      tone: "warning",
+    });
+  }
+
+  if (purpose?.complaintTags && purpose.complaintTags.length > 0) {
+    for (const tag of purpose.complaintTags.slice(0, 3)) {
+      highlights.push({
+        label: `#${tag.replace(/_/g, " ")}`,
+        tone: "normal",
+      });
+    }
+  }
+
+  return highlights;
+}
+
 export function SoapSummaryCards({
   intake,
 }: {
@@ -38,61 +117,83 @@ export function SoapSummaryCards({
   const details = intake?.sections.details;
   const purpose = intake?.sections.purpose;
   const hasVitals = details?.vitals && hasAnyVital(details.vitals);
+  const clinicalHighlights = getClinicalHighlights(intake);
 
   return (
     <div
       data-slot="soap-summary-cards"
-      className="flex flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 shadow-2xs divide-y divide-(--border-subtle) lg:flex-row lg:items-stretch lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
+      className="grid grid-cols-1 gap-3 rounded-[12px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-2xs divide-y divide-(--border-subtle) lg:grid-cols-2 lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
     >
       {/* S: Subjective */}
-      <div className="flex min-w-0 flex-1 lg:flex-[1.25] items-start gap-2.5 pb-2.5 lg:pb-0">
+      <div className="flex min-w-0 items-start gap-2.5 pb-2.5 lg:pb-0 lg:pr-2">
         <span
           aria-hidden
           className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
         >
           S
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted) shrink-0">
-                Subjective:
-              </span>
-              {intake === undefined ? (
-                <span className="text-xs text-(--text-muted)">Loading intake…</span>
-              ) : !purpose?.chiefComplaint?.trim() ? (
-                <span className="text-xs text-(--text-muted) italic">No chief complaint submitted</span>
-              ) : (
-                <p
-                  className="text-sm font-semibold text-(--text-heading) leading-snug line-clamp-2"
-                  title={purpose.chiefComplaint}
-                >
-                  {purpose.chiefComplaint}
-                </p>
-              )}
-            </div>
-            {purpose?.patientVerbatim?.trim() ? (
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted) shrink-0">
+              Subjective:
+            </span>
+            {intake === undefined ? (
+              <span className="text-xs text-(--text-muted)">Loading intake…</span>
+            ) : !purpose?.chiefComplaint?.trim() ? (
+              <span className="text-xs text-(--text-muted) italic">No chief complaint submitted</span>
+            ) : (
               <p
-                className="text-xs text-(--text-muted) italic leading-normal pl-0.5 line-clamp-1"
-                title={`Patient verbatim: "${purpose.patientVerbatim}"`}
+                className="text-[13.5px] font-semibold text-(--text-heading) leading-snug"
+                title={purpose.chiefComplaint}
               >
-                &ldquo;{purpose.patientVerbatim}&rdquo;
+                {purpose.chiefComplaint}
               </p>
-            ) : null}
+            )}
           </div>
+
+          {/* Clinical Highlights from Intake Symptom Review */}
+          {clinicalHighlights.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              {clinicalHighlights.map((item, idx) => (
+                <span
+                  key={idx}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-none transition-colors",
+                    item.tone === "critical"
+                      ? "border-(--danger-border)/50 bg-(--danger-bg) text-(--danger-fg)"
+                      : item.tone === "warning"
+                        ? "border-amber-300/80 bg-amber-50/80 text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+                        : "border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-body)",
+                  )}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {purpose?.patientVerbatim?.trim() ? (
+            <p
+              className="text-xs text-(--text-muted) italic leading-normal pl-0.5 line-clamp-1"
+              title={`Patient verbatim: "${purpose.patientVerbatim}"`}
+            >
+              &ldquo;{purpose.patientVerbatim}&rdquo;
+            </p>
+          ) : null}
         </div>
       </div>
 
       {/* O: Objective */}
-      <div className="flex min-w-0 flex-1 items-start gap-2.5 pt-2.5 lg:w-[25rem] lg:flex-none lg:pt-0 lg:pl-3.5">
+      <div className="flex min-w-0 items-start gap-2.5 pt-2.5 lg:pt-0 lg:pl-4">
         <span
           aria-hidden
           className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
         >
           O
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center justify-between">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
               Objective Vitals
             </span>
@@ -100,7 +201,7 @@ export function SoapSummaryCards({
           {intake === undefined ? (
             <p className="text-xs text-(--text-muted)">Loading vitals…</p>
           ) : hasVitals ? (
-            <div className="flex flex-wrap items-center gap-1.5 lg:grid lg:grid-cols-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {VITALS.map((vital) => {
                 const vitalsData = details!.vitals as IntakeVitals;
                 const sanityFlag = vital.sanityCheck(vitalsData);

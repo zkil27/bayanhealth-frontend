@@ -9,15 +9,38 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
-### [2026-10-01] SOAP Summary Strip: Balanced Subjective / Objective Columns
+### [2026-10-01] Mobile Bug Pass: Consultation Chat Composer, Calendar Dropdowns, Verify Back Button
 
-- **Target Route / Surface**: Doctor post-consultation workspace, SOAP summary strip
+- **Target Route / Surface**: `/consultation/room/[bookingId]` (patient chat tab), every `Calendar` with `captionLayout="dropdown"` (`DateTimePicker.tsx`), `/verify`
+- **Files Modified**:
+  - `src/features/consultation/components/session/ConsultationChatPanel.tsx` [MODIFIED]
+  - `src/components/consultation/PatientCompanionSuite.tsx` [MODIFIED]
+  - `src/components/ui/calendar.tsx` [MODIFIED]
+  - `src/app/verify/page.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Chat composer missing on mobile**: On a phone the room's right pane is ~300px tall. The embedded chat had `min-h-72` (288px), the message list lacked `min-h-0`, and the pane is `overflow-hidden`, so the composer (last child) was clipped off-screen. The embedded section is now `min-h-0 flex-1` with tighter mobile padding (`p-3 gap-2`, `sm:p-4 sm:gap-3`). The header, alert and composer are `shrink-0` and the list is `min-h-0`, so the list shrinks and the composer always stays visible. The `0/4096` counter now shows only past 80% of the limit (same rule as `PatientChatRoom`). The "Connected with Dr. …" strip is hidden below `sm`, because the room header already names the doctor. The non-embedded panel is unchanged.
+  - **Month/year dropdowns unresponsive**: Commit `0859e95` added `z-10` to the calendar `nav`, which spans the full caption row (`absolute inset-x-0`) and so sat on top of react-day-picker's transparent native `<select>`s. The nav is now `pointer-events-none` and the two arrow buttons are `pointer-events-auto`.
+  - **No way back from `/verify`**: The page renders outside every app shell, so on mobile it had no navigation at all. Added a 48px back control that calls `router.back()`, or goes to `/` when there is no history (same rule as `AppHeaderSimple`).
+- **Tokens & Primitives Used**: `--border-default`, `--surface-card`, `--text-heading`, `--action-secondary-hover-surface`, `--focus-ring`, `--radius-md`, Lucide `ArrowLeft`.
+- **Upstream Porting Notes**: Layout and class changes only, plus one navigation control. No API, contract or state changes.
+- **Open (not fixed here, outside UI scope)**: "Booking routing conflict with the dashboard population". `PatientBookingDetail` caches a wrapped `{ kind, booking }` under `["booking", bookingId, idToken]`, while `ConsultationRoom` and `PatientChatRoom` cache the raw booking under that same key. Going from booking detail to the room, the room reads `status` as `undefined` and writes the wrong stage to `activeConsultationStorage`, which then feeds `PatientHome`'s fallback booking and `ActiveConsultationBanner`. Going from the room back to booking detail, `result.booking` is `undefined`. This needs a data-layer fix upstream (e.g. a distinct key for the detail query).
+
+### [2026-10-01] SOAP Summary Strip: Empty Space Elimination & High-Density Dual-Column Layout
+
+- **Target Route / Surface**: Doctor post-consultation workspace (`/doctor/post-consultation/[id]`), SOAP summary strip (`SoapSummaryCards.tsx`)
 - **Files Modified**:
   - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED]
 - **Design Intent & Problem Solved**:
-  - Vitals wrapped as a free flow of pills, leaving SpO₂ orphaned on a second row, and the S/O divider was only as tall as the shorter column.
-  - Desktop (`lg`): Objective column is a fixed `25rem` and vitals sit in a 2×2 grid (Temp/BP, HR/SpO₂); Subjective takes the remaining width; columns stretch so the divider spans the full card height. Mobile keeps the wrapping flow.
-- **Upstream Porting Notes**: Class-only change, no logic or data changes.
+  - **Eliminated Massive Empty Space Canyon & Vertical Imbalance**:
+    - Previously, setting `lg:w-[25rem] lg:flex-none` on Objective forced Subjective to stretch across up to 1040px on widescreen monitors while chief complaint text only took ~500px, creating a 500px+ barren void between the complaint and the S/O divider.
+    - Stacking `Objective Vitals` header over a 2×2 grid forced the card height to ~88px, leaving ~55px of dead vertical space beneath the single-line subjective complaint.
+    - Refactored `SoapSummaryCards` into a true 50/50 dual-column grid on desktop (`lg:grid-cols-2 lg:divide-x`). The central divider now sits cleanly at 50% between both columns, completely eliminating the empty expanse.
+  - **Surfaced High-Value Clinical Intake Highlights in Subjective Column**:
+    - Extracted and rendered structured patient-reported intake data from `intake.sections.details.symptomReview` and `safetyScreen` (onset timeline e.g. `Onset: 3 days ago`, symptom characteristics e.g. `Productive cough with sputum`, body location e.g. `Chest / Upper Respiratory`, and fever duration e.g. `Fever: 3d`).
+    - Both columns now present 2 balanced, informative rows (Subjective: Chief complaint + clinical intake pills; Objective: Header + 2×2 vitals grid with clinical triage flags).
+    - Reduced card vertical footprint from ~88px to ~65px, pulling the Assessment card and ICD-10 diagnostic search higher into the doctor's immediate clinical field of view.
+- **Tokens & Primitives Used**: Lucide vector icons (`Clock`, `Activity`, `MapPin`, `Thermometer`, `TriangleAlert`, `Wind`), semantic surface variables (`--surface-card`, `--surface-brand-soft`, `--surface-warm-soft`), zero hardcoded hex values, verified with Impeccable design detector (`[]`).
+- **Upstream Porting Notes**: Component-scoped presentation refinement in `SoapSummaryCards.tsx`. Zero breaking changes to API contracts or CDS workflows.
 
 ### [2026-10-01] Root Body: Remove Document-Level Scroll on iOS Safari (Double Scroll)
 

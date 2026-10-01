@@ -112,13 +112,16 @@ export function PatientCompanionSuite({
 
         <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {doctorName ? (
-            <div className="shrink-0 border-b border-(--border-subtle)/60 bg-(--surface-warm)/40 px-3.5 py-2 text-xs sm:text-sm text-(--text-muted)">
+            // Hidden below `sm`: the room header already names the doctor, and
+            // on a phone this strip's two lines were what pushed the composer
+            // out of view.
+            <div className="hidden shrink-0 border-b border-(--border-subtle)/60 bg-(--surface-warm)/40 px-3.5 py-2 text-xs sm:block sm:text-sm text-(--text-muted)">
               Connected with{" "}
               <span className="font-bold text-(--navy-700)">{formatDoctorName(doctorName)}</span>.
               Messages, medication names, and advice will appear here.
             </div>
           ) : null}
-          <div className="min-h-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col">
             <ConsultationChatPanel
               bookingId={bookingId}
               sessionId={sessionId}

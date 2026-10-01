@@ -51,17 +51,20 @@ function Calendar({
         ),
         month: cn("flex w-full flex-col gap-3", defaultClassNames.month),
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1 z-10",
+          // The nav spans the full caption row and sits above it (z-10), so it
+          // must let taps fall through to the month/year <select>s beneath it;
+          // only the two arrow buttons take pointer events.
+          "pointer-events-none absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1 z-10",
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-7 p-0 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none aria-disabled:opacity-40 cursor-pointer",
+          "pointer-events-auto size-7 p-0 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none aria-disabled:opacity-40 cursor-pointer",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-7 p-0 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none aria-disabled:opacity-40 cursor-pointer",
+          "pointer-events-auto size-7 p-0 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none aria-disabled:opacity-40 cursor-pointer",
           defaultClassNames.button_next
         ),
         month_caption: cn(

@@ -60,12 +60,16 @@ export function ConsultationChatPanel({
       data-transport={transport}
       className={
         embedded
-          ? "flex h-full min-h-72 flex-col gap-3 p-4"
+          ? // No floor height when embedded: the room's right pane is ~300px
+            // tall on a phone, and a 288px minimum pushed the composer out
+            // through the pane's overflow-hidden. The message list shrinks
+            // instead, so the composer is always reachable.
+            "flex h-full min-h-0 flex-1 flex-col gap-2 p-3 sm:gap-3 sm:p-4"
           : "flex h-full min-h-72 flex-col gap-3 rounded-2xl border border-slate-200/70 bg-(--surface-card) p-4"
       }
       aria-label="Consultation chat"
     >
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex shrink-0 items-center justify-between gap-2">
         {embedded ? <span /> : <span className="text-sm font-semibold text-slate-900">Conversation</span>}
         <TransportBadge transport={transport} />
       </header>
@@ -73,7 +77,7 @@ export function ConsultationChatPanel({
       <MessageList messages={messages} isLoading={isLoading} />
 
       {sendError ? (
-        <Alert variant="destructive" data-slot="chat-send-error">
+        <Alert variant="destructive" data-slot="chat-send-error" className="shrink-0">
           <AlertCircleIcon />
           <AlertDescription>{sendError}</AlertDescription>
         </Alert>
@@ -146,7 +150,7 @@ function MessageList({
     return (
       <div
         data-slot="chat-loading"
-        className="flex flex-1 items-center justify-center gap-2 text-sm text-slate-500"
+        className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-slate-500"
         role="status"
         aria-live="polite"
       >
@@ -160,7 +164,7 @@ function MessageList({
     return (
       <div
         data-slot="chat-empty"
-        className="flex flex-1 items-center justify-center text-sm text-slate-500"
+        className="flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500"
       >
         No messages yet. Say hello to start the consultation.
       </div>
@@ -170,7 +174,7 @@ function MessageList({
   return (
     <ol
       data-slot="chat-messages"
-      className="flex flex-1 flex-col gap-2 overflow-y-auto"
+      className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
     >
       {messages.map((m) => (
         <li
@@ -212,7 +216,7 @@ function ChatComposer({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-2">
+    <form onSubmit={onSubmit} className="flex shrink-0 flex-col gap-2">
       <div className="flex items-end gap-2.5">
         <Textarea
           data-slot="chat-input"
@@ -249,11 +253,13 @@ function ChatComposer({
         >
           {validationError}
         </p>
-      ) : (
+      ) : input.length > MAX_CHAT_MESSAGE_LENGTH * 0.8 ? (
+        // Only near the limit, as in `PatientChatRoom`: a permanent "0/4096"
+        // row cost the composer a line it could not spare on a phone.
         <p className="text-right text-xs text-slate-400">
           {input.length}/{MAX_CHAT_MESSAGE_LENGTH}
         </p>
-      )}
+      ) : null}
     </form>
   );
 }
