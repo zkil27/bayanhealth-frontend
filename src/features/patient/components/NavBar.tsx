@@ -17,17 +17,28 @@ export function PatientTopBar() {
 }
 
 /**
- * The patient mobile bottom bar.
+ * The patient mobile bottom bar: a lifted pill, built for mobile Safari.
  *
- * This used to carry its own, shorter four-tab information architecture
- * (Home / Appointments / Messages / Profile) on a filled brand-teal bar —
- * a different IA, on a different surface, from the six-item white desktop
- * rail. Both traits read as "the nav is broken" rather than "the nav is
- * responsive". The bar now renders {@link PATIENT_NAV} directly — the exact
- * same six destinations, in the same order, including the "Soon" rows for
- * Chat and Med Ed — on the same white (`--surface-raised`) surface the rail
- * uses, so the only thing that changes across the breakpoint is layout, not
- * content or color.
+ * It renders {@link PATIENT_NAV} directly — the same destinations, in the same
+ * order, on the same white surface as the desktop rail — so only layout changes
+ * across the breakpoint.
+ *
+ * Why a lifted pill rather than a bar docked to the bottom edge:
+ * - Once Safari's toolbar minimises on scroll, taps in roughly the bottom
+ *   20–44px reveal Safari's toolbar instead of reaching the page (WebKit bug
+ *   194235). Tabs flush to the edge sat in that zone, so a first tap could
+ *   silently do nothing. Lifting the pill 12px above the safe area keeps every
+ *   tab clear of it.
+ * - iOS 26 Safari tints its floating toolbar from fixed bottom elements that
+ *   cover most of the bottom edge; a full-width white bar turned it into a
+ *   second solid slab. A pill with side gutters does not dominate the edge, and
+ *   the fixed element itself carries no background (the opaque surface is an
+ *   absolutely positioned child), which keeps Safari's sampling off it.
+ * - Opaque, not glass: translucency costs contrast for older eyes, and the
+ *   repo bans decorative glassmorphism.
+ *
+ * Height is 4rem; with the 0.75rem lift the bar clears 4.75rem + safe area.
+ * `PatientShell`'s bottom padding and the intake sheet's height account for it.
  */
 export function NavBar() {
   const pathname = usePathname() ?? "";
@@ -36,50 +47,48 @@ export function NavBar() {
   return (
     <nav
       aria-label="Patient navigation"
+      data-slot="patient-nav-pill"
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 w-full lg:hidden",
-        "flex h-[calc(4rem+env(safe-area-inset-bottom,0px))] items-center justify-around gap-1 border-t border-(--border-subtle) bg-(--surface-raised) px-2 pb-[env(safe-area-inset-bottom,0px)] shadow-(--shadow-lg)",
+        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] z-50 mx-auto h-16 max-w-md lg:hidden",
       )}
     >
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = isNavItemActive(pathname, item.href);
+      {/* The visible surface lives on a child so Safari 26 doesn't tint its toolbar from the fixed element. */}
+      <span
+        aria-hidden
+        className="absolute inset-0 rounded-full border border-(--border-subtle) bg-(--surface-raised) shadow-(--shadow-md)"
+      />
+      <div className="relative flex h-full items-center gap-1 p-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isNavItemActive(pathname, item.href);
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            title={item.title}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-(--radius-card) px-1 transition-colors",
-              active
-                ? "text-(--action-primary)"
-                : "text-(--text-muted) hover:text-(--text-heading)",
-              "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-            )}
-          >
-            <span
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.title}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center justify-center rounded-full px-3 py-0.5 transition-colors",
+                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                 active
                   ? "bg-(--surface-accent-soft) text-(--action-primary)"
-                  : "text-(--text-muted)",
+                  : "text-(--text-muted) hover:bg-(--surface-canvas) hover:text-(--text-heading)",
               )}
             >
-              <Icon className="size-5 shrink-0" aria-hidden="true" />
-            </span>
-            <span
-              className={cn(
-                "max-w-full truncate text-[10.5px] leading-none",
-                active ? "font-bold text-(--action-primary)" : "font-medium text-(--text-muted)",
-              )}
-            >
-              {item.title}
-            </span>
-          </Link>
-        );
-      })}
+              <Icon className="size-6 shrink-0" aria-hidden="true" />
+              <span
+                className={cn(
+                  "max-w-full truncate text-[13px] leading-tight",
+                  active ? "font-semibold" : "font-medium",
+                )}
+              >
+                {item.title}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

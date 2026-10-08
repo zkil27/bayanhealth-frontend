@@ -16,7 +16,7 @@ import {
   withTimeSegment,
 } from "./AdditionalInfoSection";
 import { complaintTagLabel } from "./ConcernSafetyStep";
-import { BlockLabel, COMPACT_INPUT } from "./IntakeChoice";
+import { BlockLabel, COMPACT_INPUT, FieldHint } from "./IntakeChoice";
 import { conditionLabel } from "./MedicalHistoryStep";
 import { severityLabel } from "./PainAssessmentStep";
 
@@ -170,20 +170,24 @@ export function ReviewConsentStep({
   const today = startOfToday();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-9">
+      {/*
+       * Answers shown in full: the old two-line clamp cut off exactly what the
+       * patient wanted to verify.
+       */}
       <section aria-labelledby="ledger-heading" data-slot="pre-consult-ledger" className="space-y-2">
         <BlockLabel id="ledger-heading">Pre-consult summary</BlockLabel>
-        <dl className="divide-y divide-(--border-subtle)">
+        <dl className="divide-y divide-(--border-subtle) border-y border-(--border-subtle)">
           {rows.map((row) => (
-            <div key={row.label} className="flex items-start gap-3 py-3">
-              <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-                <dt className="text-[11px] font-bold tracking-wider text-(--text-muted) uppercase sm:pt-0.5">
+            <div key={row.label} className="flex items-start gap-3 py-4">
+              <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+                <dt className="text-[15px] font-semibold text-(--text-heading)">
                   {row.label}
                 </dt>
-                <dd className="mt-0.5 min-w-0 sm:mt-0">
-                  <p className="line-clamp-2 text-sm font-medium break-words text-(--text-body)">{row.primary}</p>
+                <dd className="mt-1 min-w-0 sm:mt-0">
+                  <p className="text-base break-words text-(--text-body)">{row.primary}</p>
                   {row.secondary ? (
-                    <p className="mt-0.5 line-clamp-2 text-xs break-words text-(--text-muted)">{row.secondary}</p>
+                    <p className="mt-1 text-[15px] break-words text-(--text-muted)">{row.secondary}</p>
                   ) : null}
                 </dd>
               </div>
@@ -191,9 +195,9 @@ export function ReviewConsentStep({
                 type="button"
                 aria-label={row.editLabel}
                 onClick={() => onEdit(row.editStep)}
-                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold text-(--text-link) hover:bg-(--surface-canvas) hover:text-(--text-link-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+                className="inline-flex min-h-12 shrink-0 items-center gap-1.5 rounded-lg px-3 text-base font-semibold text-(--text-link) hover:bg-(--surface-canvas) hover:text-(--text-link-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
               >
-                <Pencil aria-hidden className="size-3.5" /> Edit
+                <Pencil aria-hidden className="size-4" /> Edit
               </button>
             </div>
           ))}
@@ -205,16 +209,14 @@ export function ReviewConsentStep({
           name="additionalInfo.dateOfConsultation"
           control={control}
           render={({ field, fieldState }) => (
-            <section aria-labelledby="schedule-heading" className="space-y-3 border-t border-(--border-subtle) pt-6">
+            <section aria-labelledby="schedule-heading" className="space-y-3">
               <div>
                 <BlockLabel id="schedule-heading" required>Preferred consultation time</BlockLabel>
-                <p className="mt-1 text-xs text-(--text-muted)">
-                  A preference only. Your confirmed time comes from the doctor&apos;s booked slot.
-                </p>
+                <FieldHint>A preference only. Your confirmed time comes from the doctor&apos;s booked slot.</FieldHint>
               </div>
-              <div className="grid gap-3 rounded-2xl bg-(--surface-canvas) p-3.5 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <span className="block text-xs sm:text-sm font-bold text-(--text-muted) uppercase">Preferred Date</span>
+                  <span className="block text-base font-medium text-(--text-body)">Preferred date</span>
                   <DatePicker
                     date={dateSegmentOf(field.value)}
                     onDateChange={(date) => field.onChange(withDateSegment(field.value, date))}
@@ -226,8 +228,8 @@ export function ReviewConsentStep({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="preferred-consultation-time" className="block text-xs sm:text-sm font-bold text-(--text-muted) uppercase">
-                    Time window (optional)
+                  <label htmlFor="preferred-consultation-time" className="block text-base font-medium text-(--text-body)">
+                    Time window <span className="text-(--text-muted)">(optional)</span>
                   </label>
                   <input
                     id="preferred-consultation-time"
@@ -237,11 +239,11 @@ export function ReviewConsentStep({
                     // A bare time with no date is not a preference anyone can act on.
                     disabled={!dateSegmentOf(field.value)}
                     onChange={(event) => field.onChange(withTimeSegment(field.value, event.target.value))}
-                    className={cn(COMPACT_INPUT, "min-h-12 text-base disabled:cursor-not-allowed disabled:opacity-50")}
+                    className={cn(COMPACT_INPUT, "disabled:cursor-not-allowed disabled:opacity-50")}
                   />
                 </div>
               </div>
-              {fieldState.error ? <p className="text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
+              {fieldState.error ? <p role="alert" className="text-[15px] font-medium text-(--danger-fg)">{fieldState.error.message}</p> : null}
             </section>
           )}
         />
@@ -251,7 +253,7 @@ export function ReviewConsentStep({
         name="additionalInfo.additionalConcerns"
         control={control}
         render={({ field }) => (
-          <section className="space-y-2 border-t border-(--border-subtle) pt-6">
+          <section className="space-y-2">
             <BlockLabel htmlFor="doctor-notes">Notes for doctor</BlockLabel>
             <textarea
               id="doctor-notes"
@@ -260,11 +262,11 @@ export function ReviewConsentStep({
               rows={3}
               aria-describedby="doctor-notes-hint"
               placeholder="Anything else the attending doctor should know before calling? (optional)"
-              className={cn(COMPACT_INPUT, "block resize-y text-base")}
+              className={cn(COMPACT_INPUT, "block resize-y")}
             />
-            <p id="doctor-notes-hint" className="text-xs sm:text-sm text-(--text-subtle)">
+            <FieldHint id="doctor-notes-hint">
               Documents cannot be attached here. Please bring lab results or past prescriptions to your consultation.
-            </p>
+            </FieldHint>
           </section>
         )}
       />
@@ -275,15 +277,18 @@ export function ReviewConsentStep({
         name="additionalInfo.consent"
         control={control}
         render={({ field, fieldState }) => (
-          <div className="border-t border-(--border-subtle) pt-6">
+          <div className="border-t border-(--border-subtle) pt-7">
+            {/* Consent wording is unchanged pending compliance review — styling only. */}
             <BlockLabel id="consent-heading" required>Clinical Consent & Authorization</BlockLabel>
             <label
               htmlFor="intake-consent"
               className={cn(
-                "mt-2 flex min-h-14 cursor-pointer items-start gap-3.5 rounded-2xl border p-4 text-sm sm:text-base text-(--text-body) transition-all active:scale-[0.99]",
+                "mt-3 flex min-h-14 cursor-pointer items-start gap-3.5 rounded-xl border p-4 text-base leading-relaxed text-(--text-body) transition-colors",
                 field.value
-                  ? "border-(--surface-nav-accent) bg-(--safe-bg) shadow-xs ring-1 ring-(--surface-nav-accent)"
-                  : "border-(--border-default) bg-(--surface-card) hover:bg-(--surface-canvas)",
+                  ? "border-(--surface-nav-accent) bg-(--safe-bg) ring-1 ring-(--surface-nav-accent)"
+                  : fieldState.invalid
+                    ? "border-(--danger-border) bg-(--surface-card)"
+                    : "border-(--border-default) bg-(--surface-card) hover:border-(--border-strong) hover:bg-(--surface-canvas)",
               )}
             >
               <input
@@ -299,7 +304,7 @@ export function ReviewConsentStep({
                 I confirm that the details provided are accurate and complete to the best of my knowledge. I consent to telemedicine clinical evaluation and record sharing under the BayanHealth Clinical Terms of Service.
               </span>
             </label>
-            {fieldState.error ? <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
+            {fieldState.error ? <p role="alert" className="mt-1.5 text-[15px] font-medium text-(--danger-fg)">{fieldState.error.message}</p> : null}
           </div>
         )}
       />

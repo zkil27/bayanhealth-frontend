@@ -9,7 +9,6 @@ import {
   CalendarClock,
   CheckCircle2,
   CircleCheck,
-  ClipboardCheck,
   Phone,
   ShieldAlert,
   Stethoscope,
@@ -32,7 +31,6 @@ import {
   CONSULTATION_FEE_CENTS,
   CONSULTATION_FEE_CURRENCY,
   EMERGENCY_DISCLAIMER,
-  ON_DEMAND_WAIT_ESTIMATE,
 } from "../../constants/bookingConstants";
 import { fetchDoctorSearch } from "../../lib/api/doctors";
 
@@ -41,12 +39,6 @@ const INCLUDED_POINTS = [
   "Digital prescription (Rx)",
   "Official medical certificate",
   "Doctor care summary",
-];
-
-const PREPARE_POINTS = [
-  "Have photos of previous labs or maintenance meds ready",
-  "Note when symptoms started",
-  "Test your camera and microphone",
 ];
 
 const SCOPE_POINTS = [
@@ -65,12 +57,16 @@ const SCOPE_POINTS = [
  * trade-off between them stated, and the directory is one tap deeper at
  * `/patient/booking/search`.
  *
- * Both cards state only what the platform knows. The wait estimate is the
- * shared {@link ON_DEMAND_WAIT_ESTIMATE} constant, the fee is
+ * Both cards state only what the platform knows: no wait estimate (there is no
+ * queue or acceptance data to base one on), the fee is
  * {@link CONSULTATION_FEE_CENTS} (identical on both paths, which is worth saying
  * so the choice reads as convenience rather than price), and the scheduled
  * card's availability line is counted from the real doctor directory — never a
  * fabricated "3 doctors near you".
+ *
+ * Decluttered: no eyebrow or "Pinakamabilis" badge above the titles, no bullet
+ * points that repeat the blurb, and "Prepare for your consult" moved to the
+ * waiting screen, where the patient actually has time to do it.
  */
 export function BookingPathChooser() {
   const idToken = useAuthStore((s) => s.session?.idToken ?? null);
@@ -109,7 +105,7 @@ export function BookingPathChooser() {
 
       <div className={patientPageClass("wide", "gap-3 sm:gap-5 pt-3 sm:pt-4 pb-6 sm:pb-12")}>
         {/* Educational comparison strip from Figma O12 */}
-        <div className="flex items-center gap-2 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-2.5 sm:p-3 text-[12.5px] sm:text-[13px] text-(--status-available-fg)">
+        <div className="flex items-center gap-2 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[15px] leading-snug text-(--status-available-fg)">
           <Zap className="size-4 shrink-0" aria-hidden />
           <span>
             <strong>Parehong daan, parehong presyo ({fee}) at parehong kalidad ng doktor</strong> — bilis lang ang pinagkaiba.
@@ -121,15 +117,9 @@ export function BookingPathChooser() {
             href="/patient/booking/createBooking?mode=on-demand"
             icon={<Zap />}
             illustration="patient/consult-now"
-            eyebrow="On demand"
-            badge="Pinakamabilis"
             title="Consult Now"
             blurb="Ikokonekta ka namin sa unang available na doktor. Walang appointment na kailangan."
-            points={[
-              ON_DEMAND_WAIT_ESTIMATE,
-              "Walang appointment na kailangan",
-              "I-fill up ang intake form, tapos maghintay",
-            ]}
+            points={["I-fill up ang intake form, tapos maghintay"]}
             cta="Simulan ang intake (Start intake)"
             emphasis
           />
@@ -138,7 +128,6 @@ export function BookingPathChooser() {
             href="/patient/booking/search"
             icon={<CalendarClock />}
             illustration="patient/book-later"
-            eyebrow="Scheduled"
             title="Book for later"
             blurb="Maghanap ayon sa pangalan o specialty, suriin ang kalendaryo, at pumili ng oras."
             points={[
@@ -151,8 +140,6 @@ export function BookingPathChooser() {
                   : availability.total > 0
                     ? "No open slots published right now"
                     : "Doctor directory",
-              "Ikaw ang pipili ng doktor at oras",
-              "Direkta sa kalendaryo ng doktor",
             ]}
             cta="Pumili ng doktor (Browse doctors)"
             loading={isLoading}
@@ -162,9 +149,6 @@ export function BookingPathChooser() {
         {/* Clinical context and trust — Mobile Accordion vs Desktop 3-column cockpit.
             Eliminates ~300px of mobile scroll bloat while maintaining instant accessibility. */}
         <div className="md:hidden rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-4 shadow-(--shadow-card)">
-          <p className="text-[11.5px] font-bold tracking-(--tracking-overline) text-(--text-subtle) uppercase mb-1">
-            Clinical Scope & Guidelines
-          </p>
           <Accordion defaultValue={["included"]} className="flex w-full flex-col">
             <AccordionItem value="included" className="border-b border-(--border-subtle) py-0.5">
               <AccordionTrigger className="items-center py-2.5 text-[14px] font-bold text-(--text-heading) hover:no-underline [&_svg]:text-(--status-available-fg)">
@@ -173,28 +157,9 @@ export function BookingPathChooser() {
                   What&apos;s included · {fee} flat
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="pb-2.5 pt-0.5 text-[13px] text-(--text-muted)">
+              <AccordionContent className="pb-2.5 pt-0.5 text-[15px] text-(--text-muted)">
                 <ul className="flex flex-col gap-1.5 pl-6">
                   {INCLUDED_POINTS.map((point) => (
-                    <li key={point} className="flex items-start gap-2">
-                      <CircleCheck className="mt-0.5 size-3 shrink-0 text-(--status-available-fg)" />
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="prepare" className="border-b border-(--border-subtle) py-0.5">
-              <AccordionTrigger className="items-center py-2.5 text-[14px] font-bold text-(--text-heading) hover:no-underline [&_svg]:text-(--status-available-fg)">
-                <span className="flex items-center gap-2">
-                  <ClipboardCheck className="size-4 shrink-0 text-(--status-available-fg)" />
-                  Prepare for your consult
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-2.5 pt-0.5 text-[13px] text-(--text-muted)">
-                <ul className="flex flex-col gap-1.5 pl-6">
-                  {PREPARE_POINTS.map((point) => (
                     <li key={point} className="flex items-start gap-2">
                       <CircleCheck className="mt-0.5 size-3 shrink-0 text-(--status-available-fg)" />
                       <span>{point}</span>
@@ -211,7 +176,7 @@ export function BookingPathChooser() {
                   Triage & clinical scope
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="pb-2.5 pt-0.5 text-[13px] text-(--text-muted)">
+              <AccordionContent className="pb-2.5 pt-0.5 text-[15px] text-(--text-muted)">
                 <ul className="flex flex-col gap-1.5 pl-6">
                   {SCOPE_POINTS.map((point) => (
                     <li key={point} className="flex items-start gap-2">
@@ -226,16 +191,11 @@ export function BookingPathChooser() {
         </div>
 
         {/* Desktop 3-column scannable grid */}
-        <div className="hidden md:grid md:grid-cols-3 md:gap-4">
+        <div className="hidden md:grid md:grid-cols-2 md:gap-4">
           <ContextCard
             icon={<CheckCircle2 />}
             title={`What's included · ${fee} flat`}
             points={INCLUDED_POINTS}
-          />
-          <ContextCard
-            icon={<ClipboardCheck />}
-            title="Prepare for your consult"
-            points={PREPARE_POINTS}
           />
           <ContextCard
             icon={<ShieldAlert />}
@@ -254,7 +214,7 @@ export function BookingPathChooser() {
           </span>
           <a
             href="tel:911"
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-(--radius-pill) border border-(--danger-border) bg-(--surface-card) px-3.5 py-2 text-[13px] font-bold text-(--danger-fg) transition-colors hover:bg-(--danger-bg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) min-h-[44px] sm:min-h-0"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-(--radius-pill) border border-(--danger-border) bg-(--surface-card) px-3.5 py-2 text-[13px] font-bold text-(--danger-fg) transition-colors hover:bg-(--danger-bg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) min-h-12"
           >
             <Phone className="size-3.5" aria-hidden />
             Call 911
@@ -284,7 +244,7 @@ function ContextCard({
         {points.map((point) => (
           <li
             key={point}
-            className="flex items-start gap-2 text-[13px] leading-[1.45] text-(--text-muted)"
+            className="flex items-start gap-2 text-[15px] leading-snug text-(--text-muted)"
           >
             <CircleCheck className="mt-0.5 size-3 shrink-0 text-(--status-available-fg)" />
             {point}
@@ -299,8 +259,6 @@ function PathCard({
   href,
   icon,
   illustration,
-  eyebrow,
-  badge,
   title,
   blurb,
   points,
@@ -311,8 +269,6 @@ function PathCard({
   href: string;
   icon: React.ReactNode;
   illustration: IllustrationName;
-  eyebrow: string;
-  badge?: string;
   title: string;
   blurb: string;
   points: string[];
@@ -331,14 +287,6 @@ function PathCard({
           : "border-(--border-subtle) hover:border-(--border-strong)",
       )}
     >
-      {/* Desktop badge: top right */}
-      {badge && (
-        <span className="absolute top-4 right-4 hidden md:inline-flex items-center gap-1 rounded-full bg-(--surface-accent-soft) px-2.5 py-0.5 text-[11px] font-bold text-(--status-available-fg)">
-          <Zap className="size-3" aria-hidden />
-          {badge}
-        </span>
-      )}
-
       <div className="flex flex-col gap-2.5 md:gap-3">
         {/* Header row: Left has icon + eyebrow + badge (mobile) + title, Right has compact mobile illustration thumbnail */}
         <div className="flex items-start justify-between gap-3">
@@ -353,18 +301,7 @@ function PathCard({
             >
               {icon}
             </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <p className="text-[11px] sm:text-[12px] font-bold tracking-(--tracking-overline) text-(--text-subtle) uppercase">
-                  {eyebrow}
-                </p>
-                {badge && (
-                  <span className="inline-flex md:hidden items-center gap-1 rounded-full bg-(--surface-accent-soft) px-2 py-0.5 text-[10.5px] font-bold text-(--status-available-fg)">
-                    <Zap className="size-2.5" aria-hidden />
-                    {badge}
-                  </span>
-                )}
-              </div>
+            <div className="min-w-0 flex-1 self-center">
               <p className="font-display text-[18px] sm:text-[20px] leading-tight font-bold text-(--text-heading)">
                 {title}
               </p>
@@ -382,7 +319,7 @@ function PathCard({
           <Illustration name={illustration} size="md" />
         </div>
 
-        <p className="text-[13.5px] sm:text-[14.5px] leading-snug sm:leading-[1.5] text-(--text-body)">
+        <p className="text-[15px] leading-normal text-(--text-body)">
           {blurb}
         </p>
 
@@ -390,7 +327,7 @@ function PathCard({
           {points.map((point) => (
             <li
               key={point}
-              className="flex items-start gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] leading-tight sm:leading-normal text-(--text-muted)"
+              className="flex items-start gap-1.5 sm:gap-2 text-[15px] leading-snug text-(--text-muted)"
             >
               {loading && point.endsWith("…") ? (
                 <Spinner className="mt-0.5 size-3 sm:size-3.5 shrink-0" />
@@ -405,7 +342,7 @@ function PathCard({
 
       <span
         className={cn(
-          "mt-3 sm:mt-4 inline-flex min-h-11 sm:min-h-12 w-full items-center justify-center gap-2 rounded-(--radius-pill) px-4 text-[14.5px] sm:text-[15px] font-bold transition-colors",
+          "mt-3 sm:mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-(--radius-pill) px-4 text-[14.5px] sm:text-[15px] font-bold transition-colors",
           emphasis
             ? "bg-(--action-primary) text-(--action-primary-text) shadow-(--shadow-btn-inset) group-hover:bg-(--action-primary-hover)"
             : "border border-(--action-primary) text-(--status-available-fg) group-hover:bg-(--surface-accent-soft)",

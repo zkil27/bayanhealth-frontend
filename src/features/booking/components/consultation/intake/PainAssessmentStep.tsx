@@ -55,7 +55,7 @@ export function PainAssessmentStep() {
       <section aria-labelledby="pain-gate-heading" className="space-y-3">
         <div>
           <BlockLabel id="pain-gate-heading">Pain assessment</BlockLabel>
-          <p className="mt-1 text-sm text-(--text-body)">
+          <p className="mt-1 text-base leading-snug text-(--text-body)">
             Are you currently experiencing physical pain or bodily discomfort?
           </p>
         </div>
@@ -81,7 +81,7 @@ export function PainAssessmentStep() {
       </section>
 
       {hasPain === "no" ? (
-        <div className="rounded-2xl border border-(--teal-200) bg-(--teal-100)/50 p-5 text-center">
+        <div className="rounded-xl border border-(--border-subtle) bg-(--surface-canvas) p-5 text-center">
           <CheckCircle2 className="mx-auto size-8 text-(--action-primary)" />
           <h3 className="mt-2 text-base font-bold text-(--text-heading)">No pain reported</h3>
           <p className="mt-1 text-sm text-(--text-muted)">
@@ -89,7 +89,7 @@ export function PainAssessmentStep() {
           </p>
         </div>
       ) : hasPain === "yes" ? (
-        <div className="space-y-8 animate-in duration-200 fade-in">
+        <div className="space-y-8 animate-in duration-200 fade-in motion-reduce:animate-none">
           <Severity />
           <Quality />
           <RegionRadiation />
@@ -97,7 +97,7 @@ export function PainAssessmentStep() {
           <Timing />
         </div>
       ) : (
-        <p className="flex items-start gap-2 text-xs text-(--text-subtle)">
+        <p className="flex items-start gap-2 text-[15px] leading-snug text-(--text-muted)">
           <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <span>
             Please select whether you are experiencing pain so we can tailor the intake questions to your condition.
@@ -107,6 +107,9 @@ export function PainAssessmentStep() {
     </div>
   );
 }
+
+/** Chips fill their grid cell so every row lines up. */
+const CHIP = "w-full justify-start text-left leading-snug";
 
 const joinParts = (parts: (string | false | null | undefined)[], glue = "; ") =>
   parts.filter(Boolean).join(glue);
@@ -166,14 +169,14 @@ function ChipQuestion({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold text-(--text-body)">{legend}</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="text-base font-medium text-(--text-body)">{legend}</p>
+      <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
         {[...options].map(([value, label]) => (
-          <ChipButton key={value} selected={selected.includes(value)} onClick={() => onToggle(value)}>
+          <ChipButton key={value} selected={selected.includes(value)} onClick={() => onToggle(value)} className={CHIP}>
             {label}
           </ChipButton>
         ))}
-        <ChipButton selected={otherEnabled} onClick={() => onOtherEnabledChange(!otherEnabled)}>
+        <ChipButton selected={otherEnabled} onClick={() => onOtherEnabledChange(!otherEnabled)} className={CHIP}>
           Other
         </ChipButton>
       </div>
@@ -183,7 +186,7 @@ function ChipQuestion({
           onChange={(event) => onOtherChange(event.target.value)}
           placeholder={otherPlaceholder}
           aria-label={otherAriaLabel}
-          className={cn(COMPACT_INPUT, "mt-1 min-h-11")}
+          className={cn(COMPACT_INPUT, "mt-1")}
         />
       </Reveal>
     </div>
@@ -220,7 +223,7 @@ function ProvocationPalliation() {
     <section aria-labelledby="pqrst-p-heading" className="space-y-4">
       <div>
         <BlockLabel id="pqrst-p-heading">What affects the pain</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">Provocation &amp; palliation — optional, select all that apply</p>
+        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Provocation &amp; palliation — optional, select all that apply</p>
       </div>
 
       <ChipQuestion
@@ -278,11 +281,11 @@ function Quality() {
     <section aria-labelledby="pqrst-q-heading" className="space-y-3 border-t border-(--border-subtle) pt-6">
       <div>
         <BlockLabel id="pqrst-q-heading">What it feels like</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">Quality — optional, select all that apply</p>
+        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Quality — optional, select all that apply</p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
         {[...QUALITY_OPTIONS].map(([value, label]) => (
-          <ChipButton key={value} selected={quality.includes(value)} onClick={() => toggle(value)}>
+          <ChipButton key={value} selected={quality.includes(value)} onClick={() => toggle(value)} className={CHIP}>
             {label}
           </ChipButton>
         ))}
@@ -321,20 +324,20 @@ function RegionRadiation() {
     <section aria-labelledby="pqrst-r-heading" className="space-y-4 border-t border-(--border-subtle) pt-6">
       <div>
         <BlockLabel id="pqrst-r-heading">Where it is</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">Region &amp; radiation — optional</p>
+        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Region &amp; radiation — optional</p>
       </div>
       <div className="space-y-1.5">
-        <label htmlFor="pain-body-part" className="block text-xs font-bold text-(--text-muted) uppercase">Where in the body?</label>
+        <label htmlFor="pain-body-part" className="block text-base font-medium text-(--text-body)">Where in the body?</label>
         <input
           id="pain-body-part"
           value={bodyPart}
           onChange={(event) => { setBodyPart(event.target.value); compose(event.target.value, radiates, radiatesTo); }}
           placeholder="e.g. Throat, right side"
-          className={cn(COMPACT_INPUT, "min-h-11")}
+          className={COMPACT_INPUT}
         />
       </div>
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-(--text-body)">Does it spread to other areas?</p>
+        <p className="text-base font-medium text-(--text-body)">Does it spread to other areas?</p>
         <SegmentedToggle
           label="Does the pain spread to other areas"
           value={radiates}
@@ -350,7 +353,7 @@ function RegionRadiation() {
             onChange={(event) => { setRadiatesTo(event.target.value); compose(bodyPart, radiates, event.target.value); }}
             placeholder="Where does it spread to?"
             aria-label="Where the pain spreads to"
-            className={cn(COMPACT_INPUT, "mt-2 min-h-11")}
+            className={cn(COMPACT_INPUT, "mt-2")}
           />
         </Reveal>
       </div>
@@ -375,7 +378,7 @@ function Severity() {
     <section aria-labelledby="pqrst-s-heading" className="space-y-3.5 border-t border-(--border-subtle) pt-6">
       <div>
         <BlockLabel id="pqrst-s-heading">How intense is your pain? (0–10 scale)</BlockLabel>
-        <p className="mt-1 text-xs sm:text-sm text-(--text-muted)">Severity — optional</p>
+        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Severity — optional</p>
       </div>
       <div role="radiogroup" aria-labelledby="pqrst-s-heading" className="grid grid-cols-6 gap-2 sm:grid-cols-11">
         {Array.from({ length: 11 }, (_, value) => (
@@ -391,10 +394,10 @@ function Severity() {
               })
             }
             className={cn(
-              "min-h-12 rounded-xl border text-base font-bold transition-all active:scale-[0.97]",
+              "min-h-12 rounded-xl border text-lg font-semibold tabular-nums transition-colors",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
               severity === value
-                ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) shadow-sm ring-1 ring-(--surface-nav-accent)"
+                ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) ring-1 ring-(--surface-nav-accent)"
                 : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
             )}
           >
@@ -402,7 +405,7 @@ function Severity() {
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-(--text-subtle)">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[15px] text-(--text-muted)">
         <span>0 · No pain</span>
         <span>1–3 · Mild</span>
         <span>4–6 · Moderate</span>
@@ -466,14 +469,15 @@ function Timing() {
     <section aria-labelledby="pqrst-t-heading" className="space-y-4 border-t border-(--border-subtle) pt-6">
       <div>
         <BlockLabel id="pqrst-t-heading">When and how often</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">Timing — optional</p>
+        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Timing — optional</p>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-(--text-body)">When did it start?</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-base font-medium text-(--text-body)">When did it start?</p>
+        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
           {[...ONSET_OPTIONS].map(([value, label]) => (
             <ChipButton
+              className={CHIP}
               key={value}
               selected={onset === value}
               onClick={() => {
@@ -489,10 +493,11 @@ function Timing() {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-(--text-body)">When does it usually flare up?</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-base font-medium text-(--text-body)">When does it usually flare up?</p>
+        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
           {[...WHEN_OPTIONS].map(([value, label]) => (
             <ChipButton
+              className={CHIP}
               key={value}
               selected={when.includes(value)}
               onClick={() => {
@@ -508,10 +513,11 @@ function Timing() {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-(--text-body)">How often does it happen?</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-base font-medium text-(--text-body)">How often does it happen?</p>
+        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
           {[...FREQUENCY_OPTIONS].map(([value, label]) => (
             <ChipButton
+              className={CHIP}
               key={value}
               selected={frequency === value}
               onClick={() => {
@@ -527,8 +533,8 @@ function Timing() {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-(--text-body)">How long does each episode last?</p>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className="text-base font-medium text-(--text-body)">How long does each episode last?</p>
+        <div className="space-y-2">
           <input
             type="number"
             inputMode="numeric"
@@ -538,11 +544,12 @@ function Timing() {
             onChange={(event) => { setDurationValue(event.target.value); composePattern(frequency, when, event.target.value, durationUnit); }}
             placeholder="e.g. 20"
             aria-label="Duration of each episode"
-            className={cn(COMPACT_INPUT, "min-h-11 w-24")}
+            className={cn(COMPACT_INPUT, "w-28 tabular-nums")}
           />
-          <div className="flex flex-wrap gap-2">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
             {DURATION_UNITS.map((unit) => (
               <ChipButton
+                className={CHIP}
                 key={unit}
                 selected={durationUnit === unit}
                 onClick={() => { setDurationUnit(unit); composePattern(frequency, when, durationValue, unit); }}

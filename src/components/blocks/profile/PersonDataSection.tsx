@@ -39,6 +39,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { FormSection } from "../../../features/booking/components/FormSection";
+import { AboutYouFields } from "../../../features/booking/components/consultation/intake/AboutYouFields";
 import { AnimatedFieldError } from "@/components/blocks/AnimatedFieldErrorWrapper";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/tiptap-utils";
@@ -375,13 +376,11 @@ export function PersonDataSection({
     <div className="flex flex-col gap-4 sm:gap-5">
       <FieldSet className="space-y-2">
         {mode == "booking" && (
-          <div className="flex items-center justify-between px-0.5 pb-0.5">
-            <FieldLegend className="text-sm sm:text-base font-bold text-(--text-heading) tracking-tight">
+          <div className="flex items-center justify-between gap-3 px-0.5 pb-0.5">
+            <FieldLegend className="text-[17px] font-semibold text-(--text-heading) sm:text-lg">
               Who is this for?
             </FieldLegend>
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Select patient
-            </span>
+            <span className="text-[15px] text-(--text-muted)">Select patient</span>
           </div>
         )}
 
@@ -401,7 +400,7 @@ export function PersonDataSection({
                     className={cn(
                       "group relative flex flex-col justify-between rounded-2xl border p-3 sm:p-3.5 transition-all active:scale-[0.99] select-none cursor-pointer min-h-[84px] sm:min-h-[92px]",
                       (field.value ?? "self") === "self"
-                        ? "border-(--action-primary) bg-(--teal-100)/25 ring-1 ring-(--action-primary)/40 shadow-xs"
+                        ? "border-(--surface-nav-accent) bg-(--safe-bg) ring-1 ring-(--surface-nav-accent)"
                         : "border-(--border-default) bg-(--surface-card) hover:bg-(--surface-canvas)",
                     )}
                   >
@@ -431,7 +430,7 @@ export function PersonDataSection({
                       <span className="block text-sm sm:text-base font-bold text-(--text-heading) leading-tight">
                         Myself
                       </span>
-                      <span className="block text-xs text-muted-foreground leading-tight mt-0.5">
+                      <span className="block text-sm text-muted-foreground leading-tight mt-0.5">
                         Account owner
                       </span>
                     </div>
@@ -450,7 +449,7 @@ export function PersonDataSection({
                       <span className="block text-sm sm:text-base font-medium text-muted-foreground leading-tight">
                         Dependent
                       </span>
-                      <span className="block text-xs text-muted-foreground leading-tight mt-0.5">
+                      <span className="block text-sm text-muted-foreground leading-tight mt-0.5">
                         Family member
                       </span>
                     </div>
@@ -630,7 +629,11 @@ export function PersonDataSection({
         </>
       )}
 
-      {forWhom === "self" || (forWhom === "other" && hasValidRelationship) ? (
+      {mode === "booking" && (forWhom === "self" || (forWhom === "other" && hasValidRelationship)) ? (
+        <div className="border-t border-(--border-subtle) pt-7">
+          <AboutYouFields />
+        </div>
+      ) : forWhom === "self" || (forWhom === "other" && hasValidRelationship) ? (
         <div className="space-y-2 pt-0.5">
           <div className="flex items-center justify-between px-0.5">
             <span className="text-sm sm:text-base font-bold text-(--text-heading) tracking-tight">

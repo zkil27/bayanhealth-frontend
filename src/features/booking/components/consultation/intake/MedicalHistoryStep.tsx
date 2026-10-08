@@ -1,13 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
 
 import type { DynamicIntakeFormValues } from "../../../schemas/intakeSchema";
-import { BlockLabel, COMPACT_INPUT, ChoiceCard, ConditionTile, Reveal } from "./IntakeChoice";
+import { BlockLabel, COMPACT_INPUT, ChoiceCard, ConditionTile, FieldHint, Reveal } from "./IntakeChoice";
 
 /**
  * Labels stay faithful to the contract enum: `diabetes` is not narrowed to
@@ -42,7 +41,7 @@ const HISTORY = "personalDetails.structuredMedicalHistory" as const;
 
 export function MedicalHistoryStep() {
   return (
-    <div className="space-y-6 sm:space-y-7">
+    <div className="space-y-8">
       <KnownConditions />
       <MedicationsToggle />
       <SurgeriesToggle />
@@ -56,6 +55,22 @@ function KnownConditions() {
   const selected = history?.knownConditions ?? [];
   const noneReported = history?.noneReported ?? false;
   const opts = { shouldDirty: true, shouldValidate: true } as const;
+
+  // "Do you have any?" gate: the list only appears on Yes. "No" is the same
+  // stored answer the old "No pre-existing medical conditions" tile wrote
+  // (`noneReported: true`); an existing answer opens the matching branch.
+  const [saidYes, setSaidYes] = useState(false);
+  const answer = noneReported ? "no" : selected.length > 0 || saidYes ? "yes" : undefined;
+
+  const choose = (next: "no" | "yes") => {
+    if (next === "no") {
+      setSaidYes(false);
+      setNoneReported(true);
+    } else {
+      setSaidYes(true);
+      if (noneReported) setValue(`${HISTORY}.noneReported`, false, opts);
+    }
+  };
 
   const setNoneReported = (active: boolean) => {
     setValue(`${HISTORY}.noneReported`, active, opts);
@@ -80,75 +95,44 @@ function KnownConditions() {
   return (
     <section aria-labelledby="conditions-heading" className="space-y-3">
       <div>
-        <BlockLabel id="conditions-heading">Known conditions</BlockLabel>
-        <p className="mt-1 text-xs text-(--text-muted)">
-          Select any diagnoses a doctor has given you. This is not a diagnosis tool.
-        </p>
+        <BlockLabel id="conditions-heading">Do you have any known medical conditions?</BlockLabel>
+        <FieldHint>Diagnoses a doctor has given you. This is not a diagnosis tool.</FieldHint>
       </div>
 
-      <button
-        type="button"
-        aria-pressed={noneReported}
-        onClick={() => setNoneReported(!noneReported)}
-        className={cn(
-          "flex min-h-12 w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-all sm:text-base",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-          noneReported
-            ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) shadow-xs ring-1 ring-(--surface-nav-accent)"
-            : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:border-(--border-strong) hover:bg-(--surface-canvas)",
-        )}
-      >
-        <span
-          aria-hidden
-          className={cn(
-            "flex size-5.5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors",
-            noneReported
-              ? "border-transparent bg-(--surface-nav-accent) text-white"
-              : "border-(--border-strong) bg-(--surface-canvas)",
-          )}
-        >
-          {noneReported ? <Check className="size-4 stroke-[2.5]" /> : null}
-        </span>
-        <div className="min-w-0 flex-1">
-          <span className="block font-bold text-sm sm:text-base">No pre-existing medical conditions</span>
-          <span className="block text-xs sm:text-sm font-normal text-(--text-muted)">
-            I have not been diagnosed with any chronic or long-term conditions
-          </span>
+      <div role="radiogroup" aria-labelledby="conditions-heading" className="grid grid-cols-2 gap-2.5 sm:max-w-md">
+        <ChoiceCard selected={answer === "no"} onClick={() => choose("no")} title="No" />
+        <ChoiceCard selected={answer === "yes"} onClick={() => choose("yes")} title="Yes" />
+      </div>
+
+      <Reveal open={answer === "yes"}>
+        <div className="space-y-3 pt-2">
+          <p className="text-base font-medium text-(--text-body)">Tap all that apply</p>
+          <div
+            role="group"
+            aria-label="Known conditions"
+            className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3"
+          >
+            {CONDITIONS.map(([value, label]) => (
+              <ConditionTile
+                key={value}
+                selected={selected.includes(value)}
+                onClick={() => toggle(value)}
+                className={value === "other" ? "col-span-2 sm:col-span-3" : undefined}
+              >
+                {value === "other" ? "Other condition (please specify)" : label}
+              </ConditionTile>
+            ))}
+          </div>
         </div>
-      </button>
-
-      <div
-        role="group"
-        aria-labelledby="conditions-heading"
-        aria-disabled={noneReported || undefined}
-        className={cn(
-          "grid grid-cols-2 gap-2.5 transition-opacity sm:grid-cols-3",
-          noneReported && "pointer-events-none opacity-40",
-        )}
-      >
-        {CONDITIONS.map(([value, label]) => {
-          const isOther = value === "other";
-          return (
-            <ConditionTile
-              key={value}
-              selected={selected.includes(value)}
-              disabled={noneReported}
-              onClick={() => toggle(value)}
-              className={isOther ? "col-span-2 sm:col-span-3" : undefined}
-            >
-              {isOther ? "Other condition (please specify)" : label}
-            </ConditionTile>
-          );
-        })}
-      </div>
+      </Reveal>
 
       <Reveal open={selected.includes("other")} className="-mt-1">
         <Controller
           name={`${HISTORY}.other`}
           control={control}
           render={({ field, fieldState }) => (
-            <div className="pt-2">
-              <label htmlFor="other-condition-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
+            <div className="space-y-1.5 pt-2">
+              <label htmlFor="other-condition-input" className="block text-base font-medium text-(--text-body)">
                 Other condition specification
               </label>
               <input
@@ -158,10 +142,10 @@ function KnownConditions() {
                 aria-label="Other condition"
                 aria-invalid={fieldState.invalid || undefined}
                 placeholder="Specify any other diagnosed conditions..."
-                className={cn(COMPACT_INPUT, "min-h-12")}
+                className={COMPACT_INPUT}
               />
               {fieldState.error ? (
-                <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p>
+                <p role="alert" className="text-[15px] font-medium text-(--danger-fg)">{fieldState.error.message}</p>
               ) : null}
             </div>
           )}
@@ -184,12 +168,10 @@ function MedicationsToggle() {
   };
 
   return (
-    <section aria-labelledby="medications-heading" className="space-y-2.5 border-t border-(--border-subtle) pt-5">
+    <section aria-labelledby="medications-heading" className="space-y-3 border-t border-(--border-subtle) pt-7">
       <div>
         <BlockLabel id="medications-heading">Current medications</BlockLabel>
-        <p className="mt-0.5 text-xs text-(--text-muted)">
-          Are you taking any maintenance medications or daily prescriptions?
-        </p>
+        <FieldHint>Are you taking any maintenance medications or daily prescriptions?</FieldHint>
       </div>
 
       <div
@@ -217,7 +199,7 @@ function MedicationsToggle() {
           control={control}
           render={({ field }) => (
             <div className="pt-2">
-              <label htmlFor="medications-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
+              <label htmlFor="medications-input" className="mb-1.5 block text-base font-medium text-(--text-body)">
                 Medication name and daily dose
               </label>
               <textarea
@@ -250,12 +232,10 @@ function SurgeriesToggle() {
   };
 
   return (
-    <section aria-labelledby="surgeries-heading" className="space-y-2.5 border-t border-(--border-subtle) pt-5">
+    <section aria-labelledby="surgeries-heading" className="space-y-3 border-t border-(--border-subtle) pt-7">
       <div>
         <BlockLabel id="surgeries-heading">Prior surgeries / hospitalizations</BlockLabel>
-        <p className="mt-0.5 text-xs sm:text-sm text-(--text-muted)">
-          Any hospitalizations or major surgeries in the past 2 years?
-        </p>
+        <FieldHint>Any hospitalizations or major surgeries in the past 2 years?</FieldHint>
       </div>
 
       <div
@@ -283,7 +263,7 @@ function SurgeriesToggle() {
           control={control}
           render={({ field }) => (
             <div className="pt-2">
-              <label htmlFor="surgeries-input" className="mb-1 block text-xs sm:text-sm font-semibold text-(--text-muted) uppercase">
+              <label htmlFor="surgeries-input" className="mb-1.5 block text-base font-medium text-(--text-body)">
                 Procedure details and hospital
               </label>
               <textarea

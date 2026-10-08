@@ -3,22 +3,36 @@
 import { StepsIndicator } from "./StepsIndicator";
 import { FindingStep } from "./FindingStep";
 import { IntakeStep } from "./IntakeStep";
-import { Undo2, Video } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { useFinding } from "../../hooks/useFinding";
 import type { Booking } from "../../types/booking.types";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PaymentStep } from "./PaymentStep";
 import { ConfirmationStep } from "./ConfirmationStep";
 import { CompletedStep } from "./CompletedStep";
 import { cn } from "@/lib/utils";
 
+/**
+ * Four stops on the route. "Doctor" covers both finding a doctor and the
+ * accepted/confirmed screen: "Confirmed" used to be its own stop, but it is
+ * reached the instant a doctor accepts, so the two were one moment shown as
+ * two. The booking steps underneath are unchanged — see `STOP_FOR_STEP`.
+ */
 const STEPS = [
   { id: "intake", label: "Form", system: false },
   { id: "payment", label: "Payment", system: false },
-  { id: "finding", label: "Doctor", system: true },
-  { id: "confirmation", label: "Confirmed", system: true },
+  { id: "doctor", label: "Doctor", system: true },
   { id: "booked", label: "Consult", system: false },
 ];
+
+const STOP_FOR_STEP: Record<string, number> = {
+  intake: 0,
+  payment: 1,
+  finding: 2,
+  confirmation: 2,
+  appointment: 3,
+  booked: 3,
+};
 
 const getBookingServiceLabel = (serviceRequested?: string): string => {
   switch (serviceRequested) {
@@ -39,6 +53,37 @@ const getBookingServiceLabel = (serviceRequested?: string): string => {
   }
 };
 
+/**
+ * While the patient waits they often switch tabs. There are no push
+ * notifications in this product, so when the booking leaves "finding" for a
+ * matched step during this visit, the browser tab title says so until the
+ * patient comes back to the tab. Display-only: no polling or state is added.
+ */
+function useDoctorFoundTabTitle(step: Booking["step"]) {
+  const previousStep = useRef(step);
+
+  useEffect(() => {
+    const wasFinding = previousStep.current === "finding";
+    previousStep.current = step;
+    if (!wasFinding || (step !== "confirmation" && step !== "appointment")) return;
+    if (typeof document === "undefined" || !document.hidden) return;
+
+    const original = document.title;
+    document.title = "Doctor found – BayanHealth";
+    const restore = () => {
+      if (!document.hidden) {
+        document.title = original;
+        document.removeEventListener("visibilitychange", restore);
+      }
+    };
+    document.addEventListener("visibilitychange", restore);
+    return () => {
+      document.removeEventListener("visibilitychange", restore);
+      document.title = original;
+    };
+  }, [step]);
+}
+
 interface BookingWizardProps {
   booking: Booking;
 }
@@ -46,12 +91,9 @@ interface BookingWizardProps {
 export function BookingWizard({ booking }: BookingWizardProps) {
   const [reviewStep, setReviewStep] = useState<number | null>(null);
   const finding = useFinding(booking.id, booking.step === "finding");
+  useDoctorFoundTabTitle(booking.step);
 
-  const stepId = booking.step === "appointment" ? "booked" : booking.step;
-  const currentStepIndex = Math.max(
-    0,
-    STEPS.findIndex((step) => step.id === stepId),
-  );
+  const currentStepIndex = STOP_FOR_STEP[booking.step] ?? 0;
   const activeIdx = reviewStep !== null ? reviewStep : currentStepIndex;
   const isReview = reviewStep !== null;
   const completedSteps = STEPS.map((_, i) => i < currentStepIndex);
@@ -90,12 +132,10 @@ export function BookingWizard({ booking }: BookingWizardProps) {
             isActivelyFillingIntake ? "hidden lg:flex" : "",
           )}
         >
-          <div className="mx-2 flex flex-wrap items-center gap-x-3 gap-y-1 lg:mx-0 lg:flex-col lg:items-start lg:gap-y-2">
-            <span className="flex w-fit items-center gap-1.5 rounded-full bg-(--surface-brand) px-3.5 py-1.5 text-[13px] font-bold text-white">
-              <Video className="size-3.5" />
-              <span className="capitalize">{serviceLabel}</span>
-            </span>
-          </div>
+          {/* The service name is already the page title in the context bar above;
+              the pill that repeated it here is gone. Desktop keeps it as a small
+              rail heading, where the title bar is out of the eye-line. */}
+          <p className="hidden text-[15px] font-semibold text-(--text-heading) lg:block">{serviceLabel}</p>
 
           <StepsIndicator
             steps={STEPS}
@@ -157,17 +197,20 @@ export function BookingWizard({ booking }: BookingWizardProps) {
                 <PaymentStep booking={booking} isReview={isReview} />
               )}
 
-              {activeIdx === 2 && (
-                <FindingStep
-                  booking={booking}
-                  finding={finding}
-                  isReview={isReview}
-                />
-              )}
-
-              {activeIdx === 3 && (
-                <ConfirmationStep booking={booking} isReview={isReview} />
-              )}
+              {/*
+                The Doctor stop: the waiting screen while matching, the
+                accepted-doctor screen once assigned (also when reviewed later).
+              */}
+              {activeIdx === 2 &&
+                (booking.step === "finding" ? (
+                  <FindingStep
+                    booking={booking}
+                    finding={finding}
+                    isReview={isReview}
+                  />
+                ) : (
+                  <ConfirmationStep booking={booking} isReview={isReview} />
+                ))}
 
               {/*
               STEPS has five entries and this branch was missing, so a completed
@@ -175,7 +218,7 @@ export function BookingWizard({ booking }: BookingWizardProps) {
               empty card — silence at the one moment the patient most needs to be
               told what happens next.
             */}
-              {activeIdx === 4 && <CompletedStep booking={booking} />}
+              {activeIdx === 3 && <CompletedStep booking={booking} />}
             </div>
           </div>
         </section>

@@ -2,15 +2,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-  CreditCard,
-  Info,
-  Lock,
-  Radio,
-  ShieldCheck,
-} from "lucide-react";
-import type { ReactNode } from "react";
+import { CheckCircle2, Info, Lock, ShieldCheck } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useIdToken } from "@/stores/useAuthStore";
@@ -43,19 +35,50 @@ function formatAmount(
   }).format(amountCents / 100);
 }
 
-function ReassuranceRow({
-  icon,
-  children,
+/** "fit-for-work" → "Fit for work"; falls back to "Consultation". */
+function serviceName(serviceRequested?: string): string {
+  if (!serviceRequested) return "Consultation";
+  const words = serviceRequested.replace(/-/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * The fee as a receipt: what it is for, the platform fee, and the one total
+ * that will be held. The total is always the server's amount; "Platform fee:
+ * Free" repeats the line the patient already saw on Consult Now.
+ */
+function FeeReceipt({
+  booking,
+  amountLabel,
+  held,
 }: {
-  icon: ReactNode;
-  children: ReactNode;
+  booking: Booking;
+  amountLabel: string | null;
+  held?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 shrink-0 text-(--teal-800) [&_svg]:size-4">
-        {icon}
-      </span>
-      <p className="text-[14px] leading-[1.5] text-(--text-body)">{children}</p>
+    <div
+      data-slot="payment-receipt"
+      className="rounded-xl border border-(--border-default) bg-(--surface-card) p-4 sm:p-5"
+    >
+      <dl className="space-y-2.5 text-base">
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-(--text-body)">{serviceName(booking.serviceRequested)} consultation</dt>
+          <dd className="font-medium text-(--text-heading) tabular-nums">{amountLabel ?? "Amount pending"}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-(--text-body)">Platform fee</dt>
+          <dd className="font-medium text-(--teal-800)">Free</dd>
+        </div>
+      </dl>
+      <div className="mt-4 flex items-baseline justify-between gap-4 border-t-2 border-dashed border-(--border-default) pt-4">
+        <span className="text-base font-semibold text-(--text-heading)">
+          {held ? "Held" : "Total to hold"}
+        </span>
+        <span className="font-display text-[28px] leading-none font-semibold text-(--text-heading) tabular-nums">
+          {amountLabel ?? "Amount pending"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -83,100 +106,63 @@ export function PaymentStep({ booking, isReview }: PaymentStepProps) {
 
   if (isReview) {
     return (
-      <div className="animate-in duration-300 fade-in">
-        <div className="mb-2 flex items-center gap-2 text-[15px] font-bold text-(--text-heading)">
-          <CreditCard className="size-4.5" />
-          Payment review
-        </div>
-        <div className="rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-warm) p-3 text-sm">
-          <div className="mb-2 flex justify-between">
-            <span className="text-(--text-muted)">Consultation fee</span>
-            <span className="font-semibold text-(--text-body)">
-              {amountLabel ?? "Amount pending"}
-            </span>
-          </div>
-          <div className="text-xs font-medium text-(--teal-800)">
-            Payment held successfully
-          </div>
-        </div>
+      <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
+        <h3 className="mb-3 text-xl font-bold text-(--text-heading)">Payment</h3>
+        <FeeReceipt booking={booking} amountLabel={amountLabel} held />
+        <p className="mt-3 flex items-center gap-2 text-[15px] font-medium text-(--teal-800)">
+          <CheckCircle2 aria-hidden className="size-4.5 shrink-0" />
+          Payment held successfully
+        </p>
       </div>
     );
   }
 
+  /*
+   * One receipt, one promise, one button. Removed: the navy price slab, the
+   * "Secure payment" pill (the lock on the button says it), and the rows that
+   * described later steps — the route tracker's "Next:" line covers those.
+   */
   return (
-    <div className="animate-in duration-300 fade-in">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
-          <CreditCard className="size-5" />
-          Payment
+    <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
+      <h3 className="mb-3 text-xl font-bold text-(--text-heading)">Your consultation fee</h3>
+
+      <FeeReceipt booking={booking} amountLabel={amountLabel} />
+
+      <p className="mt-4 flex items-start gap-2.5 text-base leading-relaxed text-(--text-body)">
+        <ShieldCheck aria-hidden className="mt-1 size-5 shrink-0 text-(--teal-800)" />
+        <span>
+          This is a hold, not a charge. You&apos;re only charged after your
+          consultation, and it&apos;s free to cancel before a doctor accepts.
         </span>
-        <span className="flex items-center gap-1 rounded-full bg-(--teal-100) px-2 py-0.5 text-[11px] font-semibold text-(--teal-800)">
-          <Lock className="size-3" /> Secure payment
-        </span>
-      </div>
-
-      <div className="rounded-[14px] bg-(--surface-brand) px-4 py-3.5 text-white">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-display text-[32px] leading-tight font-semibold">
-            {amountLabel ?? "Amount pending"}
-          </span>
-          <span className="text-[14px] text-white/90 capitalize">
-            {booking.serviceRequested?.replace(/-/g, " ") ?? "Consultation"}
-          </span>
-        </div>
-        <p className="mt-1 text-[13px] leading-[1.5] text-white/85">
-          Server-set price for this booking.
-        </p>
-      </div>
-
-      <div className="mt-3.5 flex flex-col gap-2.5">
-        <ReassuranceRow icon={<ShieldCheck aria-hidden />}>
-          This is a hold, not a charge — you are only charged after the
-          consultation.
-        </ReassuranceRow>
-        <ReassuranceRow icon={<CheckCircle2 aria-hidden />}>
-          Once the hold is placed, your booking is confirmed.
-        </ReassuranceRow>
-        <ReassuranceRow icon={<Radio aria-hidden />}>
-          After that, every available doctor sees your request — the first to
-          accept becomes your doctor.
-        </ReassuranceRow>
-      </div>
-
-      {/* No card fields: the simulated ledger provider captures no card data, so
-          asking for a number/expiry/CVV would misrepresent what happens. */}
-      <Alert className="mt-3.5">
-        <Info className="size-4" />
-        <AlertDescription className="text-xs">
-          This environment uses the simulated ledger payment provider. No card
-          details are collected or charged — confirming places a hold and
-          confirms your booking.
-        </AlertDescription>
-      </Alert>
+      </p>
 
       {errorMessage ? (
-        <Alert variant="destructive" className="mt-3">
-          <AlertDescription className="text-xs">
-            {errorMessage}
-          </AlertDescription>
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription className="text-[15px]">{errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 
       <BrandCtaButton
         onClick={() => paymentMutation.mutate()}
         disabled={paymentMutation.isPending || !idToken}
-        className="mt-4 min-h-12 text-[15px]"
+        className="mt-5 min-h-13 text-base"
       >
-        <Lock className="size-4" />
+        <Lock aria-hidden className="size-4.5" />
         {paymentMutation.isPending
-          ? "Processing..."
+          ? "Placing hold…"
           : amountLabel
             ? `Hold ${amountLabel}`
             : "Hold consultation fee"}
       </BrandCtaButton>
 
-      <p className="mt-2.5 text-center text-[12.5px] text-(--text-subtle)">
-        Free to cancel before a doctor accepts — full refund.
+      {/* No card fields: the simulated ledger provider captures no card data, so
+          asking for a number/expiry/CVV would misrepresent what happens. The
+          disclosure stays while that provider is live (same meaning, one quiet
+          line); upstream should drop it once a real provider is wired. */}
+      <p className="mt-3 flex items-start gap-2 text-sm leading-snug text-(--text-muted)">
+        <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
+        Test payment provider: no card details are collected or charged.
+        Confirming places a hold and confirms your booking.
       </p>
     </div>
   );

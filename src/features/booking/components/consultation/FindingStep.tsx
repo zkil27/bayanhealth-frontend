@@ -1,16 +1,14 @@
 "use client";
 
-import { Illustration } from "@/components/primitives/Illustration";
 import {
   AlertCircle,
+  Check,
   UserSearch,
   Cog,
   Languages,
   LinkIcon,
-  Radio,
   ShieldCheck,
   Stethoscope,
-  Timer,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -21,12 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { HeartbeatProgress } from "../HeartBeat";
+import { WaitingJeepney } from "../WaitingJeepney";
+import { DeviceCheckButton } from "@/features/patient/components/homepage/DeviceCheckButton";
 import { Booking } from "../../types/booking.types";
 import type { FindingState } from "../../hooks/useFinding";
 import { useCancelBooking } from "../../hooks/useCancelBooking";
 import { assignedDoctorLabel } from "../../lib/doctorLabels";
-import { formatWaitElapsed, isUsableWaitStart } from "../../lib/waitElapsed";
+import { isUsableWaitStart } from "../../lib/waitElapsed";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 interface FindingStepProps {
@@ -126,88 +126,100 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
   const progress = finding.update?.progress ?? 0;
   const message = finding.update?.message ?? "Checking your booking…";
   const isAwaitingAcceptance = booking.bookingType === "on-demand";
+  const hasPreferences =
+    preferencesApply &&
+    Boolean(booking.genderPreference?.length || booking.languagePreference?.length);
+
+  /*
+   * The waiting room, for patients who may be anxious, older, or new to
+   * telehealth. It used to stack a "Live" pill, an icon tile, an illustration,
+   * a spinner, a percentage, a heartbeat bar and two explainer cards. Now:
+   * scenery to watch (waits with something to look at feel shorter), one
+   * plain heading, and three named stages instead of a percentage — a bar
+   * parked at "66%" reads as stuck, while "Waiting for a doctor to accept"
+   * says what is actually happening. Stages come from the same
+   * `FindingUpdate.progress` the bar used (33 payment, 66 matching).
+   */
+  const stages = [
+    {
+      label: progress >= 66 ? "Payment on hold" : "Confirming your payment",
+      state: progress >= 66 ? "done" : "current",
+    },
+    {
+      label: isAwaitingAcceptance
+        ? "Waiting for a doctor to accept"
+        : "Matching you with a doctor",
+      state: progress >= 66 ? "current" : "pending",
+    },
+    { label: "Your consultation room opens", state: "pending" },
+  ] as const;
 
   return (
-    <div className="animate-in duration-300 fade-in">
-      {/* Hero Header: Title, Live indicator, Preferences, and seamlessly integrated Illustration */}
-      <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+    <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
+      <WaitingJeepney />
+
+      <div className="mt-5">
+        <h3 className="text-2xl leading-tight font-bold tracking-[-0.01em] text-(--text-heading)">
+          Finding a doctor for you
+        </h3>
+        <p className="mt-1.5 max-w-prose text-base leading-relaxed text-(--text-body)">
+          You can keep this screen open. It changes by itself as soon as{" "}
+          {isAwaitingAcceptance ? "a doctor accepts" : "a doctor is matched"}.
+        </p>
+        {isAwaitingAcceptance ? <WaitedFor booking={booking} /> : null}
+      </div>
+
+      {hasPreferences ? (
+        <div className="mt-4">
+          <MatchPreferences booking={booking} />
+        </div>
+      ) : null}
+
+      <ol
+        data-slot="finding-step-progress"
+        aria-label="Booking progress"
+        className="mt-6 space-y-0"
+      >
+        {stages.map((stage, index) => (
+          <li key={stage.label} className="relative flex gap-3.5 pb-5 last:pb-0">
+            {index < stages.length - 1 ? (
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute top-8 bottom-1 left-[15px] w-0.5 rounded-full",
+                  stage.state === "done" ? "bg-(--action-primary)" : "bg-(--border-default)",
+                )}
+              />
+            ) : null}
             <span
-              data-slot="finding-step-live"
-              className="inline-flex items-center gap-1.5 rounded-full bg-(--gold-100) px-2.5 py-1 text-[11px] font-bold text-(--gold-700)"
+              aria-hidden
+              className={cn(
+                "relative flex size-8 shrink-0 items-center justify-center rounded-full border-2",
+                stage.state === "done" && "border-(--action-primary) bg-(--action-primary) text-(--text-inverse)",
+                stage.state === "current" && "border-(--action-primary) bg-(--surface-card)",
+                stage.state === "pending" && "border-(--border-default) bg-(--surface-card)",
+              )}
             >
-              <span className="size-1.5 rounded-full bg-(--gold-600)" />
-              Live
+              {stage.state === "done" ? <Check className="size-4.5 stroke-[3]" /> : null}
+              {stage.state === "current" ? <span className="size-3 rounded-full bg-(--action-primary)" /> : null}
             </span>
-          </div>
-
-          <div className="mt-2.5 flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-(--teal-100) text-(--teal-800)">
-              <UserSearch className="size-5" />
+            <span
+              className={cn(
+                "pt-1 text-base leading-snug",
+                stage.state === "current" ? "font-semibold text-(--text-heading)" : stage.state === "done" ? "text-(--text-body)" : "text-(--text-muted)",
+              )}
+            >
+              {stage.label}
+              <span className="sr-only">
+                {stage.state === "done" ? " (done)" : stage.state === "current" ? " (now)" : " (next)"}
+              </span>
             </span>
-            <div className="min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold tracking-tight text-(--text-heading)">
-                {isAwaitingAcceptance
-                  ? "Waiting for a doctor"
-                  : "Finding your doctor"}
-              </h3>
-              <p className="text-xs sm:text-sm text-(--text-muted) truncate">
-                {isAwaitingAcceptance
-                  ? "Broadcasting request to verified doctors"
-                  : "Matching your consultation request"}
-              </p>
-            </div>
-          </div>
+          </li>
+        ))}
+      </ol>
+      <p aria-live="polite" className="sr-only">{message}</p>
 
-          {preferencesApply ? (
-            <div className="mt-3">
-              <MatchPreferences booking={booking} />
-            </div>
-          ) : null}
-        </div>
-
-        {/* Anchored Illustration plate: Framed in a calm, warm plate instead of floating adrift */}
-        <div className="flex shrink-0 justify-center sm:justify-end">
-          <div className="flex h-28 w-36 items-center justify-center rounded-[14px] border border-(--border-subtle) bg-(--surface-warm-soft) p-2.5 sm:h-32 sm:w-44">
-            <Illustration
-              name="patient/finding-doctor"
-              size="md"
-              priority
-              className="max-h-full w-auto object-contain"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Heartbeat Progress Card */}
-      <div className="mt-4 rounded-[16px] border border-(--teal-200) bg-(--surface-warm)/30 p-4 sm:p-5">
-        <div className="flex items-center gap-2.5">
-          <p className="flex flex-1 items-center gap-2 text-[14px] font-semibold text-(--text-heading)">
-            <Spinner data-slot="finding-step-spinner" className="size-3.5 text-(--teal-700)" />
-            {message}
-          </p>
-          <span className="font-display text-[22px] leading-none font-semibold text-(--teal-800)">
-            {Math.round(progress)}%
-          </span>
-        </div>
-
-        <div
-          data-slot="finding-step-progress"
-          className="mt-3.5 w-full overflow-hidden rounded-full"
-        >
-          <HeartbeatProgress value={progress} className="w-full" />
-        </div>
-
-        <div className="mt-2.5 flex items-center justify-between text-[11.5px] font-medium text-(--text-subtle)">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-(--teal-700)" /> Payment held
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Stethoscope className="size-3.5 text-(--teal-700)" /> Doctor assigned
-          </span>
-        </div>
-      </div>
+      <WhileYouWait />
 
       {isAwaitingAcceptance ? <OnDemandWaitPanel booking={booking} /> : null}
     </div>
@@ -228,32 +240,81 @@ function StepHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** How often the elapsed-wait reading is recomputed. */
-const WAIT_TICK_MS = 1000;
+const WAIT_PREP = [
+  "Find a quiet, well-lit place",
+  "Have photos of past lab results or your maintenance medicines ready",
+  "Note when your symptoms started",
+] as const;
 
 /**
- * The on-demand waiting screen (ADR-20260808-03).
+ * Turns the wait into preparation. These tips used to sit on the booking path
+ * chooser and the Consult Now form — before the patient had any time to act
+ * on them. Here they can, and the camera/microphone check (the reused, fully
+ * local `DeviceCheckButton`) targets the most common telehealth failure:
+ * connection and device problems found only once the call starts.
+ */
+function WhileYouWait() {
+  return (
+    <section aria-labelledby="while-you-wait-heading" className="mt-6 border-t border-(--border-subtle) pt-5">
+      <h4 id="while-you-wait-heading" className="text-[17px] font-semibold text-(--text-heading)">
+        While you wait
+      </h4>
+      <ul className="mt-2.5 space-y-2">
+        {WAIT_PREP.map((tip) => (
+          <li key={tip} className="flex items-start gap-2.5 text-base leading-snug text-(--text-body)">
+            <Check aria-hidden className="mt-0.5 size-4.5 shrink-0 text-(--teal-700)" />
+            {tip}
+          </li>
+        ))}
+      </ul>
+      <DeviceCheckButton className="mt-4" />
+    </section>
+  );
+}
+
+/** How often the elapsed-wait reading is recomputed — it is shown in whole minutes. */
+const WAIT_TICK_MS = 15_000;
+
+/**
+ * "Waiting 4 min", from the booking's own `updatedAt` — for an unclaimed pooled
+ * request that is the payment hold that put it in the pool, the only write
+ * while it waits. Whole minutes rather than a ticking stopwatch: seconds
+ * counting up in front of an anxious patient makes the wait feel longer, and
+ * no remaining-time estimate is shown because none could be honest.
+ */
+function WaitedFor({ booking }: { booking: Booking }) {
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), WAIT_TICK_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  const requestedAtMs = booking.updatedAt.getTime();
+  if (!isUsableWaitStart(requestedAtMs)) return null;
+  const minutes = Math.floor(Math.max(0, nowMs - requestedAtMs) / 60_000);
+  const text =
+    minutes < 1
+      ? "You have been waiting less than a minute."
+      : minutes < 60
+        ? `You have been waiting ${minutes} min.`
+        : `You have been waiting ${Math.floor(minutes / 60)} hr ${minutes % 60} min.`;
+
+  return (
+    <p data-slot="on-demand-wait-elapsed" className="mt-2 text-[15px] text-(--text-muted) tabular-nums">
+      {text}
+    </p>
+  );
+}
+
+/**
+ * The on-demand way out (ADR-20260808-03).
  *
  * An on-demand request is broadcast to every consult-approved doctor and the
  * first to accept takes it, so the patient is waiting on a human decision with
- * no deadline. Before this existed they saw only a progress bar stuck at 66%,
- * with nothing explaining what was being waited for, no sense of how long they
- * had been waiting, and — most importantly — no way out of a paid booking that
- * nobody had picked up.
- *
- * Three things are shown, and each corresponds to something the platform
- * actually knows:
- *
- * - **How long they have waited**, from the booking's own `updatedAt`. No
- *   estimated remaining time is shown: there is no queue depth and no
- *   acceptance-rate history to derive one from, so any figure would be invented.
- * - **What is happening**, in the terms the backend actually implements — a
- *   broadcast to verified doctors, claimed atomically by the first to accept
- *   (`claimOnDemandRequest`).
- * - **That the money is held, not taken**, and that cancelling now releases it
- *   in full. That is the real behaviour: `PUT /v1/bookings/{id}` with
- *   `status: cancelled` refunds a `held` payment when the prior status was
- *   `confirmed`.
+ * no deadline. Cancelling before acceptance releases the payment hold in full —
+ * that is the real behaviour: `PUT /v1/bookings/{id}` with `status: cancelled`
+ * refunds a `held` payment when the prior status was `confirmed`.
  *
  * Cancellation is offered *here* rather than as a general control on the booking
  * page on purpose. Pre-acceptance is the one point where a full release is the
@@ -263,32 +324,17 @@ const WAIT_TICK_MS = 1000;
  * get them.
  */
 function OnDemandWaitPanel({ booking }: { booking: Booking }) {
-  const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const { cancel, isCancelling, isCancelled, errorMessage } = useCancelBooking(
     booking.id,
   );
 
-  useEffect(() => {
-    const timer = setInterval(() => setNowMs(Date.now()), WAIT_TICK_MS);
-    return () => clearInterval(timer);
-  }, []);
-
-  // `updatedAt` is the booking's last write, which for an unclaimed pooled
-  // request is the payment hold that put it in the pool — nothing else touches it
-  // while it waits. Not a dedicated `pooledAt`, and named honestly here rather
-  // than dressed up as one.
-  const requestedAtMs = booking.updatedAt.getTime();
-  const elapsed = isUsableWaitStart(requestedAtMs)
-    ? formatWaitElapsed(requestedAtMs, nowMs)
-    : null;
-
   if (isCancelled) {
     return (
-      <div className="mt-3" data-slot="on-demand-wait-cancelled">
+      <div className="mt-6" data-slot="on-demand-wait-cancelled">
         <Alert>
           <ShieldCheck className="size-4" />
           <AlertTitle>Request cancelled</AlertTitle>
-          <AlertDescription className="text-xs">
+          <AlertDescription className="text-[15px]">
             Your request has been withdrawn and the payment hold released in
             full. Nothing was charged.
           </AlertDescription>
@@ -298,110 +344,73 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
   }
 
   return (
-    <div className="mt-3.5 flex flex-col gap-3" data-slot="on-demand-wait">
-      {elapsed ? (
-        <div className="flex items-center justify-between rounded-[12px] border border-(--border-subtle)/70 bg-(--surface-warm) px-3.5 py-2.5 text-sm text-(--text-muted)">
-          <div className="flex items-center gap-2">
-            <Timer className="size-4 shrink-0 text-(--teal-800)" />
-            <span>Waiting time</span>
-          </div>
-          <span
-            data-slot="on-demand-wait-elapsed"
-            className="font-display text-[18px] font-semibold text-(--text-heading) tabular-nums"
-          >
-            {elapsed}
-          </span>
-        </div>
-      ) : null}
-
-      {/* Unified Clinical Assurance Card */}
-      <div className="rounded-[14px] border border-(--border-subtle) bg-(--surface-warm)/60 p-3.5 sm:p-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start gap-2.5">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-(--teal-800) mt-0.5">
-              <Radio className="size-3.5" />
-            </span>
-            <p className="text-[13px] leading-relaxed text-(--text-body)">
-              Your request is visible to every verified doctor on BayanHealth right
-              now. The first one to accept it becomes your doctor, and your chat
-              room and video link open as soon as that happens.
-            </p>
-          </div>
-
-          <div className="h-px bg-(--border-subtle)/60" />
-
-          <div className="flex items-start gap-2.5">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-(--teal-800) mt-0.5">
-              <ShieldCheck className="size-3.5" />
-            </span>
-            <p className="text-[13px] leading-relaxed text-(--text-body)">
-              Your payment is on hold, not charged. If you cancel before a doctor
-              accepts, the hold is released in full.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div
+      className="mt-6 flex flex-col gap-3 border-t border-(--border-subtle) pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+      data-slot="on-demand-wait"
+    >
+      <p className="max-w-prose text-[15px] leading-relaxed text-(--text-muted)">
+        Your payment is on hold, not charged. If you cancel before a doctor
+        accepts, the hold is released in full.
+      </p>
 
       {errorMessage ? (
         <Alert variant="destructive" data-slot="on-demand-wait-error">
           <AlertCircle className="size-4" />
           <AlertTitle>We couldn&apos;t cancel your request</AlertTitle>
-          <AlertDescription className="text-xs">
+          <AlertDescription className="text-[15px]">
             {errorMessage}
           </AlertDescription>
         </Alert>
       ) : null}
 
-      <div className="flex justify-end pt-1">
-        <AlertDialog>
-          <AlertDialogTrigger
-            data-slot="on-demand-wait-cancel"
-            disabled={isCancelling}
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                className="h-12 min-h-12 w-full rounded-full border-(--action-primary) px-6 font-bold text-(--teal-800) hover:bg-(--teal-100) sm:w-auto"
-              />
-            }
-          >
-            {isCancelling ? (
-              <>
-                <Spinner className="mr-2 size-3" />
-                Cancelling…
-              </>
-            ) : (
-              "Cancel request"
-            )}
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
-              <AlertDialogDescription>
-                We&apos;ll stop searching for a doctor and release your payment
-                hold in full — nothing is deducted. You can book again at any
-                time.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Keep waiting</AlertDialogCancel>
-              {/*
-                Deliberately not also labelled "Cancel request": with the trigger
-                carrying that label, two controls one keypress apart would read
-                identically, and "Cancel" next to "Cancel" is the classic
-                confirm-dialog trap where the destructive and the dismissive
-                option are indistinguishable.
-              */}
-              <AlertDialogAction
-                data-slot="on-demand-wait-cancel-confirm"
-                onClick={cancel}
-              >
-                Yes, cancel &amp; refund my hold
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+      <AlertDialog>
+        <AlertDialogTrigger
+          data-slot="on-demand-wait-cancel"
+          disabled={isCancelling}
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 min-h-12 w-full shrink-0 rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
+            />
+          }
+        >
+          {isCancelling ? (
+            <>
+              <Spinner className="mr-2 size-4" />
+              Cancelling…
+            </>
+          ) : (
+            "Cancel request"
+          )}
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              We&apos;ll stop searching for a doctor and release your payment
+              hold in full — nothing is deducted. You can book again at any
+              time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep waiting</AlertDialogCancel>
+            {/*
+              Deliberately not also labelled "Cancel request": with the trigger
+              carrying that label, two controls one keypress apart would read
+              identically, and "Cancel" next to "Cancel" is the classic
+              confirm-dialog trap where the destructive and the dismissive
+              option are indistinguishable.
+            */}
+            <AlertDialogAction
+              data-slot="on-demand-wait-cancel-confirm"
+              onClick={cancel}
+            >
+              Yes, cancel &amp; refund my hold
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -409,7 +418,7 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
 /** Preferences the patient supplied, shown only where matching honours them. */
 function MatchPreferences({ booking }: { booking: Booking }) {
   const chip =
-    "flex items-center gap-1.5 rounded-full bg-(--surface-warm) px-3 py-1.5 text-[12.5px] font-medium text-(--text-muted) border border-(--border-subtle)/50";
+    "flex items-center gap-1.5 rounded-full bg-(--surface-warm) px-3 py-1.5 text-[15px] font-medium text-(--text-body) border border-(--border-subtle)";
   return (
     <div className="flex flex-wrap gap-2">
       <span className={chip}>

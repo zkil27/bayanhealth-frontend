@@ -80,7 +80,7 @@ export function DeviceCheckButton({ className }: { className?: string }) {
         type="button"
         onClick={() => void run()}
         disabled={state.kind === "checking"}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-(--radius-pill) border border-(--border-default) bg-(--surface-card) px-4 text-[14.5px] font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60 sm:w-auto"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-(--radius-pill) border border-(--border-default) bg-(--surface-card) px-5 text-base font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60 sm:w-auto"
       >
         <Video className="size-4" />
         {state.kind === "checking" ? "Checking…" : "Test camera & audio"}

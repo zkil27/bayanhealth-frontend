@@ -2,7 +2,6 @@
 
 import {
   ArrowRight,
-  ClipboardCheck,
   LogIn,
   Stethoscope,
   UserCog,
@@ -14,7 +13,6 @@ import { BookingServiceSelect } from "../BookingServiceSelect";
 import { PatientPageHeader } from "@/features/patient/components/PatientPageHeader";
 import { BookingSummary } from "../BookingSummary";
 import { BrandCtaButton, EmergencyNote } from "../BrandUI";
-import { ON_DEMAND_WAIT_ESTIMATE } from "../../constants/bookingConstants";
 import { DoctorPreferences } from "./DoctorPreferences";
 import {
   usePatientBookingForm,
@@ -34,7 +32,7 @@ interface OnDemandBookingProps {
 }
 
 const groupLabel =
-  "flex items-center gap-2 text-[15px] font-semibold text-(--text-heading)";
+  "flex items-center gap-2 text-[17px] font-semibold text-(--text-heading)";
 
 const cardClass =
   "rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-5 shadow-(--shadow-card)";
@@ -125,7 +123,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
               <div className="flex flex-col gap-2">
                 <span className={groupLabel}>
                   <Stethoscope className="size-5 text-(--status-available-fg)" />
-                  Ano ang kailangan mo? (Consultation service)
+                  Consultation service
                 </span>
                 <BookingServiceSelect
                   value={field.value}
@@ -142,20 +140,17 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
           <div className="flex flex-col gap-3 border-t border-(--border-subtle) pt-4">
             <span className={groupLabel}>
               <UserCog className="size-5 text-(--status-available-fg)" />
-              May gusto ka bang doktor? (Doctor preferences)
+              Doctor preferences <span className="font-normal text-(--text-muted)">(optional)</span>
             </span>
             <DoctorPreferences compact />
-            <p className="text-[12px] text-(--text-muted)">
-              Soft preference lamang ito — kung walang tumugmang doktor agad, ang unang available na lisensyadong manggagamot ang titingin sa&apos;yo.
-            </p>
           </div>
 
           {/* What "on-demand" actually means, stated where the patient reads it
               before committing — the doctor sees the intake first. */}
-          <div className="flex items-start gap-2.5 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[12.5px] leading-[1.5] text-(--status-available-fg)">
+          <div className="flex items-start gap-2.5 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[15px] leading-normal text-(--status-available-fg)">
             <Zap className="size-4 shrink-0 mt-0.5 text-(--status-available-fg)" />
+            {/* No wait estimate: there is no queue or acceptance data to base one on. */}
             <span>
-              <span className="font-semibold">{ON_DEMAND_WAIT_ESTIMATE}.</span>{" "}
               Susuriin muna ng doktor ang iyong profile at mga iniulat na sintomas bago ka papasukin sa consultation room.
             </span>
           </div>
@@ -191,16 +186,6 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
                 {error.message}
               </span>
             )}
-          </div>
-
-          <div className="rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-sunken) p-3 text-[12.5px] leading-[1.5] text-(--text-muted)">
-            <p className="flex items-center gap-1.5 font-semibold text-(--text-body)">
-              <ClipboardCheck className="size-3.5 shrink-0" aria-hidden />
-              Ihanda bago ang tawag (Prepare for call)
-            </p>
-            <p className="mt-1">
-              Mga larawan ng nakaraang laboratory results o lumang reseta · tala kung ilang araw na ang sintomas · tahimik at maliwanag na lugar.
-            </p>
           </div>
 
           <EmergencyNote />

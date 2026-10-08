@@ -252,13 +252,19 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         : { kind: "undisclosed" };
   const wizardBooking = toWizardBooking(booking, intakeGate, doctorResolution);
   const isIntake = wizardBooking?.step === "intake";
+  const isFinished = booking.status === "completed" || booking.status === "cancelled";
 
   return (
     <div
       className={cn(
-        "flex flex-1 min-h-0 w-full flex-col select-none",
+        "flex w-full flex-col select-none",
+        // Only the editable intake is a fixed-height sheet. Every other step
+        // must size to its content: with `flex-1 min-h-0` (basis 0) applied to
+        // all steps, a long view (the intake review, the waiting screen) was
+        // squeezed to the viewport and overflowed past its own bottom padding,
+        // so its last rows ended under the fixed bottom NavBar.
         isIntake
-          ? "h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100dvh-1.5rem)] lg:max-h-[calc(100dvh-1.5rem)] overflow-hidden gap-1.5 sm:gap-2"
+          ? "flex-1 min-h-0 h-[calc(100dvh-5.25rem-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-5.25rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100dvh-1.5rem)] lg:max-h-[calc(100dvh-1.5rem)] overflow-hidden gap-1.5 sm:gap-2"
           : "gap-4 pb-20 lg:pb-4",
       )}
       data-slot="patient-booking-detail"
@@ -280,20 +286,19 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         chat room at all: the backend allowed the conversation and the UI offered no
         door to it.
       */}
+      {/*
+        A finished booking leads with its closing step ("Consultation complete",
+        what happens next, book a follow-up), then the education and the
+        prescription the doctor released (their existing order, see below), then
+        chat history. Before, the closing step sat last, under everything else.
+      */}
+      {wizardBooking && isFinished ? <BookingWizard booking={wizardBooking} /> : null}
       {(booking.status === "confirmed" || booking.status === "in_progress") &&
       booking.doctorId ? (
         <JoinConsultationCard
           bookingId={booking.bookingId}
           hasStarted={booking.status === "in_progress"}
         />
-      ) : (booking.status === "completed" || booking.status === "cancelled") &&
-        booking.doctorId ? (
-        // Read-only history (ADR-20260909-01). `CompletedStep` (rendered by
-        // `BookingWizard` below) tells the patient their chat history stays
-        // available either way — that claim used to be true only via the
-        // separate `/patient/chat` nav tab, with no door to it from this page,
-        // the one making the promise.
-        <ChatHistoryCard bookingId={booking.bookingId} />
       ) : null}
       {/*
         Released education sits above the wizard because it is post-consult
@@ -322,7 +327,14 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         consultationId={booking.consultationId}
         poll={shouldPollReleasedArtifacts(booking.status)}
       />
-      {wizardBooking ? <BookingWizard booking={wizardBooking} /> : null}
+      {isFinished && booking.doctorId ? (
+        // Read-only history (ADR-20260909-01). `CompletedStep` tells the
+        // patient their chat history stays available either way — that claim
+        // used to be true only via the separate `/patient/chat` nav tab, with
+        // no door to it from this page, the one making the promise.
+        <ChatHistoryCard bookingId={booking.bookingId} />
+      ) : null}
+      {wizardBooking && !isFinished ? <BookingWizard booking={wizardBooking} /> : null}
     </div>
   );
 }
@@ -350,10 +362,10 @@ function JoinConsultationCard({
   return (
     <section
       data-slot="join-consultation"
-      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-teal-200/80 bg-teal-50/70 p-4 sm:p-5 shadow-xs"
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-(--teal-200) bg-(--teal-100) p-4 sm:p-5"
     >
       <div className="flex items-start sm:items-center gap-3.5">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-white shadow-xs">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-(--text-inverse)">
           {hasStarted ? (
             <Video className="size-6 shrink-0" />
           ) : (
@@ -362,19 +374,19 @@ function JoinConsultationCard({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-base font-bold text-slate-900">
+            <p className="text-lg font-bold text-(--text-heading)">
               {hasStarted
                 ? "Your consultation is live now"
                 : "Consultation room ready"}
             </p>
             {hasStarted ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-emerald-900">
-                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-(--teal-200) bg-(--surface-card) px-2.5 py-0.5 text-[13px] font-semibold text-(--teal-800)">
+                <span aria-hidden className="size-2 rounded-full bg-(--teal-700)" />
                 Live
               </span>
             ) : null}
           </div>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p className="mt-0.5 text-[15px] leading-relaxed text-(--text-body)">
             {hasStarted
               ? "Your doctor is in the room. Tap below to connect to your live visit."
               : "Speak with your doctor, review intake notes, or test your audio before joining."}
@@ -384,7 +396,7 @@ function JoinConsultationCard({
       <Link href={`/consultation/room/${encodeURIComponent(bookingId)}`} className="w-full sm:w-auto shrink-0">
         <Button
           size="default"
-          className="h-12 w-full sm:w-auto min-w-36 rounded-xl bg-(--action-primary) text-base font-bold text-(--action-primary-text) hover:bg-(--action-primary-hover) shadow-xs transition-colors"
+          className="h-12 w-full sm:w-auto min-w-36 rounded-xl bg-(--action-primary) text-base font-bold text-(--action-primary-text) hover:bg-(--action-primary-hover) transition-colors"
         >
           {hasStarted ? "Join Call with Doctor" : "Enter Room"}
         </Button>
@@ -496,8 +508,12 @@ function PageFrame({ bookingId, children }: { bookingId: string; children: React
  */
 export function BookingContextBar({ bookingId, context }: { bookingId: string; context: BarContext }) {
   const intake = context.kind === "intake";
+  // The step tracker below already says where an active booking is, and an
+  // "info" badge beside it contradicted it ("CONFIRMED" while the tracker sat
+  // on "Doctor"). The badge now appears only once the booking has ended.
   const status =
-    context.kind === "booking"
+    context.kind === "booking" &&
+    (context.booking.status === "completed" || context.booking.status === "cancelled")
       ? displayBookingStatus(context.booking.status, !!context.booking.declinedBy)
       : null;
 
@@ -512,9 +528,16 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
     context.kind === "intake"
       ? "Complete intake to match with a PRC-licensed physician."
       : context.kind === "booking"
-        ? [doctorSlotLabel(context.doctor), context.booking.scheduledAt ? formatConsultationDateTime(context.booking.scheduledAt) : null]
+        ? [
+            // "Doctor matching in progress" repeated the waiting screen beneath it.
+            context.doctor.kind === "unassigned" ? null : doctorSlotLabel(context.doctor),
+            // An on-demand request has no appointment time to state.
+            context.booking.scheduledAt && context.booking.bookingMode !== "on_demand"
+              ? formatConsultationDateTime(context.booking.scheduledAt)
+              : null,
+          ]
             .filter(Boolean)
-            .join(" · ")
+            .join(" · ") || null
         : null;
 
   return (
@@ -526,22 +549,22 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
         <Link
           href="/patient/health"
           aria-label={intake ? "Exit intake" : "Back to Health"}
-          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-muted) shadow-sm transition-colors hover:bg-(--surface-canvas) hover:text-(--text-heading) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-muted) shadow-sm transition-colors hover:bg-(--surface-canvas) hover:text-(--text-heading) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
           <ArrowLeft aria-hidden className="size-4" />
         </Link>
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="truncate text-sm sm:text-base font-bold text-(--text-heading)">{title}</h1>
+            <h1 className="truncate text-base sm:text-lg font-bold text-(--text-heading)">{title}</h1>
             {intake ? (
-              <span className="shrink-0 rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
+              <span className="shrink-0 rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-[13px] font-semibold text-(--status-available-fg)">
                 Draft
               </span>
             ) : status ? (
               <span
                 data-tone={status.tone}
                 className={cn(
-                  "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase",
+                  "shrink-0 rounded-md px-2 py-0.5 text-[13px] font-semibold",
                   TONE_BADGE[status.tone] ?? "bg-(--status-pilot-bg) text-(--status-pilot-fg)",
                 )}
               >
@@ -550,7 +573,7 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
             ) : null}
           </div>
           {subtitle ? (
-            <p className="truncate text-[11px] font-medium text-(--text-subtle)">{subtitle}</p>
+            <p className="truncate text-sm text-(--text-muted)">{subtitle}</p>
           ) : null}
         </div>
       </div>

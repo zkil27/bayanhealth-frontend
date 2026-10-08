@@ -77,65 +77,79 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
       ? scheduled.toLocaleString()
       : null;
 
+  // The accepted moment is the high point of the wait, so it names the doctor.
+  // An undisclosed name falls back to "Your doctor", never to an invented one.
+  const doctorName = (booking.doctorName ?? "").trim();
+  const heading =
+    booking.bookingType === "on-demand"
+      ? `${doctorName || "Your doctor"} accepted your request`
+      : "Booking confirmed";
+  const initials = doctorName
+    .replace(/^(dr\.?|doc)\s+/i, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
-    <div className="animate-in duration-300 fade-in">
+    <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
       <Illustration
         name="patient/booking-confirmed"
-        size="lg"
+        size="md"
         priority
         className="mb-3"
       />
-      <div className="mb-3.5 flex items-center gap-2.5 text-lg font-bold text-(--text-heading)">
-        <CheckCircle2 className="size-5 text-(--teal-800) shrink-0" />
-        Booking confirmed
-      </div>
+      <h3 className="flex items-start gap-2.5 text-xl leading-snug font-bold text-(--text-heading)">
+        <CheckCircle2 aria-hidden className="mt-0.5 size-6 shrink-0 text-(--teal-800)" />
+        {heading}
+      </h3>
 
-      <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4 shadow-2xs">
-        <p className="text-base sm:text-lg font-bold text-(--text-heading)">
-          {doctorLabel}
-        </p>
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-(--text-muted)">
-          <Stethoscope className="size-4 shrink-0 text-(--teal-700)" />
-          {specialty || "General Medicine"}
-        </p>
-        {booking.doctorId ? (
-          <Link
-            href={`/patient/booking/doctor/${booking.doctorId}`}
-            className="mt-2.5 inline-flex items-center gap-1.5 text-sm font-semibold text-(--text-link) hover:text-(--text-link-hover)"
-          >
-            <LinkIcon className="size-3.5" strokeWidth={1.5} />
-            View doctor profile
-          </Link>
-        ) : null}
-      </div>
-
-      <dl className="mt-3.5 flex flex-col gap-3 rounded-xl bg-(--surface-warm) p-4 text-sm text-(--text-body) border border-(--border-subtle)/50">
-        <div className="flex items-center gap-3">
-          <Stethoscope className="size-4.5 shrink-0 text-(--teal-800)" />
-          <dt className="sr-only">Assigned doctor</dt>
-          <dd className="font-medium">{doctorLabel}</dd>
+      {/* One doctor card — the name used to appear here and again in the list below. */}
+      <div className="mt-4 flex items-center gap-3.5 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4">
+        <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-base font-bold text-(--teal-800)">
+          {initials || <Stethoscope className="size-5" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-bold text-(--text-heading)">{doctorLabel}</p>
+          {/* Specialty only when the directory gives one — no "General Medicine" default. */}
+          {specialty ? <p className="text-[15px] text-(--text-muted)">{specialty}</p> : null}
+          {booking.doctorId ? (
+            <Link
+              href={`/patient/booking/doctor/${booking.doctorId}`}
+              className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-(--text-link) hover:text-(--text-link-hover)"
+            >
+              <LinkIcon aria-hidden className="size-4" strokeWidth={1.75} />
+              View doctor profile
+            </Link>
+          ) : null}
         </div>
+      </div>
 
-        {scheduledLabel ? (
-          <div className="flex items-center gap-3">
-            <CalendarClock className="size-4.5 shrink-0 text-(--teal-800)" />
-            <dt className="sr-only">Scheduled for</dt>
-            <dd className="font-medium">{scheduledLabel}</dd>
-          </div>
-        ) : null}
-
-        {amount ? (
-          <div className="flex items-center gap-3">
-            <CreditCard className="size-4.5 shrink-0 text-(--teal-800)" />
-            <dt className="sr-only">Payment</dt>
-            <dd className="font-medium">{amount} held — captured after consultation</dd>
-          </div>
-        ) : null}
-      </dl>
+      {scheduledLabel || amount ? (
+        <dl className="mt-3 flex flex-col gap-2.5 px-1 text-[15px] text-(--text-body)">
+          {scheduledLabel ? (
+            <div className="flex items-center gap-3">
+              <CalendarClock aria-hidden className="size-4.5 shrink-0 text-(--teal-800)" />
+              <dt className="sr-only">Scheduled for</dt>
+              <dd>{scheduledLabel}</dd>
+            </div>
+          ) : null}
+          {amount ? (
+            <div className="flex items-center gap-3">
+              <CreditCard aria-hidden className="size-4.5 shrink-0 text-(--teal-800)" />
+              <dt className="sr-only">Payment</dt>
+              <dd>{amount} held — captured after consultation</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
 
       {!isReview ? (
-        <p className="mt-3.5 text-sm text-(--text-muted) leading-relaxed">
-          Your doctor has received your intake information. You can enter the consultation room above to wait or speak with your doctor.
+        <p className="mt-4 text-[15px] leading-relaxed text-(--text-muted)">
+          Your doctor has your intake. Tap{" "}
+          <strong className="font-semibold text-(--text-body)">Enter Room</strong>{" "}
+          at the top of this page when you&apos;re ready.
         </p>
       ) : null}
 
@@ -235,7 +249,7 @@ function PostAcceptanceCancelPanel({ booking }: { booking: Booking }) {
       {pastGrace ? (
         <div
           data-slot="post-acceptance-cancel-warning"
-          className="flex items-start gap-2.5 rounded-[12px] border border-(--danger-border) bg-(--danger-bg) px-3 py-2.5 text-[13px] text-(--danger-fg)"
+          className="flex items-start gap-2.5 rounded-[12px] border border-(--danger-border) bg-(--danger-bg) px-3 py-2.5 text-[15px] text-(--danger-fg)"
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <p>
@@ -248,7 +262,7 @@ function PostAcceptanceCancelPanel({ booking }: { booking: Booking }) {
           </p>
         </div>
       ) : (
-        <div className="flex items-start gap-2.5 rounded-[12px] border border-(--teal-200) bg-(--teal-100) px-3 py-2.5 text-[13px] text-(--text-muted)">
+        <div className="flex items-start gap-2.5 rounded-[12px] border border-(--teal-200) bg-(--teal-100) px-3 py-2.5 text-[15px] text-(--text-muted)">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
           <p>
             Your payment is on hold, not charged. Cancelling now releases it
@@ -289,7 +303,7 @@ function PostAcceptanceCancelPanel({ booking }: { booking: Booking }) {
               <Button
                 type="button"
                 variant="outline"
-                className="h-[42px] rounded-full border-(--action-primary) px-4 font-bold text-(--teal-800) hover:bg-(--teal-100)"
+                className="h-12 w-full rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
               />
             }
           >

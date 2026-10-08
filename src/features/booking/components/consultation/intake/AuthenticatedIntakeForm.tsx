@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { Check, Circle, LockKeyhole, ShieldCheck, TriangleAlert } from "lucide-react";
+import { format, isValid, parse } from "date-fns";
+import { Check, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormProvider,
@@ -15,6 +15,7 @@ import {
 
 import { PersonDataSection } from "@/components/blocks/profile/PersonDataSection";
 import AppButton from "@/components/primitives/AppButton";
+import { NONE_OPTION } from "@/features/booking/constants/bookingConstants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useProfile } from "@/hooks/useProfile";
 import { ApiError } from "@/lib/api";
@@ -33,6 +34,7 @@ import {
 import type { Booking } from "../../../types/booking.types";
 import {
   ConcernSafetyStep,
+  complaintTagLabel,
   concernBlockedReason,
   redFlagFromScreen,
   type RedFlagState,
@@ -40,6 +42,7 @@ import {
 import { IntakeNavFooter } from "./IntakeNavFooter";
 import { MedicalHistoryStep } from "./MedicalHistoryStep";
 import { PainAssessmentStep } from "./PainAssessmentStep";
+import { conditionLabel } from "./MedicalHistoryStep";
 import { ReviewConsentStep } from "./ReviewConsentStep";
 import { ServiceRequestSection } from "./ServiceRequestSection";
 
@@ -329,31 +332,28 @@ export function AuthenticatedIntakeForm({
         data-slot="intake-sheet"
         className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden"
       >
-        <header className="shrink-0 border-b border-(--border-subtle) px-4 py-2.5 sm:px-8 sm:py-3.5">
-          <div className="flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="inline-flex items-center rounded-lg bg-(--surface-accent-soft) px-2.5 py-1 text-xs font-bold tracking-wider text-(--status-available-fg) uppercase">
-                Step {currentStep + 1} of {STEPS.length}
-              </span>
-              <h1 ref={headingRef} tabIndex={-1} className="truncate text-base sm:text-lg font-bold text-(--text-heading) outline-none">
-                {STEPS[currentStep].title}
-              </h1>
-            </div>
-            {/* Clinical Trust Badge */}
-            <div className="flex items-center gap-1.5 rounded-lg border border-(--teal-200) bg-(--teal-100)/60 px-2.5 py-1 text-xs font-semibold text-(--teal-800) shrink-0">
-              <ShieldCheck className="size-4 text-(--teal-700)" />
-              <span className="hidden xs:inline">Encrypted & Autosaved</span>
-              <span className="xs:hidden">Autosaved</span>
-            </div>
+        {/*
+         * One title, one plain step count, one thin bar. The uppercase step pill
+         * and the "Encrypted & Autosaved" badge competed with the title, and
+         * "Autosaved" overstated it: answers save when Continue is tapped.
+         */}
+        <header className="shrink-0 border-b border-(--border-subtle) px-4 pt-3 pb-3 sm:px-8 sm:pt-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 ref={headingRef} tabIndex={-1} className="min-w-0 text-xl leading-tight font-bold text-(--text-heading) outline-none sm:text-2xl">
+              {STEPS[currentStep].title}
+            </h1>
+            <span className="shrink-0 text-[15px] font-medium text-(--text-muted) tabular-nums">
+              Step {currentStep + 1} of {STEPS.length}
+            </span>
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
-            <div className="h-full rounded-full bg-(--action-primary) transition-[width] duration-300" style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
+            <div className="h-full rounded-full bg-(--action-primary) transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
           </div>
         </header>
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav aria-label="Intake steps" className="hidden w-56 shrink-0 overflow-y-auto border-r border-(--border-subtle) p-4 xl:block">
-            <ol className="space-y-2">
+            <ol className="space-y-1">
               {STEPS.map((step, index) => {
                 const complete = index < furthestStep;
                 const current = index === currentStep;
@@ -366,13 +366,30 @@ export function AuthenticatedIntakeForm({
                       aria-current={current ? "step" : undefined}
                       onClick={() => navigateTo(index)}
                       className={cn(
-                        "flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm",
-                        current ? "border-primary bg-primary/10 font-semibold" : "border-transparent",
-                        locked && "cursor-not-allowed text-muted-foreground",
+                        "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
+                        current
+                          ? "bg-(--surface-brand-soft) font-semibold text-(--text-heading)"
+                          : complete
+                            ? "text-(--text-body) hover:bg-(--surface-canvas)"
+                            : "cursor-not-allowed text-(--text-muted)",
                       )}
                     >
-                      {complete ? <Check aria-hidden className="size-4" /> : locked ? <LockKeyhole aria-hidden className="size-4" /> : <Circle aria-hidden className="size-4" />}
-                      <span><span className="block">{step.short}</span><span className="text-xs font-normal text-muted-foreground">{current ? "Current" : complete ? "Completed" : locked ? "Locked" : "Available"}</span></span>
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "flex size-6 shrink-0 items-center justify-center rounded-full border text-[13px] font-semibold tabular-nums",
+                          complete
+                            ? "border-transparent bg-(--action-primary) text-(--text-inverse)"
+                            : current
+                              ? "border-(--action-primary) text-(--action-primary)"
+                              : "border-(--border-strong)",
+                        )}
+                      >
+                        {complete ? <Check className="size-3.5 stroke-[3]" /> : index + 1}
+                      </span>
+                      <span>{step.short}</span>
+                      {complete ? <span className="sr-only">(completed)</span> : null}
                     </button>
                   </li>
                 );
@@ -383,7 +400,9 @@ export function AuthenticatedIntakeForm({
           <main
             ref={scrollBodyRef}
             data-slot="intake-scroll-body"
-            className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:px-8 sm:py-5"
+            // The scrollbar stays visible: it is the only cue that a long step
+            // continues below the fold, and older patients rely on it.
+            className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-color:var(--border-strong)_transparent] [scrollbar-width:thin] sm:px-8 sm:py-6"
           >
             {currentStep === 0 ? <AboutYouSection profile={profile} /> : null}
             {currentStep === 1 ? <MedicalHistoryStep /> : null}
@@ -411,13 +430,15 @@ export function AuthenticatedIntakeForm({
         >
           {/*
            * In the pinned bar, so a save error is visible without scrolling —
-           * a single quiet line rather than a full destructive Alert card,
-           * which read as an alarming amount of red for a "try again" message.
+           * a single line rather than a full destructive Alert card. It used to
+           * be screen-reader-only text plus a toast that vanished in seconds,
+           * which left sighted patients with no lasting explanation.
            */}
           {saveError ? (
-            <span role="alert" className="sr-only">
+            <p role="alert" className="mb-2.5 flex items-start gap-2 text-[15px] leading-snug font-semibold text-(--danger-fg)">
+              <TriangleAlert aria-hidden className="mt-0.5 size-4.5 shrink-0" />
               {saveError}
-            </span>
+            </p>
           ) : null}
         </IntakeNavFooter>
       </form>
@@ -436,19 +457,70 @@ function AboutYouSection({ profile }: { profile: unknown }) {
   return <PersonDataSection userProfile={profile} mode="booking" />;
 }
 
+/**
+ * The submitted intake, read back to the patient in plain form: condition
+ * labels instead of stored enums (`bleeding_disorder`), a written-out date,
+ * units on measurements, and "No known allergies" for the stored "None".
+ * Values are unchanged — only how they are displayed.
+ */
 function ReadOnlyAuthenticatedIntake({ values }: { values: DynamicIntakeFormValues }) {
   const personal = values.personalDetails;
   const request = values.requestDetails;
   const teleconsult = request.type === "teleconsult" ? request : null;
   const history = personal.structuredMedicalHistory;
   const display = (value: unknown, empty = "Not answered") => value === undefined || value === null || value === "" ? empty : String(value);
+  const withUnit = (value: unknown, unit: string) => (value === undefined || value === null || value === "" ? "Not recorded" : `${value} ${unit}`);
+  const yesNo = (value: boolean | undefined) => (value === undefined ? "Not answered" : value ? "Yes" : "No");
+  const dob = personal.dateOfBirth ? parse(personal.dateOfBirth, "yyyy-MM-dd", new Date()) : null;
+  const allergies = personal.allergens?.length
+    ? personal.allergens.includes(NONE_OPTION)
+      ? "No known allergies"
+      : personal.allergens.join(", ")
+    : "Not answered";
+  const conditions = history?.noneReported
+    ? "None reported"
+    : history?.knownConditions?.length
+      ? history.knownConditions.map((item) => (item === "other" && history.other ? history.other : conditionLabel(item))).join(", ")
+      : "Not answered";
+  const bp = personal.baselineVitals?.systolicBp !== undefined || personal.baselineVitals?.diastolicBp !== undefined
+    ? `${display(personal.baselineVitals?.systolicBp, "—")}/${display(personal.baselineVitals?.diastolicBp, "—")} mmHg`
+    : "Not recorded";
   return <div className="space-y-6" data-slot="authenticated-intake-read-only">
-    <ReadOnlyGroup title="About You & Baseline"><ReadOnlyField label="Name" value={display(personal.name)} /><ReadOnlyField label="Date of birth" value={display(personal.dateOfBirth)} /><ReadOnlyField label="Height" value={display(personal.height, "Not recorded")} /><ReadOnlyField label="Weight" value={display(personal.weight, "Not recorded")} /><ReadOnlyField label="Allergies" value={personal.allergens?.length ? personal.allergens.join(", ") : "Not answered"} /><ReadOnlyField label="Baseline blood pressure" value={personal.baselineVitals?.systolicBp !== undefined || personal.baselineVitals?.diastolicBp !== undefined ? `${display(personal.baselineVitals?.systolicBp, "—")}/${display(personal.baselineVitals?.diastolicBp, "—")} mmHg` : "Not recorded"} /><ReadOnlyField label="Self-reported measurements" value={personal.measurementsSelfReported === undefined ? "Not answered" : personal.measurementsSelfReported ? "Yes" : "No"} /></ReadOnlyGroup>
-    <ReadOnlyGroup title="Medical History"><ReadOnlyField label="Known conditions" value={history?.noneReported ? "None reported" : history?.knownConditions?.length ? history.knownConditions.join(", ") : "Not answered"} /><ReadOnlyField label="Details" value={display(history?.details)} /><ReadOnlyField label="Current medications" value={display(history?.currentMedications)} /></ReadOnlyGroup>
-    <ReadOnlyGroup title="Current Concern & Safety">{teleconsult ? <><ReadOnlyField label="Main concern" value={display(teleconsult.chiefComplaint)} /><ReadOnlyField label="Chest pain" value={teleconsult.safetyScreen?.chestPain === undefined ? "Not answered" : teleconsult.safetyScreen.chestPain ? "Yes" : "No"} /><ReadOnlyField label="Difficulty breathing" value={teleconsult.safetyScreen?.dyspnea === undefined ? "Not answered" : teleconsult.safetyScreen.dyspnea ? "Yes" : "No"} /><ReadOnlyField label="Fever days" value={display(teleconsult.safetyScreen?.feverDays)} /></> : <ReadOnlyField label="Service request" value={request.type} />}</ReadOnlyGroup>
-    <ReadOnlyGroup title="Symptom Review & Consent">{teleconsult ? <><ReadOnlyField label="Onset" value={display(teleconsult.symptomReview?.onset)} /><ReadOnlyField label="Pain severity" value={display(teleconsult.symptomReview?.painSeverity)} /><ReadOnlyField label="Reproductive health" value={teleconsult.reproductiveHealth ? display(teleconsult.reproductiveHealth.pregnancyPossibility) : "Not answered"} /></> : null}<ReadOnlyField label="Additional concerns" value={display(values.additionalInfo.additionalConcerns)} /><ReadOnlyField label="Preferred consultation date" value={display(values.additionalInfo.dateOfConsultation)} /><ReadOnlyField label="Consent" value={values.additionalInfo.consent ? "Given" : "Not given"} /></ReadOnlyGroup>
+    <ReadOnlyGroup title="About You & Baseline">
+      {personal.name ? <ReadOnlyField label="Name" value={personal.name} /> : null}
+      <ReadOnlyField label="Date of birth" value={dob && isValid(dob) ? format(dob, "d MMMM yyyy") : display(personal.dateOfBirth)} />
+      <ReadOnlyField label="Height" value={withUnit(personal.height, "cm")} />
+      <ReadOnlyField label="Weight" value={withUnit(personal.weight, "kg")} />
+      <ReadOnlyField label="Allergies" value={allergies} />
+      <ReadOnlyField label="Baseline blood pressure" value={bp} />
+      <ReadOnlyField label="Self-reported measurements" value={yesNo(personal.measurementsSelfReported)} />
+    </ReadOnlyGroup>
+    <ReadOnlyGroup title="Medical History">
+      <ReadOnlyField label="Known conditions" value={conditions} />
+      <ReadOnlyField label="Details" value={display(history?.details)} />
+      <ReadOnlyField label="Current medications" value={display(history?.currentMedications)} />
+    </ReadOnlyGroup>
+    <ReadOnlyGroup title="Current Concern & Safety">
+      {teleconsult ? <>
+        <ReadOnlyField label="Main concern" value={display(teleconsult.chiefComplaint)} />
+        <ReadOnlyField label="Related symptoms" value={teleconsult.complaintTags?.length ? teleconsult.complaintTags.map(complaintTagLabel).join(", ") : "None selected"} />
+        <ReadOnlyField label="Chest pain" value={yesNo(teleconsult.safetyScreen?.chestPain)} />
+        <ReadOnlyField label="Difficulty breathing" value={yesNo(teleconsult.safetyScreen?.dyspnea)} />
+        <ReadOnlyField label="Fever days" value={display(teleconsult.safetyScreen?.feverDays)} />
+      </> : <ReadOnlyField label="Service request" value={request.type.replace(/-/g, " ")} />}
+    </ReadOnlyGroup>
+    <ReadOnlyGroup title="Symptom Review & Consent">
+      {teleconsult ? <>
+        <ReadOnlyField label="Onset" value={display(teleconsult.symptomReview?.onset)} />
+        <ReadOnlyField label="Pain severity" value={typeof teleconsult.symptomReview?.painSeverity === "number" ? `${teleconsult.symptomReview.painSeverity} / 10` : "Not answered"} />
+        <ReadOnlyField label="Reproductive health" value={teleconsult.reproductiveHealth ? display(teleconsult.reproductiveHealth.pregnancyPossibility) : "Not answered"} />
+      </> : null}
+      <ReadOnlyField label="Additional concerns" value={display(values.additionalInfo.additionalConcerns)} />
+      <ReadOnlyField label="Preferred consultation date" value={display(values.additionalInfo.dateOfConsultation)} />
+      <ReadOnlyField label="Consent" value={values.additionalInfo.consent ? "Given" : "Not given"} />
+    </ReadOnlyGroup>
   </div>;
 }
 
-function ReadOnlyGroup({ title, children }: { title: string; children: React.ReactNode }) { return <section className="rounded-xl border border-border bg-card p-4"><h2 className="mb-4 text-lg font-semibold">{title}</h2><dl className="grid gap-3 sm:grid-cols-2">{children}</dl></section>; }
-function ReadOnlyField({ label, value }: { label: string; value: string }) { return <div><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-sm font-medium">{value}</dd></div>; }
+function ReadOnlyGroup({ title, children }: { title: string; children: React.ReactNode }) { return <section className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4"><h2 className="mb-4 text-lg font-semibold text-(--text-heading)">{title}</h2><dl className="grid gap-4 sm:grid-cols-2">{children}</dl></section>; }
+function ReadOnlyField({ label, value }: { label: string; value: string }) { return <div><dt className="text-sm text-(--text-muted)">{label}</dt><dd className="text-base font-medium break-words text-(--text-body)">{value}</dd></div>; }

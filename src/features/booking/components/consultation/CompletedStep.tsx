@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
-  Hourglass,
   MessageSquareOff,
   ShieldCheck,
   XCircle,
@@ -16,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 import { buildRebookingUrl } from "../../lib/rebookingUrl";
 import { Booking } from "../../types/booking.types";
-import { BrandCtaButton } from "../BrandUI";
+import { BrandCtaButton, EmergencyNote } from "../BrandUI";
 import { DoctorProfileLink } from "../DoctorProfileLink";
 
 /** Format minor units as a currency amount, or return null when unpriced. */
@@ -31,9 +30,6 @@ function formatAmount(amountCents?: number, currency?: string): string | null {
     return `${(amountCents / 100).toFixed(2)} ${currency}`;
   }
 }
-
-const infoCard =
-  "flex items-start gap-2.5 rounded-[12px] bg-(--surface-warm) px-3 py-2.5 text-[13px] text-(--text-muted)";
 
 /**
  * Terminal step of the booking wizard — the consultation is over, or cancelled.
@@ -66,11 +62,11 @@ export function CompletedStep({ booking }: { booking: Booking }) {
         className="animate-in duration-300 fade-in"
         data-slot="wizard-declined"
       >
-        <div className="mb-2 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
+        <div className="mb-2 flex items-center gap-2 text-xl font-bold text-(--text-heading)">
           <MessageSquareOff className="size-5 text-(--danger-fg)" />
           <span>Your doctor declined this booking</span>
         </div>
-        <p className="text-[14px] text-(--text-muted)">
+        <p className="text-base leading-relaxed text-(--text-body)">
           Your doctor was unable to take this appointment. This booking has been
           cancelled and you have been fully refunded — nothing was charged.
         </p>
@@ -99,7 +95,7 @@ export function CompletedStep({ booking }: { booking: Booking }) {
             the one this rebooking flow must exclude.
           */}
           <Link href={buildRebookingUrl({ excludeDoctorId: booking.doctorId })}>
-            <Button size="sm" data-slot="rebook-after-decline">
+            <Button className="h-12 px-5 text-base" data-slot="rebook-after-decline">
               Find another doctor
             </Button>
           </Link>
@@ -114,17 +110,17 @@ export function CompletedStep({ booking }: { booking: Booking }) {
         className="animate-in duration-300 fade-in"
         data-slot="wizard-cancelled"
       >
-        <div className="mb-2 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
+        <div className="mb-2 flex items-center gap-2 text-xl font-bold text-(--text-heading)">
           <XCircle className="size-5 text-(--danger-fg)" />
           <span>Booking cancelled</span>
         </div>
-        <p className="text-[14px] text-(--text-muted)">
+        <p className="text-base leading-relaxed text-(--text-body)">
           This booking was cancelled. Any payment hold placed for it has been
           released — nothing was charged. You can book again whenever you need
           to.
         </p>
 
-        <div className="mt-3.5 flex items-start gap-2.5 rounded-[12px] border border-(--teal-200) bg-(--teal-100) px-3 py-2.5 text-[13px] text-(--text-muted)">
+        <div className="mt-3.5 flex items-start gap-2.5 rounded-[12px] border border-(--teal-200) bg-(--teal-100) px-3 py-2.5 text-[15px] text-(--text-muted)">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
           <p>
             {heldAmount ? (
@@ -142,7 +138,7 @@ export function CompletedStep({ booking }: { booking: Booking }) {
         </div>
 
         <Link href="/patient/booking/createBooking" className="mt-3.5 block">
-          <BrandCtaButton type="button" className="min-h-12 text-[15px]">
+          <BrandCtaButton type="button" className="min-h-12 text-base">
             Book again
             <ArrowRight className="size-4" />
           </BrandCtaButton>
@@ -151,53 +147,51 @@ export function CompletedStep({ booking }: { booking: Booking }) {
     );
   }
 
+  // The ending is what the visit is remembered by (peak-end), so it closes
+  // warmly and plainly: done, what happens next, and a way back in. Released
+  // prescriptions and education render directly beneath this step (see
+  // `PatientBookingDetail`), so "below" is literally true.
   return (
     <div
-      className="animate-in duration-300 fade-in"
+      className="animate-in duration-300 fade-in motion-reduce:animate-none"
       data-slot="wizard-completed"
     >
       <Illustration
         name="patient/consult-complete"
-        size="lg"
+        size="md"
         priority
         className="mb-3"
       />
-      <div className="mb-2 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
-        <CheckCircle2 className="size-5 text-(--teal-800)" />
-        <span>Consultation complete</span>
-      </div>
+      <h3 className="flex items-center gap-2.5 text-xl font-bold text-(--text-heading)">
+        <CheckCircle2 aria-hidden className="size-6 shrink-0 text-(--teal-800)" />
+        Consultation complete
+      </h3>
 
-      <p className="text-[14px] text-(--text-muted)">
+      <p className="mt-2 text-base leading-relaxed text-(--text-body)">
         Thank you for using BayanHealth. Your consultation has ended and your
         doctor is writing up their findings.
       </p>
 
-      <div className="mt-4 flex flex-col gap-2.5">
-        <div className={infoCard}>
-          <Hourglass className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
-          <p>
-            <span className="font-bold text-(--text-heading)">
-              Waiting for your doctor.
-            </span>{" "}
-            They review the consultation before sharing anything, so there may
-            be a short wait. You do not need to stay on this page.
-          </p>
-        </div>
+      <p className="mt-3 flex items-start gap-2.5 text-[15px] leading-relaxed text-(--text-muted)">
+        <FileText aria-hidden className="mt-0.5 size-4.5 shrink-0 text-(--teal-800)" />
+        <span>
+          Care instructions and any prescription appear below once your doctor
+          releases them. You do not need to stay on this page, and your chat
+          history stays available either way.
+        </span>
+      </p>
 
-        <div className={infoCard}>
-          <FileText className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
-          <p>
-            <span className="font-bold text-(--text-heading)">
-              Anything your doctor shares appears here.
-            </span>{" "}
-            Care instructions and any prescription will show up on this booking
-            page once your doctor releases them. Your chat history stays
-            available either way.
-          </p>
-        </div>
+      <div className="mt-5 flex flex-col gap-3 border-t border-(--border-subtle) pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <DoctorProfileLink doctorId={booking.doctorId} />
+        <Link href="/patient/booking" className="block sm:w-auto">
+          <BrandCtaButton type="button" className="min-h-12 text-base sm:w-auto sm:px-6">
+            Book a follow-up
+            <ArrowRight aria-hidden className="size-4" />
+          </BrandCtaButton>
+        </Link>
       </div>
 
-      <DoctorProfileLink doctorId={booking.doctorId} className="mt-2" />
+      <EmergencyNote className="mt-4" />
     </div>
   );
 }
