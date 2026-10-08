@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AccountControls } from "@/components/layout/FloatingSidebar";
 import { createIdempotencyKeyManager } from "@/lib/idempotency";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { SignaturePadDialog } from "@/features/consultation/components/postConsultation/SignatureField";
@@ -146,7 +147,12 @@ function DoctorIdentitySummaryCard({
       </div>
 
       {/* Fast Navigation Shortcut List */}
-      <nav aria-label="Profile navigation" className="flex flex-col gap-1 border-t border-(--border-subtle) pt-3">
+      {/*
+        Desktop-only: below `lg` this card stacks above the workspace, whose
+        own tab bar switches the same three sections, so the list was a
+        duplicate whose taps changed content out of sight below the fold.
+      */}
+      <nav aria-label="Profile navigation" className="flex flex-col gap-1 border-t border-(--border-subtle) pt-3 max-lg:hidden">
         <span className="mb-1 text-[11px] font-bold uppercase tracking-wider text-(--text-subtle)">
           Workspace Sections
         </span>
@@ -265,7 +271,7 @@ export function DoctorProfileView() {
                   aria-selected={activeTab === "details"}
                   onClick={() => setActiveTab("details")}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    "flex min-h-11 items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:min-h-0 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
                     activeTab === "details"
                       ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
                       : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
@@ -281,7 +287,7 @@ export function DoctorProfileView() {
                   aria-selected={activeTab === "signature"}
                   onClick={() => setActiveTab("signature")}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    "flex min-h-11 items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:min-h-0 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
                     activeTab === "signature"
                       ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
                       : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
@@ -297,7 +303,7 @@ export function DoctorProfileView() {
                   aria-selected={activeTab === "credentials"}
                   onClick={() => setActiveTab("credentials")}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
+                    "flex min-h-11 items-center justify-center gap-1.5 rounded-xl py-2 px-2 sm:min-h-0 sm:px-3 text-xs sm:text-sm font-semibold transition-all select-none",
                     activeTab === "credentials"
                       ? "bg-(--surface-card) text-(--text-heading) shadow-sm border border-(--border-subtle)"
                       : "text-(--text-muted) hover:text-(--text-heading) hover:bg-black/[0.02]",
@@ -334,6 +340,21 @@ export function DoctorProfileView() {
                   />
                 </section>
               </div>
+
+              {/*
+                Phones have no rail, and the rail is where dark mode and sign-out
+                live, so without this a doctor on a phone could not sign out.
+              */}
+              <section
+                aria-labelledby="profile-account-heading"
+                data-slot="profile-account-mobile"
+                className={cn(cardClass, "lg:hidden")}
+              >
+                <h2 id="profile-account-heading" className="mb-2 text-sm font-bold text-(--text-heading)">
+                  Account
+                </h2>
+                <AccountControls className="[&_button]:min-h-12 [&_button]:text-sm" />
+              </section>
             </main>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { SidebarContent } from "@/components/layout/FloatingSidebar";
 import { DoctorHeader } from "@/features/doctor/components/header";
+import { DoctorMobileNav } from "@/features/doctor/components/DoctorMobileNav";
 import { QueryClientProviders } from "@/components/blocks/Providers";
 import Loading from "./loading";
 
@@ -31,14 +32,21 @@ export default function DoctorLayout({
         scrolls — the same shell rule as `PatientShell` — so the dashboard fits
         the screen with the sidebar and content bottoms aligned.
       */}
-      <div className="bg-satin relative flex min-h-screen gap-6 overflow-hidden p-4 text-(--text-body) lg:h-screen lg:py-3">
+      {/*
+        Below `lg` the rail is replaced by the fixed `DoctorMobileNav`, so
+        `<main>` reserves its height (plus the safe-area inset) at the bottom,
+        and the taller reservation when the "Return to consult" bar is stacked
+        above it — keyed on that bar's `data-slot` via `group-has`.
+      */}
+      <div className="group/doctor-shell bg-satin relative flex min-h-screen gap-6 overflow-hidden p-4 text-(--text-body) lg:h-screen lg:py-3">
         <aside className="relative z-50 hidden h-full w-60 shrink-0 flex-col justify-between rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-raised) p-5 text-(--text-body) shadow-lg lg:flex">
           <SidebarContent />
         </aside>
-        <main className="bg-satin relative flex min-w-0 flex-1 flex-col overflow-x-hidden lg:h-full lg:min-h-0 lg:overflow-y-auto">
+        <main className="bg-satin relative flex min-w-0 flex-1 flex-col overflow-x-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-[calc(8rem+env(safe-area-inset-bottom,0px))] lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pb-0 lg:group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-0">
           <DoctorHeader />
           <Suspense fallback={<Loading />}>{children}</Suspense>
         </main>
+        <DoctorMobileNav />
       </div>
     </QueryClientProviders>
   );

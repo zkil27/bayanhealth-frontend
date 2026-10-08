@@ -61,7 +61,8 @@ export function WorkspaceStepper({
               <span
                 aria-hidden
                 className={cn(
-                  "h-px w-3 sm:w-4 xl:w-6 transition-colors",
+                  // Decorative; dropped on phones so the stepper, Intake and Refresh fit one row.
+                  "h-px w-3 max-sm:hidden sm:w-4 xl:w-6 transition-colors",
                   done || current ? "bg-(--action-primary)" : "bg-(--border-default)",
                 )}
               />
@@ -169,13 +170,16 @@ export function WorkspaceHeader({
   return (
     <header
       data-slot="workspace-header"
-      className="flex w-full max-w-full min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-xs sm:px-4 sm:py-3 md:px-6"
+      // Sticky below `lg`: on a phone the page is one long column, and the
+      // patient's identity, allergies and the stepper must not scroll away
+      // while a prescription is being written further down.
+      className="flex w-full max-w-full min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-xs max-lg:sticky max-lg:top-0 max-lg:z-30 max-lg:pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4 sm:py-3 md:px-6"
     >
       <div className="flex min-w-0 flex-1 sm:flex-initial items-center gap-2.5 sm:gap-3">
         <Link
           href="/doctor/history"
           aria-label="Back to consultation history"
-          className="flex size-8.5 sm:size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
+          className="flex size-11 sm:size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
         >
           <ArrowLeft className="size-4" />
         </Link>
@@ -220,7 +224,19 @@ export function WorkspaceHeader({
         ) : null}
       </div>
 
-      <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 lg:gap-4">
+      {allergies ? (
+        // The `md+` tag above sits inside the identity row; on phones there is
+        // no room there, so the same warning gets its own full-width line.
+        <p
+          data-slot="header-allergy-line"
+          className="flex basis-full items-center gap-1.5 rounded-lg border border-(--danger-border) bg-(--danger-bg) px-2.5 py-1 text-xs font-bold text-(--danger-fg) md:hidden"
+        >
+          <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+          <span className="min-w-0">Allergies: {allergies}</span>
+        </p>
+      ) : null}
+
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5 max-sm:w-full max-sm:justify-between sm:gap-3 lg:gap-4">
         <WorkspaceStepper phase={phase} blocked={blocked} />
         {actions}
       </div>

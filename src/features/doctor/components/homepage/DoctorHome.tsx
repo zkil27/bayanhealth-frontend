@@ -35,7 +35,14 @@ export function DoctorHome() {
           <ActiveEncounterCommandCenter />
           <ScheduleCollisionBanner />
           <DoctorPatientQueue />
-          <DoctorRecentConsultations />
+          {/*
+            Phones keep Today to "who needs me now"; past consults live one tap
+            away under the Consults tab. `contents` leaves the desktop layout
+            untouched.
+          */}
+          <div className="hidden lg:contents">
+            <DoctorRecentConsultations />
+          </div>
         </section>
 
         {/* ------------------------------ right rail: schedule context -- */}

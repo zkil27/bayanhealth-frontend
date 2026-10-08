@@ -9,6 +9,118 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-08] Doctor Mobile Phase 5: Profile Tabs & Account Controls on Phones
+
+- **Target Route / Surface**: `/doctor/profile` (and `/doctor/kyc`, which renders it) below `lg`. `/doctor/history` was checked and needed no change.
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §5.6–5.7
+- **Files Modified**:
+  - `src/components/layout/FloatingSidebar.tsx` [MODIFIED]
+  - `src/features/doctor/components/profile/DoctorProfileView.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Phones could not sign out or switch theme.** Both controls lived only in the desktop rail, which is hidden below `lg`. The rail's theme toggle and sign-out band (including the confirmation dialog) were extracted, unchanged, into an exported `AccountControls`. `SidebarContent` renders it exactly as before, and Profile adds an **Account** card below `lg` with 48px targets.
+  - **Duplicate section list hidden on phones.** The identity card's "Workspace Sections" list repeats the workspace's own tab bar. On a phone its taps changed content below the fold, so it now shows only at `lg+`. The real tab bar gets 44px targets.
+- **Device Optimization**: Doctor mobile. Desktop is verified identical, rail included.
+- **Tokens & Primitives Used**: `AccountControls`, `cardClass`, `useSignOut`, `next-themes`.
+- **Upstream Porting Notes**: `AccountControls` keeps the exact markup, `aria-label`s, `data-slot="sidebar-logout-modal"` and sign-out flow from `SidebarContent`. The patient rail uses `SidebarContent` too and renders identically.
+
+### [2026-10-08] Doctor Mobile Phase 4: Calendar on Phones (Day Default, Touch Scrolling, Popover Sheets)
+
+- **Target Route / Surface**: `/doctor/schedule` below `md`/`sm`. Desktop is unchanged.
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §5.5
+- **Files Modified**:
+  - `src/features/doctor/components/schedule/TimeGrid.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/SchedulePopover.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/CalendarToolbar.tsx` [MODIFIED]
+  - `src/features/doctor/components/schedule/DoctorScheduleView.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **The calendar could not be scrolled by finger.** The time-grid body is `touch-none` (for mouse drag-to-select), so any swipe starting on the grid, which is most of a phone screen, started a selection instead of scrolling. It now uses `pointer-coarse:touch-pan-y`: fingers pan, a tap still proposes a shift, and drag-select stays mouse/pen-only.
+  - **Phones open on Day.** Below 768px, Week needed about 760px and showed two days at a time in a sideways strip. A mount-only effect switches to Day unless the URL carries `?view=` (the notification deep link still wins). The D/W/M switcher still works.
+  - **There was no visible way to add availability on phones.** The Day view's side rail ("Day Overview" + "Add Shift") is `lg+` only, and the toolbar's Add button was removed earlier, which left tap-empty-grid as the only path. A phone-only row shows "N open · N booked" and an **Add availability** button that opens the same create popover with the same default range.
+  - **All four calendar popovers become bottom sheets below `sm`.** `SchedulePopover` (base of Availability, ShiftInspector, Appointment and MonthOverflow) docks to the bottom edge over a scrim, with 85dvh max height, safe-area padding and 44px inner buttons. It is portalled to `<body>`, so the mobile nav and shell stacking contexts can't cover it. Desktop anchoring is unchanged.
+  - **Toolbar:** Today, previous/next and the view switcher get 44px / 40px targets below `sm`.
+- **Device Optimization**: Doctor mobile scheduling. Desktop is verified identical (Week default, anchored popovers, no extra row).
+- **Tokens & Primitives Used**: `pointer-coarse:` variant (Tailwind 4.2), `createPortal`, `Button`, `Plus`, `--teal-700`, `--navy-700`.
+- **Upstream Porting Notes**: No slot, booking or API logic touched. `openCreate`, `defaultRangeFrom` and the existing popovers are reused as-is. The new `data-slot`s are `schedule-day-actions`, `{testId}-scrim`, and `data-presentation="sheet|popover"` on the popover.
+
+### [2026-10-08] Doctor Mobile Phase 3: Post-Consult Workspace on Phones
+
+- **Target Route / Surface**: `/doctor/post-consultation/id` below `lg` (< 1024px). Desktop is unchanged.
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §5.4
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx` [MODIFIED]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Sticky header with an allergy warning.** `WorkspaceHeader` pins to the top below `lg`, so patient identity, the Review → Assess → Deliver stepper and the actions never scroll away while an Rx is written further down. The allergy tag used to be `hidden md:flex`; on phones it now gets its own full-width red line (`header-allergy-line`), only when the allergy is a real warning (`usableAllergyLabel`). The back button is 44px.
+  - **Header actions fit.** The header's Finish was clipped off a 360px screen. On phones it moves to the bottom bar. Refresh becomes a 44px icon button with an `aria-label`. The decorative stepper connectors are hidden below `sm` so the stepper, Intake and Refresh fit one row.
+  - **Patient intake opens as a sheet.** Below `lg` the rail used to stack under the whole main column, past Care Continuity and history. It's now hidden there and opens from a new **Intake** header button as a `CustomBottomModal` that renders `PatientDetails` from the intake the workspace already holds, so there's no extra request.
+  - **Sticky Finish bar.** The existing "Complete Consultation" card pins to the bottom edge below `lg` (edge to edge, safe-area padding, description hidden, 48px button), so Finish is always in the thumb zone. It's the same `FinishDocumentationControl` and the same confirmation.
+  - **No scroll inside the scroll.** The deliverable panel's `max-h-[…] overflow-y-auto` cap now applies at `lg+` only. On phones it hid the Sign / Edit / Redraft actions inside a small inner scroller between the sticky header and footer.
+  - **Deliverable tab strip.** Below `sm`, the "Your records only / Patient can see this" badge wraps above the tabs instead of taking a third of the strip, and the tabs are at least 44px tall.
+- **Device Optimization**: Doctor mobile documentation. Desktop is verified identical at 1440px.
+- **Tokens & Primitives Used**: `CustomBottomModal`, `PatientDetails`, `FinishDocumentationControl`, `--danger-border`/`--danger-bg`/`--danger-fg`, `env(safe-area-inset-*)`, `max-lg:`/`max-sm:` variants.
+- **Upstream Porting Notes**: Layout and class changes only. Assessment-first gating, generation, signing, finalization, release, query flow and every `data-slot` are untouched (`workspace-finish-bar` and `header-allergy-line` are new). Prescribing behavior is unchanged, and the S2 decision is still open. Pre-existing lint problems were left as they were, notably three `react-hooks/rules-of-hooks` errors in `DeliverablesDeck.tsx` (lines ~279–281, `useState` after a conditional return), which predate this change and are worth fixing upstream.
+
+### [2026-10-08] Doctor Mobile Phase 2: Consult Room (Safety Strip, Panel Expand, End Confirmation)
+
+- **Target Route / Surface**: `/consultation/room/[bookingId]`, assigned-doctor view. The patient view is unchanged.
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §5.3
+- **Files Modified**:
+  - `src/features/consultation/components/session/RoomSafetyStrip.tsx` [NEW]
+  - `src/components/consultation/DoctorClinicalCompanionSuite.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationRoom.tsx` [MODIFIED]
+  - `src/features/consultation/components/session/ConsultationChatPanel.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **The End consultation control now asks for confirmation (all breakpoints).** "End Consultation & Release" used to call `POST /complete` on a single tap. That call captures payment, ends the CDS session and can't be undone. Both triggers (the header button and the demo stage's end-call button) now open an `AlertDialog`: "End this consultation? … This can't be undone. Next, you'll write the assessment." The buttons are **Keep consulting** and **End consultation**, 48px on phones. Answers the demo rubric item 3.2 ("safe against accidental clicks").
+  - **New safety strip** pinned above the Intake/Chat tabs (all breakpoints) shows allergies and a red-flag summary. It stays visible on the Chat tab, which on a phone otherwise hides the whole intake. It reuses the room header's `["booking-intake", bookingId, idToken]` query, so it makes no new request. It follows the same honesty rules as `PatientIntakeReferenceTab`: blank allergies show "Not recorded", NKDA shows "No known allergies", and an unanswered screen shows "screening incomplete", never a negative.
+  - **Phone panel expand.** A new **Expand / Show video** toggle (below `lg`) collapses the video to its existing compact strip, using the same `isChatFocused` state the patient's chat focus already drives, so intake or chat gets the screen. The call keeps running. `DemoVideoStage` gained the matching compact strip so demos behave like the real room.
+  - **Phone ergonomics:** the End button is 44px, labelled "End consult" with an icon. Tabs are 44px with short labels ("Intake" / "Chat") below `sm`. The demo stage hides its overlapping "WebRTC Demo" chip and its duplicate red End button below `sm`.
+  - **Copy fix:** the doctor's chat composer said "Type a message to your doctor…". `ConsultationChatPanel` now takes an optional `placeholder`. It defaults to the patient wording, and the doctor suite passes "Type a message to your patient…".
+- **Device Optimization**: Doctor mobile (one-handed, mid-consult). Desktop's only visible additions are the safety strip and the End confirmation.
+- **Tokens & Primitives Used**: `AlertDialog`, `Tabs`, `--surface-warm`, `--danger-fg`, `--status-soon-fg`, `--status-available-fg`, `ChevronsUp`/`ChevronsDown`/`PhoneOff`/`ShieldAlert`/`ShieldCheck`/`TriangleAlert`.
+- **Upstream Porting Notes**: `completeConsultation`, `handleComplete`, query keys and redirects are untouched; the dialog only gates when `handleComplete` runs. The new props are optional and backward compatible (`DoctorClinicalCompanionSuite.expanded` / `onToggleExpanded`, `ConsultationChatPanel.placeholder`, `DemoVideoStage.compact` / `onExpand`). The pre-existing lint warnings in these files (unused `Alert*` imports in the chat panel, `Date.now` in the room's demo data) were left alone to keep the diff clean.
+
+### [2026-10-08] Doctor Mobile Phase 1: Today Screen, Triage & Accept Sheets
+
+- **Target Route / Surface**: `/doctor` below `sm` (< 640px); desktop unchanged
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §5.1–5.2
+- **Files Modified**:
+  - `src/features/doctor/components/homepage/DoctorPatientQueue.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/TriageDetailsModal.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/AcceptConsultModal.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/ActiveEncounterCommandCenter.tsx` [MODIFIED]
+  - `src/features/doctor/components/homepage/DoctorHome.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Queue rows stack on phones.** The patient sits on top and actions sit in a full-width strip below, with 44px buttons that wrap to their own line when the labels don't fit. Previously three 28px buttons sat beside a truncated name and overflowed the card at 360px.
+  - **The queue frame is flat below `sm`.** This removes a card nested inside a card and gives the row actions about 60px more width.
+  - **Triage review and accept confirmation dock to the bottom edge as sheets below `sm`.** Accept and Confirm sit in the thumb zone, with 48px footer buttons and safe-area padding. Body text goes from 12px to 14px, and the close button grows to 44px.
+  - **Both modals are portalled to `<body>`.** An ancestor stacking context was letting the fixed mobile nav cover their action footers.
+  - **The duty switch is a full-width control on phones.** A `before:` overlay gives the 44×24 track a 48px hit area. The notification button grows to 56px.
+  - **Active encounter** "Return to room" / "Open room" becomes a full-width 48px button on phones.
+  - **Recent consultations are hidden below `lg`.** They live under the Consults tab, so Today stays focused on who needs the doctor now. `lg:contents` keeps the desktop layout identical.
+  - **Accessibility:** the icon-only "View intake" button gets a visible label on phones and an sr-only label on desktop. The no-show icon button gets an `aria-label`.
+- **Device Optimization**: Doctor mobile (on the go, one-handed). Desktop `lg+` is pixel-identical.
+- **Tokens & Primitives Used**: `Button` (`data-slot="button"` child selectors), `--radius-canvas`, `--surface-warm`, `--action-primary`, `env(safe-area-inset-bottom)`.
+- **Upstream Porting Notes**: Class-level and markup-only changes. No hooks, mutations, query keys, `data-testid`s or `data-slot`s were changed. The only structural change is `createPortal(…, document.body)` around the two custom modals' existing JSX. Accept still always passes through `AcceptConsultModal`'s confirmation.
+
+### [2026-10-08] Doctor Mobile Phase 0: Bottom Navigation & Return-to-Consult Bar
+
+- **Target Route / Surface**: All `doctor/(homepage)` routes below `lg` (< 1024px)
+- **Plan**: `docs/specs/doctor-mobile/PLAN.md` §4, §6
+- **Files Modified**:
+  - `src/features/doctor/components/DoctorMobileNav.tsx` [NEW]
+  - `src/app/doctor/(homepage)/layout.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **The doctor area had no navigation at all below `lg`.** The sidebar was hidden and nothing replaced it. `DoctorMobileNav` renders `DOCTOR_NAV` (minus "Soon" items) as a fixed bottom bar with 48px targets and text labels, mirroring the patient `NavBar` pattern, so destinations never differ between breakpoints.
+  - **Dashboard tab count chip** shows the same "Live queue" figure as the command bar (`useDoctorQueueSummary().totalActive`). It's solid, not pulsing, with an sr-only "N patients in queue".
+  - **Return-to-consult bar** sits above the nav on every doctor screen except `/doctor`, where the Command Center already shows the encounter. It shows "In consult · <name> · Return" or "Accepted · ready to start · Open room", reads `useActiveEncounter` (the same value as `ActiveEncounterCommandCenter`), and links to the room the same way.
+  - `<main>` reserves bottom padding for the bar (`4.5rem`, or `8rem` while the return bar shows, keyed by `group-has-[[data-slot=live-encounter-return]]`). The bar sits at `z-40`, under the `z-50` sheets.
+  - The consult room and post-consult workspace are outside this layout, so the bar never covers those focused screens.
+- **Device Optimization**: Doctor mobile. Desktop unchanged (`lg:hidden`, `lg:pb-0`).
+- **Tokens & Primitives Used**: `DOCTOR_NAV`, `isNavItemActive`, `--surface-raised`, `--surface-brand`, `--teal-300`, `--teal-500`, `--action-primary`, `--surface-accent-soft`, `--focus-ring`.
+- **Upstream Porting Notes**: Copy `DoctorMobileNav.tsx` and mount it as the last child of the doctor shell's flex row. The new hook reads (`useDoctorQueueSummary`, `useActiveEncounter`) reuse existing query keys, so they add no new endpoints. They do mean the queue polls also run on non-dashboard doctor routes.
+
 ### [2026-10-02] Consultation Intake Vitals & Blood Pressure Layout & Error Formatting Redesign
 
 - **Target Route / Surface**: `/patient/booking/intake/[bookingId]` (`ConcernSafetyStep.tsx`), `intakeSchema.ts`

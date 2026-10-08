@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, Info, MessageSquare, Thermometer, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -82,18 +83,21 @@ export function TriageDetailsModal({
   const requested = new Date(item.requestedAt);
   const requestedLabel = Number.isNaN(requested.getTime()) ? null : requested.toLocaleString();
 
-  return (
+  // Portalled to <body> so no ancestor stacking context (the dashboard's
+  // sheets, the mobile nav) can sit above this dialog or its action footer.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       data-slot="triage-details-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-xs sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-6 py-5">
+      {/* Below `sm` this docks to the bottom edge as a sheet, so the accept action sits in the thumb zone. */}
+      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-(--radius-canvas) border border-b-0 border-(--border-subtle) bg-(--surface-card) shadow-2xl sm:max-h-[90vh] sm:rounded-(--radius-canvas) sm:border-b">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <span className="rounded-md border border-(--status-soon-fg)/25 bg-(--status-soon-bg) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-soon-fg) uppercase">
               Pre-Acceptance Review
@@ -106,13 +110,13 @@ export function TriageDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-xl p-2 text-(--text-subtle) transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body)"
+            className="flex size-11 items-center justify-center rounded-xl text-(--text-subtle) sm:size-auto sm:p-2 transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body)"
           >
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-6 text-xs">
+        <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 text-sm sm:p-6 sm:text-xs">
           <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-warm)/60 p-4">
             <h3 className="text-sm font-bold text-(--text-heading)">
               {item.patientName ?? `Ref ${item.bookingId.slice(-6).toUpperCase()}`}
@@ -208,16 +212,17 @@ export function TriageDetailsModal({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-(--border-subtle) bg-(--surface-warm) px-6 py-4">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-(--border-subtle) bg-(--surface-warm) px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-4">
+          <Button type="button" variant="outline" size="sm" className="h-12 px-4 text-sm sm:h-7 sm:px-2.5 sm:text-[0.8rem]" onClick={onClose}>
             Back to queue
           </Button>
-          <Button type="button" size="sm" className="flex-1" onClick={onProceedToAccept}>
+          <Button type="button" size="sm" className="h-12 flex-1 text-sm sm:h-7 sm:text-[0.8rem]" onClick={onProceedToAccept}>
             Proceed to accept →
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

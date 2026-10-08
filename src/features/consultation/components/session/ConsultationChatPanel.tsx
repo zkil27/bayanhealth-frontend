@@ -33,6 +33,7 @@ export function ConsultationChatPanel({
   deps,
   embedded = false,
   onFocusChange,
+  placeholder = "Type a message to your doctor…",
 }: {
   bookingId: string;
   sessionId?: string;
@@ -44,6 +45,8 @@ export function ConsultationChatPanel({
    */
   embedded?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  /** Composer placeholder. Defaults to the patient's wording; the doctor's suite passes its own. */
+  placeholder?: string;
 }) {
   const {
     messages,
@@ -96,6 +99,7 @@ export function ConsultationChatPanel({
         send={send}
         validationError={validationError}
         onFocusChange={onFocusChange}
+        placeholder={placeholder}
       />
     </section>
   );
@@ -210,12 +214,14 @@ function ChatComposer({
   send,
   validationError,
   onFocusChange,
+  placeholder,
 }: {
   input: string;
   setInput: (v: string) => void;
   send: () => Promise<boolean>;
   validationError: string | null;
   onFocusChange?: (focused: boolean) => void;
+  placeholder: string;
 }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -238,7 +244,7 @@ function ChatComposer({
               void send().then(() => onFocusChange?.(false));
             }
           }}
-          placeholder="Type a message to your doctor…"
+          placeholder={placeholder}
           aria-label="Message to doctor"
           aria-invalid={validationError ? true : undefined}
           rows={2}

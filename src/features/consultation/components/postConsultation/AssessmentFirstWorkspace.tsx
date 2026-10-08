@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
+  ClipboardList,
   Clock,
   FileText,
   History,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CustomBottomModal } from "@/components/ui/custom-bottom-modal";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -33,6 +35,7 @@ import { AuthorizedArtifactHistory } from "./AuthorizedArtifactHistory";
 import { CandidatePicker } from "./CandidatePicker";
 import { CareContinuityPanel } from "./CareContinuityPanel";
 import { DeliverablesDeck, deriveDeckEntries } from "./DeliverablesDeck";
+import { PatientDetails } from "./PatientDetails";
 import { PatientRail } from "./PatientRail";
 import { SoapSummaryCards } from "./SoapSummaryCards";
 import { WorkspaceHeader } from "./WorkspaceChrome";
@@ -196,6 +199,13 @@ export function AssessmentFirstWorkspace({
    */
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [patientRailCollapsed, setPatientRailCollapsed] = useState(false);
+  /**
+   * Below `lg` the patient rail is not a column: stacked under the main
+   * column it ended up past Care Continuity and the history list, a long
+   * scroll away from the prescription being written. It opens as a sheet from
+   * the header instead (see `mobileIntakeOpen` usage below).
+   */
+  const [mobileIntakeOpen, setMobileIntakeOpen] = useState(false);
   const previewRequestRef = useRef(0);
   const candidateSearchRequestRef = useRef(0);
   /**
@@ -1106,7 +1116,18 @@ export function AssessmentFirstWorkspace({
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full gap-1.5 shrink-0"
+              className="h-11 shrink-0 gap-1.5 rounded-full px-3.5 text-sm lg:hidden"
+              onClick={() => setMobileIntakeOpen(true)}
+            >
+              <ClipboardList className="size-4 shrink-0" aria-hidden />
+              Intake
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Refresh"
+              className="size-11 shrink-0 gap-1.5 rounded-full p-0 sm:h-7 sm:w-auto sm:px-2.5"
               disabled={busy}
               onClick={() =>
                 run(async () => {
@@ -1119,11 +1140,14 @@ export function AssessmentFirstWorkspace({
               <RefreshCw className="size-3.5 shrink-0" />
               <span className="hidden sm:inline">Refresh</span>
             </Button>
-            <FinishDocumentationControl
-              assessment={assessment}
-              artifacts={liveCurrent}
-              size="sm"
-            />
+            {/* Phones get Finish in the sticky bottom bar instead, in the thumb zone. */}
+            <div className="hidden lg:block">
+              <FinishDocumentationControl
+                assessment={assessment}
+                artifacts={liveCurrent}
+                size="sm"
+              />
+            </div>
           </div>
         }
       />
@@ -1383,8 +1407,16 @@ export function AssessmentFirstWorkspace({
               onInspectArtifact={(art) => setInspectingHistoricalArtifact(art)}
             />
           ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
-            <div>
+          {/*
+            Below `lg` this card pins to the bottom edge while the main column
+            scrolls, so Finish is always one thumb-reach away and never a long
+            scroll down past Care Continuity and history.
+          */}
+          <div
+            data-slot="workspace-finish-bar"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs max-lg:sticky max-lg:bottom-0 max-lg:z-20 max-lg:-mx-3 max-lg:rounded-b-none max-lg:px-3 max-lg:pt-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] max-lg:shadow-[0_-4px_12px_rgba(0,0,0,0.06)] sm:max-lg:-mx-4 sm:max-lg:px-4"
+          >
+            <div className="max-lg:hidden">
               <p className="text-sm font-bold text-(--text-heading)">Complete Consultation</p>
               <p className="text-xs text-(--text-muted)">
                 Review and release all clinical documents, or complete this encounter.
@@ -1394,12 +1426,12 @@ export function AssessmentFirstWorkspace({
               assessment={assessment}
               artifacts={liveCurrent}
               size="default"
-              className="w-full sm:w-auto"
+              className="w-full max-lg:h-12 max-lg:text-sm sm:w-auto max-lg:sm:w-full"
             />
           </div>
         </main>
 
-        <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
+        <div className="order-2 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
           <PatientRail
             bookingId={bookingId}
             intake={intake}
@@ -1408,6 +1440,15 @@ export function AssessmentFirstWorkspace({
           />
         </div>
       </div>
+
+      <CustomBottomModal
+        open={mobileIntakeOpen}
+        onOpenChange={setMobileIntakeOpen}
+        title="Patient intake"
+        description={intake?.patientName ?? undefined}
+      >
+        <PatientDetails bookingId={bookingId} form={intake} />
+      </CustomBottomModal>
 
       <DocumentSheetModal
         open={Boolean(inspectingHistoricalArtifact)}

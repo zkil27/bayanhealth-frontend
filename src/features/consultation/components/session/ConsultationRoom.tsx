@@ -19,6 +19,16 @@ import {
 import { cn } from "@/lib/utils";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -71,6 +81,13 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   const queryClient = useQueryClient();
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [isChatFocused, setIsChatFocused] = useState(false);
+  /**
+   * "End consultation" is irreversible: `complete` captures payment, ends the
+   * CDS session and moves the doctor into documentation. Both of its triggers
+   * (the header button and the demo stage's end-call control) open this
+   * confirmation instead of firing the mutation directly.
+   */
+  const [confirmEndOpen, setConfirmEndOpen] = useState(false);
 
   const stateQuery = useQuery({
     queryKey: ["consultation-state", bookingId, idToken],
@@ -243,7 +260,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
             booking={booking}
             session={session}
             isAssignedDoctor={isAssignedDoctor}
-            onComplete={handleComplete}
+            onComplete={() => setConfirmEndOpen(true)}
             completing={complete.isPending}
           />
         ) : (
@@ -274,7 +291,11 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
           )}
         >
           {isDemo ? (
-            <DemoVideoStage onEndCall={handleComplete} />
+            <DemoVideoStage
+              onEndCall={() => setConfirmEndOpen(true)}
+              compact={isChatFocused}
+              onExpand={() => setIsChatFocused(false)}
+            />
           ) : (
             <ConsultationVideo
               bookingId={bookingId}
@@ -298,9 +319,14 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
         */}
         <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-card) shadow-sm md:rounded-3xl lg:h-full lg:flex-[5] min-w-0">
           {isAssignedDoctor ? (
+            // Below `lg` the doctor can hand the screen to the panel; the video
+            // above collapses to its compact strip through the same
+            // `isChatFocused` state the patient's chat focus already drives.
             <DoctorClinicalCompanionSuite
               bookingId={bookingId}
               sessionId={session?.sessionId}
+              expanded={isChatFocused}
+              onToggleExpanded={() => setIsChatFocused((prev) => !prev)}
             />
           ) : (
             <PatientCompanionSuite
@@ -312,6 +338,32 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
           )}
         </aside>
       </main>
+
+      {isAssignedDoctor ? (
+        <AlertDialog open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
+          <AlertDialogContent data-slot="consultation-room-end-confirm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>End this consultation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The call ends for you and your patient and the booking is marked complete.
+                This can&apos;t be undone. Next, you&apos;ll write the assessment.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="h-12 text-sm sm:h-8">Keep consulting</AlertDialogCancel>
+              <AlertDialogAction
+                className="h-12 bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 sm:h-8"
+                onClick={() => {
+                  setConfirmEndOpen(false);
+                  handleComplete();
+                }}
+              >
+                End consultation
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </div>
   );
 }
@@ -443,7 +495,7 @@ function InProgressHeader({
             size="sm"
             onClick={onComplete}
             disabled={completing}
-            className="rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 active:bg-rose-800"
+            className="h-11 rounded-xl bg-rose-600 px-3.5 text-sm font-bold text-white hover:bg-rose-700 active:bg-rose-800 sm:h-7 sm:px-2.5 sm:text-[0.8rem]"
           >
             {completing ? (
               <>
@@ -451,7 +503,11 @@ function InProgressHeader({
                 Completing…
               </>
             ) : (
-              "End Consultation & Release"
+              <>
+                <PhoneOff className="size-4 sm:hidden" aria-hidden />
+                <span className="sm:hidden">End consult</span>
+                <span className="hidden sm:inline">End Consultation &amp; Release</span>
+              </>
             )}
           </Button>
         ) : (
@@ -628,9 +684,64 @@ function NotStartedPanel({ isFetching }: { isFetching: boolean }) {
   );
 }
 
-function DemoVideoStage({ onEndCall }: { onEndCall: () => void }) {
+function DemoVideoStage({
+  onEndCall,
+  compact = false,
+  onExpand,
+}: {
+  onEndCall: () => void;
+  /** Mirrors `ConsultationVideo`'s compact strip, shown while the doctor's panel is expanded. */
+  compact?: boolean;
+  onExpand?: () => void;
+}) {
   const [micMuted, setMicMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
+
+  if (compact) {
+    return (
+      <section
+        data-slot="consultation-video-compact"
+        className="flex h-full w-full items-center justify-between gap-2.5 bg-slate-950 px-3.5 py-1.5 text-white"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-xs font-black text-white">
+            MS
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-bold text-slate-100">Maria Santos</p>
+            <p className="text-[11px] font-medium text-teal-300">Call continues · video minimized</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => setMicMuted((prev) => !prev)}
+            aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
+            className={cn(
+              "h-11 rounded-lg px-3 text-xs font-bold",
+              micMuted ? "bg-rose-600 text-white hover:bg-rose-700" : "border border-white/10 bg-slate-800 text-slate-200",
+            )}
+          >
+            {micMuted ? <MicOff className="mr-1 size-3.5" /> : <Mic className="mr-1 size-3.5 text-emerald-400" />}
+            {micMuted ? "Unmute" : "Mute"}
+          </Button>
+          {onExpand ? (
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={onExpand}
+              aria-label="Show video"
+              className="size-11 rounded-lg border-white/20 bg-slate-900 p-0 text-slate-200 hover:bg-slate-800"
+            >
+              <Video className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl bg-slate-950 text-white shadow-inner">
@@ -667,7 +778,8 @@ function DemoVideoStage({ onEndCall }: { onEndCall: () => void }) {
 
       {/* Self-view Picture-in-Picture (Doctor Feed) */}
       <div className="relative z-10 m-3.5 flex items-end justify-between sm:m-4">
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+        {/* Hidden on phones, where the short stage would put this chip over the patient's name. */}
+        <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md sm:flex">
           <span className="text-xs text-white/80 font-medium">BayanHealth WebRTC Demo</span>
         </div>
 
@@ -722,10 +834,11 @@ function DemoVideoStage({ onEndCall }: { onEndCall: () => void }) {
           {cameraOff ? <VideoOff className="size-5" /> : <Video className="size-5" />}
         </Button>
 
+        {/* On phones the room header's "End consult" is the one end control; two stacked red buttons read as two different actions. */}
         <Button
           type="button"
           onClick={onEndCall}
-          className="flex h-11 items-center gap-2 rounded-full bg-rose-600 px-5 font-semibold text-white shadow-md hover:bg-rose-700 transition-colors"
+          className="hidden h-11 items-center gap-2 rounded-full bg-rose-600 px-5 font-semibold text-white shadow-md hover:bg-rose-700 transition-colors sm:flex"
         >
           <PhoneOff className="size-4" />
           <span>End Consultation</span>

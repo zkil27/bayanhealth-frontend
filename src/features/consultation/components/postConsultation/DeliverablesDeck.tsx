@@ -495,7 +495,12 @@ export function DeliverablesDeck({
         is the point.
       */}
       <div className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs">
-        <div className="flex items-end gap-2 border-b border-(--border-subtle) bg-(--surface-warm-soft)/40 px-2 pt-2">
+        {/*
+          Below `sm` the visibility badge wraps onto its own line above the
+          tabs (`order-first`); pinned beside them it took a third of a 360px
+          phone and left the scrollable tab strip ~200px.
+        */}
+        <div className="flex flex-wrap items-end gap-2 border-b border-(--border-subtle) bg-(--surface-warm-soft)/40 px-2 pt-2 sm:flex-nowrap">
           {/*
             A horizontal, scrollable strip rather than a wrapping row: with
             seven possible documents a wrapping strip reflows the whole panel
@@ -505,7 +510,7 @@ export function DeliverablesDeck({
           <div
             role="tablist"
             aria-label="Drafted documents"
-            className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto overflow-y-hidden"
+            className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto overflow-y-hidden max-sm:basis-full"
           >
             {entries.map((entry) => {
               const Icon = TOOL_ICONS[entry.outputType];
@@ -528,7 +533,7 @@ export function DeliverablesDeck({
                   data-status={entry.status}
                   onClick={() => onActiveChange(entry.outputType)}
                   className={cn(
-                    "group relative flex shrink-0 items-center gap-2 rounded-t-xl px-3 py-2 text-xs sm:text-sm transition-all select-none",
+                    "group relative flex min-h-11 shrink-0 items-center gap-2 rounded-t-xl px-3 py-2 text-xs sm:min-h-0 sm:text-sm transition-all select-none",
                     selected
                       ? "z-10 -mb-px border border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading) shadow-[0_-2px_6px_rgba(0,0,0,0.03)]"
                       : "border border-transparent bg-transparent text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-card)/50 font-medium",
@@ -617,7 +622,7 @@ export function DeliverablesDeck({
             data-slot="artifact-patient-visibility"
             data-patient-readable={isPatientReadableOutput(current.outputType)}
             className={cn(
-              "mb-2 shrink-0 rounded-full px-2 py-0.5 text-xs",
+              "mb-2 shrink-0 rounded-full px-2 py-0.5 text-xs max-sm:order-first max-sm:mb-0 max-sm:ml-1",
               isPatientReadableOutput(current.outputType)
                 ? "bg-(--surface-accent-soft) font-bold text-(--status-available-fg)"
                 : "bg-(--gray-bg) text-(--gray-fg)",
@@ -639,7 +644,10 @@ export function DeliverablesDeck({
           role="tabpanel"
           id={`deck-panel-${current.outputType}`}
           aria-labelledby={`deck-tab-${current.outputType}`}
-          className="min-w-0 max-h-[min(640px,calc(100dvh-16rem))] overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-1 duration-200"
+          // Capped with its own scroll only at `lg+`. On a phone, between the
+          // sticky header and the sticky Finish bar, an inner scroller became a
+          // small scroll-within-a-scroll that hid the sign/edit actions.
+          className="min-w-0 animate-in lg:max-h-[min(640px,calc(100dvh-16rem))] lg:overflow-y-auto fade-in-0 slide-in-from-bottom-1 duration-200"
         >
           {STATUS_COPY[current.status] ? (
             <p className="px-4 pt-3 text-sm text-(--text-muted)">{STATUS_COPY[current.status]}</p>

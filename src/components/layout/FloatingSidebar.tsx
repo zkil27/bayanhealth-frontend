@@ -51,20 +51,6 @@ export function SidebarContent() {
     [area],
   );
 
-  const { signOut, pending } = useSignOut();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  // `next-themes`: `resolvedTheme` is only known client-side, so the toggle is
-  // withheld until mount rather than rendering the wrong icon for a
-  // `system`-resolved theme (same guard as `DoctorThemeToggle` / `ModeToggle`).
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-  const isDark = resolvedTheme === "dark";
-
   return (
     <>
       {/* -------------------------------------------------- top: brand -- */}
@@ -129,7 +115,35 @@ export function SidebarContent() {
         "duty" that could disagree — one real, one a decorative local
         `useState` — is worse than one.
       */}
-      <div className="flex flex-col gap-1.5 border-t border-(--border-subtle) pt-3">
+      <AccountControls className="border-t border-(--border-subtle) pt-3" />
+    </>
+  );
+}
+
+/**
+ * Theme toggle and sign-out (with its confirmation), the account band at the
+ * bottom of the desktop rail. Extracted so a screen that has no rail — the
+ * doctor's Profile on a phone, where the rail is hidden and nothing else
+ * offered sign-out — can render the exact same controls, not a copy of them.
+ */
+export function AccountControls({ className }: { className?: string }) {
+  const { signOut, pending } = useSignOut();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // `next-themes`: `resolvedTheme` is only known client-side, so the toggle is
+  // withheld until mount rather than rendering the wrong icon for a
+  // `system`-resolved theme (same guard as `DoctorThemeToggle` / `ModeToggle`).
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+  const isDark = resolvedTheme === "dark";
+
+  return (
+    <>
+      <div className={cn("flex flex-col gap-1.5", className)}>
         {mounted && (
           <button
             type="button"
