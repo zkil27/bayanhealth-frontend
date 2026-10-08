@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type {
+  CdsClinicalReferralPayload,
+  CdsDiagnosticRequestPayload,
   CdsFinalIcdPayload,
-  CdsImagingRequestPayload,
-  CdsLabRequestPayload,
   CdsMedicalCertificatePayload,
   CdsPatientEducationPayload,
   CdsPlanPayload,
@@ -73,10 +73,10 @@ export function isEditablePayload(
       return isText(record.code);
     case "medical_certificate":
       return isText(record.statement);
-    case "lab_request":
-      return Array.isArray(record.tests) && record.tests.length > 0;
-    case "imaging_request":
-      return Array.isArray(record.studies) && record.studies.length > 0;
+    case "diagnostic_request":
+      return Array.isArray(record.items) && record.items.length > 0;
+    case "clinical_referral":
+      return isText(record.reasonForReferral) && isText(record.clinicalSummary);
     case "patient_education":
       return isText(record.title) && Array.isArray(record.sections);
     default:
@@ -96,10 +96,10 @@ export function ArtifactPayloadEditor(props: ArtifactPayloadEditorProps) {
       return <FinalIcdEditor payload={payload as CdsFinalIcdPayload} onChange={onChange} disabled={disabled} />;
     case "medical_certificate":
       return <MedicalCertificateEditor payload={payload as CdsMedicalCertificatePayload} onChange={onChange} disabled={disabled} />;
-    case "lab_request":
-      return <LabRequestEditor payload={payload as CdsLabRequestPayload} onChange={onChange} disabled={disabled} />;
-    case "imaging_request":
-      return <ImagingRequestEditor payload={payload as CdsImagingRequestPayload} onChange={onChange} disabled={disabled} />;
+    case "diagnostic_request":
+      return <DiagnosticRequestEditor payload={payload as CdsDiagnosticRequestPayload} onChange={onChange} disabled={disabled} />;
+    case "clinical_referral":
+      return <ClinicalReferralEditor payload={payload as CdsClinicalReferralPayload} onChange={onChange} disabled={disabled} />;
     case "patient_education":
       return <PatientEducationEditor payload={payload as CdsPatientEducationPayload} onChange={onChange} disabled={disabled} />;
     default:
@@ -353,58 +353,89 @@ function MedicalCertificateEditor({
   );
 }
 
-function LabRequestEditor({
+function DiagnosticRequestEditor({
   payload,
   onChange,
   disabled,
 }: {
-  payload: CdsLabRequestPayload;
+  payload: CdsDiagnosticRequestPayload;
   onChange: (next: CdsProtectedArtifactPayload) => void;
   disabled?: boolean;
 }) {
-  const tests = payload.tests;
-  const setTests = (next: CdsLabRequestPayload["tests"]) => onChange({ ...payload, tests: next });
+  const items = payload.items;
+  const setItems = (next: CdsDiagnosticRequestPayload["items"]) => onChange({ ...payload, items: next });
 
   return (
     <div className="flex flex-col gap-4">
+      <label className="flex min-w-0 max-w-xs flex-col gap-1.5">
+        <FieldLabel>Modality</FieldLabel>
+        <select
+          value={payload.modality}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange({ ...payload, modality: event.target.value as CdsDiagnosticRequestPayload["modality"] })
+          }
+          className="h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3 text-base sm:text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
+        >
+          <option value="lab">Lab</option>
+          <option value="imaging">Imaging</option>
+          <option value="urinalysis">Urinalysis</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
       <RepeatingGroup
-        legend="Tests"
-        count={tests.length}
+        legend="Items"
+        count={items.length}
         min={1}
         max={40}
         disabled={disabled}
-        addLabel="Add test"
-        onAdd={() => setTests([...tests, { testName: "", rationale: "", priority: "routine" }])}
+        addLabel="Add item"
+        onAdd={() => setItems([...items, { testName: "", rationale: "", priority: "routine" }])}
       >
-        {tests.map((test, index) => (
+        {items.map((item, index) => (
           <GroupItem
             key={index}
-            title={test.testName.trim() || `Test ${index + 1}`}
+            title={item.testName?.trim() || item.studyName?.trim() || `Item ${index + 1}`}
             disabled={disabled}
-            removable={tests.length > 1}
-            onRemove={() => setTests(tests.filter((_, i) => i !== index))}
+            removable={items.length > 1}
+            onRemove={() => setItems(items.filter((_, i) => i !== index))}
           >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_9rem]">
               <TextField
                 label="Test name"
-                value={test.testName}
+                value={item.testName ?? ""}
                 maxLength={255}
                 disabled={disabled}
-                onChange={(testName) => setTests(tests.map((item, i) => (i === index ? { ...item, testName } : item)))}
+                onChange={(testName) => setItems(items.map((it, i) => (i === index ? { ...it, testName } : it)))}
+              />
+              <TextField
+                label="Study name"
+                value={item.studyName ?? ""}
+                maxLength={255}
+                disabled={disabled}
+                onChange={(studyName) => setItems(items.map((it, i) => (i === index ? { ...it, studyName } : it)))}
               />
               <PriorityField
-                value={test.priority}
+                value={item.priority}
                 disabled={disabled}
-                onChange={(priority) => setTests(tests.map((item, i) => (i === index ? { ...item, priority } : item)))}
+                onChange={(priority) => setItems(items.map((it, i) => (i === index ? { ...it, priority } : it)))}
               />
             </div>
+            <TextField
+              label="Body region"
+              optional
+              value={item.bodyRegion ?? ""}
+              maxLength={255}
+              disabled={disabled}
+              onChange={(bodyRegion) => setItems(items.map((it, i) => (i === index ? { ...it, bodyRegion } : it)))}
+            />
             <TextAreaField
               label="Rationale"
-              value={test.rationale}
+              value={item.rationale}
               maxLength={1000}
               rows={2}
               disabled={disabled}
-              onChange={(rationale) => setTests(tests.map((item, i) => (i === index ? { ...item, rationale } : item)))}
+              onChange={(rationale) => setItems(items.map((it, i) => (i === index ? { ...it, rationale } : it)))}
             />
           </GroupItem>
         ))}
@@ -424,78 +455,73 @@ function LabRequestEditor({
   );
 }
 
-function ImagingRequestEditor({
+function ClinicalReferralEditor({
   payload,
   onChange,
   disabled,
 }: {
-  payload: CdsImagingRequestPayload;
+  payload: CdsClinicalReferralPayload;
   onChange: (next: CdsProtectedArtifactPayload) => void;
   disabled?: boolean;
 }) {
-  const studies = payload.studies;
-  const setStudies = (next: CdsImagingRequestPayload["studies"]) => onChange({ ...payload, studies: next });
-
   return (
     <div className="flex flex-col gap-4">
-      <RepeatingGroup
-        legend="Studies"
-        count={studies.length}
-        min={1}
-        max={20}
-        disabled={disabled}
-        addLabel="Add study"
-        onAdd={() => setStudies([...studies, { studyName: "", bodyRegion: "", rationale: "", priority: "routine" }])}
-      >
-        {studies.map((study, index) => (
-          <GroupItem
-            key={index}
-            title={study.studyName.trim() || `Study ${index + 1}`}
-            disabled={disabled}
-            removable={studies.length > 1}
-            onRemove={() => setStudies(studies.filter((_, i) => i !== index))}
-          >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_9rem]">
-              <TextField
-                label="Study name"
-                value={study.studyName}
-                maxLength={255}
-                disabled={disabled}
-                onChange={(studyName) => setStudies(studies.map((item, i) => (i === index ? { ...item, studyName } : item)))}
-              />
-              <TextField
-                label="Body region"
-                value={study.bodyRegion}
-                maxLength={255}
-                disabled={disabled}
-                onChange={(bodyRegion) => setStudies(studies.map((item, i) => (i === index ? { ...item, bodyRegion } : item)))}
-              />
-              <PriorityField
-                value={study.priority}
-                disabled={disabled}
-                onChange={(priority) => setStudies(studies.map((item, i) => (i === index ? { ...item, priority } : item)))}
-              />
-            </div>
-            <TextAreaField
-              label="Rationale"
-              value={study.rationale}
-              maxLength={1000}
-              rows={2}
-              disabled={disabled}
-              onChange={(rationale) => setStudies(studies.map((item, i) => (i === index ? { ...item, rationale } : item)))}
-            />
-          </GroupItem>
-        ))}
-      </RepeatingGroup>
-      <TextAreaField
-        label="Instructions"
+      <TextField
+        label="Receiving facility / specialty"
         optional
-        value={payload.instructions ?? ""}
+        value={payload.receivingFacilityOrSpecialty ?? ""}
+        maxLength={255}
+        disabled={disabled}
+        onChange={(value) =>
+          onChange({
+            ...payload,
+            ...(value.trim() ? { receivingFacilityOrSpecialty: value } : { receivingFacilityOrSpecialty: undefined }),
+          })
+        }
+      />
+      <label className="flex min-w-0 max-w-xs flex-col gap-1.5">
+        <FieldLabel>Urgency</FieldLabel>
+        <select
+          value={payload.urgency}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange({
+              ...payload,
+              urgency: event.target.value === "emergency" ? "emergency" : event.target.value === "urgent" ? "urgent" : "routine",
+            })
+          }
+          className="h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3 text-base sm:text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
+        >
+          <option value="routine">Routine</option>
+          <option value="urgent">Urgent</option>
+          <option value="emergency">Emergency: go to the ER now</option>
+        </select>
+      </label>
+      <TextAreaField
+        label="Reason for referral"
+        value={payload.reasonForReferral}
         maxLength={2000}
         rows={2}
         disabled={disabled}
-        onChange={(instructions) =>
-          onChange({ ...payload, ...(instructions.trim() ? { instructions } : { instructions: undefined }) })
+        onChange={(reasonForReferral) => onChange({ ...payload, reasonForReferral })}
+      />
+      <TextAreaField
+        label="Clinical summary"
+        value={payload.clinicalSummary}
+        maxLength={4000}
+        rows={3}
+        disabled={disabled}
+        onChange={(clinicalSummary) => onChange({ ...payload, clinicalSummary })}
+      />
+      <TextAreaField
+        label="Follow-up"
+        optional
+        value={payload.followUp ?? ""}
+        maxLength={2000}
+        rows={2}
+        disabled={disabled}
+        onChange={(value) =>
+          onChange({ ...payload, ...(value.trim() ? { followUp: value } : { followUp: undefined }) })
         }
       />
     </div>
@@ -625,7 +651,7 @@ function FieldLabel({ children, optional }: { children: React.ReactNode; optiona
   return (
     <span className="text-xs font-semibold text-(--text-heading) flex items-center gap-1.5">
       {children}
-      {optional ? <span className="text-[11px] font-normal text-(--text-muted)">(optional)</span> : null}
+      {optional ? <span className="text-xs font-normal text-(--text-muted)">(optional)</span> : null}
     </span>
   );
 }
@@ -640,6 +666,7 @@ function TextField({
   mono,
   hint,
   placeholder,
+  optional,
 }: {
   label: string;
   value: string;
@@ -650,10 +677,11 @@ function TextField({
   mono?: boolean;
   hint?: string;
   placeholder?: string;
+  optional?: boolean;
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel optional={optional}>{label}</FieldLabel>
       <Input
         type={type}
         value={value}
@@ -661,7 +689,7 @@ function TextField({
         disabled={disabled}
         placeholder={placeholder}
         className={cn(
-          "h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3.5 text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20",
+          "h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3.5 text-base sm:text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20",
           mono && "font-mono",
         )}
         onChange={(event) => onChange(event.target.value)}
@@ -701,7 +729,7 @@ function TextAreaField({
         maxLength={maxLength}
         disabled={disabled}
         placeholder={placeholder}
-        className="min-h-20 w-full rounded-[12px] border border-(--border-default) bg-white dark:bg-(--surface-card) p-3.5 text-sm leading-relaxed text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20 resize-y"
+        className="min-h-20 w-full rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) p-3.5 text-base sm:text-sm leading-relaxed text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20 resize-y"
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <span className="text-xs text-(--text-subtle)">{hint}</span> : null}
@@ -725,7 +753,7 @@ function PriorityField({
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value === "urgent" ? "urgent" : "routine")}
-        className="h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3 text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
+        className="h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3 text-base sm:text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
       >
         <option value="routine">Routine</option>
         <option value="urgent">Urgent</option>
@@ -762,7 +790,7 @@ function StringListField({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <FieldLabel>{label}</FieldLabel>
-        <span className="text-[11px] text-(--text-muted)">
+        <span className="text-xs text-(--text-muted)">
           {items.length} of {max} max
         </span>
       </div>
@@ -771,7 +799,7 @@ function StringListField({
           <li key={index} className="flex items-center gap-2">
             <span
               aria-hidden
-              className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--surface-brand-soft) text-[11px] font-bold text-(--navy-800) dark:text-(--navy-200)"
+              className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--surface-brand-soft) text-xs font-bold text-(--navy-800) dark:text-(--navy-200)"
             >
               {index + 1}
             </span>
@@ -782,7 +810,7 @@ function StringListField({
                 disabled={disabled}
                 placeholder={placeholder ?? `Enter ${label.toLowerCase()}...`}
                 aria-label={`${label} ${index + 1}`}
-                className="h-10 rounded-[10px] border border-(--border-default) bg-white dark:bg-(--surface-card) px-3.5 text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20"
+                className="h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3.5 text-base sm:text-sm text-(--text-heading) shadow-2xs transition-colors placeholder:text-(--text-subtle)/50 focus-visible:border-(--action-primary) focus-visible:ring-2 focus-visible:ring-(--teal-600)/20"
                 onChange={(event) =>
                   onChange(items.map((existing, i) => (i === index ? event.target.value : existing)))
                 }
@@ -792,7 +820,7 @@ function StringListField({
               type="button"
               variant="ghost"
               size="icon"
-              className="size-9 shrink-0 rounded-lg text-(--text-muted) transition-colors hover:bg-(--danger-bg) hover:text-(--danger-fg)"
+              className="size-9 max-lg:size-11 shrink-0 rounded-lg text-(--text-muted) transition-colors hover:bg-(--danger-bg) hover:text-(--danger-fg)"
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
               disabled={disabled || items.length <= 1}
               onClick={() => onChange(items.filter((_, i) => i !== index))}
@@ -806,7 +834,7 @@ function StringListField({
         type="button"
         variant="outline"
         size="sm"
-        className="self-start rounded-full border-dashed border-(--teal-700)/40 bg-white/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
+        className="self-start max-lg:h-11 rounded-full border-dashed border-(--teal-700)/40 bg-(--white)/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
         disabled={disabled || items.length >= max}
         onClick={() => onChange([...items, ""])}
       >
@@ -842,7 +870,7 @@ function RepeatingGroup({
         <legend className="text-xs font-semibold text-(--text-heading)">
           {legend}
         </legend>
-        <span className="text-[11px] text-(--text-muted)">
+        <span className="text-xs text-(--text-muted)">
           {count} of {max} max
         </span>
       </div>
@@ -851,7 +879,7 @@ function RepeatingGroup({
         type="button"
         variant="outline"
         size="sm"
-        className="self-start rounded-full border-dashed border-(--teal-700)/40 bg-white/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
+        className="self-start max-lg:h-11 rounded-full border-dashed border-(--teal-700)/40 bg-(--white)/80 dark:bg-(--surface-card) px-3.5 text-xs font-semibold text-(--teal-800) dark:text-(--teal-300) shadow-2xs hover:border-(--teal-700) hover:bg-(--surface-brand-soft)"
         disabled={disabled || count >= max}
         onClick={onAdd}
       >
@@ -875,7 +903,7 @@ function GroupItem({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[14px] border border-(--border-default) bg-(--surface-card) p-4 shadow-2xs">
+    <div className="flex flex-col gap-3 rounded-2xl border border-(--border-default) bg-(--surface-card) p-4 shadow-2xs">
       <div className="flex items-center gap-2 border-b border-(--border-subtle) pb-2">
         <p className="min-w-0 flex-1 truncate text-xs font-bold text-(--text-heading)">{title}</p>
         <Button
@@ -897,7 +925,7 @@ function GroupItem({
 
 function ReadOnlyNote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-[10px] bg-(--surface-sunken) px-3 py-2 text-xs text-(--text-muted)">
+    <p className="rounded-xl bg-(--surface-sunken) px-3 py-2 text-xs text-(--text-muted)">
       {children}
     </p>
   );

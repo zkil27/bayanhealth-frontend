@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, ShieldCheck, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -93,18 +94,21 @@ export function AcceptConsultModal({
     }
   }
 
-  return (
+  // Portalled to <body> so no ancestor stacking context (the dashboard's
+  // sheets, the mobile nav) can sit above this dialog or its action footer.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       data-slot="accept-consult-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-xs sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isSubmitting) onClose();
       }}
     >
-      <div className="w-full max-w-md overflow-hidden rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-6 py-5">
+      {/* Below `sm` this docks to the bottom edge as a sheet, so Confirm sits in the thumb zone. */}
+      <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-(--radius-canvas) border border-b-0 border-(--border-subtle) bg-(--surface-card) shadow-2xl sm:max-h-none sm:overflow-hidden sm:rounded-(--radius-canvas) sm:border-b">
+        <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <span className="rounded-md border border-(--status-available-fg)/25 bg-(--status-available-bg) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
               Clinical Duty Confirmation
@@ -116,13 +120,13 @@ export function AcceptConsultModal({
             onClick={onClose}
             disabled={isSubmitting}
             aria-label="Close"
-            className="rounded-xl p-2 text-(--text-subtle) transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body) disabled:opacity-40"
+            className="flex size-11 items-center justify-center rounded-xl text-(--text-subtle) sm:size-auto sm:p-2 transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body) disabled:opacity-40"
           >
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="space-y-4 p-6 text-xs">
+        <div className="space-y-4 p-4 text-sm sm:p-6 sm:text-xs">
           <div className="space-y-2 rounded-2xl border border-(--border-subtle) bg-(--surface-warm)/60 p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm font-bold text-(--text-heading)">{target.name}</span>
@@ -167,11 +171,11 @@ export function AcceptConsultModal({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-(--border-subtle) bg-(--surface-warm) px-6 py-4">
-          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
+        <div className="flex items-center justify-between gap-3 border-t border-(--border-subtle) bg-(--surface-warm) px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-4">
+          <Button type="button" variant="outline" size="sm" className="h-12 px-4 text-sm sm:h-7 sm:px-2.5 sm:text-[0.8rem]" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="button" size="sm" className="flex-1" onClick={onConfirm} disabled={isSubmitting}>
+          <Button type="button" size="sm" className="h-12 flex-1 text-sm sm:h-7 sm:text-[0.8rem]" onClick={onConfirm} disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Spinner className="mr-1.5 size-3.5" />
@@ -183,6 +187,7 @@ export function AcceptConsultModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

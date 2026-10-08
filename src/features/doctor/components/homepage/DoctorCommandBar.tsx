@@ -146,11 +146,12 @@ export function DoctorCommandBar() {
         </div>
 
         {/* Duty Status Capsule & Quick Actions */}
-        <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
+        {/* Full width on phones: the duty switch is the most consequential control on the screen, not a corner chip. */}
+        <div className="flex w-full items-center gap-3 md:w-auto md:flex-wrap md:self-auto">
           {/* Master Duty Switch Capsule */}
           <div
             className={cn(
-              "flex items-center gap-3 rounded-2xl border px-3.5 py-2 transition-colors",
+              "flex min-h-14 flex-1 items-center justify-between gap-3 rounded-2xl border px-3.5 py-2 transition-colors md:min-h-0 md:flex-none md:justify-start",
               isOnDuty
                 ? "border-(--status-available-fg)/30 bg-(--status-available-bg)"
                 : "border-(--border-subtle) bg-(--surface-warm)",
@@ -182,7 +183,8 @@ export function DoctorCommandBar() {
               disabled={toggle.isPending || !profile}
               onClick={() => toggle.mutate(!isOnDuty)}
               className={cn(
-                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:cursor-not-allowed disabled:opacity-60",
+                // `before:` widens the hit area to 48px around the 44×24 track without changing how it looks.
+                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:cursor-not-allowed disabled:opacity-60",
                 isOnDuty ? "bg-(--status-available-fg)" : "bg-(--gray-fg)",
               )}
             >
@@ -197,7 +199,7 @@ export function DoctorCommandBar() {
           </div>
 
           {/* Notification Center */}
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) [&_svg]:size-4.5">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) md:size-10 text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) [&_svg]:size-4.5">
             <DoctorNotification />
           </div>
         </div>

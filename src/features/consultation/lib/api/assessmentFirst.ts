@@ -15,6 +15,7 @@ import type {
   CdsCandidateSelectionRequest,
   CdsConfirmedAssessmentUpdateRequest,
   CdsCurrentOutputs,
+  CdsPhysicianAuthoredOutputRequest,
   CdsDiagnosisCandidatePreview,
   CdsEditableAssessmentUpdateRequest,
   CdsGateTokenIssueRequest,
@@ -37,13 +38,14 @@ export type CdsGenerationResult =
   | { kind: "completed"; artifact: CdsProtectedArtifact }
   | { kind: "accepted"; job: CdsAsyncJobAccepted };
 
-const generationPaths: Record<CdsProtectedOutputType, string> = {
+// No Final ICD: the ICD-10 code is the physician's, confirmed with the
+// Assessment (ADR-20261006-02), and its generation route is retired.
+const generationPaths: Record<Exclude<CdsProtectedOutputType, "final_icd">, string> = {
   plan: "plan-generations",
   prescription: "prescription-generations",
-  final_icd: "final-icd-generations",
   medical_certificate: "medical-certificate-generations",
-  lab_request: "lab-request-generations",
-  imaging_request: "imaging-request-generations",
+  diagnostic_request: "diagnostic-request-generations",
+  clinical_referral: "clinical-referral-generations",
   patient_education: "patient-education-generations",
 };
 
@@ -88,8 +90,8 @@ export async function getAssessment(consultationId: string, token: string): Prom
       allowedOutputTypes: [
         "plan",
         "prescription",
-        "lab_request",
-        "imaging_request",
+        "diagnostic_request",
+        "clinical_referral",
         "medical_certificate",
         "patient_education",
       ],
@@ -104,8 +106,8 @@ export async function getAssessment(consultationId: string, token: string): Prom
           eligibleOutputTypes: [
             "plan",
             "prescription",
-            "lab_request",
-            "imaging_request",
+            "diagnostic_request",
+            "clinical_referral",
             "medical_certificate",
             "patient_education",
           ],
@@ -250,6 +252,9 @@ export async function generateProtectedOutput(
   outputType: CdsProtectedOutputType,
   request: CdsProtectedGenerationRequest,
 ): Promise<CdsGenerationResult> {
+  if (outputType === "final_icd") {
+    throw new ApiError("OUTPUT_TYPE_NOT_ELIGIBLE", "The ICD-10 code is part of your Assessment.", 409);
+  }
   const response = await command<CdsProtectedArtifact | CdsAsyncJobAccepted>(
     `${consultationPath(consultationId)}/${generationPaths[outputType]}`,
     token,
@@ -309,33 +314,21 @@ export async function getCurrentOutputs(consultationId: string, token: string): 
           },
         },
         {
-          artifactId: "demo-art-lab",
-          outputType: "lab_request",
+          artifactId: "demo-art-diagnostic",
+          outputType: "diagnostic_request",
           artifactRevision: 1,
           assessmentVersion: 1,
           lifecycleStatus: "generated",
           effectiveStale: false,
           physicianEdited: false,
           payload: {
-            tests: [
+            modality: "lab",
+            items: [
               {
                 testName: "Complete Blood Count (CBC) with Platelet Count",
                 rationale: "Evaluate leukocytosis / acute infectious process",
                 priority: "routine",
               },
-            ],
-          },
-        },
-        {
-          artifactId: "demo-art-imaging",
-          outputType: "imaging_request",
-          artifactRevision: 1,
-          assessmentVersion: 1,
-          lifecycleStatus: "generated",
-          effectiveStale: false,
-          physicianEdited: false,
-          payload: {
-            studies: [
               {
                 studyName: "Chest X-Ray PA/Lateral",
                 bodyRegion: "Chest",
@@ -343,6 +336,21 @@ export async function getCurrentOutputs(consultationId: string, token: string): 
                 priority: "routine",
               },
             ],
+          },
+        },
+        {
+          artifactId: "demo-art-referral",
+          outputType: "clinical_referral",
+          artifactRevision: 1,
+          assessmentVersion: 1,
+          lifecycleStatus: "generated",
+          effectiveStale: false,
+          physicianEdited: false,
+          payload: {
+            reasonForReferral: "Persistent cough with wheeze; specialist assessment requested.",
+            receivingFacilityOrSpecialty: "Pulmonology",
+            urgency: "routine",
+            clinicalSummary: "Acute bronchitis, not improving after supportive care.",
           },
         },
         {
@@ -398,6 +406,24 @@ export async function getOutputHistory(
  * before any subsequent finalize call, whose `expectedArtifactRevision` would
  * otherwise be one behind.
  */
+/**
+ * The physician writes a document themselves, with no AI (ADR-20261005-01).
+ * Needs only the physician's own confirmed Assessment: no gate token, no
+ * catalogue eligibility, and a red flag does not block it.
+ */
+export async function authorPhysicianOutput(
+  consultationId: string,
+  token: string,
+  request: CdsPhysicianAuthoredOutputRequest,
+): Promise<CdsProtectedArtifact> {
+  return (await command<CdsProtectedArtifact>(
+    `${consultationPath(consultationId)}/physician-authored-outputs`,
+    token,
+    "POST",
+    request,
+  )).data;
+}
+
 export async function amendArtifact(
   consultationId: string,
   artifactId: string,

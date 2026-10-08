@@ -130,7 +130,7 @@ export function ActiveEncounterCommandCenter() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 self-end sm:self-center">
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:self-center">
         {!isLive ? <NoShowControl item={active} /> : null}
         <Link
           href={
@@ -139,7 +139,7 @@ export function ActiveEncounterCommandCenter() {
               : `/consultation/room/${encodeURIComponent(active.bookingId)}`
           }
           data-slot="command-center-return-link"
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-(--teal-500) px-4 py-2.5 text-xs font-bold text-(--surface-brand) shadow-sm transition-colors hover:bg-(--teal-400) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-(--teal-500) px-4 text-sm font-bold sm:h-auto sm:flex-none sm:py-2.5 sm:text-xs text-(--surface-brand) shadow-sm transition-colors hover:bg-(--teal-400) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
           <Video className="size-4" aria-hidden />
           {isLive ? "Return to room" : "Open room"}

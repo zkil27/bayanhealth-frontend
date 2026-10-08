@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, RefreshCw, Satellite, UserRoundX, Video } from "lucide-react";
+import { Eye, RefreshCw, UserRoundX, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -97,7 +98,10 @@ export function DoctorPatientQueue() {
       <div
         id="doctor-queues"
         data-slot="operational-queues"
-        className="scroll-mt-4 rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-page)/40 p-4"
+        // Flat below `sm`: the rows are already bordered, and a third padded
+        // frame inside the workstation sheet left ~210px for row actions on a
+        // 360px phone (and read as a card inside a card).
+        className="scroll-mt-4 rounded-(--radius-canvas) sm:border sm:border-(--border-subtle) sm:bg-(--surface-page)/40 sm:p-4"
       >
         {summary.isEmpty ? <StandbyPanel isOnDuty={isOnDuty} /> : <UnifiedQueueList />}
       </div>
@@ -402,11 +406,16 @@ function QueueRowShell({
   queueType: QueueRow["kind"];
 }) {
   const tone = ROW_BADGE[badge];
+  // Below `sm` the row stacks: patient on top, actions in a full-width strip
+  // beneath it with 44px buttons that share the width and wrap to their own
+  // line when the labels don't fit side by side. The desktop's slim
+  // single-line row put three 28px buttons beside a truncated name, too small
+  // and too close together to hit reliably one-handed on a phone.
   return (
     <li
       data-slot={dataSlot}
       data-queue-type={queueType}
-      className="flex items-center justify-between gap-3 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3"
+      className="flex flex-col items-stretch gap-3 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex min-w-0 items-center gap-3">
         <Avatar className="size-9 shrink-0">
@@ -428,7 +437,9 @@ function QueueRowShell({
           <p className="truncate text-[11.5px] text-(--text-muted)">{subtitle}</p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">{action}</div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 *:data-[slot=button]:h-11 *:data-[slot=button]:flex-auto *:data-[slot=button]:text-sm sm:flex-nowrap sm:gap-1.5 sm:*:data-[slot=button]:h-7 sm:*:data-[slot=button]:flex-none sm:*:data-[slot=button]:text-[0.8rem]">
+        {action}
+      </div>
     </li>
   );
 }
@@ -563,7 +574,9 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
         onClick={() => setOpen(true)}
         data-slot="ready-to-start-view-trigger"
       >
-        <Eye className="size-3.5" />
+        <Eye className="size-3.5" aria-hidden />
+        {/* Icon-only on desktop; spelled out on phones, where it shares a full-width strip. */}
+        <span className="sm:sr-only">View intake</span>
       </Button>
       <DrawerContent className="mx-auto w-full max-w-2xl">
         <DrawerHeader className="flex items-center justify-between">
@@ -633,8 +646,9 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
             assertNoShow();
           }
         }}
-        className="text-(--danger-fg)"
+        className="size-11 text-(--danger-fg) sm:h-7 sm:w-auto"
         title={waitElapsed ? "Patient didn't show" : "Waiting out the ten-minute window"}
+        aria-label={waitElapsed ? "Patient didn't show" : "Patient didn't show (available after the ten-minute wait)"}
       >
         {isAsserting ? <Spinner className="size-3.5" /> : <UserRoundX className="size-3.5" />}
       </Button>
@@ -675,9 +689,12 @@ function StandbyPanel({ isOnDuty }: { isOnDuty: boolean }) {
       className="flex flex-col items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-warm) px-5 py-6 text-center sm:flex-row sm:justify-between sm:text-left"
     >
       <div className="flex items-center gap-3.5">
-        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-(--status-available-fg)/20 bg-(--status-available-bg) text-(--status-available-fg)">
-          <Satellite className="size-4.5" aria-hidden />
-        </span>
+        <div className="w-20 shrink-0">
+          <Illustration
+            name={isOnDuty ? "doctor/standby-on-duty" : "doctor/standby-offline"}
+            size="sm"
+          />
+        </div>
         <div>
           <h4 className="text-[13px] font-bold tracking-wide text-(--text-heading) uppercase">
             {isOnDuty ? "Triage radar active · ready for patients" : "Offline · walk-ins paused"}
@@ -693,7 +710,7 @@ function StandbyPanel({ isOnDuty }: { isOnDuty: boolean }) {
       <button
         type="button"
         onClick={refresh}
-        className="inline-flex shrink-0 items-center justify-center gap-1.5 self-center rounded-xl border border-(--border-default) bg-(--surface-card) px-3 py-1.5 text-[12.5px] font-semibold text-(--text-body) shadow-sm transition-colors hover:bg-(--action-secondary-hover-surface)"
+        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 self-center rounded-xl border border-(--border-default) bg-(--surface-card) px-4 py-1.5 text-[12.5px] font-semibold text-(--text-body) shadow-sm transition-colors hover:bg-(--action-secondary-hover-surface) sm:min-h-0 sm:px-3"
       >
         <RefreshCw className="size-3.5" aria-hidden />
         Refresh now

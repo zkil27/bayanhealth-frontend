@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CircleDot, Eye, TicketCheck, TriangleAlert, UserRoundX, Video } from "lucide-react";
@@ -120,8 +121,8 @@ export function ReadyToStartCard() {
         ) : items.length === 0 ? (
           <Empty data-slot="ready-to-start-empty" className="gap-2 p-2">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <TicketCheck />
+              <EmptyMedia variant="illustration">
+                <Illustration name="doctor/all-clear" size="sm" />
               </EmptyMedia>
               <EmptyTitle>Nothing ready yet</EmptyTitle>
               <EmptyDescription>

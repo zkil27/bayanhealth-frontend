@@ -327,7 +327,7 @@ function ClinicalAlerts({
           </p>
           <p
             className={cn(
-              "text-[11px] font-medium leading-tight",
+              "text-xs font-medium leading-tight",
               alerts.length > 0 ? "text-(--danger-fg)" : "text-(--text-muted)",
             )}
           >
@@ -365,7 +365,7 @@ function Disclosure({
       open={open}
       className="group overflow-hidden rounded-[12px] border border-(--border-subtle) bg-(--surface-card) shadow-2xs"
     >
-      <summary className="cursor-pointer list-none px-3 py-2 text-xs font-bold uppercase tracking-wider text-(--text-heading) hover:bg-(--surface-warm-soft)/40">
+      <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-(--text-heading) hover:bg-(--surface-warm-soft)/40 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center justify-between gap-2">
           {title}
           <span aria-hidden className="text-(--text-muted) transition-transform group-open:rotate-180">⌄</span>
@@ -442,7 +442,7 @@ function SymptomReviewSection({ review }: { review?: IntakeSymptomReview }) {
         <div className="grid grid-cols-1 gap-2 rounded-lg bg-(--surface-warm-soft)/40 p-2.5 sm:grid-cols-2">
           {rows.map(({ key, label }) => (
             <div key={key} className="flex flex-col">
-              <span className="text-[11px] font-semibold text-(--text-muted)">{label}</span>
+              <span className="text-xs font-semibold text-(--text-muted)">{label}</span>
               <span className="text-xs font-semibold text-(--text-heading)">{review[key]}</span>
             </div>
           ))}
@@ -481,7 +481,7 @@ function ReproductiveHealthSection({ health }: { health?: IntakeReproductiveHeal
 function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-[11px] font-semibold text-(--text-muted)">{label}</dt>
+      <dt className="text-xs font-semibold text-(--text-muted)">{label}</dt>
       <dd className="text-xs font-semibold text-(--text-heading)">{children}</dd>
     </div>
   );

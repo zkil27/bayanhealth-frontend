@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -229,8 +230,8 @@ export function PatientRecordsTab({
     return (
       <Empty data-slot="patient-health-records-empty">
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Stethoscope />
+          <EmptyMedia variant="illustration">
+            <Illustration name="patient/no-records" size="md" />
           </EmptyMedia>
           <EmptyTitle>No health records yet</EmptyTitle>
           <EmptyDescription>

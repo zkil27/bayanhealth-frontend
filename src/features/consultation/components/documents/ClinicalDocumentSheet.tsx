@@ -1,16 +1,13 @@
 "use client";
 
 import type {
-  CdsImagingRequestPayload,
-  CdsLabRequestPayload,
+  CdsClinicalReferralPayload,
+  CdsDiagnosticRequestPayload,
   CdsMedicalCertificatePayload,
   CdsPatientEducationPayload,
-  CdsPlanPayload,
   CdsPrescriptionPayload,
   CdsProtectedArtifact,
-  CdsProtectedOutputType,
 } from "@/types/cds-contract";
-import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 import { PrescriptionSheet } from "./PrescriptionSheet";
 import { MedicalCertificateSheet } from "./MedicalCertificateSheet";
@@ -24,11 +21,13 @@ import type {
   DocumentVerificationInfo,
 } from "./types";
 import { ageFromDateOfBirth, SEX_LABELS } from "@/features/doctor/lib/api/bookingIntake";
+import { documentVerification } from "./verification";
 
 interface ClinicalDocumentSheetProps {
   artifact: ClinicalDocumentArtifact;
   intake?: BookingIntakeForm | null;
-  specimen?: DoctorSignatureSpecimen | undefined;
+  /** The patient's own name, for the patient's view, where no doctor-side intake read exists. */
+  patientName?: string;
   doctorName?: string;
   doctorSpecialty?: string;
   doctorLicenseNumber?: string;
@@ -39,7 +38,7 @@ interface ClinicalDocumentSheetProps {
 export function ClinicalDocumentSheet({
   artifact,
   intake,
-  specimen,
+  patientName,
   doctorName,
   doctorSpecialty,
   doctorLicenseNumber,
@@ -48,47 +47,55 @@ export function ClinicalDocumentSheet({
 }: ClinicalDocumentSheetProps) {
   const isDraft = artifact.lifecycleStatus === "generated";
 
-  // Build clean patient info from intake or authentic fallback
+  // Build clean patient info from intake — never invent an identity, a DOB, an
+  // age/sex, or an allergy status for a field the intake did not actually
+  // record. Each Sheet component renders these as "not on file" rather than a
+  // plausible-looking specific value when absent.
   const dob = intake?.sections?.details?.demographics?.dateOfBirth;
   const rawSex = intake?.sections?.details?.demographics?.sex;
   const allergiesStr = intake?.sections?.details?.allergies;
 
   const patientInfo: DocumentPatientInfo = {
-    name: intake?.patientName || "—",
+    name: patientName ?? intake?.patientName ?? "",
     dateOfBirth: dob
       ? new Date(dob).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         })
-      : "—",
-    age: dob ? ageFromDateOfBirth(dob) : undefined,
-    sex: rawSex
-      ? (SEX_LABELS[rawSex as keyof typeof SEX_LABELS] || rawSex)
-      : "—",
-    allergies: allergiesStr && allergiesStr.trim().length > 0
-      ? allergiesStr
-      : "No known drug allergies",
-    caseId: artifact.consultationId || intake?.bookingId || "—",
-  };
-
-  // Build physician info
-  const physicianInfo: DocumentPhysicianInfo = {
-    name: doctorName || specimen?.signerName || "Attending Physician",
-    title: doctorSpecialty || "Licensed Physician",
-    licenseNumber: doctorLicenseNumber || "—",
-    ptrNumber: doctorPtrNumber || "—",
-    signatureStrokes: specimen?.strokes,
-    signedAt: artifact.physicianEditedAt
-      ? new Date(artifact.physicianEditedAt).toLocaleString()
       : undefined,
+    age: dob ? ageFromDateOfBirth(dob) : undefined,
+    sex: rawSex ? (SEX_LABELS[rawSex as keyof typeof SEX_LABELS] || rawSex) : undefined,
+    allergies: allergiesStr && allergiesStr.trim().length > 0 ? allergiesStr : undefined,
+    caseId: artifact.consultationId || intake?.bookingId || undefined,
+    // The document's own issue time — release, else signature, else
+    // finalization. A draft has none, and the sheet says so rather than
+    // printing today's date on it.
+    ...issuedAtFields(artifact.releasedAt ?? artifact.signature?.signedAt ?? artifact.finalizedAt),
   };
 
-  const verificationInfo: DocumentVerificationInfo = {
-    qrValue: `https://bayanhealth.ph/verify/${artifact.outputType}/${artifact.artifactId}`,
-    documentId: `${artifact.outputType.substring(0, 3).toUpperCase()}-${patientInfo.caseId}`,
-    status: isDraft ? "DRAFT" : "ACTIVE",
+  // Build physician info from the caller's KYC-reviewed identity. Undefined
+  // fields stay undefined rather than a fabricated specialty or a
+  // "SAMPLE-0000000" license number that reads as a real one. The signature is
+  // the one captured when this document was signed, never the doctor's profile
+  // specimen: an unsigned draft must not look signed.
+  const signedAt = artifact.signature?.signedAt ?? artifact.finalizedAt;
+  const physicianInfo: DocumentPhysicianInfo = {
+    name: doctorName ?? "",
+    title: doctorSpecialty,
+    licenseNumber: doctorLicenseNumber,
+    ptrNumber: doctorPtrNumber,
+    signatureStrokes: artifact.signature?.strokes,
+    signedAt: signedAt ? new Date(signedAt).toLocaleString() : undefined,
   };
+
+  const verificationInfo = documentVerification({
+    documentId: patientInfo.caseId
+      ? `${artifact.outputType.substring(0, 3).toUpperCase()}-${patientInfo.caseId}`
+      : "",
+    verificationCode: artifact.verificationCode,
+    verificationValidUntil: artifact.verificationValidUntil,
+  });
 
   switch (artifact.outputType) {
     case "prescription":
@@ -115,10 +122,10 @@ export function ClinicalDocumentSheet({
         />
       );
 
-    case "lab_request":
+    case "diagnostic_request":
       return (
         <DiagnosticRequestSheet
-          labPayload={artifact.payload as CdsLabRequestPayload}
+          payload={artifact.payload as CdsDiagnosticRequestPayload}
           patient={patientInfo}
           physician={physicianInfo}
           verification={verificationInfo}
@@ -127,22 +134,10 @@ export function ClinicalDocumentSheet({
         />
       );
 
-    case "imaging_request":
-      return (
-        <DiagnosticRequestSheet
-          imagingPayload={artifact.payload as CdsImagingRequestPayload}
-          patient={patientInfo}
-          physician={physicianInfo}
-          verification={verificationInfo}
-          isDraft={isDraft}
-          className={className}
-        />
-      );
-
-    case "plan":
+    case "clinical_referral":
       return (
         <ClinicalReferralSheet
-          planPayload={artifact.payload as CdsPlanPayload}
+          payload={artifact.payload as CdsClinicalReferralPayload}
           patient={patientInfo}
           physician={physicianInfo}
           verification={verificationInfo}
@@ -163,7 +158,20 @@ export function ClinicalDocumentSheet({
         />
       );
 
+    // Plan and Final ICD stay internal (ADR-20260924-02) — neither is one of
+    // the five patient-facing documents this sheet renders.
     default:
       return null;
   }
+}
+
+function issuedAtFields(
+  issuedAt: string | undefined,
+): Pick<DocumentPatientInfo, "consultationDate" | "consultationTime"> {
+  if (!issuedAt) return {};
+  const at = new Date(issuedAt);
+  return {
+    consultationDate: at.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    consultationTime: at.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+  };
 }

@@ -80,14 +80,14 @@ const LOCK_REASON_COPY: Record<GateLockReason, LockReasonCopy> = {
     meaning:
       "The deterministic safety check found a finding that takes this consultation off the routine remote pathway.",
     nextAction:
-      "Review the safety finding shown with the candidates. Acknowledge the current episode once the latest check reads routine.",
+      "Review the finding. You decide: refer the patient to the ER, or proceed on your clinical judgment with a short reason.",
     selfClearable: true,
   },
   acknowledgment_pending: {
     label: "A safety finding needs your acknowledgement",
     meaning:
       "A safety episode has been raised and is waiting for the assigned physician to acknowledge it before protected actions reopen.",
-    nextAction: 'Review the finding, then select "Acknowledge current episode".',
+    nextAction: 'Review the finding, then choose "Proceed on my clinical judgment" or refer the patient to the ER.',
     selfClearable: true,
   },
   reassignment: {
@@ -240,7 +240,7 @@ export function stepGuidance(input: {
       step: "safety_review",
       heading: "A safety finding needs review",
       instruction:
-        "Review the safety finding, then acknowledge the current episode to reopen protected actions.",
+        "Review the safety finding. You can proceed on your clinical judgment, or refer the patient to the ER.",
     };
   }
 
@@ -302,29 +302,27 @@ type ProtectedOutputType = components["schemas"]["CdsProtectedOutputType"];
 /**
  * Output types a patient can actually read once released.
  *
- * MUST stay in lockstep with `PATIENT_READABLE_OUTPUT_TYPES` in
- * `backend/src/lib/cds/released-patient-education.ts` and with
- * `patient_cds_route_keys` in `infra/modules/cds_operations/routes.tf`, which
- * exposes exactly two patient-readable routes:
+ * The five patient handoff artifacts of ADR-20260924-02 — Clinical Referral,
+ * Diagnostic Request, E-Prescription, Medical Certificate, and Health Guide
+ * (patient education) — each now have their own released-read route and
+ * schema (`CdsReleasedClinicalReferral`, `CdsReleasedDiagnosticRequest`,
+ * `CdsReleasedPrescription`, `CdsReleasedMedicalCertificate`,
+ * `CdsReleasedPatientEducation`). `plan` and `final_icd` stay internal by
+ * design — Plan and Final ICD coding are never handed to a patient
+ * unmediated.
  *
- *   GET /v1/cds/consultations/{consultationId}/patient-education/released
- *   GET /v1/cds/consultations/{consultationId}/prescription/released
- *
- * There is no `/plan/released` route, nor one for `final_icd`,
- * `medical_certificate`, `lab_request`, or `imaging_request`. Those five are
- * excluded deliberately — the backend comment is explicit that each "needs its
- * own decision about presentation and accompanying explanation before it is
- * handed to a patient unmediated".
- *
- * This list exists because the workspace offered a Release control on all seven
- * output types with nothing distinguishing them, so releasing a Plan looked
- * identical to releasing a prescription and silently reached no one
+ * This list exists because the workspace once offered a Release control on
+ * every output type with nothing distinguishing them, so releasing a Plan
+ * looked identical to releasing a prescription and silently reached no one
  * (ADR-20260810-05). `cdsCopy.test.ts` pins the membership so adding a patient
  * route without updating this list, or vice versa, fails a test.
  */
 export const PATIENT_READABLE_OUTPUT_TYPES: readonly ProtectedOutputType[] = [
   "patient_education",
   "prescription",
+  "medical_certificate",
+  "diagnostic_request",
+  "clinical_referral",
 ];
 
 /** Whether releasing this output type actually shows the patient anything. */

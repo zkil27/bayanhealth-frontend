@@ -52,6 +52,9 @@ export interface BookingDetail {
    */
   bookingMode?: "scheduled" | "on_demand" | string;
   serviceType?: string;
+  /** When the doctor told the patient to go to the ER (ADR-20261005-02), and their note. */
+  emergencyAdvisedAt?: string;
+  emergencyNote?: string;
   scheduledAt?: string;
   channel?: string;
   notes?: string;

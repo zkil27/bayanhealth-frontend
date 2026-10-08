@@ -1,51 +1,61 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowRight,
   CheckCircle2,
-  Clock,
-  FileText,
-  History,
-  PenLine,
+  ChevronRight,
+  ClipboardList,
   RefreshCw,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CustomBottomModal } from "@/components/ui/custom-bottom-modal";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { PostConsultationSkeleton } from "./PostConsultationSkeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { StatusText } from "@/components/ui/status-text";
+import { StickyActionBar } from "@/components/ui/sticky-action-bar";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
+import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
 import { cn } from "@/lib/utils";
-import { ArtifactCard, type ArtifactSignatureInput } from "./ArtifactCard";
-import { AuthorizedArtifactHistory } from "./AuthorizedArtifactHistory";
+import { type ArtifactSignatureInput } from "./ArtifactCard";
 import { CandidatePicker } from "./CandidatePicker";
-import { CareContinuityPanel } from "./CareContinuityPanel";
-import { DeliverablesDeck, deriveDeckEntries } from "./DeliverablesDeck";
+import { RedFlagOverrideControl } from "./RedFlagOverrideControl";
+import { SendToErControl } from "../emergency/SendToErControl";
+import { useFollowUpRecommendation } from "./CareContinuityPanel";
+import {
+  CHECKLIST_TYPES,
+  checklistProgress,
+  DeliverablesDeck,
+  deriveDeckEntries,
+  type ChecklistKey,
+} from "./DeliverablesDeck";
+import { PatientDetails } from "./PatientDetails";
 import { PatientRail } from "./PatientRail";
-import { SoapSummaryCards } from "./SoapSummaryCards";
+import {
+  ObjectiveIntake,
+  ObjectiveSummary,
+  SubjectiveIntake,
+  SubjectiveSummary,
+  subjectiveIntakeSummary,
+} from "./SoapSummaryCards";
+import { ClinicalNoteField, NotesSaveState, useClinicalNotes } from "./ClinicalNotesCard";
 import { WorkspaceHeader } from "./WorkspaceChrome";
+import { IntakeBlock, WorkspaceSection } from "./WorkspaceSection";
+import { DOCUMENT_STATUS } from "./documentStatus";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import {
   deriveFinishReadiness,
-  deriveRailState,
-  deriveToolRows,
   derivePhase,
   hasSafetyLock,
-  railBadgeLabel,
   OUTPUT_LABELS,
-  RAIL_OUTPUT_TYPES,
+  type WorkspacePhase,
 } from "./workspacePhase";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
@@ -70,6 +80,7 @@ import type {
 import {
   acknowledgeRedFlag,
   amendArtifact,
+  authorPhysicianOutput,
   cancelAsyncJob,
   clearAssessment,
   confirmAssessment,
@@ -91,7 +102,7 @@ import {
   updateConfirmedAssessment,
   updateEditableAssessment,
 } from "../../lib/api/assessmentFirst";
-import { lockReasonCopy, staleReasonLabel, stepGuidance } from "../../lib/cdsCopy";
+import { lockReasonCopy, stepGuidance } from "../../lib/cdsCopy";
 
 const outputLabels = OUTPUT_LABELS;
 const terminalJobs = new Set([
@@ -131,6 +142,17 @@ export function AssessmentFirstWorkspace({
   const token = session?.idToken ?? (isDemo ? "demo-token" : "");
   const physicianActorId = session?.userId ?? (isDemo ? "demo-doctor" : "");
   /**
+   * On a phone each phase is its own screen and an open document is a screen
+   * of its own (doctor-mobile PLAN.md §5.4). Both live in the URL (`?view=`,
+   * `?doc=`), written with the native History API so there is no server round
+   * trip, which makes the phone's back gesture step back through them instead
+   * of leaving the workspace, and lets a reload land where the doctor was.
+   */
+  const searchParams = useSearchParams();
+  const viewParam = searchParams.get("view");
+  const docParam = searchParams.get("doc");
+  const isPhone = useIsBreakpoint("max", 1024);
+  /**
    * The doctor's stored signature specimen. Read here rather than inside each
    * artifact card so seven cards share one request, and so a doctor who has not
    * set one up is told once, in the card they are actually trying to sign.
@@ -139,6 +161,13 @@ export function AssessmentFirstWorkspace({
 
   const [assessment, setAssessment] = useState<CdsAssessment | null>(null);
   const [draftDiagnosis, setDraftDiagnosis] = useState("");
+  /**
+   * The physician's ICD-10 code for the diagnosis (ADR-20261006-02). Prefilled
+   * from the server's reviewed map when the diagnosis is a catalog entry, and
+   * never overwritten once the physician has typed in it.
+   */
+  const [draftIcd, setDraftIcd] = useState<IcdDraft>(EMPTY_ICD_DRAFT);
+  const icdTouchedRef = useRef(false);
   const [evaluation, setEvaluation] = useState<CdsCandidateEvaluation | null>(null);
   const [preview, setPreview] = useState<CdsDiagnosisCandidatePreview | null>(null);
   const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
@@ -177,7 +206,7 @@ export function AssessmentFirstWorkspace({
    * genuinely conflict with each other, still take `busy`.
    */
   const [generating, setGenerating] = useState<ReadonlySet<CdsProtectedOutputType>>(new Set());
-  const [activeDeliverable, setActiveDeliverable] = useState<CdsProtectedOutputType | null>(null);
+  const [activeDeliverable, setActiveDeliverable] = useState<ChecklistKey | null>(null);
   /**
    * Output types the physician explicitly discarded or removed during this session.
    * Excluded from active tabs, deliverables deck, and finish-documentation warnings.
@@ -190,12 +219,48 @@ export function AssessmentFirstWorkspace({
     [current, discardedTypes],
   );
   /**
-   * Whether the confirmed Assessment is expanded for editing. Confirmed state
-   * collapses to a one-line summary bar; this re-opens the full editor. Always
-   * false while unconfirmed, where the editor is the whole point of the phase.
+   * "Not needed" is the physician's call about this consultation, so it should
+   * survive the reload or dropped tab that a phone between rounds will cause.
+   * Kept in this browser only (the server has no field for it), per
+   * consultation, and read defensively: storage may be unavailable.
    */
-  const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const notNeededKey = `bh:post-consult:not-needed:${consultationId}`;
+  const [notNeededLoaded, setNotNeededLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(notNeededKey);
+      const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reading an external store once on mount.
+      if (Array.isArray(parsed)) setDiscardedTypes(new Set(parsed as CdsProtectedOutputType[]));
+    } catch {
+      // Storage unavailable: fall back to this session only.
+    }
+    setNotNeededLoaded(true);
+  }, [notNeededKey]);
+  useEffect(() => {
+    if (!notNeededLoaded) return;
+    try {
+      window.localStorage.setItem(notNeededKey, JSON.stringify([...discardedTypes]));
+    } catch {
+      // Storage unavailable: the marking still holds for this session.
+    }
+  }, [discardedTypes, notNeededKey, notNeededLoaded]);
+  /**
+   * Which SOAP sections the physician has folded or unfolded by hand, for the
+   * phase they did it in. Each phase has its own defaults (Deliver folds S, O
+   * and A so the documents come first); a manual toggle overrides them until
+   * the phase changes.
+   */
+  const [sectionOverrides, setSectionOverrides] = useState<Partial<Record<"S" | "O" | "A", boolean>>>({});
+  const [overridesPhase, setOverridesPhase] = useState<WorkspacePhase | null>(null);
   const [patientRailCollapsed, setPatientRailCollapsed] = useState(false);
+  /**
+   * Below `lg` the patient rail is not a column: stacked under the main
+   * column it ended up past Care Continuity and the history list, a long
+   * scroll away from the prescription being written. It opens as a sheet from
+   * the header instead (see `mobileIntakeOpen` usage below).
+   */
+  const [mobileIntakeOpen, setMobileIntakeOpen] = useState(false);
   const previewRequestRef = useRef(0);
   const candidateSearchRequestRef = useRef(0);
   /**
@@ -221,6 +286,8 @@ export function AssessmentFirstWorkspace({
    * `undefined` means still loading; `null` means there is no intake.
    */
   const [intake, setIntake] = useState<BookingIntakeForm | null | undefined>(undefined);
+  const notes = useClinicalNotes({ consultationId, token, intake });
+  const followUp = useFollowUpRecommendation(consultationId, token);
 
   const markGenerating = useCallback((outputType: CdsProtectedOutputType, active: boolean) => {
     setGenerating((known) => {
@@ -253,6 +320,19 @@ export function AssessmentFirstWorkspace({
    */
   const seedDraft = useCallback((next: CdsAssessment) => {
     setDraftDiagnosis(next.confirmed?.diagnosis ?? "");
+    icdTouchedRef.current = false;
+    setDraftIcd(next.confirmed?.icd10 ? icdDraftFrom(next.confirmed.icd10) : EMPTY_ICD_DRAFT);
+  }, []);
+
+  /** Offer the map's code for the saved diagnosis, unless the physician already chose one. */
+  const prefillIcd = useCallback((next: CdsAssessment) => {
+    if (icdTouchedRef.current) return;
+    setDraftIcd(next.editableIcd10Suggestion ? icdDraftFrom(next.editableIcd10Suggestion) : EMPTY_ICD_DRAFT);
+  }, []);
+
+  const editDraftIcd = useCallback((next: IcdDraft) => {
+    icdTouchedRef.current = true;
+    setDraftIcd(next);
   }, []);
 
   const refreshAssessment = useCallback(async () => {
@@ -472,6 +552,7 @@ export function AssessmentFirstWorkspace({
         expectedGateRevision: assessment.gateRevision,
       });
       setAssessment(next);
+      prefillIcd(next);
       resetDerived();
       toast.success("Draft saved. Nothing can be drafted from it until you confirm it.");
     });
@@ -500,9 +581,32 @@ export function AssessmentFirstWorkspace({
         setAssessment(confirmationSource);
       }
 
+      // The code is the physician's. When the map has one for this diagnosis
+      // and the physician has not chosen their own, show it and stop: they
+      // confirm what they have seen, never a code filled in on the way past.
+      // An untouched draft holds only an earlier prefill, which may belong to
+      // a different diagnosis.
+      const suggestion = confirmationSource.editableIcd10Suggestion;
+      if (!icdTouchedRef.current && suggestion && draftIcd.code.trim().toUpperCase() !== suggestion.code) {
+        setDraftIcd(icdDraftFrom(suggestion));
+        toast.info(`ICD-10 ${suggestion.code} is prefilled for ${diagnosis}. Check it, then confirm.`);
+        return;
+      }
+      if (!icdTouchedRef.current && !suggestion && draftIcd.code.trim()) {
+        setDraftIcd(EMPTY_ICD_DRAFT);
+        toast.error("This diagnosis has no prefilled ICD-10 code. Enter the code before confirming.");
+        return;
+      }
+      const icd10 = icdFromDraft(draftIcd);
+      if (!icd10) {
+        toast.error("Enter the ICD-10 code and its description for this diagnosis before confirming.");
+        return;
+      }
+
       const next = await confirmAssessment(consultationId, token, {
         consultationId,
         physicianActorId,
+        icd10,
         expectedAssessmentVersion: confirmationSource.assessmentVersion,
         expectedEditableAssessmentRevision: confirmationSource.editableAssessmentRevision,
         expectedEditableAssessmentDigest: confirmationSource.editableAssessmentDigest,
@@ -512,6 +616,7 @@ export function AssessmentFirstWorkspace({
         expectedGateRevision: confirmationSource.gateRevision,
       });
       setAssessment(next);
+      seedDraft(next);
       resetDerived();
       // Confirming is the physician saying "this is my diagnosis". Unlocking is
       // the server saying "and the record still supports it". Making the second
@@ -521,7 +626,7 @@ export function AssessmentFirstWorkspace({
       try {
         await ensureGate(next);
         toast.success(
-          "Assessment confirmed and drafting unlocked. Choose a document from Protected tools.",
+          "Assessment confirmed. Plan & documents are open: start any document from its row.",
         );
       } catch (cause) {
         resetDerived();
@@ -542,11 +647,21 @@ export function AssessmentFirstWorkspace({
   const updateOrReattest = (changeType: "update" | "reattest") =>
     assessment?.confirmed &&
     run(async () => {
+      const icd10 = changeType === "reattest" ? assessment.confirmed!.icd10 : icdFromDraft(draftIcd);
+      if (!icd10) {
+        toast.error(
+          changeType === "reattest"
+            ? "This version has no ICD-10 code. Add one and save a new version instead."
+            : "Enter the ICD-10 code and its description before saving a new version.",
+        );
+        return;
+      }
       const next = await updateConfirmedAssessment(consultationId, token, {
         consultationId,
         physicianActorId,
         changeType,
         diagnosis: changeType === "reattest" ? assessment.confirmed!.diagnosis : draftDiagnosis.trim(),
+        icd10,
         expectedAssessmentVersion: assessment.assessmentVersion,
         expectedConfirmedAssessmentDigest: assessment.confirmed!.confirmedAssessmentDigest,
         expectedAssignmentRevision: assessment.assignmentRevision,
@@ -555,7 +670,7 @@ export function AssessmentFirstWorkspace({
         expectedGateRevision: assessment.gateRevision,
       });
       setAssessment(next);
-      setDraftDiagnosis(next.confirmed?.diagnosis ?? "");
+      seedDraft(next);
       resetDerived();
       await refreshOutputs();
       try {
@@ -587,7 +702,7 @@ export function AssessmentFirstWorkspace({
         expectedGateRevision: assessment.gateRevision,
       });
       setAssessment(next);
-      setDraftDiagnosis("");
+      seedDraft(next);
       resetDerived();
       await refreshOutputs();
       toast.info("Assessment cleared. Drafting stays closed until you confirm a new Assessment.");
@@ -779,11 +894,12 @@ export function AssessmentFirstWorkspace({
       });
       setAssessment(next);
       setDraftDiagnosis(next.editableDiagnosis);
+      prefillIcd(next);
       setEvaluation(null);
       setPreview(null);
       setFocusedCandidate(null);
       toast.info(
-        `${diagnosisName} is now your working diagnosis. It is not confirmed yet — confirm it below when you are ready.`,
+        `${diagnosisName} is your working diagnosis. Check the ICD-10 code, then confirm.`,
       );
     });
 
@@ -833,10 +949,42 @@ export function AssessmentFirstWorkspace({
         expectedGateRevision: assessment.gateRevision,
         expectedPolicyActivationRevision: assessment.policyActivationRevision,
         acknowledged: true,
+        mode: "routine_reevaluation",
       });
       resetDerived();
       await refreshAssessment();
-      toast.info("Safety finding acknowledged. Re-check safety to unlock drafting.");
+      toast.info("Safety finding acknowledged. Re-run the safety check to reopen drafting.");
+    }).finally(() => {
+      acknowledgmentIssueRef.current = false;
+    });
+  };
+
+  /**
+   * The physician proceeds past the current red flag on their own clinical
+   * judgment (ADR-20261005-01). No routine re-check is needed; the server pins
+   * the override to this exact episode.
+   */
+  const proceedOnJudgment = (overrideReason: string) => {
+    if (!assessment?.clinicalSafetyEpisodeId || acknowledgmentIssueRef.current) return;
+    acknowledgmentIssueRef.current = true;
+    void run(async () => {
+      await acknowledgeRedFlag(consultationId, token, {
+        consultationId,
+        physicianActorId,
+        clinicalSafetyEpisodeId: assessment.clinicalSafetyEpisodeId!,
+        expectedAssessmentVersion: assessment.assessmentVersion,
+        expectedAssignmentRevision: assessment.assignmentRevision,
+        expectedClinicalInputRevision: assessment.clinicalInputRevision,
+        expectedClinicalInputSourceFence: assessment.clinicalInputSourceFence,
+        expectedGateRevision: assessment.gateRevision,
+        expectedPolicyActivationRevision: assessment.policyActivationRevision,
+        acknowledged: true,
+        mode: "physician_override",
+        overrideReason,
+      });
+      resetDerived();
+      await refreshAssessment();
+      toast.success("Proceeding on your clinical judgment. A new red flag will pause drafting again.");
     }).finally(() => {
       acknowledgmentIssueRef.current = false;
     });
@@ -948,6 +1096,29 @@ export function AssessmentFirstWorkspace({
     [assessment, consultationId, physicianActorId, token],
   );
 
+  /** Save a document the physician wrote themselves, with no AI (ADR-20261005-01). */
+  const authorDocument = useCallback(
+    async (outputType: CdsProtectedOutputType, payload: CdsProtectedArtifactPayload) => {
+      if (!assessment) return;
+      try {
+        const created = await authorPhysicianOutput(consultationId, token, {
+          consultationId,
+          physicianActorId,
+          assessmentVersion: assessment.assessmentVersion,
+          outputType,
+          payload,
+        });
+        setCurrent((known) => [...known.filter((item) => item.outputType !== created.outputType), created]);
+        setActiveDeliverable(created.outputType);
+        toast.success(`${outputLabels[outputType]} saved. Review it, then sign it.`);
+      } catch (cause) {
+        toast.error(physicianErrorMessage(cause));
+        throw cause;
+      }
+    },
+    [assessment, consultationId, physicianActorId, token],
+  );
+
   const finalize = useCallback(
     async (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => {
       if (!assessment) return;
@@ -992,31 +1163,40 @@ export function AssessmentFirstWorkspace({
         releaseAcknowledged: true,
       });
       setCurrent((known) => known.map((item) => (item.artifactId === next.artifactId ? next : item)));
-      toast.success("Released. Nothing else was changed.");
+      toast.success(`${outputLabels[artifact.outputType]} released to the patient.`);
     });
 
+  /** Bring back a document marked not needed (a removed draft returns as it was). */
+  const restoreType = useCallback((outputType: CdsProtectedOutputType) => {
+    setDiscardedTypes((prev) => {
+      const next = new Set(prev);
+      next.delete(outputType);
+      return next;
+    });
+  }, []);
+
+  /** Remove a draft, or mark an unstarted document not needed. Both can be undone. */
   const handleDiscard = useCallback(
     (outputType: CdsProtectedOutputType) => {
       const target = current.find((a) => a.outputType === outputType);
       setDiscardedTypes((prev) => new Set(prev).add(outputType));
       markGenerating(outputType, false);
-      toast.success(`${outputLabels[outputType]} draft removed.`, {
-        action: target
-          ? {
-              label: "Undo",
-              onClick: () => {
-                setDiscardedTypes((prev) => {
-                  const next = new Set(prev);
-                  next.delete(outputType);
-                  return next;
-                });
-                setActiveDeliverable(outputType);
-              },
-            }
-          : undefined,
-      });
+      toast.success(
+        target
+          ? `${outputLabels[outputType]} draft removed. Marked not needed.`
+          : `${outputLabels[outputType]} marked not needed.`,
+        {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              restoreType(outputType);
+              setActiveDeliverable(outputType);
+            },
+          },
+        },
+      );
     },
-    [current, markGenerating],
+    [current, markGenerating, restoreType],
   );
 
   const loadMoreHistory = () =>
@@ -1046,29 +1226,145 @@ export function AssessmentFirstWorkspace({
     return <PostConsultationSkeleton />;
   }
 
-  // Which of the five designed post-consult states this consultation is in. All
-  // of it is derived from the same authoritative server state that drives the
-  // gate, so the layout and the permissions cannot disagree (see workspacePhase).
+  // Which designed post-consult state this consultation is in, derived from
+  // the same authoritative server state that drives the gate, so the layout
+  // and the permissions cannot disagree (see workspacePhase).
   const phase = derivePhase(assessment);
   const safetyLock = hasSafetyLock(assessment);
+  const confirmed = Boolean(assessment.confirmed);
   // Drafting is permitted whenever the gate is not actively holding this
   // consultation. A lapsed token is not a hold — `generate` re-issues one.
-  const draftingOpen = Boolean(assessment.confirmed) && assessment.lockReasons.length === 0;
-  const railState = deriveRailState({ assessment, draftingAuthorized: draftingOpen, artifacts: liveCurrent });
-  const toolRows = deriveToolRows({ assessment, railState, artifacts: liveCurrent });
-  const railOutputTypeSet = new Set(RAIL_OUTPUT_TYPES);
-  const railRows = toolRows.filter((row) => railOutputTypeSet.has(row.outputType));
-  const icdArtifact = liveCurrent.find(
+  const draftingOpen = confirmed && assessment.lockReasons.length === 0;
+  // A confirmation from before ADR-20261006-02 has no code; its generated
+  // Final ICD artifact, if any, is still shown as a legacy record.
+  const legacyIcdArtifact = liveCurrent.find(
     (artifact) => !artifact.effectiveStale && artifact.outputType === "final_icd",
   );
-  const icdPayload = readFinalIcdPayload(icdArtifact);
-  // Plan is now unified as the premier tab of the deliverables deck.
-  // Final ICD remains shown inside the Assessment card.
+  const confirmedIcd = assessment.confirmed?.icd10 ?? readFinalIcdPayload(legacyIcdArtifact);
+  // Final ICD is confirmed inside the Assessment, so it is not a checklist row.
   const deckEntries = deriveDeckEntries({
     artifacts: liveCurrent,
     generating,
     exclude: new Set<CdsProtectedOutputType>(["final_icd"]),
   });
+  const aiEligibleTypes = new Set<CdsProtectedOutputType>(allowedTypes);
+  const removedDraftTypes = new Set(
+    current.filter((artifact) => discardedTypes.has(artifact.outputType)).map((artifact) => artifact.outputType),
+  );
+
+  // Background jobs the physician can still cancel, by document type.
+  const activeJobs = Object.values(jobs).filter(
+    (job) =>
+      (!("authoritative" in job) && !terminalJobs.has(job.status))
+      || ("authoritative" in job && job.authoritative && !terminalJobs.has(job.status)),
+  );
+  const jobByType = new Map<CdsProtectedOutputType, CdsAsyncJob | CdsAsyncJobAccepted>();
+  for (const job of activeJobs) {
+    if ("outputType" in job && job.outputType) {
+      jobByType.set(job.outputType as CdsProtectedOutputType, job as CdsAsyncJob | CdsAsyncJobAccepted);
+    }
+  }
+  const untypedJobs = activeJobs.filter((job) => !("outputType" in job) || !job.outputType);
+
+  // ── Phone screens ────────────────────────────────────────────────────────
+  // The view in the URL wins; otherwise the screen is the phase the
+  // consultation is actually in. Deliver cannot be shown before confirmation.
+  const PHONE_VIEWS: readonly WorkspacePhase[] = ["review", "assess", "deliver"];
+  const requestedView = PHONE_VIEWS.find((view) => view === viewParam) ?? null;
+  const phoneView: WorkspacePhase = requestedView === "deliver" && !confirmed ? "assess" : requestedView ?? phase;
+  const CHECKLIST_KEYS: readonly ChecklistKey[] = [...CHECKLIST_TYPES, "follow_up", "history"];
+  const phoneDoc: ChecklistKey | null =
+    phoneView === "deliver" && confirmed ? CHECKLIST_KEYS.find((key) => key === docParam) ?? null : null;
+  const docOpen = Boolean(phoneDoc);
+  /** "max-lg:hidden" unless this block belongs on the phone screen showing now. */
+  const onPhone = (...views: WorkspacePhase[]) => (!docOpen && views.includes(phoneView) ? "" : "max-lg:hidden");
+
+  const progress = checklistProgress(deckEntries, phoneDoc ?? activeDeliverable);
+
+  const writeUrl = (patch: Record<string, string | null>, mode: "push" | "replace") => {
+    const params = new URLSearchParams(window.location.search);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    const url = `${window.location.pathname}?${params.toString()}`;
+    // Only our own flag: Next.js adds its router state itself, and skips
+    // syncing `useSearchParams` for an entry that already carries it.
+    const state = { postConsultView: true };
+    if (mode === "push") window.history.pushState(state, "", url);
+    else window.history.replaceState(state, "", url);
+    window.scrollTo({ top: 0 });
+  };
+  const showView = (view: WorkspacePhase) => {
+    if (view === "deliver" && !confirmed) {
+      toast.info("Documents open after you confirm the assessment.", { id: "deliver-locked" });
+      if (phoneView === "assess") return;
+      view = "assess";
+    }
+    if (view === phoneView && !docOpen) return;
+    writeUrl({ view, doc: null }, "push");
+  };
+  const openDocument = (key: ChecklistKey) => {
+    setActiveDeliverable(key);
+    if (!isPhone || phoneDoc === key) return;
+    // Moving between documents replaces the entry, so Back returns to the list
+    // rather than walking back through every document opened.
+    writeUrl({ view: "deliver", doc: key }, phoneDoc ? "replace" : "push");
+  };
+  const closeDocument = () => {
+    if (window.history.state?.postConsultView) window.history.back();
+    else writeUrl({ doc: null }, "replace");
+  };
+
+  // Section folding (desktop): each phase has defaults, a manual toggle wins
+  // until the phase changes. Deliver folds S, O and A so the documents lead;
+  // A stays open when the confirmed diagnosis cannot be AI-drafted, because
+  // the explanation for that lives inside it. On a phone a section is its own
+  // screen and always open.
+  if (overridesPhase !== phase) {
+    setOverridesPhase(phase);
+    setSectionOverrides({});
+  }
+  const defaultOpen = {
+    S: phase !== "deliver",
+    O: phase !== "deliver",
+    A: phase !== "deliver" || allowedTypes.length === 0,
+  };
+  const sectionOpen = (letter: "S" | "O" | "A") => isPhone || (sectionOverrides[letter] ?? defaultOpen[letter]);
+  const setSection = (letter: "S" | "O" | "A", open: boolean) =>
+    setSectionOverrides((known) => ({ ...known, [letter]: open }));
+  const toggleFor = (letter: "S" | "O" | "A") => (isPhone ? undefined : (open: boolean) => setSection(letter, open));
+
+  const reduceMotion =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const scrollToId = (id: string, focusId?: string) => {
+    window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+    });
+  };
+  const goToAssessment = () => {
+    if (isPhone) {
+      showView("assess");
+      return;
+    }
+    setSection("A", true);
+    scrollToId("soap-a", "assessment-diagnosis");
+  };
+  const goToDocument = (key: ChecklistKey) => {
+    if (isPhone) {
+      openDocument(key);
+      return;
+    }
+    setActiveDeliverable(key);
+    scrollToId("soap-p");
+  };
+  const refreshAll = () =>
+    run(async () => {
+      resetDerived();
+      await refreshAssessment();
+      await refreshOutputs();
+    });
 
   // Identity for the header, from the structured intake demographics.
   const demographics = intake?.sections.details?.demographics;
@@ -1076,12 +1372,33 @@ export function AssessmentFirstWorkspace({
   const patientSex = demographics?.sex ? SEX_LABELS[demographics.sex] : undefined;
   const patientAllergies = usableAllergyLabel(intake?.sections.details?.allergies);
 
+  const lockNotice = (
+    <LockNotice
+      assessment={assessment}
+      safetyLock={safetyLock}
+      busy={busy}
+      acknowledgmentReady={acknowledgmentReady}
+      onAcknowledge={acknowledge}
+      onProceed={proceedOnJudgment}
+      onRecheck={requestToken}
+      onRefresh={refreshAll}
+    />
+  );
+  const hasLocks = assessment.lockReasons.length > 0;
+
+  const firstLine = (value: string) => value.split("\n").find((line) => line.trim())?.trim();
+  const subjectiveSummary = firstLine(notes.draft.subjective) ?? subjectiveIntakeSummary(intake);
+  const assessmentSummary = assessment.confirmed
+    ? `${assessment.confirmed.diagnosis}${confirmedIcd ? ` · ICD-10 ${confirmedIcd.code}` : ""}`
+    : assessment.editableDiagnosis.trim() || "No diagnosis yet";
+
   return (
     <div
       data-slot="post-consultation-workspace"
       data-phase={phase}
-      className="flex min-h-full w-full max-w-full min-w-0 flex-col"
-      aria-label="Assessment-first clinical decision support"
+      data-view={phoneView}
+      className="group/ws flex min-h-full w-full max-w-full min-w-0 flex-col"
+      aria-label="Post-consultation documentation"
     >
       <WorkspaceHeader
         consultationId={consultationId}
@@ -1092,314 +1409,310 @@ export function AssessmentFirstWorkspace({
         allergies={patientAllergies}
         phase={phase}
         blocked={safetyLock}
-        statusLabel={
-          safetyLock
-            ? "Red flag detected"
-            : assessment.confirmed
-              ? "Assessment confirmed"
-              : "Not yet confirmed"
+        view={phoneView}
+        deliverLocked={!confirmed}
+        onSelectView={showView}
+        phoneActions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              shape="pill"
+              aria-label="Patient intake"
+              className="h-11 gap-1.5 border-(--border-default) px-3"
+              onClick={() => setMobileIntakeOpen(true)}
+            >
+              <ClipboardList className="size-4 shrink-0" aria-hidden />
+              <span className="max-[359px]:sr-only">Intake</span>
+            </Button>
+            {bookingId ? <SendToErControl bookingId={bookingId} urgent={safetyLock} /> : null}
+          </>
         }
-        statusTone={safetyLock ? "danger" : assessment.confirmed ? "active" : "done"}
         actions={
           <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-full gap-1.5 shrink-0"
+              variant="ghost"
+              shape="pill"
+              aria-label="Refresh"
+              title="Refresh"
+              className="size-9 p-0 text-(--text-muted) hover:text-(--text-heading)"
               disabled={busy}
-              onClick={() =>
-                run(async () => {
-                  resetDerived();
-                  await refreshAssessment();
-                  await refreshOutputs();
-                })
-              }
+              onClick={refreshAll}
             >
-              <RefreshCw className="size-3.5 shrink-0" />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className="size-4 shrink-0" />
             </Button>
-            <FinishDocumentationControl
-              assessment={assessment}
-              artifacts={liveCurrent}
-              size="sm"
-            />
+            {bookingId ? <SendToErControl bookingId={bookingId} urgent={safetyLock} /> : null}
           </div>
         }
       />
 
-      {/*
-        2-Column Clinical Cockpit: Active Documentation Stage on the left (70%), Patient Intake Reference Dock on the right (30%).
-      */}
       <div
         className={cn(
-          "grid flex-1 grid-cols-1 items-start gap-4 p-3 sm:p-4 min-w-0 max-w-full",
+          "grid flex-1 grid-cols-1 items-start gap-4 p-3 min-w-0 max-w-full sm:p-4",
           patientRailCollapsed
             ? "lg:grid-cols-[minmax(0,1fr)_3.5rem]"
-            : "lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]",
+            : "lg:grid-cols-[minmax(0,1fr)_minmax(17rem,21rem)]",
         )}
       >
-        <main className="order-1 flex min-w-0 flex-col gap-4">
-          {/*
-            Read-only Subjective / Objective context. It sits above the
-            Assessment card because it is what the physician reads while writing
-            the Assessment.
-          */}
-          <SoapSummaryCards intake={intake} />
+        <main className="order-1 flex min-w-0 flex-col gap-3">
+          {/* A safety finding leads the page (every phone screen but an open document). */}
+          {safetyLock ? <div className={docOpen ? "max-lg:hidden" : ""}>{lockNotice}</div> : null}
 
-          <AssessmentCard
-            assessment={assessment}
-            allowedTypes={allowedTypes}
-            draftDiagnosis={draftDiagnosis}
-            onDraftDiagnosis={updateDraftDiagnosis}
-            open={assessmentOpen}
-            onOpenChange={setAssessmentOpen}
-            busy={busy}
-            onSave={saveManual}
-            onConfirm={confirm}
-            onUpdate={() => updateOrReattest("update")}
-            onReattest={() => updateOrReattest("reattest")}
-            onClear={clear}
-            icd={icdPayload}
-            icdSyncing={generating.has("final_icd")}
-            onSyncIcd={() => {
-              if (assessment.confirmed) {
-                void generate("final_icd");
-              }
-            }}
-            picker={
-              <CandidatePicker
-                assessment={assessment}
-                evaluation={evaluation}
-                preview={preview}
-                focused={focusedCandidate}
-                previewLoading={previewLoading}
-                searching={searching}
-                cursor={cursor}
-                busy={busy}
-                suppressed={Boolean(candidateSuppressed)}
-                onStart={startEvaluation}
-                onMore={() => runCandidateSearch(draftDiagnosis, cursor)}
-                onFocus={loadPreview}
-                onSelect={chooseCandidate}
+          <WorkspaceSection
+            id="soap-s"
+            letter="S"
+            title="Subjective"
+            className={onPhone("review")}
+            summary={<SubjectiveSummary intake={intake} text={subjectiveSummary} />}
+            open={sectionOpen("S")}
+            onOpenChange={toggleFor("S")}
+            meta={<NotesSaveState state={notes.saveState} prefilled={notes.prefilled} />}
+          >
+            <div className="flex flex-col gap-4">
+              <IntakeBlock label="Patient reported">
+                <SubjectiveIntake intake={intake} />
+              </IntakeBlock>
+              <ClinicalNoteField
+                notes={notes}
+                field="subjective"
+                label="Your subjective notes"
+                hint="Private to you"
+                placeholder="What the patient told you, in your words."
               />
-            }
-            onFieldFocus={() => {
-              if (!assessment.confirmed && !evaluation && !busy) void startEvaluation();
-            }}
-          />
-
-          {/*
-            One "what to do next" line for the current §4.1 state.
-            `assessment_open` is excluded: its guidance heading duplicates the
-            Assessment card header directly beneath it.
-          */}
-          {guidance && guidance.step !== "assessment_open" && guidance.step !== "generation_ready" ? (
-            <div
-              data-slot="workspace-guidance"
-              data-step={guidance.step}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2 text-xs shadow-2xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className="size-2 shrink-0 rounded-full bg-(--teal-600)" aria-hidden />
-                <span className="font-bold text-(--text-heading)">{guidance.heading}:</span>
-                <span className="font-medium text-(--text-body)">{guidance.instruction}</span>
-              </div>
             </div>
-          ) : null}
+          </WorkspaceSection>
 
-          {/*
-            Lock reasons in clinical language, each with the control that clears
-            it. These used to render as `lockReasons.join(", ")`, so a physician
-            read the raw contract enum -- `clinical_input_changed`.
-          */}
-          {assessment.lockReasons.length > 0 ? (
-            <div
-              role="alert"
-              data-slot="workspace-locks"
+          <WorkspaceSection
+            id="soap-o"
+            letter="O"
+            title="Objective"
+            className={onPhone("review")}
+            summary={<ObjectiveSummary intake={intake} fallback={firstLine(notes.draft.objective)} />}
+            open={sectionOpen("O")}
+            onOpenChange={toggleFor("O")}
+          >
+            <div className="flex flex-col gap-4">
+              <IntakeBlock label="Patient-recorded vitals">
+                <ObjectiveIntake intake={intake} />
+              </IntakeBlock>
+              <ClinicalNoteField
+                notes={notes}
+                field="objective"
+                label="Your objective findings"
+                hint="Private to you"
+                placeholder="What you observed or measured during the consult."
+              />
+            </div>
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            id="soap-a"
+            letter="A"
+            title="Assessment"
+            className={onPhone("assess")}
+            summary={
+              assessment.confirmed ? (
+                <>
+                  <span className="min-w-0 truncate font-semibold text-(--text-heading)">
+                    {assessment.confirmed.diagnosis}
+                  </span>
+                  {confirmedIcd ? (
+                    <span className="shrink-0 rounded-md bg-(--surface-warm-soft) px-1.5 py-0.5 font-mono text-xs font-semibold text-(--text-heading)">
+                      ICD-10 {confirmedIcd.code}
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                assessmentSummary
+              )
+            }
+            open={sectionOpen("A")}
+            onOpenChange={toggleFor("A")}
+            meta={
+              safetyLock ? (
+                <StatusText tone="danger" icon={ShieldAlert}>
+                  Red flag
+                </StatusText>
+              ) : confirmed ? (
+                <StatusText tone="success" icon={CheckCircle2}>
+                  Confirmed
+                </StatusText>
+              ) : (
+                <StatusText tone="attention">Not confirmed</StatusText>
+              )
+            }
+          >
+            <AssessmentEditor
+              assessment={assessment}
+              allowedTypes={allowedTypes}
+              draftDiagnosis={draftDiagnosis}
+              onDraftDiagnosis={updateDraftDiagnosis}
+              busy={busy}
+              onSave={saveManual}
+              onConfirm={confirm}
+              onUpdate={() => updateOrReattest("update")}
+              onReattest={() => updateOrReattest("reattest")}
+              onClear={clear}
+              icd={confirmedIcd}
+              draftIcd={draftIcd}
+              onDraftIcd={editDraftIcd}
+              reasoning={
+                <ClinicalNoteField
+                  notes={notes}
+                  field="assessmentNotes"
+                  label="Clinical reasoning"
+                  hint="Optional · private to you, never sent to the AI"
+                  placeholder="Why this diagnosis: differentials considered, what ruled them out."
+                />
+              }
+              picker={
+                <CandidatePicker
+                  assessment={assessment}
+                  evaluation={evaluation}
+                  preview={preview}
+                  focused={focusedCandidate}
+                  previewLoading={previewLoading}
+                  searching={searching}
+                  cursor={cursor}
+                  busy={busy}
+                  suppressed={Boolean(candidateSuppressed)}
+                  onStart={startEvaluation}
+                  onMore={() => runCandidateSearch(draftDiagnosis, cursor)}
+                  onFocus={loadPreview}
+                  onSelect={chooseCandidate}
+                />
+              }
+            />
+          </WorkspaceSection>
+
+          {/* Phone, Deliver: the confirmed diagnosis in one tappable line. */}
+          {confirmed ? (
+            <button
+              type="button"
+              data-slot="phone-assessment-summary"
+              onClick={() => showView("assess")}
               className={cn(
-                "rounded-[14px] border p-3.5",
-                safetyLock
-                  ? "border-(--danger-border) bg-(--danger-bg)"
-                  : "border-(--status-soon-fg)/40 bg-(--status-soon-bg)",
+                "flex min-h-14 w-full items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-card) px-4 py-2.5 text-left lg:hidden",
+                onPhone("deliver"),
               )}
             >
-              {/*
-                Ordered so the physician reads *what happened* before being
-                handed a button: heading, then one card per reason (a bold
-                one-line label, its plain-language meaning underneath, and its
-                own concrete next step called out separately rather than run
-                together into one dense sentence), and only then the shared
-                action that actually clears the two most common locks. The
-                button used to sit between the heading and the explanation —
-                asking the physician to act before they had read why.
-              */}
-              <p className="flex items-center gap-2 text-[15px] font-bold text-(--text-heading)">
-                <ShieldAlert
-                  className={cn(
-                    "size-5 shrink-0",
-                    safetyLock ? "text-(--danger-fg)" : "text-(--status-soon-fg)",
-                  )}
-                />
-                {assessment.lockReasons.length === 1
-                  ? "Drafting is on hold"
-                  : `Drafting is on hold for ${assessment.lockReasons.length} reasons`}
-              </p>
-
-              <ul className="mt-2.5 space-y-2.5">
-                {assessment.lockReasons.map((reason) => {
-                  const copy = lockReasonCopy(reason);
-                  return (
-                    <li
-                      key={reason}
-                      className="rounded-[10px] bg-(--surface-card)/60 p-2.5 text-sm"
-                      data-lock-reason={reason}
-                    >
-                      <p className="font-semibold text-(--text-heading)">{copy.label}.</p>
-                      <p className="mt-0.5 text-(--text-muted)">{copy.meaning}</p>
-                      <p className="mt-1 flex items-start gap-1.5 font-medium text-(--text-body)">
-                        <span aria-hidden className="shrink-0">
-                          →
-                        </span>
-                        {copy.nextAction}
-                      </p>
-                      {reason === "acknowledgment_pending"
-                      && assessment.clinicalSafetyEpisodeId
-                      && acknowledgmentReady ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="mt-1.5 flex rounded-full"
-                          disabled={busy}
-                          onClick={acknowledge}
-                        >
-                          Acknowledge current episode
-                        </Button>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <Button
-                type="button"
-                data-slot="banner-recheck-safety"
-                className="mt-3 rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
-                disabled={busy || !assessment.confirmed}
-                title={
-                  !assessment.confirmed
-                    ? "Confirm the Assessment first, then re-run the safety check to unlock drafting."
-                    : undefined
-                }
-                onClick={requestToken}
+              <span
+                aria-hidden
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-(--surface-brand-soft) text-sm font-bold text-(--navy-700) dark:text-(--navy-300)"
               >
-                <ShieldAlert className="size-4" />
-                Re-run safety check
-              </Button>
-            </div>
+                A
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-semibold text-(--text-heading)">{assessmentSummary}</span>
+                <span className="text-xs text-(--text-muted)">Confirmed assessment · tap to revise</span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-(--text-muted)" aria-hidden />
+            </button>
           ) : null}
 
-          {/* Assessment includes its synchronized ICD coding above. */}
-          {/* Plan is unified as the primary tab of DeliverablesDeck below. */}
+          {/* A non-safety hold concerns drafting, so it sits right above the Plan it holds. */}
+          {hasLocks && !safetyLock ? <div className={onPhone("assess", "deliver")}>{lockNotice}</div> : null}
 
-          <DeliverablesDeck
-            entries={deckEntries}
-            active={activeDeliverable}
-            onActiveChange={setActiveDeliverable}
-            busy={busy}
-            generating={generating}
-            specimen={doctorProfile?.signature}
-            defaultSignerName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
-            canRegenerate={draftingOpen}
-            onAmend={amend}
-            onFinalize={finalize}
-            onRelease={release}
-            onRegenerate={(outputType) => void generate(outputType)}
-            onDraft={(outputType) => void generate(outputType)}
-            onDiscard={handleDiscard}
-            intake={intake}
-            gateStatusLabel={railBadgeLabel(railState, railRows)}
-          />
-
-          <CareContinuityPanel
-            consultationId={consultationId}
-            token={token}
-            doctorName={doctorProfile?.fullName || undefined}
-          />
-
-          {Object.values(jobs).length ? (
-            <section
-              className="rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs"
-              aria-labelledby="jobs-heading"
-            >
-              <h2 id="jobs-heading" className="text-[15px] font-bold text-(--text-heading)">
-                Background drafts
-              </h2>
-              <p className="text-xs text-(--text-muted)">
-                Status is polled from the server. There is no client continuation action.
-              </p>
-              <ul className="mt-3 space-y-2">
-                {Object.values(jobs).map((job) => (
-                  <li
-                    key={job.jobId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] bg-(--surface-warm-soft) p-3 text-sm text-(--text-body)"
-                  >
-                    <span>
-                      {"outputType" in job
-                        ? outputLabels[job.outputType as CdsProtectedOutputType]
-                        : "Earlier draft"}{" "}
-                      · {job.status}
-                      {"boundedReason" in job && job.boundedReason ? ` · ${job.boundedReason}` : ""}
-                      {!("authoritative" in job) ? " · checking status" : ""}
-                    </span>
-                    {(!("authoritative" in job) && !terminalJobs.has(job.status)) ||
-                    ("authoritative" in job && job.authoritative && !terminalJobs.has(job.status)) ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => cancelJob(job as CdsAsyncJob | CdsAsyncJobAccepted)}
-                        disabled={busy}
-                      >
-                        Cancel
-                      </Button>
-                    ) : null}
+          <WorkspaceSection
+            id="soap-p"
+            letter="P"
+            title="Plan & documents"
+            className={phoneView === "deliver" ? undefined : "max-lg:hidden"}
+            headerClassName={docOpen ? "max-lg:hidden" : undefined}
+            locked={!confirmed}
+            summary={!confirmed ? "Opens after you confirm the Assessment" : undefined}
+            bodyClassName="p-0 sm:p-0 max-lg:border-t-0"
+            meta={
+              confirmed && progress.started > 0 ? (
+                <span className="text-xs font-semibold text-(--text-muted) tabular-nums">
+                  {progress.done} of {progress.started} done
+                </span>
+              ) : null
+            }
+          >
+            <DeliverablesDeck
+              entries={deckEntries}
+              active={phoneDoc ?? activeDeliverable}
+              onActiveChange={openDocument}
+              busy={busy}
+              generating={generating}
+              specimen={doctorProfile?.signature}
+              defaultSignerName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+              draftingOpen={draftingOpen}
+              aiEligibleTypes={aiEligibleTypes}
+              aiUnavailableReason={
+                hasLocks
+                  ? "AI drafting is on hold until the notice above is cleared. You can still write it yourself."
+                  : undefined
+              }
+              onAmend={amend}
+              onFinalize={finalize}
+              onRelease={release}
+              onDraft={(outputType) => void generate(outputType)}
+              onAuthor={authorDocument}
+              onDiscard={handleDiscard}
+              cancellableTypes={new Set(jobByType.keys())}
+              onCancelDraft={(outputType) => {
+                const job = jobByType.get(outputType);
+                if (job) cancelJob(job);
+              }}
+              intake={intake}
+              followUp={followUp}
+              history={history}
+              historyCursor={historyCursor}
+              onLoadMoreHistory={loadMoreHistory}
+              onInspectHistory={(artifact) => setInspectingHistoricalArtifact(artifact)}
+              mobileDetail={docOpen}
+              onCloseMobileDetail={closeDocument}
+              notNeeded={discardedTypes}
+              removedDraftTypes={removedDraftTypes}
+              onNotNeeded={handleDiscard}
+              onRestore={restoreType}
+              onRefresh={refreshAll}
+            />
+            {untypedJobs.length > 0 ? (
+              <ul className="flex flex-col gap-2 border-t border-(--border-subtle) p-4 sm:px-5">
+                {untypedJobs.map((job) => (
+                  <li key={job.jobId} className="flex flex-wrap items-center justify-between gap-2 text-sm text-(--text-body)">
+                    <span>Earlier draft · {job.status.replaceAll("_", " ")}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      shape="pill"
+                      className="h-11 lg:h-9"
+                      disabled={busy}
+                      onClick={() => cancelJob(job as CdsAsyncJob | CdsAsyncJobAccepted)}
+                    >
+                      Cancel
+                    </Button>
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : null}
+            ) : null}
+          </WorkspaceSection>
 
-          {/* Kept out of the pre-confirmation scroll: with no confirmed
-              Assessment there is nothing that could have been authorized. */}
-          {assessment.confirmed || history.length > 0 ? (
-            <AuthorizedArtifactHistory
-              history={history}
-              cursor={historyCursor}
-              busy={busy}
-              onLoadMore={loadMoreHistory}
-              onInspectArtifact={(art) => setInspectingHistoricalArtifact(art)}
-            />
-          ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-4 shadow-xs">
-            <div>
-              <p className="text-sm font-bold text-(--text-heading)">Complete Consultation</p>
-              <p className="text-xs text-(--text-muted)">
-                Review and release all clinical documents, or complete this encounter.
-              </p>
-            </div>
-            <FinishDocumentationControl
-              assessment={assessment}
-              artifacts={liveCurrent}
-              size="default"
-              className="w-full sm:w-auto"
-            />
-          </div>
+          <NextStepBar
+            className={docOpen ? "max-lg:hidden" : undefined}
+            assessment={assessment}
+            artifacts={liveCurrent}
+            notNeededTypes={discardedTypes}
+            safetyLock={safetyLock}
+            guidance={guidance}
+            progress={progress}
+            isPhone={isPhone}
+            phoneView={phoneView}
+            busy={busy}
+            canConfirm={Boolean(draftDiagnosis.trim())}
+            onConfirm={confirm}
+            onShowView={showView}
+            onGoToAssessment={goToAssessment}
+            onGoToNotice={() => (isPhone ? window.scrollTo({ top: 0 }) : scrollToId("workspace-locks"))}
+            onGoToDocument={goToDocument}
+          />
         </main>
 
-        <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
+        <div className="order-2 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
           <PatientRail
             bookingId={bookingId}
             intake={intake}
@@ -1409,6 +1722,15 @@ export function AssessmentFirstWorkspace({
         </div>
       </div>
 
+      <CustomBottomModal
+        open={mobileIntakeOpen}
+        onOpenChange={setMobileIntakeOpen}
+        title="Patient intake"
+        description={intake?.patientName ?? undefined}
+      >
+        <PatientDetails bookingId={bookingId} form={intake} />
+      </CustomBottomModal>
+
       <DocumentSheetModal
         open={Boolean(inspectingHistoricalArtifact)}
         onOpenChange={(open) => {
@@ -1416,12 +1738,337 @@ export function AssessmentFirstWorkspace({
         }}
         artifact={inspectingHistoricalArtifact ?? undefined}
         intake={intake}
-        specimen={doctorProfile?.signature}
         doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
         isHistoricalArchive={true}
       />
     </div>
   );
+}
+
+/**
+ * Why drafting is held, in clinical language, each reason with what clears
+ * it, and then the controls that clear the common ones. Ordered so the
+ * physician reads what happened before being handed a button. Refresh lives
+ * here too, because several reasons say to refresh.
+ */
+function LockNotice({
+  assessment,
+  safetyLock,
+  busy,
+  acknowledgmentReady,
+  onAcknowledge,
+  onProceed,
+  onRecheck,
+  onRefresh,
+}: {
+  assessment: CdsAssessment;
+  safetyLock: boolean;
+  busy: boolean;
+  acknowledgmentReady: boolean;
+  onAcknowledge: () => void;
+  onProceed: (reason: string) => void;
+  onRecheck: () => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <section
+      id="workspace-locks"
+      role="alert"
+      data-slot="workspace-locks"
+      className={cn(
+        "scroll-mt-28 rounded-2xl border p-4 sm:p-5",
+        safetyLock
+          ? "border-(--danger-border)/60 bg-(--danger-bg)"
+          : "border-(--attention-border)/40 bg-(--attention-bg)",
+      )}
+    >
+      <h2 className="flex items-center gap-2 text-base font-bold text-(--text-heading)">
+        <ShieldAlert
+          className={cn("size-5 shrink-0", safetyLock ? "text-(--danger-fg)" : "text-(--attention-fg)")}
+          aria-hidden
+        />
+        {safetyLock
+          ? "A safety finding needs your review"
+          : assessment.lockReasons.length === 1
+            ? "Drafting is on hold"
+            : `Drafting is on hold for ${assessment.lockReasons.length} reasons`}
+      </h2>
+
+      <ul className="mt-3 flex flex-col gap-2">
+        {assessment.lockReasons.map((reason) => {
+          const copy = lockReasonCopy(reason);
+          return (
+            <li key={reason} data-lock-reason={reason} className="rounded-xl bg-(--surface-card) p-3 text-sm">
+              <p className="font-semibold text-(--text-heading)">{copy.label}</p>
+              <p className="mt-0.5 text-(--text-muted)">{copy.meaning}</p>
+              <p className="mt-1.5 flex items-start gap-1.5 font-medium text-(--text-body)">
+                <ArrowRight className="mt-0.5 size-4 shrink-0 text-(--text-muted)" aria-hidden />
+                {copy.nextAction}
+              </p>
+              {reason === "acknowledgment_pending" && assessment.clinicalSafetyEpisodeId && acknowledgmentReady ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  shape="pill"
+                  className="mt-2 h-11 border-(--border-default) lg:h-9"
+                  disabled={busy}
+                  onClick={onAcknowledge}
+                >
+                  Acknowledge this finding
+                </Button>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+
+      {safetyLock && assessment.clinicalSafetyEpisodeId ? (
+        <RedFlagOverrideControl
+          assessmentConfirmed={Boolean(assessment.confirmed)}
+          busy={busy}
+          onProceed={onProceed}
+        />
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">
+        <Button
+          type="button"
+          data-slot="banner-recheck-safety"
+          variant="primary"
+          shape="pill"
+          className="h-11 lg:h-9"
+          disabled={busy || !assessment.confirmed}
+          title={
+            !assessment.confirmed
+              ? "Confirm the Assessment first, then re-run the safety check to unlock drafting."
+              : undefined
+          }
+          onClick={onRecheck}
+        >
+          <ShieldAlert className="size-4" />
+          Re-run safety check
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          shape="pill"
+          className="h-11 border-(--border-default) bg-(--surface-card) lg:h-9"
+          disabled={busy}
+          onClick={onRefresh}
+        >
+          <RefreshCw className="size-4" /> Refresh
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The bar that always says what to do next, at the bottom of the column on
+ * every screen size, and the only place Finish lives.
+ *
+ * On a phone its primary action is the screen's own next step: "Write
+ * assessment" on Review, the real **Confirm assessment** on Assess (in the
+ * thumb zone, rather than at the end of a long form), and the next document on
+ * Deliver. The primary grows to fill the width; Finish stays compact beside
+ * it, because it is a way out, not the next step. The whole bar steps aside
+ * while the keyboard is up.
+ */
+function NextStepBar({
+  className,
+  assessment,
+  artifacts,
+  notNeededTypes,
+  safetyLock,
+  guidance,
+  progress,
+  isPhone,
+  phoneView,
+  busy,
+  canConfirm,
+  onConfirm,
+  onShowView,
+  onGoToAssessment,
+  onGoToNotice,
+  onGoToDocument,
+}: {
+  className?: string;
+  assessment: CdsAssessment;
+  artifacts: readonly CdsProtectedArtifact[];
+  notNeededTypes: ReadonlySet<CdsProtectedOutputType>;
+  safetyLock: boolean;
+  guidance: ReturnType<typeof stepGuidance> | null;
+  progress: ReturnType<typeof checklistProgress>;
+  isPhone: boolean;
+  phoneView: WorkspacePhase;
+  busy: boolean;
+  canConfirm: boolean;
+  onConfirm: () => void;
+  onShowView: (view: WorkspacePhase) => void;
+  onGoToAssessment: () => void;
+  onGoToNotice: () => void;
+  onGoToDocument: (key: ChecklistKey) => void;
+}) {
+  const confirmed = Boolean(assessment.confirmed);
+  const held = assessment.lockReasons.length > 0;
+  const allDone = confirmed && !held && progress.started > 0 && !progress.next;
+  const grow = "h-11 lg:h-9 max-sm:flex-1";
+
+  let status: React.ReactNode;
+  let action: React.ReactNode = null;
+
+  if (safetyLock) {
+    status = (
+      <BarStatus tone="danger" label="Red flag">
+        {guidance?.instruction ?? "Review the safety finding before drafting."}
+      </BarStatus>
+    );
+    action = (
+      <Button type="button" variant="outline" shape="pill" className={cn(grow, "border-(--border-default)")} onClick={onGoToNotice}>
+        Review finding
+      </Button>
+    );
+  } else if (!confirmed && isPhone && phoneView === "review") {
+    status = <BarStatus label="Step 1 of 3">Read the intake and add your notes. They save as you go.</BarStatus>;
+    action = (
+      <Button type="button" variant="primary" shape="pill" className={grow} onClick={() => onShowView("assess")}>
+        Write assessment <ArrowRight className="size-4" />
+      </Button>
+    );
+  } else if (!confirmed && isPhone) {
+    status = <BarStatus label="Step 2 of 3">Nothing is drafted until you confirm.</BarStatus>;
+    action = (
+      <Button
+        type="button"
+        variant="primary"
+        shape="pill"
+        className={grow}
+        disabled={busy || !canConfirm}
+        onClick={onConfirm}
+      >
+        {busy ? <Spinner className="size-4" /> : <CheckCircle2 className="size-4" />}
+        Confirm assessment
+      </Button>
+    );
+  } else if (!confirmed) {
+    status = <BarStatus label="Next">Confirm your diagnosis and its ICD-10 code in Assessment.</BarStatus>;
+    action = (
+      <Button type="button" variant="primary" shape="pill" className={grow} onClick={onGoToAssessment}>
+        Go to Assessment <ArrowRight className="size-4" />
+      </Button>
+    );
+  } else if (held) {
+    status = (
+      <BarStatus tone="attention" label="On hold">
+        {guidance?.heading ?? "Drafting is on hold."} You can still write documents yourself.
+      </BarStatus>
+    );
+    action = (
+      <Button type="button" variant="outline" shape="pill" className={cn(grow, "border-(--border-default)")} onClick={onGoToNotice}>
+        See why
+      </Button>
+    );
+  } else if (isPhone && phoneView !== "deliver") {
+    status = <BarStatus tone="success" label="Confirmed">Your assessment is saved. Documents are next.</BarStatus>;
+    action = (
+      <Button type="button" variant="primary" shape="pill" className={grow} onClick={() => onShowView("deliver")}>
+        Go to documents <ArrowRight className="size-4" />
+      </Button>
+    );
+  } else if (progress.next) {
+    const label = OUTPUT_LABELS[progress.next.outputType];
+    status = (
+      <BarStatus label={`${progress.done} of ${progress.started} done`}>
+        Next: {progress.next.verb.toLowerCase()} the {label.toLowerCase()}.
+      </BarStatus>
+    );
+    action = (
+      <Button
+        type="button"
+        variant="primary"
+        shape="pill"
+        className={grow}
+        onClick={() => onGoToDocument(progress.next!.outputType)}
+      >
+        {progress.next.verb} {label.toLowerCase()} <ArrowRight className="size-4" />
+      </Button>
+    );
+  } else if (progress.started === 0) {
+    status = <BarStatus label="Next">Start the documents this patient needs.</BarStatus>;
+    action = (
+      <Button type="button" variant="primary" shape="pill" className={grow} onClick={() => onGoToDocument("plan")}>
+        Start with the plan <ArrowRight className="size-4" />
+      </Button>
+    );
+  } else {
+    status = (
+      <BarStatus tone="success" label={`${progress.done} of ${progress.started} done`}>
+        Every document you started is finished.
+      </BarStatus>
+    );
+  }
+
+  return (
+    <StickyActionBar
+      aria-label="Next step"
+      className={cn(
+        "max-lg:-mx-3 sm:max-lg:-mx-4 lg:rounded-2xl lg:border lg:pb-3 max-lg:group-has-[textarea:focus]/ws:hidden max-lg:group-has-[input:focus]/ws:hidden",
+        className,
+      )}
+      status={status}
+    >
+      {action}
+      {/* Before confirmation a phone has nothing to finish; the slot goes to the next step. */}
+      {confirmed || !isPhone ? (
+        <FinishDocumentationControl
+          assessment={assessment}
+          artifacts={artifacts}
+          notNeededTypes={notNeededTypes}
+          emphasize={allDone}
+        />
+      ) : null}
+    </StickyActionBar>
+  );
+}
+
+function BarStatus({
+  label,
+  tone = "neutral",
+  children,
+}: {
+  label: string;
+  tone?: "neutral" | "attention" | "success" | "danger";
+  children: React.ReactNode;
+}) {
+  return (
+    <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-(--text-body)">
+      <StatusText tone={tone} size="sm">
+        {label}
+      </StatusText>
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+}
+
+interface IcdDraft {
+  code: string;
+  description: string;
+  /** Set while the draft still equals the map's suggestion. */
+  mapVersion?: string;
+}
+
+const EMPTY_ICD_DRAFT: IcdDraft = { code: "", description: "" };
+const ICD10_CODE = /^[A-Z][0-9A-Z]{2}(\.[0-9A-Z]{1,4})?$/u;
+
+function icdDraftFrom(value: { code: string; description: string; mapVersion?: string }): IcdDraft {
+  return { code: value.code, description: value.description, ...(value.mapVersion ? { mapVersion: value.mapVersion } : {}) };
+}
+
+function icdFromDraft(draft: IcdDraft): { system: "ICD-10"; code: string; description: string } | null {
+  const code = draft.code.normalize("NFKC").trim().toUpperCase();
+  const description = draft.description.normalize("NFKC").trim().replace(/\s+/gu, " ");
+  if (!ICD10_CODE.test(code) || description.length < 1 || description.length > 500) return null;
+  return { system: "ICD-10", code, description };
 }
 
 function readFinalIcdPayload(
@@ -1435,27 +2082,19 @@ function readFinalIcdPayload(
 }
 
 /**
- * The Assessment: the one thing on this page the physician writes themselves.
+ * The Assessment: the one thing on this page that unlocks documents.
  *
- * Extracted from the workspace body because its two states — open editor with a
- * suggestion picker, and settled one-line summary — were 200 lines of nested
- * ternaries in the middle of the page's layout, which is how the confirm strip's
- * wording drifted out of step with the buttons above it.
- *
- * The action labels are the substantive change. "Save" and "Confirm Assessment"
- * sat side by side with nothing saying which one committed anything; the
- * post-confirmation row read "Change Assessment / Re-attest unchanged / Clear
- * Assessment / Done editing", four verbs of similar weight, one of which
- * destroys the confirmation. They now say what they do and are ordered by
- * consequence.
+ * Renders inside the A section, which owns the title, status and folding.
+ * Order follows the work: the diagnosis and its ICD-10 code, optional
+ * suggestions, the physician's private reasoning, then the commit. Actions
+ * are ordered by consequence, with the destructive one apart on the left and
+ * confirmed before it runs.
  */
-function AssessmentCard({
+function AssessmentEditor({
   assessment,
   allowedTypes,
   draftDiagnosis,
   onDraftDiagnosis,
-  open,
-  onOpenChange,
   busy,
   onSave,
   onConfirm,
@@ -1463,17 +2102,15 @@ function AssessmentCard({
   onReattest,
   onClear,
   icd,
-  icdSyncing,
-  onSyncIcd,
+  draftIcd,
+  onDraftIcd,
   picker,
-  onFieldFocus,
+  reasoning,
 }: {
   assessment: CdsAssessment;
   allowedTypes: readonly CdsProtectedOutputType[];
   draftDiagnosis: string;
   onDraftDiagnosis: (value: string) => void;
-  open: boolean;
-  onOpenChange: (value: boolean) => void;
   busy: boolean;
   onSave: () => void;
   onConfirm: () => void;
@@ -1481,120 +2118,73 @@ function AssessmentCard({
   onReattest: () => void;
   onClear: () => void;
   icd: { code: string; description: string } | null;
-  icdSyncing: boolean;
-  onSyncIcd: () => void;
+  draftIcd: IcdDraft;
+  onDraftIcd: (value: IcdDraft) => void;
   picker: React.ReactNode;
-  onFieldFocus: () => void;
+  reasoning: React.ReactNode;
 }) {
+  const [clearOpen, setClearOpen] = useState(false);
   const confirmed = assessment.confirmed;
-  const manuallyDraftableTypes = allowedTypes.filter(
-    (type) => type !== "final_icd" && type !== "lab_request" && type !== "imaging_request",
+  const aiDraftable = allowedTypes.filter((type) => type !== "final_icd");
+  const draftIcdValue = icdFromDraft(draftIcd);
+  const icdChanged = Boolean(confirmed) && (
+    !confirmed?.icd10
+    || draftIcdValue?.code !== confirmed.icd10.code
+    || draftIcdValue?.description !== confirmed.icd10.description
   );
-
-  /*
-    Once confirmed, the Assessment collapses to a one-line bar. It is settled
-    state at that point, and leaving the full editor plus the candidate picker
-    expanded put the largest, most interactive card on the page in the phase
-    where the physician's work has moved to the documents below.
-
-    It collapses only when the confirmed Assessment can actually draft
-    something. A diagnosis outside the approved catalogue resolves to an empty
-    eligible-output set, and the explanation for that lives in the expanded
-    card — collapsing there would leave a tidy summary bar above seven dead
-    tools with no stated reason.
-  */
-  if (confirmed && !open && allowedTypes.length > 0) {
-    return (
-      <section
-        data-slot="assessment-summary-bar"
-        className="flex flex-wrap items-center gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) px-4 py-3 shadow-xs"
-        aria-labelledby="assessment-heading"
-      >
-        <span
-          aria-hidden
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-(--surface-accent-soft) text-(--status-available-fg)"
-        >
-          <CheckCircle2 className="size-4" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <h2 id="assessment-heading" className="text-xs font-bold uppercase tracking-wider text-(--navy-700) dark:text-(--navy-300)">
-            Confirmed Assessment
-          </h2>
-          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
-            <span className="truncate font-semibold text-(--text-heading)">{confirmed.diagnosis}</span>
-            {icd ? (
-              <span
-                data-slot="assessment-icd-code"
-                className="shrink-0 rounded-md bg-(--surface-accent-soft) px-2 py-0.5 text-xs font-bold text-(--teal-800) dark:text-(--teal-300)"
-              >
-                ICD-10 {icd.code}
-              </span>
-            ) : icdSyncing ? (
-              <span className="flex shrink-0 items-center gap-1 text-xs text-(--ai-fg)">
-                <Spinner className="size-3" /> Syncing ICD-10…
-              </span>
-            ) : null}
-            <span className="text-xs font-medium text-(--text-muted)">v{assessment.assessmentVersion}</span>
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-full"
-          disabled={busy}
-          onClick={() => onOpenChange(true)}
-        >
-          <PenLine className="size-4" /> Revise
-        </Button>
-      </section>
-    );
-  }
+  const diagnosisChanged = Boolean(draftDiagnosis.trim()) && draftDiagnosis.trim() !== confirmed?.diagnosis;
 
   return (
-    <section
-      data-slot="assessment-card"
-      className="flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
-      aria-labelledby="assessment-heading"
-    >
-      <div className="flex flex-wrap items-center gap-2 border-b border-(--border-subtle) px-4 py-3.5">
-        <span
-          aria-hidden
-          className="flex size-6 items-center justify-center rounded-md bg-(--surface-accent-soft) text-xs font-bold text-(--status-available-fg)"
-        >
-          A
-        </span>
-        <h2 id="assessment-heading" className="text-[15px] font-bold text-(--text-heading)">
-          Your Assessment
-        </h2>
-        {assessment.confirmationState === "confirmed" ? (
-          <span className="rounded-full bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
-            Confirmed
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 rounded-full bg-(--status-soon-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-soon-fg)">
-            <PenLine className="size-3" />
-            Not confirmed yet
-          </span>
-        )}
-        <span className="ml-auto text-xs text-(--text-subtle)">
-          Version {assessment.assessmentVersion}
-        </span>
-      </div>
+    <div data-slot="assessment-card" className="flex min-w-0 flex-col gap-4">
+      {confirmed ? (
+        <div data-slot="assessment-confirmed-summary" className="rounded-xl bg-(--surface-warm-soft) p-3.5 text-sm">
+          <p className="font-semibold text-(--text-heading)">
+            {confirmed.diagnosis}
+            {icd ? (
+              <span data-slot="assessment-icd-code" className="font-normal text-(--text-muted)">
+                {" "}· ICD-10 <span className="font-mono font-semibold text-(--text-heading)">{icd.code}</span>{" "}
+                {icd.description}
+              </span>
+            ) : null}
+          </p>
+          <p className="mt-0.5 text-(--text-muted)">
+            Confirmed by you{" "}
+            {new Date(confirmed.confirmedAt).toLocaleString([], {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}{" "}
+            · version {assessment.assessmentVersion}
+          </p>
+          {!icd ? (
+            <p className="mt-1 text-(--attention-fg)">No ICD-10 code on this version. Add one below and save a new version.</p>
+          ) : null}
+          {aiDraftable.length === 0 ? (
+            /*
+              The most confusing state in live testing: a diagnosis outside the
+              approved catalogue has an empty eligible-output set, so no AI
+              drafting at all. Said here, where the diagnosis is.
+            */
+            <p className="mt-2 text-(--text-body)">
+              AI drafting isn&apos;t available for this diagnosis because it is not in the approved catalogue.
+              You can still write any document yourself in Plan &amp; documents.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-      <div className="flex min-w-0 flex-col gap-3 p-4">
-        <label htmlFor="assessment-diagnosis" className="text-sm font-medium text-(--text-body)">
-          {confirmed
-            ? "Confirmed diagnosis — changing it creates a new version"
-            : "Write your diagnosis, or pick a suggestion below"}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="assessment-diagnosis" className="text-sm font-semibold text-(--text-heading)">
+          {confirmed ? "Diagnosis (changing it saves a new version)" : "Diagnosis"}
         </label>
         <Textarea
           id="assessment-diagnosis"
           value={draftDiagnosis}
           // PRD v3.2 §4.2 fixes this string verbatim as acceptance evidence.
           placeholder="Type or select diagnosis..."
-          className="min-h-16 rounded-[12px]"
+          className="min-h-16 rounded-xl text-base sm:text-sm"
           onChange={(event) => onDraftDiagnosis(event.target.value)}
-          onFocus={onFieldFocus}
           disabled={busy}
         />
         {!confirmed && assessment.editableDiagnosis.trim() ? (
@@ -1603,340 +2193,326 @@ function AssessmentCard({
             <span className="font-medium text-(--text-heading)">{assessment.editableDiagnosis}</span>
           </p>
         ) : null}
-
-        {confirmed ? (
-          <div
-            className="rounded-[14px] bg-(--surface-warm-soft) p-3.5 text-sm"
-            data-slot="assessment-confirmed-summary"
-          >
-            <p className="font-bold text-(--text-heading)">Confirmed: {confirmed.diagnosis}</p>
-            <p className="text-(--text-muted)">
-              Confirmed by you at {new Date(confirmed.confirmedAt).toLocaleString()}
-            </p>
-            <div className="mt-2 rounded-[10px] border border-(--border-subtle) bg-(--surface-card) p-2.5">
-              <p className="text-xs font-medium text-(--text-subtle)">
-                Assessment code
-              </p>
-              {icd ? (
-                <p className="mt-0.5 font-bold text-(--text-heading)" data-slot="assessment-icd-code">
-                  ICD-10 {icd.code} <span className="font-normal text-(--text-muted)">· {icd.description}</span>
-                </p>
-              ) : icdSyncing ? (
-                <p className="mt-0.5 flex items-center gap-1.5 text-(--ai-fg)">
-                  <Spinner className="size-3.5" /> Syncing ICD-10 with this Assessment…
-                </p>
-              ) : allowedTypes.includes("final_icd") ? (
-                <Button type="button" size="sm" variant="outline" className="mt-1 rounded-full" onClick={onSyncIcd}>
-                  <RefreshCw className="size-3.5" /> Sync ICD-10 code
-                </Button>
-              ) : (
-                <p className="mt-0.5 text-(--text-muted)">No catalogued ICD code is available.</p>
-              )}
-            </div>
-            {manuallyDraftableTypes.length ? (
-              <p className="mt-1 text-(--text-body)">
-                Available to draft: {manuallyDraftableTypes.map((type) => outputLabels[type]).join(", ")}
-              </p>
-            ) : (
-              /*
-                The single most confusing state in live testing. A diagnosis
-                outside the approved catalogue resolves to `unmapped_manual`
-                with an empty eligible-output set, which disables all seven
-                controls permanently.
-              */
-              <p className="mt-1 text-(--danger-fg)">
-                Nothing can be drafted from this diagnosis — it is not in the approved
-                catalogue yet. Your Assessment is still recorded. To draft, confirm a
-                catalogued diagnosis instead: clear this Assessment, then focus the diagnosis
-                field to see what is available.
-              </p>
-            )}
-          </div>
-        ) : null}
-
-        {confirmed ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
-              disabled={busy || !draftDiagnosis.trim() || draftDiagnosis.trim() === confirmed.diagnosis}
-              onClick={onUpdate}
-            >
-              Save as new version
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full"
-              disabled={busy}
-              onClick={onReattest}
-            >
-              Re-attest, unchanged
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="rounded-full"
-              disabled={busy}
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="ml-auto rounded-full text-(--danger-fg) hover:bg-(--danger-bg)"
-              disabled={busy}
-              onClick={onClear}
-            >
-              Clear Assessment
-            </Button>
-          </div>
-        ) : null}
       </div>
 
+      <IcdCodeField draft={draftIcd} onChange={onDraftIcd} suggestion={assessment.editableIcd10Suggestion} busy={busy} />
+
       {/*
-        The diagnosis picker lives inside the Assessment card rather than beside
-        it: the suggestions exist to fill the field directly above them. It
-        unmounts entirely once confirmed, where its only control is disabled by
-        design.
+        The suggestions exist to fill the field above them, so they live here.
+        Unmounted once confirmed, where choosing a suggestion is not possible.
       */}
-      {!confirmed ? <div className="border-t border-(--border-subtle) p-4">{picker}</div> : null}
+      {!confirmed ? <div className="rounded-xl border border-(--border-subtle) p-3.5">{picker}</div> : null}
+
+      {reasoning}
 
       {!confirmed ? (
         <div
           data-slot="assessment-confirm-strip"
-          className="flex flex-col gap-2 border-t border-(--border-subtle) bg-(--surface-warm-soft) px-4 py-3.5 sm:flex-row sm:items-center sm:justify-end"
+          className="flex flex-col gap-3 border-t border-(--border-subtle) pt-4 sm:flex-row sm:items-center sm:justify-between"
         >
-          <p className="min-w-0 flex-1 text-xs text-(--text-muted) sm:pr-3">
-            Confirming records this as your clinical judgment and opens the protected tools.
+          <p className="min-w-0 text-sm text-(--text-muted)">
+            Nothing is drafted until you confirm. The clinical judgment is yours.
+            <span className="lg:hidden"> Confirm is in the bar at the bottom.</span>
           </p>
+          <div className="flex shrink-0 flex-wrap gap-2 max-sm:[&>*]:flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              shape="pill"
+              className="border-(--border-default) max-lg:h-11"
+              disabled={busy || !draftDiagnosis.trim()}
+              onClick={onSave}
+            >
+              Save draft
+            </Button>
+            {/* On a phone Confirm lives in the next-step bar, under the thumb. */}
+            <Button
+              type="button"
+              variant="primary"
+              shape="pill"
+              className="px-4 max-lg:hidden"
+              disabled={busy || !draftDiagnosis.trim()}
+              onClick={onConfirm}
+            >
+              {busy ? <Spinner className="size-4" /> : <CheckCircle2 className="size-4" />}
+              Confirm assessment
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 border-t border-(--border-subtle) pt-4 max-sm:[&>*]:flex-1">
+          <Button
+            type="button"
+            variant="ghost"
+            shape="pill"
+            className="text-(--danger-fg) hover:bg-(--danger-bg) hover:text-(--danger-fg) max-lg:h-11 sm:mr-auto"
+            disabled={busy}
+            onClick={() => setClearOpen(true)}
+          >
+            <Trash2 className="size-4" /> Clear assessment
+          </Button>
           <Button
             type="button"
             variant="outline"
-            className="rounded-full"
-            disabled={busy || !draftDiagnosis.trim()}
-            onClick={onSave}
+            shape="pill"
+            className="border-(--border-default) max-lg:h-11"
+            title="Confirm the same diagnosis again under your name, for example after the consultation was reassigned."
+            disabled={busy || !confirmed.icd10}
+            onClick={onReattest}
           >
-            Save draft
+            Re-attest unchanged
           </Button>
           <Button
             type="button"
-            className="rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)"
-            disabled={busy || !draftDiagnosis.trim()}
-            onClick={onConfirm}
+            variant="primary"
+            shape="pill"
+            className="max-lg:h-11"
+            disabled={busy || !draftDiagnosis.trim() || !draftIcdValue || (!diagnosisChanged && !icdChanged)}
+            onClick={onUpdate}
           >
-            {busy ? <Spinner className="size-4" /> : <CheckCircle2 className="size-4" />}
-            Confirm Assessment &amp; continue
+            Save as new version
           </Button>
         </div>
-      ) : null}
-    </section>
+      )}
+
+      <ResponsiveSheet
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        icon={Trash2}
+        title="Clear the confirmed assessment?"
+        description="Drafting closes until you confirm a new one, and documents drafted from this assessment become out of date. Signed and released documents stay in the record."
+        footer={
+          <>
+            <Button
+              type="button"
+              shape="pill"
+              className="bg-(--danger-fg) px-5 font-semibold text-white hover:bg-(--danger-fg)/90"
+              onClick={() => {
+                setClearOpen(false);
+                onClear();
+              }}
+            >
+              Clear assessment
+            </Button>
+            <Button type="button" variant="ghost" shape="pill" onClick={() => setClearOpen(false)}>
+              Keep it
+            </Button>
+          </>
+        }
+      />
+    </div>
   );
 }
 
 /**
- * Finish documentation remains unavailable until Assessment confirmation. Once
- * confirmed, the doctor may leave at any point after explicitly reviewing what
- * will remain missing, unsigned, or unreleased.
+ * The ICD-10 code the physician confirms with the diagnosis (ADR-20261006-02).
+ *
+ * A catalog diagnosis arrives prefilled from the reviewed map; the note under
+ * the field says so while the value is still the map's, so the physician
+ * knows what they are confirming. A manual diagnosis has no prefill and the
+ * code is required. No model ever proposes one.
+ */
+function IcdCodeField({
+  draft,
+  onChange,
+  suggestion,
+  busy,
+}: {
+  draft: IcdDraft;
+  onChange: (value: IcdDraft) => void;
+  suggestion: CdsAssessment["editableIcd10Suggestion"];
+  busy: boolean;
+}) {
+  const fromMap = Boolean(suggestion)
+    && draft.code.trim().toUpperCase() === suggestion?.code
+    && draft.description.trim() === suggestion?.description;
+  const codeInvalid = draft.code.trim() !== "" && !ICD10_CODE.test(draft.code.trim().toUpperCase());
+  return (
+    <div className="grid gap-x-3 gap-y-1.5 sm:grid-cols-[9rem_1fr]" data-slot="assessment-icd-field">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="assessment-icd-code" className="text-sm font-semibold text-(--text-heading)">
+          ICD-10 code
+        </label>
+        <Input
+          id="assessment-icd-code"
+          value={draft.code}
+          placeholder="e.g. J06.9"
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={16}
+          aria-invalid={codeInvalid || undefined}
+          aria-describedby="assessment-icd-note"
+          className="h-10 rounded-xl font-mono text-base uppercase placeholder:font-sans placeholder:normal-case sm:text-sm max-lg:h-11"
+          onChange={(event) => onChange({ code: event.target.value, description: draft.description })}
+          disabled={busy}
+        />
+      </div>
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <label htmlFor="assessment-icd-description" className="text-sm font-semibold text-(--text-heading)">
+          Code description
+        </label>
+        <Input
+          id="assessment-icd-description"
+          value={draft.description}
+          placeholder="e.g. Acute upper respiratory infection, unspecified"
+          autoComplete="off"
+          maxLength={500}
+          aria-describedby="assessment-icd-note"
+          className="h-10 rounded-xl text-base sm:text-sm max-lg:h-11"
+          onChange={(event) => onChange({ code: draft.code, description: event.target.value })}
+          disabled={busy}
+        />
+      </div>
+      <p
+        id="assessment-icd-note"
+        className={cn("text-xs sm:col-span-2", codeInvalid ? "text-(--danger-fg)" : "text-(--text-muted)")}
+      >
+        {codeInvalid
+          ? "Use the WHO ICD-10 format: a letter, two characters, then an optional dot and up to four more (for example G43.9)."
+          : fromMap
+            ? "Prefilled from the BayanHealth ICD-10 map for this diagnosis (pending clinical review). Check it before you confirm."
+            : "Required. You choose the code; it is versioned with your diagnosis."}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Finish stays unavailable until the Assessment is confirmed. After that the
+ * doctor may leave at any point, having seen what will remain unstarted,
+ * unsigned or unreleased, in the same words the checklist uses.
  */
 function FinishDocumentationControl({
   assessment,
   artifacts,
-  size = "sm",
-  className,
+  notNeededTypes,
+  emphasize,
 }: {
   assessment: CdsAssessment;
   artifacts: readonly CdsProtectedArtifact[];
-  size?: "default" | "sm" | "lg";
-  className?: string;
+  /** Documents the physician marked not needed: not "missing". */
+  notNeededTypes: ReadonlySet<CdsProtectedOutputType>;
+  /** Everything is done: Finish becomes the primary action. */
+  emphasize: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const readiness = deriveFinishReadiness({ assessment, artifacts });
+  const notNeededLabels = new Set([...notNeededTypes].map((type) => OUTPUT_LABELS[type]));
+  const missing = readiness.missing.filter((label) => !notNeededLabels.has(label));
+  const size = "h-11 shrink-0 px-4 lg:h-9";
 
   if (!readiness.canFinish) {
     return (
       <Button
         type="button"
+        variant="outline"
+        shape="pill"
         disabled
-        size={size}
         data-slot="finish-documentation"
-        aria-disabled="true"
-        className={cn(
-          "rounded-full bg-(--action-primary) text-white opacity-50 shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] cursor-not-allowed shrink-0 whitespace-nowrap",
-          className,
-        )}
+        title="Confirm the Assessment first"
+        className={cn(size, "border-(--border-default)")}
       >
-        <CheckCircle2 className="size-3.5 sm:size-4 shrink-0" />
-        <span>Finish documentation</span>
+        Finish
       </Button>
     );
   }
 
-  const hasOutstanding =
-    readiness.missing.length > 0
-    || readiness.unreviewed.length > 0
-    || readiness.unreleased.length > 0;
-
-  const pendingCount = readiness.unreviewed.length + readiness.unreleased.length;
+  const hasOutstanding = missing.length > 0 || readiness.unreviewed.length > 0 || readiness.unreleased.length > 0;
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <>
       <Button
         type="button"
-        size={size}
-        variant={hasOutstanding ? "outline" : "default"}
+        variant={emphasize ? "primary" : "outline"}
+        shape="pill"
         data-slot="finish-documentation"
-        className={cn(
-          "rounded-full shrink-0 whitespace-nowrap transition-colors",
-          hasOutstanding
-            ? "border-(--border-default) bg-(--surface-card) text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-warm-soft)"
-            : "bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover)",
-          className,
-        )}
+        className={cn(size, !emphasize && "border-(--border-default)", emphasize && "max-sm:flex-1")}
         onClick={() => setOpen(true)}
       >
-        <CheckCircle2
-          className={cn(
-            "size-3.5 sm:size-4 shrink-0",
-            hasOutstanding ? "text-(--text-muted)" : "text-white",
-          )}
-        />
-        <span>
-          {hasOutstanding && pendingCount > 0
-            ? `Finish (${pendingCount} pending)`
-            : "Finish documentation"}
-        </span>
+        <CheckCircle2 className="size-4 shrink-0" />
+        Finish
       </Button>
-      <AlertDialogContent
-        size="lg"
-        className="p-6 sm:p-7 gap-5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) shadow-lg"
+      <ResponsiveSheet
+        open={open}
+        onOpenChange={setOpen}
+        title={hasOutstanding ? "Finish with documents still open?" : "Finish this consultation?"}
+        description="Your confirmed Assessment is saved. Leaving does not draft, sign, release or delete anything, and you can come back to finish later from your history."
+        className="sm:max-w-lg"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              shape="pill"
+              className="px-5"
+              data-slot="finish-documentation-confirm"
+              onClick={() => router.push("/doctor/history")}
+            >
+              Finish and go to history
+            </Button>
+            <Button type="button" variant="ghost" shape="pill" onClick={() => setOpen(false)}>
+              Keep working
+            </Button>
+          </>
+        }
       >
-        <AlertDialogHeader className="space-y-1.5 text-left">
-          <AlertDialogTitle className="text-lg font-bold text-(--text-heading)">
-            {hasOutstanding ? "Finish with incomplete documentation?" : "Finish documentation?"}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm leading-relaxed text-(--text-muted)">
-            Your confirmed Assessment is already saved. Leaving this workspace will not generate,
-            sign, release, or delete any document.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="space-y-3 text-sm text-(--text-body)">
-          {readiness.missing.length > 0 ? (
-            <DocumentationWarning
-              variant="neutral"
-              title="Not generated"
-              items={readiness.missing}
-              detail="These documents will not exist unless you return and draft them."
-            />
-          ) : null}
-          {readiness.unreviewed.length > 0 ? (
-            <DocumentationWarning
-              variant="warning"
-              title="Drafted but not signed"
-              items={readiness.unreviewed}
-              detail="These remain physician-unreviewed drafts awaiting your attestation."
-            />
-          ) : null}
-          {readiness.unreleased.length > 0 ? (
-            <DocumentationWarning
-              variant="signed"
-              title="Signed but not released"
-              items={readiness.unreleased}
-              detail="Patient-facing documents in this group will remain unavailable to the patient."
-            />
-          ) : null}
-          {!hasOutstanding ? (
-            <p className="rounded-xl border border-(--teal-500)/30 bg-(--status-available-bg) p-3.5 text-sm font-medium text-(--status-available-fg)">
-              All selected documentation has been completed. You can safely return to consultation history.
-            </p>
-          ) : (
-            <p className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/40 p-3 text-xs font-medium text-(--text-muted)">
-              You can return later to complete the remaining documents. Confirm only if this is intentional.
-            </p>
-          )}
-        </div>
-
-        <AlertDialogFooter className="mt-1 pt-4 border-t border-(--border-subtle) flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
-          <AlertDialogCancel className="w-full sm:w-auto h-10 rounded-full border border-(--border-default) px-5 text-xs font-semibold text-(--text-body) hover:bg-(--surface-warm-soft)">
-            Continue documenting
-          </AlertDialogCancel>
-          <AlertDialogAction
-            data-slot="finish-documentation-confirm"
-            className="w-full sm:w-auto h-10 rounded-full bg-(--action-primary) px-5 text-xs font-semibold text-white shadow-xs hover:bg-(--action-primary-hover)"
-            onClick={() => router.push("/doctor/history")}
-          >
-            Finish and go to history
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        {hasOutstanding ? (
+          <ul className="flex flex-col gap-2.5">
+            {readiness.unreviewed.length > 0 ? (
+              <FinishGroup
+                status="needs_review"
+                items={readiness.unreviewed}
+                detail="Drafts you have not signed. They stay drafts."
+              />
+            ) : null}
+            {readiness.unreleased.length > 0 ? (
+              <FinishGroup
+                status="signed"
+                label="Signed, not released"
+                items={readiness.unreleased}
+                detail="The patient cannot see these until you release them."
+              />
+            ) : null}
+            {missing.length > 0 ? (
+              <FinishGroup
+                status="not_started"
+                items={missing}
+                detail="Available for this diagnosis but never started. Mark them Not needed if this patient doesn't need them."
+              />
+            ) : null}
+          </ul>
+        ) : (
+          <p className="rounded-xl bg-(--status-available-bg) p-3.5 text-sm font-medium text-(--status-available-fg)">
+            Every document you started is signed, and patient documents are released.
+          </p>
+        )}
+      </ResponsiveSheet>
+    </>
   );
 }
 
-function DocumentationWarning({
-  title,
+function FinishGroup({
+  status,
+  label,
   items,
   detail,
-  variant = "warning",
 }: {
-  title: string;
+  status: keyof typeof DOCUMENT_STATUS;
+  label?: string;
   items: readonly string[];
   detail: string;
-  variant?: "warning" | "signed" | "neutral";
 }) {
-  const isSigned = variant === "signed";
-  const isNeutral = variant === "neutral";
-
+  const config = DOCUMENT_STATUS[status];
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-3.5 sm:p-4 transition-colors",
-        isSigned
-          ? "border-(--navy-400)/30 bg-(--navy-100)/50 dark:bg-(--navy-900)/30"
-          : isNeutral
-            ? "border-(--border-subtle) bg-(--surface-sunken)/60"
-            : "border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40",
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          {isSigned ? (
-            <PenLine className="size-3.5 text-(--navy-700) dark:text-(--navy-300)" />
-          ) : isNeutral ? (
-            <FileText className="size-3.5 text-(--text-muted)" />
-          ) : (
-            <Clock className="size-3.5 text-(--status-soon-fg)" />
-          )}
-          <p
-            className={cn(
-              "text-xs font-bold uppercase tracking-wider",
-              isSigned
-                ? "text-(--navy-800) dark:text-(--navy-200)"
-                : isNeutral
-                  ? "text-(--text-muted)"
-                  : "text-(--status-soon-fg)",
-            )}
-          >
-            {title}
-          </p>
-        </div>
-        <span
-          className={cn(
-            "rounded-md border bg-white/90 dark:bg-(--surface-card) px-2.5 py-0.5 text-xs font-bold shadow-2xs",
-            isSigned
-              ? "border-(--navy-300) text-(--navy-800) dark:text-(--navy-200)"
-              : isNeutral
-                ? "border-(--border-subtle) text-(--text-muted)"
-                : "border-(--status-soon-fg)/20 text-(--text-heading)",
-          )}
-        >
-          {items.join(", ")}
-        </span>
+    <li className="flex flex-col gap-1.5 rounded-xl border border-(--border-subtle) p-3.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusText tone={config.tone} icon={config.icon}>
+          {label ?? config.label}
+        </StatusText>
+        <span className="text-sm font-semibold text-(--text-heading)">{items.join(", ")}</span>
       </div>
-      <p className="mt-2 text-xs leading-relaxed text-(--text-muted)">{detail}</p>
-    </div>
+      <p className="text-sm text-(--text-muted)">{detail}</p>
+    </li>
   );
 }

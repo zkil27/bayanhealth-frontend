@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
   BadgeCheck,
@@ -205,6 +206,15 @@ export function DoctorCredentialsSection({
           {pill.label}
         </Badge>
       </header>
+
+      {profile.verificationStatus === "pending" ? (
+        <div
+          data-slot="kyc-under-review"
+          className="flex justify-center rounded-[14px] bg-(--surface-warm-soft) py-4"
+        >
+          <Illustration name="doctor/kyc-under-review" size="md" />
+        </div>
+      ) : null}
 
       {profile.verificationStatus === "rejected" && profile.rejectionReason ? (
         <p
@@ -449,9 +459,13 @@ function UploadedDocumentsList({ documents }: { documents: DoctorKycDocument[] }
     <div data-slot="kyc-documents" className="flex flex-col gap-2">
       <h2 className="text-[15px] font-bold text-(--text-heading)">Uploaded documents</h2>
       {documents.length === 0 ? (
-        <p data-slot="kyc-documents-empty" className="text-sm text-(--text-muted)">
-          No documents uploaded yet.
-        </p>
+        <div
+          data-slot="kyc-documents-empty"
+          className="flex flex-col items-center gap-1 py-2 text-center text-sm text-(--text-muted)"
+        >
+          <Illustration name="doctor/kyc-upload" size="sm" />
+          <p>No documents uploaded yet.</p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-2">
           {documents.map((doc) => (

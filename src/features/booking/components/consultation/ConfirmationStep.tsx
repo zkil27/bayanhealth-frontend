@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Booking } from "../../types/booking.types";
@@ -78,6 +79,12 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
 
   return (
     <div className="animate-in duration-300 fade-in">
+      <Illustration
+        name="patient/booking-confirmed"
+        size="lg"
+        priority
+        className="mb-3"
+      />
       <div className="mb-3.5 flex items-center gap-2.5 text-lg font-bold text-(--text-heading)">
         <CheckCircle2 className="size-5 text-(--teal-800) shrink-0" />
         Booking confirmed

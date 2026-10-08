@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useRef } from "react";
 import { AlertCircleIcon, SendHorizonal, Wifi, WifiOff } from "lucide-react";
 
@@ -32,6 +33,7 @@ export function ConsultationChatPanel({
   deps,
   embedded = false,
   onFocusChange,
+  placeholder = "Type a message to your doctor…",
 }: {
   bookingId: string;
   sessionId?: string;
@@ -43,6 +45,8 @@ export function ConsultationChatPanel({
    */
   embedded?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  /** Composer placeholder. Defaults to the patient's wording; the doctor's suite passes its own. */
+  placeholder?: string;
 }) {
   const {
     messages,
@@ -95,6 +99,7 @@ export function ConsultationChatPanel({
         send={send}
         validationError={validationError}
         onFocusChange={onFocusChange}
+        placeholder={placeholder}
       />
     </section>
   );
@@ -170,9 +175,10 @@ function MessageList({
     return (
       <div
         data-slot="chat-empty"
-        className="flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500"
+        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-sm text-slate-500"
       >
-        No messages yet. Say hello to start the consultation.
+        <Illustration name="shared/no-conversations" size="sm" />
+        <p>No messages yet. Say hello to start the consultation.</p>
       </div>
     );
   }
@@ -208,12 +214,14 @@ function ChatComposer({
   send,
   validationError,
   onFocusChange,
+  placeholder,
 }: {
   input: string;
   setInput: (v: string) => void;
   send: () => Promise<boolean>;
   validationError: string | null;
   onFocusChange?: (focused: boolean) => void;
+  placeholder: string;
 }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -236,7 +244,7 @@ function ChatComposer({
               void send().then(() => onFocusChange?.(false));
             }
           }}
-          placeholder="Type a message to your doctor…"
+          placeholder={placeholder}
           aria-label="Message to doctor"
           aria-invalid={validationError ? true : undefined}
           rows={2}

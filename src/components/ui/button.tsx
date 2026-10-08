@@ -20,6 +20,14 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         business:
           "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md active:shadow-none transition-all duration-150 [a]:hover:bg-primary/80",
+        // Brand Teal call to action with its pressed-key bottom edge. Was
+        // hand-rolled at every call site in the doctor workspace.
+        primary:
+          "bg-(--action-primary) text-(--action-primary-text) font-semibold shadow-[inset_0_-3px_0_0_rgb(0_0_0/0.18)] hover:bg-(--action-primary-hover) active:bg-(--action-primary-active) active:shadow-none",
+      },
+      shape: {
+        default: "",
+        pill: "rounded-full",
       },
       size: {
         default:
@@ -42,6 +50,7 @@ const buttonVariants = cva(
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "default",
     },
   }
 )
@@ -50,12 +59,13 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  shape = "default",
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, shape, className }))}
       {...props}
     />
   )

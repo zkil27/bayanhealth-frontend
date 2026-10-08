@@ -1,16 +1,10 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertCircleIcon,
-  CalendarClock,
-  MessageSquareText,
-  Search,
-  Video,
-  X,
-} from "lucide-react";
+import { AlertCircleIcon, CalendarClock, Search, Video, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -360,8 +354,8 @@ function DoctorChatSidebarEmpty() {
   return (
     <Empty data-slot="doctor-chat-empty" className="p-4">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <MessageSquareText className="size-6" />
+        <EmptyMedia variant="illustration">
+          <Illustration name="shared/no-conversations" size="sm" />
         </EmptyMedia>
         <EmptyTitle className="text-sm font-bold">No conversations yet</EmptyTitle>
         <EmptyDescription className="text-xs">

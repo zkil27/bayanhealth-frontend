@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -286,6 +287,7 @@ function MessageList({
         data-slot="doctor-chat-empty"
         className="flex flex-1 flex-col items-center justify-center p-6 text-center text-xs text-(--text-muted)"
       >
+        <Illustration name="shared/no-conversations" size="sm" className="mb-2" />
         <p className="max-w-xs leading-relaxed">
           {readOnly
             ? "No messages were recorded during this consultation."

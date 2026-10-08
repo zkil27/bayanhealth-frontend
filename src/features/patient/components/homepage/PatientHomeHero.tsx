@@ -84,11 +84,8 @@ function LiveRoomHero({ booking }: { booking: BookingListItem }) {
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-[12px] font-bold tracking-(--tracking-overline) text-(--status-available-fg) uppercase">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-2 rounded-full bg-(--action-primary) opacity-75 motion-safe:animate-ping" />
-            <span className="relative inline-flex size-2 rounded-full bg-(--action-primary)" />
-          </span>
+        <p className="flex items-center gap-1.5 text-[12px] font-bold tracking-(--tracking-overline) text-(--status-available-fg) uppercase">
+          <span className="size-2 rounded-full bg-(--action-primary)" />
           Live now
         </p>
         <h2 className="font-display mt-1 text-[21px] leading-tight font-bold tracking-[-0.01em] text-(--text-heading) md:text-[23px]">

@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Newspaper } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -229,11 +230,7 @@ function ArticlesTab() {
         data-slot="patient-home-articles-empty"
         className="flex flex-1 flex-col items-center justify-center gap-2 rounded-(--radius-md) border border-dashed border-(--border-default) bg-(--surface-sunken) px-4 py-10 text-center"
       >
-        <Newspaper
-          strokeWidth={1.5}
-          aria-hidden
-          className="size-7 text-(--text-subtle)"
-        />
+        <Illustration name="patient/no-articles" size="sm" />
         <p className="text-[14px] font-semibold text-(--text-heading)">
           No articles published yet
         </p>

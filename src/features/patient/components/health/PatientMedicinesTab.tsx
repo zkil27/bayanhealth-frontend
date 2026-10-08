@@ -1,8 +1,9 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Pill } from "lucide-react";
+
 
 import {
   Empty,
@@ -75,8 +76,8 @@ export function PatientMedicinesTab({ query }: { query: string }) {
     return (
       <Empty data-slot="patient-health-medicines-empty">
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Pill />
+          <EmptyMedia variant="illustration">
+            <Illustration name="patient/no-medicines" size="md" />
           </EmptyMedia>
           <EmptyTitle>No medicines on record</EmptyTitle>
           <EmptyDescription>

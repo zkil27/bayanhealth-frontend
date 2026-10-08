@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -122,6 +123,13 @@ export function SchedulePopover({
   const cardRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+  /**
+   * Below `sm` an anchored card has nowhere sensible to sit — a 336px card
+   * next to a finger-sized anchor on a 360px screen covers the very block it
+   * describes — so it docks to the bottom edge as a sheet over a scrim
+   * instead. Decided in the same pre-paint measure as `position`.
+   */
+  const [asSheet, setAsSheet] = useState(false);
 
   /*
     Measure once mounted, then place. `useLayoutEffect` rather than `useEffect`
@@ -135,6 +143,7 @@ export function SchedulePopover({
   useLayoutEffect(() => {
     if (!open || !anchor) return;
     const measure = () => {
+      setAsSheet(window.matchMedia("(max-width: 639px)").matches);
       const box = cardRef.current?.getBoundingClientRect();
       setPosition(
         placePopover(
@@ -205,27 +214,44 @@ export function SchedulePopover({
 
   if (!open || !anchor) return null;
 
-  return (
-    <div
-      ref={cardRef}
-      data-slot={testId}
-      role="dialog"
-      aria-label={label}
-      tabIndex={-1}
-      style={{
-        position: "fixed",
-        top: position?.top ?? anchor.top + anchor.height + GAP,
-        left: position?.left ?? anchor.left,
-        // Hidden until placed, so the card is never seen in the wrong spot. It
-        // still occupies the DOM, which is what lets the measurement above run.
-        visibility: position ? "visible" : "hidden",
-      }}
-      className={cn(
-        "z-50 flex w-[min(21rem,calc(100vw-1.5rem))] flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4 text-sm shadow-[0_12px_32px_rgba(120,110,80,0.22),0_2px_6px_rgba(120,110,80,0.10)] outline-none",
-        className,
-      )}
-    >
-      {children}
-    </div>
+  // Portalled to <body> so no ancestor stacking context (the doctor shell, the
+  // fixed mobile nav) can sit above the card. The scrim is outside the card,
+  // so pressing it is an outside press and closes the sheet like any other.
+  return createPortal(
+    <>
+      {asSheet ? (
+        <div aria-hidden className="fixed inset-0 z-50 bg-black/30" data-slot={`${testId}-scrim`} />
+      ) : null}
+      <div
+        ref={cardRef}
+        data-slot={testId}
+        data-presentation={asSheet ? "sheet" : "popover"}
+        role="dialog"
+        aria-label={label}
+        tabIndex={-1}
+        style={
+          asSheet
+            ? { position: "fixed", left: 0, right: 0, bottom: 0 }
+            : {
+                position: "fixed",
+                top: position?.top ?? anchor.top + anchor.height + GAP,
+                left: position?.left ?? anchor.left,
+                // Hidden until placed, so the card is never seen in the wrong spot. It
+                // still occupies the DOM, which is what lets the measurement above run.
+                visibility: position ? "visible" : "hidden",
+              }
+        }
+        className={cn(
+          "z-50 flex w-[min(21rem,calc(100vw-1.5rem))] flex-col gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) p-4 text-sm shadow-[0_12px_32px_rgba(120,110,80,0.22),0_2px_6px_rgba(120,110,80,0.10)] outline-none",
+          className,
+          asSheet &&
+            // Buttons inside are sized for a mouse; as a phone sheet they get 44px targets.
+            "max-h-[85dvh] w-full overflow-y-auto overscroll-contain rounded-b-none rounded-t-[20px] border-b-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] [&_[data-slot=button]]:min-h-11 [&_[data-slot=button]]:px-4 [&_[data-slot=button]]:text-sm",
+        )}
+      >
+        {children}
+      </div>
+    </>,
+    document.body,
   );
 }

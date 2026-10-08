@@ -56,18 +56,20 @@ export const OUTPUT_LABELS: Record<CdsProtectedOutputType, string> = {
   prescription: "Prescription",
   final_icd: "Final ICD code",
   medical_certificate: "Medical certificate",
-  lab_request: "Lab request",
-  imaging_request: "Imaging request",
+  diagnostic_request: "Diagnostic request",
+  clinical_referral: "Clinical referral",
   patient_education: "Patient education",
 };
 
 export const OUTPUT_TYPES = Object.keys(OUTPUT_LABELS) as CdsProtectedOutputType[];
 
-/** Outputs visible in the roadmap but intentionally unavailable in this release. */
-export const COMING_SOON_OUTPUT_TYPES = new Set<CdsProtectedOutputType>([
-  "lab_request",
-  "imaging_request",
-]);
+/**
+ * Outputs visible in the roadmap but intentionally unavailable in this release.
+ *
+ * Empty now that the merged Diagnostic Request and the new Clinical Referral
+ * (ADR-20260924-02) are both live on the backend.
+ */
+export const COMING_SOON_OUTPUT_TYPES = new Set<CdsProtectedOutputType>([]);
 
 /**
  * Output types the Protected tools rail renders as its own rows, i.e. every
@@ -262,7 +264,7 @@ export function deriveToolRows(input: {
         outputType,
         label,
         status: "ineligible" as const,
-        detail: "Not available for this diagnosis",
+        detail: "No AI draft for this diagnosis; write it yourself",
       };
     }
     if (input.railState !== "unlocked") {

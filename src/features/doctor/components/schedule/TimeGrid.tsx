@@ -366,7 +366,12 @@ function DayColumn({
           });
         }}
         className={cn(
-          "relative flex-1 touch-none px-1 pt-0.5 text-left select-none",
+          // `touch-none` lets a mouse/pen drag mark out a range. On a coarse
+          // (finger) pointer it also swallowed every swipe that started on the
+          // grid — most of a phone screen — so the calendar could not be
+          // scrolled. Fingers get vertical panning back; a tap still proposes a
+          // shift (the click path below), only drag-to-select is mouse/pen-only.
+          "relative flex-1 touch-none px-1 pt-0.5 text-left select-none pointer-coarse:touch-pan-y",
           isToday ? "bg-(--surface-brand-soft)/10" : "bg-(--surface-card)",
         )}
         style={{ minHeight }}

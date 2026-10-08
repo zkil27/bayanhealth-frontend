@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Daily, { type DailyCall, type DailyParticipant } from "@daily-co/daily-js";
 import {
@@ -620,7 +621,7 @@ export function ConsultationVideo({
           <ParticipantVideoTile tile={remoteTile} variant="hero" />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-teal-100/70">
-            <VideoOff className="size-6" />
+            <Illustration name="shared/video-waiting" size="md" />
             <span className="text-xs">Waiting for the other participant to join…</span>
           </div>
         )}

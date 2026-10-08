@@ -23,7 +23,7 @@ export interface NavItem {
  * two breakpoints present the same six destinations in the same order
  * instead of two different information architectures.
  *
- * Chat is live for patient and doctor direct messaging.
+ * Chat is archived for both patient and doctor navigation.
  */
 export const PATIENT_NAV: NavItem[] = [
   { title: "Home", href: "/patient", icon: Home },
@@ -32,7 +32,9 @@ export const PATIENT_NAV: NavItem[] = [
   // sitting beside a near-duplicate Records tab.
   { title: "Health", href: "/patient/health", icon: HeartPulse },
   { title: "Book", href: "/patient/booking", icon: CalendarClock },
-  { title: "Chat", href: "/patient/chat", icon: MessageSquareText },
+  // ARCHIVED: Chat tab hidden from patient nav per request.
+  // Underlying routes (/patient/chat) and components remain intact for future restoration.
+  // { title: "Chat", href: "/patient/chat", icon: MessageSquareText },
   { title: "Med Ed", href: "/med-ed", icon: GraduationCap, comingSoon: true },
   { title: "Profile", href: "/patient/profile", icon: UserRound },
 ];

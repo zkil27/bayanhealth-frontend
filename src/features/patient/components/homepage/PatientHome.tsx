@@ -593,11 +593,8 @@ function LiveActivityCard({
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-(--action-primary)/15 px-2.5 py-1 text-[11px] font-bold text-(--status-available-fg) uppercase">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-2 rounded-full bg-(--action-primary) opacity-75 motion-safe:animate-ping" />
-                <span className="relative inline-flex size-2 rounded-full bg-(--action-primary)" />
-              </span>
+            <span className="inline-flex items-center gap-1.5 rounded-(--radius-pill) border border-(--action-primary)/30 bg-(--action-primary)/10 px-2.5 py-1 text-[11px] font-bold text-(--status-available-fg) uppercase tracking-wide">
+              <span className="size-2 rounded-full bg-(--action-primary)" />
               Live Consultation
             </span>
             <span className="text-xs font-semibold text-(--status-available-fg)">
@@ -635,28 +632,25 @@ function LiveActivityCard({
       <div
         data-slot="patient-home-hero"
         data-state="ON_DEMAND_WAITING"
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-(--radius-card) border-2 border-teal-600 bg-teal-50/80 dark:bg-teal-950/30 p-4 sm:p-5 shadow-(--shadow-card)"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-(--radius-card) border-2 border-(--action-primary) bg-(--surface-accent-soft) p-4 sm:p-5 shadow-(--shadow-card)"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-teal-100 dark:bg-teal-900/60 px-2.5 py-1 text-[11px] font-bold text-teal-800 dark:text-teal-200 uppercase tracking-wide">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-2 rounded-full bg-teal-500 opacity-75 motion-safe:animate-ping" />
-                <span className="relative inline-flex size-2 rounded-full bg-teal-600" />
-              </span>
+            <span className="inline-flex items-center gap-1.5 rounded-(--radius-pill) border border-(--action-primary)/30 bg-(--action-primary)/10 px-2.5 py-1 text-[11px] font-bold text-(--status-available-fg) uppercase tracking-wide">
+              <span className="size-2 rounded-full bg-(--action-primary)" />
               {isRoomReady ? "Handa na ang Silid" : "Nasa Pila ng Konsulta"}
             </span>
-            <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">
+            <span className="text-xs font-semibold text-(--status-available-fg)">
               {isDoctorAssigned ? `Nakatalaga si ${doctorName}` : "Naghahanap ng available na doktor…"}
             </span>
           </div>
 
-          <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-slate-900 dark:text-slate-100">
+          <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-(--text-heading)">
             {isRoomReady
               ? "Kasalukuyang bukas ang iyong telekonsulta"
               : "Aktibo ang iyong request para sa telekonsulta"}
           </h3>
-          <p className="mt-0.5 text-[13.5px] text-slate-600 dark:text-slate-300">
+          <p className="mt-0.5 text-[13.5px] text-(--text-body)">
             {isRoomReady
               ? `Maaari ka nang pumasok sa consultation waiting room upang makausap si ${doctorName}.`
               : "Manatili sa linya. Ikokonekta ka namin sa unang available na lisensyadong manggagamot."}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -311,11 +312,14 @@ function MessageList({
     return (
       <div
         data-slot="chat-empty"
-        className="flex flex-1 items-center justify-center px-6 text-center text-[14.5px] text-(--text-muted)"
+        className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center text-[14.5px] text-(--text-muted)"
       >
-        {readOnly
-          ? "No messages were sent in this conversation."
-          : "No messages yet. Send the first one — your doctor will see it here."}
+        <Illustration name="shared/no-conversations" size="sm" />
+        <p>
+          {readOnly
+            ? "No messages were sent in this conversation."
+            : "No messages yet. Send the first one — your doctor will see it here."}
+        </p>
       </div>
     );
   }

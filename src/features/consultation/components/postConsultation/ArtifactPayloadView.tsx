@@ -1,10 +1,10 @@
 "use client";
 
-import { Activity, Clock, Target } from "lucide-react";
+import { Activity, Building2, Clock, Target } from "lucide-react";
 import type {
+  CdsClinicalReferralPayload,
+  CdsDiagnosticRequestPayload,
   CdsFinalIcdPayload,
-  CdsImagingRequestPayload,
-  CdsLabRequestPayload,
   CdsMedicalCertificatePayload,
   CdsPatientEducationPayload,
   CdsPlanPayload,
@@ -80,10 +80,10 @@ function renderPayload(
       return isFinalIcd(payload) ? <FinalIcdView payload={payload} /> : null;
     case "medical_certificate":
       return isMedicalCertificate(payload) ? <MedicalCertificateView payload={payload} /> : null;
-    case "lab_request":
-      return isLabRequest(payload) ? <LabRequestView payload={payload} /> : null;
-    case "imaging_request":
-      return isImagingRequest(payload) ? <ImagingRequestView payload={payload} /> : null;
+    case "diagnostic_request":
+      return isDiagnosticRequest(payload) ? <DiagnosticRequestView payload={payload} /> : null;
+    case "clinical_referral":
+      return isClinicalReferral(payload) ? <ClinicalReferralView payload={payload} /> : null;
     case "patient_education":
       return isPatientEducation(payload) ? <PatientEducationView payload={payload} /> : null;
     default:
@@ -197,20 +197,23 @@ function MedicalCertificateView({ payload }: { payload: CdsMedicalCertificatePay
   );
 }
 
-function LabRequestView({ payload }: { payload: CdsLabRequestPayload }) {
+function DiagnosticRequestView({ payload }: { payload: CdsDiagnosticRequestPayload }) {
   return (
     <>
       <ul className="flex flex-col gap-2">
-        {payload.tests.map((test, index) => (
+        {payload.items.map((item, index) => (
           <li
-            key={`${test.testName}-${index}`}
+            key={`${item.testName ?? item.studyName}-${index}`}
             className="rounded-[10px] border border-(--border-subtle) p-3"
           >
             <p className="flex flex-wrap items-center gap-2 font-bold text-(--text-heading)">
-              {test.testName}
-              <PriorityChip priority={test.priority} />
+              {item.testName || item.studyName}
+              {item.bodyRegion ? (
+                <span className="text-sm font-normal text-(--text-muted)">{item.bodyRegion}</span>
+              ) : null}
+              <PriorityChip priority={item.priority} />
             </p>
-            <p className="mt-1 text-(--text-muted)">{test.rationale}</p>
+            <p className="mt-1 text-(--text-muted)">{item.rationale}</p>
           </li>
         ))}
       </ul>
@@ -223,29 +226,25 @@ function LabRequestView({ payload }: { payload: CdsLabRequestPayload }) {
   );
 }
 
-function ImagingRequestView({ payload }: { payload: CdsImagingRequestPayload }) {
+function ClinicalReferralView({ payload }: { payload: CdsClinicalReferralPayload }) {
   return (
     <>
-      <ul className="flex flex-col gap-2">
-        {payload.studies.map((study, index) => (
-          <li
-            key={`${study.studyName}-${index}`}
-            className="rounded-[10px] border border-(--border-subtle) p-3"
-          >
-            <p className="flex flex-wrap items-center gap-2 font-bold text-(--text-heading)">
-              {study.studyName}
-              <span className="text-sm font-normal text-(--text-muted)">
-                {study.bodyRegion}
-              </span>
-              <PriorityChip priority={study.priority} />
-            </p>
-            <p className="mt-1 text-(--text-muted)">{study.rationale}</p>
-          </li>
-        ))}
-      </ul>
-      {payload.instructions?.trim() ? (
-        <Field label="Instructions">
-          <Prose>{payload.instructions}</Prose>
+      <div className="flex items-baseline gap-2">
+        <Building2 className="size-3.5 text-(--teal-700)" />
+        <span className="font-bold text-(--text-heading)">
+          {payload.receivingFacilityOrSpecialty || "Receiving facility not specified"}
+        </span>
+        <PriorityChip priority={payload.urgency} />
+      </div>
+      <Field label="Reason for referral">
+        <Prose>{payload.reasonForReferral}</Prose>
+      </Field>
+      <Field label="Clinical summary">
+        <Prose>{payload.clinicalSummary}</Prose>
+      </Field>
+      {payload.followUp?.trim() ? (
+        <Field label="Follow-up">
+          <Prose>{payload.followUp}</Prose>
         </Field>
       ) : null}
     </>
@@ -348,17 +347,19 @@ function Pair({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PriorityChip({ priority }: { priority: "routine" | "urgent" }) {
+function PriorityChip({ priority }: { priority: "routine" | "urgent" | "emergency" }) {
   return (
     <span
       data-priority={priority}
       className={
-        priority === "urgent"
-          ? "rounded-full bg-(--danger-bg) px-2 py-0.5 text-xs font-bold text-(--danger-fg)"
-          : "rounded-full bg-(--gray-bg) px-2 py-0.5 text-xs font-bold text-(--gray-fg)"
+        priority === "emergency"
+          ? "rounded-full bg-(--danger-fg) px-2 py-0.5 text-xs font-bold text-white"
+          : priority === "urgent"
+            ? "rounded-full bg-(--danger-bg) px-2 py-0.5 text-xs font-bold text-(--danger-fg)"
+            : "rounded-full bg-(--gray-bg) px-2 py-0.5 text-xs font-bold text-(--gray-fg)"
       }
     >
-      {priority === "urgent" ? "Urgent" : "Routine"}
+      {priority === "emergency" ? "Emergency" : priority === "urgent" ? "Urgent" : "Routine"}
     </span>
   );
 }
@@ -440,18 +441,26 @@ function isMedicalCertificate(
   );
 }
 
-function isLabRequest(payload: CdsProtectedArtifactPayload): payload is CdsLabRequestPayload {
-  const record = asRecord(payload);
-  return record !== null && isObjectArray(record.tests, ["testName", "rationale", "priority"]);
-}
-
-function isImagingRequest(
+function isDiagnosticRequest(
   payload: CdsProtectedArtifactPayload,
-): payload is CdsImagingRequestPayload {
+): payload is CdsDiagnosticRequestPayload {
   const record = asRecord(payload);
   return (
     record !== null &&
-    isObjectArray(record.studies, ["studyName", "bodyRegion", "rationale", "priority"])
+    isText(record.modality) &&
+    isObjectArray(record.items, ["rationale", "priority"])
+  );
+}
+
+function isClinicalReferral(
+  payload: CdsProtectedArtifactPayload,
+): payload is CdsClinicalReferralPayload {
+  const record = asRecord(payload);
+  return (
+    record !== null &&
+    isText(record.reasonForReferral) &&
+    isText(record.clinicalSummary) &&
+    isText(record.urgency)
   );
 }
 

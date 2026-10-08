@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { buildRebookingUrl } from "../../lib/rebookingUrl";
 import { Booking } from "../../types/booking.types";
 import { BrandCtaButton } from "../BrandUI";
+import { DoctorProfileLink } from "../DoctorProfileLink";
 
 /** Format minor units as a currency amount, or return null when unpriced. */
 function formatAmount(amountCents?: number, currency?: string): string | null {
@@ -154,6 +156,12 @@ export function CompletedStep({ booking }: { booking: Booking }) {
       className="animate-in duration-300 fade-in"
       data-slot="wizard-completed"
     >
+      <Illustration
+        name="patient/consult-complete"
+        size="lg"
+        priority
+        className="mb-3"
+      />
       <div className="mb-2 flex items-center gap-2 text-[17px] font-bold text-(--text-heading)">
         <CheckCircle2 className="size-5 text-(--teal-800)" />
         <span>Consultation complete</span>
@@ -188,6 +196,8 @@ export function CompletedStep({ booking }: { booking: Booking }) {
           </p>
         </div>
       </div>
+
+      <DoctorProfileLink doctorId={booking.doctorId} className="mt-2" />
     </div>
   );
 }

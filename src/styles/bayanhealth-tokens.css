@@ -51,6 +51,14 @@
   --gold-400: #f0cd73;
   --gold-100: #fdf4dc;
 
+  /* Amber — "needs your attention", and nothing else. A burnt amber kept well
+     away from Gold ("Soon") and Red (emergency / blocked), so a document waiting
+     for review or an elevated vital never reads as either. */
+  --amber-700: #8a4b0f;
+  --amber-600: #b86414;
+  --amber-200: #f3d2a8;
+  --amber-100: #fcf0e0;
+
   /* Violet — reserved exclusively for AI-authored content. It is deliberately
      outside the brand ramp: navy, teal, gold and red already carry meanings
      (authority, action, "soon", danger), and marking machine-authored text with
@@ -167,6 +175,13 @@
   --danger-fg: var(--red-700);
   --danger-bg: var(--red-100);
   --danger-border: var(--red-600);
+
+  /* Attention — the physician needs to act (review a draft, re-draft a stale
+     document, look twice at a reading), but nothing is an emergency. Always
+     shown with an icon and a word, never as color alone. */
+  --attention-fg: var(--amber-700);
+  --attention-bg: var(--amber-100);
+  --attention-border: var(--amber-600);
 
   /* AI provenance — machine-authored content a clinician must review and may
      edit. Applied as a border and a label, never as the only signal. */
@@ -329,6 +344,10 @@
   --danger-fg: #e79a9a;
   --danger-bg: #3a1f1f;
   --danger-border: var(--red-400);
+
+  --attention-fg: #f0b56f;
+  --attention-bg: #33230f;
+  --attention-border: var(--amber-600);
 
   --ai-fg: #c9b6ff;
   --ai-accent: var(--violet-400);

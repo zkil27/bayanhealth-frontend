@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, isValid, parseISO } from "date-fns";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { AsyncView } from "@/components/async-view";
@@ -180,6 +181,22 @@ export function DoctorScheduleView() {
       setView(viewParam as CalendarView);
     }
   }
+
+  /*
+    Phones open on Day. Week needs ~760px and on a 360px screen became a
+    sideways-scrolling strip showing two days at a time. A deep link's own
+    `view` wins, and this runs once, so the D/W/M switcher still works.
+  */
+  useEffect(() => {
+    if (searchParams.get("view")) return;
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setView("day");
+    }
+    // Mount-only by design: re-running on a later URL change would override a
+    // view the doctor picked themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const days = useMemo(() => visibleDays(view, anchor), [view, anchor]);
   const range = useMemo(() => visibleRange(view, anchor), [view, anchor]);
@@ -575,8 +592,49 @@ export function DoctorScheduleView() {
           const drawerSlots = drawerDate ? (slotsByDate.get(drawerDate) ?? []) : [];
           const popoverSlots = popoverDate ? (slotsByDate.get(popoverDate) ?? []) : [];
 
+          const activeDay = view === "day" ? dayItems[0] : undefined;
+          const activeDaySlots = activeDay ? (slotsByDate.get(activeDay.iso) ?? []) : [];
+
           return (
             <>
+              {/*
+                Below `lg` the Day view's side rail ("Day Overview", its counts
+                and "+ Add Shift") is hidden, which left a phone with no visible
+                way to add availability: the only path was tapping empty grid,
+                which nothing on screen suggests. This row restores both.
+              */}
+              {activeDay ? (
+                <div
+                  data-slot="schedule-day-actions"
+                  className="flex items-center justify-between gap-3 lg:hidden"
+                >
+                  <p className="text-sm text-(--text-muted)">
+                    <span className="font-bold text-(--teal-700)">
+                      {activeDaySlots.filter((s) => s.status === "available").length}
+                    </span>{" "}
+                    open ·{" "}
+                    <span className="font-bold text-(--navy-700)">
+                      {activeDaySlots.filter((s) => s.status === "booked").length}
+                    </span>{" "}
+                    booked
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      openCreate({
+                        date: activeDay.iso,
+                        ...defaultRangeFrom(TOOLBAR_DEFAULT_START_MINUTES),
+                        anchor: rectFromMouseEvent(e),
+                      });
+                    }}
+                    className="h-11 rounded-full px-4 text-sm font-bold"
+                  >
+                    <Plus className="size-4" aria-hidden />
+                    Add availability
+                  </Button>
+                </div>
+              ) : null}
+
               {/*
                 The card is a fixed shell (`flex-1 min-h-0`) so its box is
                 identical across Day, Week and Month; only the region inside it

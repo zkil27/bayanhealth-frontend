@@ -8,7 +8,6 @@ import {
   getActiveConsultation,
   type ActiveConsultationRef,
 } from "@/lib/patient/activeConsultationStorage";
-import { cn } from "@/lib/utils";
 
 /**
  * Omnipresent Active Consultation Banner.
@@ -61,24 +60,23 @@ export function ActiveConsultationBanner() {
       role="banner"
       aria-label="Aktibong Konsulta"
       data-slot="active-consultation-banner"
-      className="sticky top-0 z-50 w-full shrink-0 border-b border-teal-600/40 bg-teal-900 text-white shadow-md transition-all duration-200"
+      className="sticky top-0 z-50 w-full shrink-0 border-b border-(--border-subtle) bg-(--surface-card) text-(--text-body) shadow-(--shadow-xs) transition-colors duration-200"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3.5 py-2 sm:px-6 sm:py-2.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-          <span className="relative flex size-2.5 shrink-0">
-            <span className="absolute inline-flex size-full rounded-full bg-teal-400 opacity-75 motion-safe:animate-ping" />
-            <span className="relative inline-flex size-2.5 rounded-full bg-teal-300" />
+          <span className="flex size-7.5 sm:size-8 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border-subtle) bg-(--surface-accent-soft) text-(--status-available-fg)">
+            <Video className="size-3.5 sm:size-4" aria-hidden />
           </span>
 
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold truncate">
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-teal-800/80 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-teal-200">
-              <Video className="size-3 text-teal-300" />
-              {isLiveRoom ? "Live Call" : "Aktibong Konsulta"}
+          <div className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-xs sm:text-sm font-bold text-(--text-heading) truncate">
+              {isLiveRoom ? "Bukas ang iyong consultation room" : "May aktibong konsulta"}
             </span>
-            <span className="truncate">
+            <span className="hidden sm:inline text-(--text-subtle)">•</span>
+            <span className="text-[11px] sm:text-xs text-(--text-muted) truncate">
               {isLiveRoom
-                ? "Bukas pa ang iyong consultation room."
-                : "May naghihintay kang konsulta sa telemedisina."}
+                ? "Nandito ang doktor o naghihintay sa video call."
+                : "May naghihintay kang sesyon sa telemedisina."}
             </span>
           </div>
         </div>
@@ -86,7 +84,7 @@ export function ActiveConsultationBanner() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={targetHref}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-(--action-primary) px-3.5 text-xs font-bold text-(--action-primary-text) shadow-sm hover:brightness-105 active:scale-[0.98] transition-all"
+            className="inline-flex min-h-9 sm:min-h-8 items-center justify-center gap-1.5 rounded-(--radius-pill) bg-(--action-primary) px-3.5 py-1.5 text-xs font-bold text-(--action-primary-text) shadow-(--shadow-xs) hover:bg-(--action-primary-hover) active:scale-[0.98] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
           >
             <span>Bumalik sa Konsulta</span>
             <ArrowRight className="size-3.5" />
@@ -95,11 +93,11 @@ export function ActiveConsultationBanner() {
           <button
             type="button"
             onClick={() => setDismissedBookingId(active.bookingId)}
-            className="size-7 flex items-center justify-center rounded-full text-teal-300 hover:text-white hover:bg-teal-800/50 transition-colors"
+            className="flex size-9 sm:size-8 items-center justify-center rounded-(--radius-md) text-(--text-muted) hover:bg-(--surface-warm) hover:text-(--text-heading) transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
             title="Itago pansamantala"
             aria-label="Itago ang paalala"
           >
-            <X className="size-3.5" />
+            <X className="size-4" />
           </button>
         </div>
       </div>

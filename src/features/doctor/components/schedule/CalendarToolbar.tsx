@@ -53,7 +53,7 @@ export function CalendarToolbar({
             type="button"
             onClick={onToday}
             title="Jump to today (T)"
-            className="rounded-full border border-(--border-subtle) bg-(--surface-card) px-3 py-1.5 text-xs font-bold text-(--text-heading) shadow-xs transition-colors hover:bg-(--surface-warm-soft) active:scale-95"
+            className="min-h-11 rounded-full border border-(--border-subtle) bg-(--surface-card) px-4 py-1.5 text-sm font-bold sm:min-h-0 sm:px-3 sm:text-xs text-(--text-heading) shadow-xs transition-colors hover:bg-(--surface-warm-soft) active:scale-95"
           >
             Today
           </button>
@@ -65,7 +65,7 @@ export function CalendarToolbar({
             onClick={() => onStep(-1)}
             aria-label={`Previous ${stepLabel}`}
             title={`Previous ${stepLabel} (←)`}
-            className="flex size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
+            className="flex size-11 sm:size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -74,7 +74,7 @@ export function CalendarToolbar({
             onClick={() => onStep(1)}
             aria-label={`Next ${stepLabel}`}
             title={`Next ${stepLabel} (→)`}
-            className="flex size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
+            className="flex size-11 sm:size-7.5 items-center justify-center rounded-full text-(--text-heading) transition-colors hover:bg-(--surface-warm-soft)"
           >
             <ChevronRight className="size-4" />
           </button>
@@ -102,7 +102,7 @@ export function CalendarToolbar({
               aria-pressed={view === option}
               title={`${VIEW_LABELS[option]} view (${VIEW_KEYS[option]})`}
               className={cn(
-                "rounded-full px-3.5 py-1 text-xs font-bold transition-all sm:text-sm",
+                "min-h-10 rounded-full px-3.5 py-1 text-sm font-bold transition-all sm:min-h-0",
                 view === option
                   ? "bg-(--surface-card) text-(--text-heading) shadow-xs"
                   : "text-(--text-muted) hover:text-(--text-heading)",

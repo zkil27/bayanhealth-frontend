@@ -2,11 +2,13 @@
 
 import { TogglePill } from "./BrandUI";
 import { LANGUAGES } from "../constants/bookingConstants";
+import { cn } from "@/lib/utils";
 
 type LanguageSelectProps = {
   selectedLanguages: string[];
   /** Receives the full next selection. An empty array means "any language". */
   onChange: (next: string[]) => void;
+  className?: string;
 };
 
 /**
@@ -15,18 +17,23 @@ type LanguageSelectProps = {
  * "Any" (an empty selection) is the default and is offered as its own pill, so a
  * bilingual patient is not forced to name a language they do not care about.
  * Only the languages the platform can actually staff are listed (see
- * {@link LANGUAGES}) — the Figma mock also shows "Bisaya", but regional
- * languages were deliberately dropped rather than accepted and silently ignored.
+ * {@link LANGUAGES}).
+ * Spans full width across to the right for easy clicking and touch ergonomics.
  */
 export function LanguageSelect({
   selectedLanguages,
   onChange,
+  className,
 }: LanguageSelectProps) {
   const noPreference = selectedLanguages.length === 0;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <TogglePill selected={noPreference} onClick={() => onChange([])}>
+    <div className={cn("grid w-full grid-cols-3 gap-2", className)}>
+      <TogglePill
+        selected={noPreference}
+        className="w-full justify-center px-2 sm:px-4"
+        onClick={() => onChange([])}
+      >
         Any
       </TogglePill>
       {LANGUAGES.map((language) => {
@@ -35,6 +42,7 @@ export function LanguageSelect({
           <TogglePill
             key={language.value}
             selected={isSelected}
+            className="w-full justify-center px-2 sm:px-4"
             onClick={() =>
               onChange(
                 isSelected

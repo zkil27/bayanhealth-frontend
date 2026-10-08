@@ -1,5 +1,6 @@
 "use client";
 
+import { Illustration } from "@/components/primitives/Illustration";
 import {
   AlertCircle,
   UserSearch,
@@ -128,34 +129,62 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
 
   return (
     <div className="animate-in duration-300 fade-in">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-[38px] shrink-0 items-center justify-center rounded-[12px] bg-(--teal-100) text-(--teal-800)">
-          <UserSearch className="size-5" />
-        </span>
-        <span className="flex-1 text-[17px] font-bold text-(--text-heading)">
-          {isAwaitingAcceptance
-            ? "Waiting for a doctor"
-            : "Finding your doctor"}
-        </span>
-        <span
-          data-slot="finding-step-live"
-          className="flex items-center gap-1.5 rounded-full bg-(--gold-100) px-2.5 py-1 text-[11px] font-bold text-(--gold-700)"
-        >
-          <span className="size-1.5 animate-pulse rounded-[3px] bg-(--gold-600)" />
-          Live
-        </span>
+      {/* Hero Header: Title, Live indicator, Preferences, and seamlessly integrated Illustration */}
+      <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              data-slot="finding-step-live"
+              className="inline-flex items-center gap-1.5 rounded-full bg-(--gold-100) px-2.5 py-1 text-[11px] font-bold text-(--gold-700)"
+            >
+              <span className="size-1.5 rounded-full bg-(--gold-600)" />
+              Live
+            </span>
+          </div>
+
+          <div className="mt-2.5 flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-(--teal-100) text-(--teal-800)">
+              <UserSearch className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight text-(--text-heading)">
+                {isAwaitingAcceptance
+                  ? "Waiting for a doctor"
+                  : "Finding your doctor"}
+              </h3>
+              <p className="text-xs sm:text-sm text-(--text-muted) truncate">
+                {isAwaitingAcceptance
+                  ? "Broadcasting request to verified doctors"
+                  : "Matching your consultation request"}
+              </p>
+            </div>
+          </div>
+
+          {preferencesApply ? (
+            <div className="mt-3">
+              <MatchPreferences booking={booking} />
+            </div>
+          ) : null}
+        </div>
+
+        {/* Anchored Illustration plate: Framed in a calm, warm plate instead of floating adrift */}
+        <div className="flex shrink-0 justify-center sm:justify-end">
+          <div className="flex h-28 w-36 items-center justify-center rounded-[14px] border border-(--border-subtle) bg-(--surface-warm-soft) p-2.5 sm:h-32 sm:w-44">
+            <Illustration
+              name="patient/finding-doctor"
+              size="md"
+              priority
+              className="max-h-full w-auto object-contain"
+            />
+          </div>
+        </div>
       </div>
 
-      {preferencesApply ? (
-        <div className="mt-3.5">
-          <MatchPreferences booking={booking} />
-        </div>
-      ) : null}
-
-      <div className="mt-3.5 rounded-[16px] border border-(--teal-200) bg-gradient-to-b from-(--teal-100) to-(--surface-warm) p-4">
+      {/* Heartbeat Progress Card */}
+      <div className="mt-4 rounded-[16px] border border-(--teal-200) bg-(--surface-warm)/30 p-4 sm:p-5">
         <div className="flex items-center gap-2.5">
-          <p className="flex flex-1 items-center gap-1.5 text-[14px] font-semibold text-(--text-heading)">
-            <Spinner data-slot="finding-step-spinner" className="size-3.5" />
+          <p className="flex flex-1 items-center gap-2 text-[14px] font-semibold text-(--text-heading)">
+            <Spinner data-slot="finding-step-spinner" className="size-3.5 text-(--teal-700)" />
             {message}
           </p>
           <span className="font-display text-[22px] leading-none font-semibold text-(--teal-800)">
@@ -165,16 +194,18 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
 
         <div
           data-slot="finding-step-progress"
-          className="mt-3 w-full overflow-hidden rounded-full"
+          className="mt-3.5 w-full overflow-hidden rounded-full"
         >
           <HeartbeatProgress value={progress} className="w-full" />
         </div>
 
-        <div className="mt-2 flex items-center justify-between text-[11.5px] text-(--text-subtle)">
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="size-3" /> Payment held
+        <div className="mt-2.5 flex items-center justify-between text-[11.5px] font-medium text-(--text-subtle)">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="size-3.5 text-(--teal-700)" /> Payment held
           </span>
-          <span>Doctor assigned</span>
+          <span className="flex items-center gap-1.5">
+            <Stethoscope className="size-3.5 text-(--teal-700)" /> Doctor assigned
+          </span>
         </div>
       </div>
 
@@ -267,37 +298,48 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
   }
 
   return (
-    <div className="mt-3.5 flex flex-col gap-2.5" data-slot="on-demand-wait">
+    <div className="mt-3.5 flex flex-col gap-3" data-slot="on-demand-wait">
       {elapsed ? (
-        <div className="flex items-center gap-2 rounded-[12px] bg-(--surface-warm) px-3 py-2.5 text-sm text-(--text-muted)">
-          <Timer className="size-4 shrink-0 text-(--teal-800)" />
-          <span>
-            Waiting{" "}
-            <span
-              data-slot="on-demand-wait-elapsed"
-              className="font-display text-[18px] font-semibold text-(--text-heading) tabular-nums"
-            >
-              {elapsed}
-            </span>
+        <div className="flex items-center justify-between rounded-[12px] border border-(--border-subtle)/70 bg-(--surface-warm) px-3.5 py-2.5 text-sm text-(--text-muted)">
+          <div className="flex items-center gap-2">
+            <Timer className="size-4 shrink-0 text-(--teal-800)" />
+            <span>Waiting time</span>
+          </div>
+          <span
+            data-slot="on-demand-wait-elapsed"
+            className="font-display text-[18px] font-semibold text-(--text-heading) tabular-nums"
+          >
+            {elapsed}
           </span>
         </div>
       ) : null}
 
-      <div className="flex items-start gap-2.5 rounded-[12px] bg-(--surface-warm) px-3 py-2.5 text-[13px] text-(--text-muted)">
-        <Radio className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
-        <p>
-          Your request is visible to every verified doctor on BayanHealth right
-          now. The first one to accept it becomes your doctor, and your chat
-          room and video link open as soon as that happens.
-        </p>
-      </div>
+      {/* Unified Clinical Assurance Card */}
+      <div className="rounded-[14px] border border-(--border-subtle) bg-(--surface-warm)/60 p-3.5 sm:p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-2.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-(--teal-800) mt-0.5">
+              <Radio className="size-3.5" />
+            </span>
+            <p className="text-[13px] leading-relaxed text-(--text-body)">
+              Your request is visible to every verified doctor on BayanHealth right
+              now. The first one to accept it becomes your doctor, and your chat
+              room and video link open as soon as that happens.
+            </p>
+          </div>
 
-      <div className="flex items-start gap-2.5 rounded-[12px] border border-(--teal-200) bg-(--teal-100) px-3 py-2.5 text-[13px] text-(--text-muted)">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-(--teal-800)" />
-        <p>
-          Your payment is on hold, not charged. If you cancel before a doctor
-          accepts, the hold is released in full.
-        </p>
+          <div className="h-px bg-(--border-subtle)/60" />
+
+          <div className="flex items-start gap-2.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-(--teal-800) mt-0.5">
+              <ShieldCheck className="size-3.5" />
+            </span>
+            <p className="text-[13px] leading-relaxed text-(--text-body)">
+              Your payment is on hold, not charged. If you cancel before a doctor
+              accepts, the hold is released in full.
+            </p>
+          </div>
+        </div>
       </div>
 
       {errorMessage ? (
@@ -319,7 +361,7 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
               <Button
                 type="button"
                 variant="outline"
-                className="h-[42px] rounded-full border-(--action-primary) px-4 font-bold text-(--teal-800) hover:bg-(--teal-100)"
+                className="h-12 min-h-12 w-full rounded-full border-(--action-primary) px-6 font-bold text-(--teal-800) hover:bg-(--teal-100) sm:w-auto"
               />
             }
           >
@@ -367,9 +409,9 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
 /** Preferences the patient supplied, shown only where matching honours them. */
 function MatchPreferences({ booking }: { booking: Booking }) {
   const chip =
-    "flex items-center gap-1.5 rounded-full bg-(--surface-warm) px-3 py-1.5 text-[12.5px] font-medium text-(--text-muted)";
+    "flex items-center gap-1.5 rounded-full bg-(--surface-warm) px-3 py-1.5 text-[12.5px] font-medium text-(--text-muted) border border-(--border-subtle)/50";
   return (
-    <div className="flex flex-wrap gap-2.5">
+    <div className="flex flex-wrap gap-2">
       <span className={chip}>
         <Cog className="size-3.5 shrink-0" />
         <span className="capitalize">
@@ -409,14 +451,14 @@ function DoctorReviewCard({ booking }: { booking: Booking }) {
 
   return (
     <Card className="relative mx-auto flex w-full flex-col overflow-hidden pt-0 shadow-lg">
-      <div className="relative aspect-video w-full overflow-hidden">
+      <div className="relative aspect-video w-full overflow-hidden bg-(--surface-warm-soft)">
         <Image
-          src="/medicinePlaceholder.jpg"
+          src="/illustrations/patient/doctor-matched.webp"
           alt=""
           aria-hidden="true"
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="z-20 object-cover brightness-80 dark:brightness-40"
+          className="z-20 object-contain p-2"
           loading="eager"
         />
       </div>

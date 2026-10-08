@@ -1,101 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
-  AlertCircle,
-  ArrowRight,
+  ArrowLeft,
   BookOpen,
-  Check,
-  CheckCircle2,
-  ChevronDown,
+  CalendarClock,
+  CircleMinus,
   ClipboardList,
-  Clock,
   FileBadge,
-  FilePlus2,
-  FlaskConical,
+  FileSignature,
   Hash,
-  Info,
+  History,
   PenLine,
   Pill,
-  Plus,
-  Scan,
-  Trash2,
-  X,
+  RefreshCw,
+  TestTube2,
+  Undo2,
+  UserCheck,
+  FileText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
+import { StatusText } from "@/components/ui/status-text";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { CdsProtectedArtifact, CdsProtectedOutputType } from "@/types/cds-contract";
+import type {
+  CdsProtectedArtifact,
+  CdsProtectedArtifactPayload,
+  CdsProtectedOutputType,
+} from "@/types/cds-contract";
 import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
 import {
-  AiProvenanceChip,
   ArtifactCard,
   computeArtifactProvenance,
+  type ArtifactCommand,
   type ArtifactSignatureInput,
 } from "./ArtifactCard";
+import { AuthorizedArtifactHistory } from "./AuthorizedArtifactHistory";
+import { CareContinuityPanel, followUpStatus, type FollowUpRecommendation } from "./CareContinuityPanel";
+import { DOCUMENT_STATUS, provenanceLabel, type DocumentStatus } from "./documentStatus";
+import { PhysicianAuthoringForm } from "./PhysicianAuthoringPanel";
 import { OUTPUT_LABELS } from "./workspacePhase";
-import { isPatientReadableOutput, patientVisibilityCopy } from "../../lib/cdsCopy";
-import type { CdsProtectedArtifactPayload } from "@/types/cds-contract";
+import { isPatientReadableOutput } from "../../lib/cdsCopy";
 
 const TOOL_ICONS: Record<CdsProtectedOutputType, React.ComponentType<{ className?: string }>> = {
   plan: ClipboardList,
   prescription: Pill,
   final_icd: Hash,
   medical_certificate: FileBadge,
-  lab_request: FlaskConical,
-  imaging_request: Scan,
+  diagnostic_request: TestTube2,
+  clinical_referral: UserCheck,
   patient_education: BookOpen,
 };
 
 const OUTPUT_DESCRIPTIONS: Record<CdsProtectedOutputType, string> = {
-  plan: "Clinical goals, interventions & specialist referral",
-  prescription: "Official electronic Rx with medications & dosage directions",
-  medical_certificate: "Work/school clearance with diagnosis & excused rest dates",
-  lab_request: "Diagnostic laboratory workup order (blood, urine, etc.)",
-  imaging_request: "Diagnostic imaging order (X-ray, ultrasound, CT)",
-  patient_education: "Personalized Tagalog/English home care guide & red flags",
-  final_icd: "Authoritative ICD-10 diagnostic coding classification",
+  plan: "Your goals, interventions and follow-up for this encounter. Kept in your records.",
+  prescription: "Electronic prescription with medications, doses and directions.",
+  medical_certificate: "Work or school certificate with diagnosis and rest dates.",
+  diagnostic_request: "Laboratory, urinalysis and imaging orders in one request.",
+  clinical_referral: "Referral letter to a specialist or receiving facility.",
+  patient_education: "Home-care guide and warning signs, in English or Filipino.",
+  final_icd: "ICD-10 coding for the confirmed diagnosis.",
 };
 
-/**
- * The drafted documents, as a deck rather than a stack.
- *
- * Documents used to render as a vertical list of full cards. With four or five
- * drafted — the ordinary case for a consultation that produces a plan, a
- * prescription, an ICD code, a certificate and patient education — reviewing the
- * last one meant scrolling past every earlier one, and there was no way to see
- * at a glance which still needed signing. Worse, pressing a tool in the right
- * rail scrolled the page to a card somewhere in that column, which reads as the
- * page jumping rather than as navigation.
- *
- * One tab strip, one document at a time. The strip is the review checklist: each
- * tab states its document's state, so "what is left to do" is answerable without
- * scrolling anything. A generation in flight gets its own tab immediately, which
- * is what makes pressing a second tool while the first is still drafting do
- * something visible instead of nothing.
- */
+/** Every document row, in the order a consultation usually produces them. */
+export const CHECKLIST_TYPES: readonly CdsProtectedOutputType[] = [
+  "plan",
+  "prescription",
+  "medical_certificate",
+  "diagnostic_request",
+  "clinical_referral",
+  "patient_education",
+];
+
+/** A row in the checklist: a document type, or one of the two extra rows. */
+export type ChecklistKey = CdsProtectedOutputType | "follow_up" | "history";
 
 export type DeckStatus = "generating" | "draft" | "edited" | "signed" | "released" | "stale";
 
@@ -107,24 +92,14 @@ export interface DeckEntry {
 }
 
 /**
- * Build the deck's entries from current artifacts plus whatever is generating.
- *
- * Kept pure and exported so the tab set is testable without a rendered tree, and
- * so the workspace and the deck cannot disagree about which documents exist.
+ * Build the started documents from current artifacts plus whatever is
+ * generating. Kept pure and exported so the workspace (next-step bar, finish
+ * readiness) and the checklist cannot disagree about which documents exist.
  */
-const PREFERRED_DECK_ORDER: readonly CdsProtectedOutputType[] = [
-  "plan",
-  "prescription",
-  "medical_certificate",
-  "patient_education",
-  "lab_request",
-  "imaging_request",
-];
-
 export function deriveDeckEntries(input: {
   artifacts: readonly CdsProtectedArtifact[];
   generating: ReadonlySet<CdsProtectedOutputType>;
-  /** Types rendered elsewhere on the page — Plan lives under the Assessment. */
+  /** Types rendered elsewhere on the page (Final ICD lives in the Assessment). */
   exclude?: ReadonlySet<CdsProtectedOutputType>;
 }): DeckEntry[] {
   const entries: DeckEntry[] = [];
@@ -151,47 +126,97 @@ export function deriveDeckEntries(input: {
 
   for (const outputType of input.generating) {
     if (input.exclude?.has(outputType)) continue;
-    const existing = entries.find((entry) => entry.outputType === outputType);
-    // A redraft of something already on the deck keeps its tab and its content
-    // visible; only a first draft gets a placeholder tab of its own.
-    if (existing) continue;
+    // A redraft of something already started keeps its content visible; only
+    // a first draft gets a placeholder of its own.
+    if (entries.some((entry) => entry.outputType === outputType)) continue;
     entries.push({ outputType, status: "generating" });
   }
-
-  entries.sort((a, b) => {
-    const indexA = PREFERRED_DECK_ORDER.indexOf(a.outputType);
-    const indexB = PREFERRED_DECK_ORDER.indexOf(b.outputType);
-    return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-  });
 
   return entries;
 }
 
+/** The single vocabulary status for a started document. */
+export function entryStatus(entry: DeckEntry | undefined): DocumentStatus {
+  if (!entry) return "not_started";
+  switch (entry.status) {
+    case "generating":
+      return "drafting";
+    case "draft":
+    case "edited":
+      return "needs_review";
+    default:
+      return entry.status;
+  }
+}
+
+/** Whether a started document still needs something from the physician. */
+function needsAction(entry: DeckEntry): boolean {
+  const status = entryStatus(entry);
+  if (status === "needs_review" || status === "stale") return true;
+  // Signed patient documents still need releasing; Plan's last step is signing.
+  return status === "signed" && isPatientReadableOutput(entry.outputType);
+}
+
+export interface ChecklistProgress {
+  /** Documents with nothing left to do. */
+  done: number;
+  /** Documents started (drafted, written, or drafting). */
+  started: number;
+  /** The first document that needs the physician, and what it needs. */
+  next: { outputType: CdsProtectedOutputType; verb: string } | null;
+}
+
 /**
- * The line shown above the active document, for states that need one.
- *
- * `draft` and `edited` are deliberately absent: that used to duplicate the
- * card's own "AI draft · you own it" / "AI draft · you edited it" badge, and
- * now duplicates the card's "Needs your review" / "Reviewed" status badge too
- * — two sentences above the fold saying what one badge inside it already
- * says. The remaining four states are not shown anywhere else on the card.
+ * Progress for the next-step bar, from the same entries the checklist shows.
+ * `prefer` is the open row: when it still needs something, it is the next
+ * step, so the bar never points away from the document already in front of
+ * the physician.
  */
-const STATUS_COPY: Partial<Record<DeckStatus, string>> = {
-  generating: "Drafting…",
-  signed: "Signed · ready to release",
-  released: "Released",
-  stale: "Out of date",
-};
+export function checklistProgress(
+  entries: readonly DeckEntry[],
+  prefer?: ChecklistKey | null,
+): ChecklistProgress {
+  const ordered = CHECKLIST_TYPES.map((type) => entries.find((entry) => entry.outputType === type)).filter(
+    (entry): entry is DeckEntry => Boolean(entry),
+  );
+  const preferred = ordered.find((entry) => entry.outputType === prefer);
+  const pending = preferred && needsAction(preferred) ? preferred : ordered.find(needsAction);
+  const verbFor = (entry: DeckEntry) => {
+    const status = entryStatus(entry);
+    if (status === "stale") return "Redraft";
+    if (status === "signed") return "Release";
+    return "Review";
+  };
+  return {
+    done: ordered.filter((entry) => entryStatus(entry) !== "drafting" && !needsAction(entry)).length,
+    started: ordered.length,
+    next: pending ? { outputType: pending.outputType, verb: verbFor(pending) } : null,
+  };
+}
 
-const ALL_DRAFT_TYPES: readonly CdsProtectedOutputType[] = [
-  "prescription",
-  "medical_certificate",
-  "patient_education",
-  "lab_request",
-  "imaging_request",
-  "plan",
-];
-
+/**
+ * Plan and documents, as a checklist.
+ *
+ * Every document type is always a row with one status, as in the NHS and
+ * GOV.UK task-list pattern. A doctor seeing this for the first time can tell
+ * what exists, what is left, and where to start without reading anything else.
+ * It replaces three things that grew up separately:
+ *
+ * - a tab strip that only showed documents already drafted, cut off mid-word
+ *   past four tabs, and carried four badges per tab;
+ * - an "Add Document" menu and a row of "+ Prescription" chips that drafted
+ *   with AI; and
+ * - a "Write a document yourself" card whose chips, also "+ Prescription",
+ *   opened a blank form.
+ *
+ * Now an unstarted row offers both choices side by side: Draft with AI, or
+ * Write it myself. Follow-up and earlier versions are rows in the same list,
+ * because they are part of the Plan too.
+ *
+ * Keyboard (desktop): ↑ / ↓ move between rows, E edits the open draft, S opens
+ * its Sign dialog. Signing still needs the attestation tick, and releasing
+ * still needs the two-second hold.
+ */
 export function DeliverablesDeck({
   entries,
   active,
@@ -200,584 +225,732 @@ export function DeliverablesDeck({
   generating,
   specimen,
   defaultSignerName,
-  canRegenerate,
+  draftingOpen,
+  aiEligibleTypes,
+  aiUnavailableReason,
   onAmend,
   onFinalize,
   onRelease,
-  onRegenerate,
   onDraft,
+  onAuthor,
   onDiscard,
+  cancellableTypes,
+  onCancelDraft,
   intake,
-  gateStatusLabel,
+  followUp,
+  history,
+  historyCursor,
+  onLoadMoreHistory,
+  onInspectHistory,
+  mobileDetail,
+  onCloseMobileDetail,
+  notNeeded,
+  removedDraftTypes,
+  onNotNeeded,
+  onRestore,
+  onRefresh,
 }: {
   entries: readonly DeckEntry[];
-  active: CdsProtectedOutputType | null;
-  onActiveChange: (outputType: CdsProtectedOutputType) => void;
+  active: ChecklistKey | null;
+  onActiveChange: (key: ChecklistKey) => void;
   busy: boolean;
   generating: ReadonlySet<CdsProtectedOutputType>;
   specimen?: DoctorSignatureSpecimen | undefined;
   defaultSignerName?: string;
-  canRegenerate: boolean;
+  /** No lock is holding drafting. */
+  draftingOpen: boolean;
+  /** Types the confirmed Assessment allows the AI to draft. */
+  aiEligibleTypes: ReadonlySet<CdsProtectedOutputType>;
+  /** Why AI drafting is closed, when it is closed for every type. */
+  aiUnavailableReason?: string;
   onAmend: (artifact: CdsProtectedArtifact, payload: CdsProtectedArtifactPayload) => Promise<void>;
   onFinalize: (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => Promise<void>;
   onRelease: (artifact: CdsProtectedArtifact) => void;
-  onRegenerate: (outputType: CdsProtectedOutputType) => void;
-  onDraft?: (outputType: CdsProtectedOutputType) => void;
-  onDiscard?: (outputType: CdsProtectedOutputType) => void;
+  /** Draft (or redraft) with AI. */
+  onDraft: (outputType: CdsProtectedOutputType) => void;
+  /** Save a document the physician wrote. Rejects to keep the editor open. */
+  onAuthor: (outputType: CdsProtectedOutputType, payload: CdsProtectedArtifactPayload) => Promise<void>;
+  onDiscard: (outputType: CdsProtectedOutputType) => void;
+  /** Types with a background job the physician can cancel. */
+  cancellableTypes?: ReadonlySet<CdsProtectedOutputType>;
+  onCancelDraft?: (outputType: CdsProtectedOutputType) => void;
   intake?: BookingIntakeForm | null;
-  gateStatusLabel?: string;
+  followUp: FollowUpRecommendation;
+  history: readonly CdsProtectedArtifact[];
+  historyCursor?: string;
+  onLoadMoreHistory: () => void;
+  onInspectHistory: (artifact: CdsProtectedArtifact) => void;
+  /**
+   * Phone only (below `lg`): whether the open row is shown as its own screen
+   * instead of the list. Owned by the workspace, which keeps it in the URL so
+   * the phone's back gesture returns to the list.
+   */
+  mobileDetail: boolean;
+  onCloseMobileDetail: () => void;
+  /** Documents the physician removed or marked not needed. */
+  notNeeded: ReadonlySet<CdsProtectedOutputType>;
+  /** Of those, the ones that had a draft (adding back restores it). */
+  removedDraftTypes: ReadonlySet<CdsProtectedOutputType>;
+  onNotNeeded: (outputType: CdsProtectedOutputType) => void;
+  onRestore: (outputType: CdsProtectedOutputType) => void;
+  /** Reload the server state (offered at the foot of the list on a phone). */
+  onRefresh?: () => void;
 }) {
-  if (entries.length === 0) {
-    return (
-      <section
-        data-slot="deliverables-deck-empty"
-        className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-(--border-subtle) bg-(--surface-card) p-8 text-center"
-      >
-        <span className="flex size-11 items-center justify-center rounded-2xl bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
-          <ClipboardList className="size-6" />
-        </span>
-        <h3 className="mt-3 text-base font-bold text-(--text-heading)">No clinical documents drafted yet</h3>
-        <p className="mt-1 max-w-md text-xs text-(--text-muted) leading-relaxed">
-          Generate official patient-facing documents, electronic prescriptions, or medical certificates below:
-        </p>
-        {onDraft ? (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-            {ALL_DRAFT_TYPES.map((type) => {
-              const Icon = TOOL_ICONS[type];
-              return (
-                <Button
-                  key={type}
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full gap-1.5 text-xs border-(--border-subtle) hover:border-(--teal-600) hover:bg-(--surface-accent-soft)"
-                  disabled={busy || !canRegenerate}
-                  onClick={() => onDraft(type)}
-                >
-                  <Icon className="size-3.5 text-teal-700" />
-                  + {OUTPUT_LABELS[type]}
-                </Button>
-              );
-            })}
-          </div>
-        ) : null}
-      </section>
-    );
-  }
-
-  // An `active` naming a document that has since gone (a redraft that changed
-  // type set, a stale sweep) falls back to the first tab rather than rendering
-  // an empty panel.
-  const current = entries.find((entry) => entry.outputType === active) ?? entries[0];
-  const outstanding = entries.filter(
-    (entry) => entry.status === "draft" || entry.status === "edited",
-  ).length;
-
-  const undraftedTypes = ALL_DRAFT_TYPES.filter(
-    (type) => !entries.some((e) => e.outputType === type),
-  );
-
+  const [authoring, setAuthoring] = useState<CdsProtectedOutputType | null>(null);
   const [batchSigningOpen, setBatchSigningOpen] = useState(false);
   const [batchSigningInProgress, setBatchSigningInProgress] = useState(false);
-  const [discardTarget, setDiscardTarget] = useState<CdsProtectedOutputType | null>(null);
+  // Drafts whose pane has shown them, and the ones ticked in the batch-sign
+  // dialog. Batch sign pre-ticks only drafts the physician has opened or
+  // edited, so nothing is signed unseen without an explicit tick.
+  const [openedTypes, setOpenedTypes] = useState<ReadonlySet<CdsProtectedOutputType>>(() => new Set());
+  const [batchSelection, setBatchSelection] = useState<ReadonlySet<CdsProtectedOutputType>>(() => new Set());
+  const [command, setCommand] = useState<ArtifactCommand | null>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const entryFor = (type: CdsProtectedOutputType) => entries.find((entry) => entry.outputType === type);
+  const rowKeys: ChecklistKey[] = [...CHECKLIST_TYPES, "follow_up", "history"];
+
+  // With nothing chosen, open the first document that needs the physician,
+  // else the first row.
+  const firstPending = CHECKLIST_TYPES.find((type) => {
+    const entry = entryFor(type);
+    return entry ? needsAction(entry) : false;
+  });
+  const selected: ChecklistKey = active ?? firstPending ?? "plan";
+  const statusOf = (type: CdsProtectedOutputType): DocumentStatus =>
+    notNeeded.has(type) ? "not_needed" : entryStatus(entryFor(type));
+  const selectedIsDocument = selected !== "follow_up" && selected !== "history";
+  const selectedNotNeeded = selectedIsDocument && notNeeded.has(selected);
+
+  const selectedEntry = !selectedIsDocument || selectedNotNeeded ? undefined : entryFor(selected);
+  if (
+    selectedEntry?.artifact
+    && entryStatus(selectedEntry) === "needs_review"
+    && !openedTypes.has(selectedEntry.outputType)
+  ) {
+    setOpenedTypes((prev) => new Set(prev).add(selectedEntry.outputType));
+  }
 
   const unsignedEntries = entries.filter(
-    (entry) => (entry.status === "draft" || entry.status === "edited") && entry.artifact,
+    (entry) => entryStatus(entry) === "needs_review" && entry.artifact,
   );
+  const isOpenedOrEdited = (entry: DeckEntry) =>
+    openedTypes.has(entry.outputType)
+    || (entry.artifact ? computeArtifactProvenance(entry.artifact) === "edited" : false);
+  const batchEntries = unsignedEntries.filter((entry) => batchSelection.has(entry.outputType));
 
-  const currentIndex = entries.findIndex((entry) => entry.outputType === current.outputType);
-  const nextUnsigned = entries.find(
-    (entry) =>
-      (entry.status === "draft" || entry.status === "edited") &&
-      entry.outputType !== current.outputType,
-  );
-  const nextEntry =
-    currentIndex >= 0 && currentIndex < entries.length - 1
-      ? entries[currentIndex + 1]
-      : null;
+  const select = (key: ChecklistKey) => {
+    if (key !== selected) setAuthoring(null);
+    onActiveChange(key);
+  };
 
-  const handleDiscardWithFallback = (outputType: CdsProtectedOutputType) => {
-    if (!onDiscard) return;
-    if (current.outputType === outputType) {
-      const remaining = entries.filter((e) => e.outputType !== outputType);
-      if (remaining.length > 0) {
-        const idx = entries.findIndex((e) => e.outputType === outputType);
-        const fallback = idx > 0 ? entries[idx - 1] : remaining[0];
-        onActiveChange(fallback.outputType);
-      }
+  /** After signing or "Next document": the next document that still needs something. */
+  const nextPendingAfter = (type: CdsProtectedOutputType) => {
+    const index = CHECKLIST_TYPES.indexOf(type);
+    const ordered = [...CHECKLIST_TYPES.slice(index + 1), ...CHECKLIST_TYPES.slice(0, index)];
+    return ordered.find((candidate) => {
+      const entry = entryFor(candidate);
+      return entry ? needsAction(entry) : false;
+    });
+  };
+
+  const handleFinalize = async (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => {
+    await onFinalize(artifact, signature);
+    // Patient documents stay open after signing, so Release is the next thing
+    // in view; records-only documents are finished, so move on.
+    if (!isPatientReadableOutput(artifact.outputType)) {
+      const next = nextPendingAfter(artifact.outputType);
+      if (next) onActiveChange(next);
     }
+  };
+
+  const handleDiscard = (outputType: CdsProtectedOutputType) => {
     onDiscard(outputType);
+    onActiveChange(outputType);
   };
 
-  const handleFinalize = async (signature: ArtifactSignatureInput) => {
-    if (!current.artifact) return;
-    await onFinalize(current.artifact, signature);
-    if (nextUnsigned) {
-      onActiveChange(nextUnsigned.outputType);
-    } else if (nextEntry) {
-      onActiveChange(nextEntry.outputType);
-    }
+  const openBatchSigning = () => {
+    setBatchSelection(new Set(unsignedEntries.filter(isOpenedOrEdited).map((entry) => entry.outputType)));
+    setBatchSigningOpen(true);
   };
+
+  const toggleBatchEntry = (outputType: CdsProtectedOutputType, checked: boolean) =>
+    setBatchSelection((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(outputType);
+      else next.delete(outputType);
+      return next;
+    });
 
   const handleBatchSign = async () => {
     if (!specimen) return;
     setBatchSigningInProgress(true);
     try {
-      for (const entry of unsignedEntries) {
+      for (const entry of batchEntries) {
         if (entry.artifact) {
-          await onFinalize(entry.artifact, {
-            signerName: specimen.signerName,
-            strokes: specimen.strokes,
-          });
+          await onFinalize(entry.artifact, { signerName: specimen.signerName, strokes: specimen.strokes });
         }
       }
       setBatchSigningOpen(false);
-      if (unsignedEntries.length > 1) {
-        toast.success(
-          `Signed all ${unsignedEntries.length} documents. The patient cannot see them until released.`,
-          { id: "finalize-signature" },
-        );
+      if (batchEntries.length > 1) {
+        toast.success(`Signed ${batchEntries.length} documents. The patient sees them only after you release them.`, {
+          id: "finalize-signature",
+        });
       }
     } finally {
       setBatchSigningInProgress(false);
     }
   };
 
+  /**
+   * ↑ / ↓ inside the list move the selection; E and S anywhere in the
+   * checklist (outside a text field) act on the open document.
+   */
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("input, textarea, select, [contenteditable='true'], [role='dialog'], [role='menu']")) return;
+
+    if ((event.key === "ArrowDown" || event.key === "ArrowUp") && target.closest("[data-slot='checklist-rows']")) {
+      event.preventDefault();
+      const index = rowKeys.indexOf(selected);
+      const nextIndex =
+        event.key === "ArrowDown" ? Math.min(rowKeys.length - 1, index + 1) : Math.max(0, index - 1);
+      const key = rowKeys[nextIndex]!;
+      select(key);
+      listRef.current?.querySelector<HTMLButtonElement>(`[data-row='${key}']`)?.focus();
+      return;
+    }
+    const key = event.key.toLowerCase();
+    if ((key === "e" || key === "s") && selectedEntry?.artifact) {
+      event.preventDefault();
+      setCommand({ action: key === "e" ? "edit" : "sign", nonce: Date.now() });
+    }
+  };
+
+  const followUpState = followUpStatus(followUp);
+
   return (
-    <section
-      data-slot="deliverables-deck"
-      aria-labelledby="deliverables-heading"
-      className="flex min-w-0 flex-col"
+    <div
+      data-slot="document-checklist"
+      onKeyDown={handleKeyDown}
+      className="grid min-w-0 lg:grid-cols-[18rem_minmax(0,1fr)]"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 id="deliverables-heading" className="text-[15px] font-bold text-(--text-heading)">
-            Plan &amp; deliverables
-          </h2>
-          {outstanding > 0 ? (
-            <span className="flex items-center gap-1 rounded-full border border-(--status-soon-fg)/30 bg-(--status-soon-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-soon-fg)">
-              <Clock className="size-3" />
-              {outstanding} awaiting your signature
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 rounded-full border border-(--teal-500)/30 bg-(--status-available-bg) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
-              <CheckCircle2 className="size-3" /> All reviewed &amp; signed
-            </span>
-          )}
-
-          {gateStatusLabel ? (
-            <span className="rounded-full bg-(--surface-accent-soft) px-2.5 py-0.5 text-xs font-bold text-(--teal-800) dark:text-(--teal-300)">
-              {gateStatusLabel}
-            </span>
-          ) : null}
-
-          {/* Quick jump to next unsigned document */}
-          {nextUnsigned ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-6 gap-1.5 rounded-full px-2.5 text-[11px] font-bold text-(--status-soon-fg) border-(--status-soon-fg)/30 bg-(--status-soon-bg)/40 hover:bg-(--status-soon-bg)"
-              onClick={() => onActiveChange(nextUnsigned.outputType)}
-            >
-              <Clock className="size-3 text-(--status-soon-fg)" />
-              <span>Next to sign: {OUTPUT_LABELS[nextUnsigned.outputType]}</span>
-              <ArrowRight className="size-3" />
-            </Button>
-          ) : null}
-
-          {/* Batch sign action if doctor has registered specimen and multiple drafts exist */}
-          {specimen && unsignedEntries.length > 1 ? (
-            <Button
-              type="button"
-              size="sm"
-              className="h-6 gap-1.5 rounded-full px-2.5 text-[11px] font-bold bg-(--action-primary) text-white shadow-2xs hover:bg-(--action-primary-hover)"
-              onClick={() => setBatchSigningOpen(true)}
-              disabled={busy}
-            >
-              <PenLine className="size-3" />
-              <span>Sign all ({unsignedEntries.length})</span>
-            </Button>
-          ) : null}
-        </div>
-
-        {onDraft && undraftedTypes.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              disabled={busy || !canRegenerate}
-              className={cn(
-                "group flex items-center gap-2 rounded-xl border border-(--teal-600)/30 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-(--teal-800) dark:text-teal-300 shadow-2xs hover:bg-(--teal-50)/80 dark:hover:bg-slate-800 hover:border-(--teal-600)/50 disabled:opacity-50 transition-all cursor-pointer select-none",
-              )}
-            >
-              <div className="flex size-5 shrink-0 items-center justify-center rounded-md bg-(--teal-50) text-(--teal-700) dark:bg-teal-950/60 dark:text-teal-300 border border-(--teal-500)/25 group-hover:bg-(--teal-700) group-hover:text-white transition-colors">
-                <Plus className="size-3.5 stroke-[2.5]" />
-              </div>
-              <span className="font-bold tracking-tight">Add Document</span>
-              <span className="inline-flex size-5 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/80 text-[10px] font-bold text-(--teal-800) dark:text-teal-200">
-                {undraftedTypes.length}
-              </span>
-              <ChevronDown className="size-3.5 text-(--teal-700)/70 group-hover:text-(--teal-700) transition-transform duration-200" />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="end"
-              sideOffset={6}
-              className="w-80 sm:w-88 rounded-2xl border border-(--border-subtle) bg-white dark:bg-slate-900 p-2 shadow-xl"
-            >
-              {/* Menu Header */}
-              <div className="px-2.5 py-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-(--navy-800) dark:text-slate-100 uppercase tracking-wider">
-                  <FilePlus2 className="size-4 text-(--teal-700)" />
-                  <span>Add Clinical Deliverable</span>
-                </div>
-                <p className="text-[11px] font-normal text-(--text-muted) mt-0.5 leading-snug">
-                  Select a document template to draft for this patient encounter:
-                </p>
-              </div>
-
-              <DropdownMenuSeparator className="my-1 border-t border-slate-100 dark:border-slate-800" />
-
-              {/* Document Items List */}
-              <div className="flex flex-col gap-1 py-1">
-                {undraftedTypes.map((type) => {
-                  const Icon = TOOL_ICONS[type];
-                  const label = OUTPUT_LABELS[type];
-                  const desc = OUTPUT_DESCRIPTIONS[type];
-
-                  return (
-                    <DropdownMenuItem
-                      key={type}
-                      onClick={() => onDraft(type)}
-                      className="group flex items-start gap-3 rounded-xl p-2.5 cursor-pointer text-left transition-colors hover:bg-(--teal-50)/80 dark:hover:bg-slate-800 focus:bg-(--teal-50)/80 dark:focus:bg-slate-800"
-                    >
-                      <div className="flex size-9.5 shrink-0 items-center justify-center rounded-lg bg-(--teal-50) text-(--teal-700) border border-(--teal-500)/25 group-hover:bg-(--teal-700) group-hover:text-white dark:bg-teal-950/60 dark:text-teal-300 dark:group-hover:bg-teal-600 transition-colors shadow-2xs mt-0.5">
-                        <Icon className="size-5" />
-                      </div>
-
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <span className="text-xs font-bold text-(--text-heading) group-hover:text-(--navy-800) dark:group-hover:text-white leading-tight">
-                          {label}
-                        </span>
-                        <span className="text-[11px] text-(--text-muted) leading-snug mt-0.5">
-                          {desc}
-                        </span>
-                      </div>
-
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--teal-50) text-(--teal-700) group-hover:bg-(--teal-700) group-hover:text-white dark:bg-teal-950/60 dark:text-teal-300 dark:group-hover:bg-teal-600 dark:group-hover:text-white transition-colors self-center">
-                        <Plus className="size-3.5 stroke-[2.5]" />
-                      </div>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </div>
-
-              {/* Menu Footer */}
-              <DropdownMenuSeparator className="my-1 border-t border-slate-100 dark:border-slate-800" />
-              <div className="px-2.5 py-1.5 text-[10px] text-(--text-muted) flex items-center gap-1.5 leading-snug">
-                <Info className="size-3 text-(--teal-700) shrink-0" />
-                <span>Documents generate as editable drafts for clinical review and attestation.</span>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      {/* The list */}
+      <nav
+        aria-label="Documents"
+        className={cn(
+          "flex min-w-0 flex-col gap-2 p-2 sm:p-3 lg:sticky lg:top-4 lg:self-start",
+          mobileDetail && "max-lg:hidden",
+        )}
+      >
+        {specimen && unsignedEntries.length > 1 ? (
+          <Button
+            type="button"
+            variant="outline"
+            shape="pill"
+            className="mx-1 justify-center border-(--border-default) max-lg:h-11"
+            disabled={busy}
+            onClick={openBatchSigning}
+          >
+            <FileSignature className="size-4" /> Sign several ({unsignedEntries.length})
+          </Button>
         ) : null}
-      </div>
 
-      {/*
-        One unified card -- teal border, white body -- rather than tabs
-        floating above a separate card. Its own top section doubles as the
-        tab strip, on a muted teal wash. The active tab is pulled down by one
-        border-width with its bottom border removed, and its background and
-        border color are set to match the card exactly (the same
-        `--status-available-*` teal this app already uses for an accented
-        card elsewhere), so the strip's own divider line disappears exactly
-        where the active tab sits and the two shapes read as one continuous
-        outline. Inactive tabs carry no border of their own and sit flat on
-        the strip -- there is nothing for them to visually attach to, which
-        is the point.
-      */}
-      <div className="overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs">
-        <div className="flex items-end gap-2 border-b border-(--border-subtle) bg-(--surface-warm-soft)/40 px-2 pt-2">
-          {/*
-            A horizontal, scrollable strip rather than a wrapping row: with
-            seven possible documents a wrapping strip reflows the whole panel
-            every time a draft lands, and the tab under the physician's
-            cursor moves.
-          */}
-          <div
-            role="tablist"
-            aria-label="Drafted documents"
-            className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto overflow-y-hidden"
+        <ul ref={listRef} data-slot="checklist-rows" className="flex flex-col gap-0.5">
+          {CHECKLIST_TYPES.map((type) => {
+            const Icon = TOOL_ICONS[type];
+            const status = DOCUMENT_STATUS[statusOf(type)];
+            return (
+              <li key={type}>
+                <ChecklistRow
+                  rowKey={type}
+                  muted={notNeeded.has(type)}
+                  selected={selected === type}
+                  onSelect={select}
+                  icon={generating.has(type) ? undefined : Icon}
+                  spinning={generating.has(type)}
+                  label={OUTPUT_LABELS[type]}
+                  status={
+                    <StatusText tone={status.tone} icon={status.icon} size="sm">
+                      {status.label}
+                    </StatusText>
+                  }
+                />
+              </li>
+            );
+          })}
+          <li aria-hidden className="mx-3 my-1.5 border-t border-(--border-subtle)" />
+          <li>
+            <ChecklistRow
+              rowKey="follow_up"
+              selected={selected === "follow_up"}
+              onSelect={select}
+              icon={CalendarClock}
+              label="Follow-up"
+              status={
+                <StatusText tone={followUpState.tone} size="sm">
+                  {followUpState.label}
+                </StatusText>
+              }
+            />
+          </li>
+          <li>
+            <ChecklistRow
+              rowKey="history"
+              selected={selected === "history"}
+              onSelect={select}
+              icon={History}
+              label="Earlier versions"
+              status={
+                history.length > 0 ? (
+                  <span className="text-xs font-semibold text-(--text-muted) tabular-nums">{history.length}</span>
+                ) : null
+              }
+            />
+          </li>
+        </ul>
+
+        <p className="mx-3 mt-1 hidden flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-(--text-muted) lg:flex">
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd> move · <Kbd>E</Kbd> edit · <Kbd>S</Kbd> sign
+        </p>
+        {onRefresh ? (
+          <Button
+            type="button"
+            variant="ghost"
+            shape="pill"
+            className="mx-1 h-11 justify-center gap-1.5 text-(--text-muted) lg:hidden"
+            disabled={busy}
+            onClick={onRefresh}
           >
-            {entries.map((entry) => {
-              const Icon = TOOL_ICONS[entry.outputType];
-              const selected = entry.outputType === current.outputType;
-              const provenance = entry.artifact ? computeArtifactProvenance(entry.artifact) : null;
-              const isDraft = entry.status === "draft" || entry.status === "edited";
-              const isSigned = entry.status === "signed";
-              const isReleased = entry.status === "released";
-              const isStale = entry.status === "stale";
-              const isGenerating = entry.status === "generating";
+            <RefreshCw className="size-4" /> Not seeing a document? Refresh
+          </Button>
+        ) : null}
+      </nav>
 
-              return (
-                <button
-                  key={entry.outputType}
-                  type="button"
-                  role="tab"
-                  id={`deck-tab-${entry.outputType}`}
-                  aria-selected={selected}
-                  aria-controls={`deck-panel-${entry.outputType}`}
-                  data-status={entry.status}
-                  onClick={() => onActiveChange(entry.outputType)}
-                  className={cn(
-                    "group relative flex shrink-0 items-center gap-2 rounded-t-xl px-3 py-2 text-xs sm:text-sm transition-all select-none",
-                    selected
-                      ? "z-10 -mb-px border border-(--border-subtle) border-b-0 bg-(--surface-card) font-bold text-(--text-heading) shadow-[0_-2px_6px_rgba(0,0,0,0.03)]"
-                      : "border border-transparent bg-transparent text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-card)/50 font-medium",
-                  )}
-                >
-                  {/* Semantic Icon Avatar Tile */}
-                  <span
-                    className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-md border transition-all",
-                      isDraft
-                        ? "bg-amber-500/12 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300 border-amber-500/25"
-                        : isSigned
-                          ? "bg-sky-500/12 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300 border-sky-500/25"
-                          : isReleased
-                            ? "bg-teal-500/12 text-teal-800 dark:bg-teal-400/15 dark:text-teal-300 border-teal-500/25"
-                            : isStale
-                              ? "bg-red-500/12 text-red-700 dark:bg-red-400/15 dark:text-red-300 border-red-500/25"
-                              : "bg-purple-500/12 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300 border-purple-500/25",
-                      selected ? "ring-1.5 ring-current/20 shadow-2xs" : "opacity-85 group-hover:opacity-100",
-                    )}
-                  >
-                    {isGenerating ? (
-                      <Spinner className="size-3 text-inherit" />
-                    ) : (
-                      <Icon className="size-3.5 text-inherit" />
-                    )}
-                  </span>
+      {/* The open row */}
+      <div
+        className={cn(
+          "flex min-w-0 flex-col border-(--border-subtle) lg:border-l",
+          !mobileDetail && "max-lg:hidden",
+        )}
+      >
+        <PaneHeader
+          selected={selected}
+          entry={selectedEntry}
+          notNeeded={selectedNotNeeded}
+          onBack={onCloseMobileDetail}
+        />
 
-                  <span className="whitespace-nowrap font-bold text-inherit">{OUTPUT_LABELS[entry.outputType]}</span>
-
-                  {/* High-visibility Status Badge */}
-                  {isSigned ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-300/80 bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-900 dark:border-sky-700/50 dark:bg-sky-950/50 dark:text-sky-200">
-                      <PenLine className="size-2.5" /> Signed
-                    </span>
-                  ) : isReleased ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-300/80 bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-900 dark:border-teal-700/50 dark:bg-teal-950/50 dark:text-teal-200">
-                      <Check className="size-2.5" /> Released
-                    </span>
-                  ) : isDraft ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/50 dark:text-amber-200">
-                      <Clock className="size-2.5" /> {provenance === "edited" ? "Ready to sign" : "To sign"}
-                    </span>
-                  ) : isStale ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-red-300/80 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-900 dark:border-red-700/50 dark:bg-red-950/50 dark:text-red-200">
-                      <AlertCircle className="size-2.5" /> Outdated
-                    </span>
-                  ) : null}
-
-                  {/* AI provenance badge on active tab if relevant */}
-                  {selected && provenance && provenance !== "neutral" ? (
-                    <AiProvenanceChip />
-                  ) : null}
-
-                  {/* Discrete Close / Discard trigger on active tab for non-plan, non-released deliverables */}
-                  {selected && entry.outputType !== "plan" && entry.status !== "released" && onDiscard ? (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Discard ${OUTPUT_LABELS[entry.outputType]} draft`}
-                      title={`Discard ${OUTPUT_LABELS[entry.outputType]}`}
-                      className="ml-0.5 flex size-4.5 items-center justify-center rounded-full text-(--text-muted) hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 transition-colors cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDiscardTarget(entry.outputType);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          setDiscardTarget(entry.outputType);
-                        }
-                      }}
-                    >
-                      <X className="size-3" />
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* The active document's patient-visibility badge, pinned to the
-              strip's far right rather than scrolling with the tabs. */}
-          <span
-            data-slot="artifact-patient-visibility"
-            data-patient-readable={isPatientReadableOutput(current.outputType)}
-            className={cn(
-              "mb-2 shrink-0 rounded-full px-2 py-0.5 text-xs",
-              isPatientReadableOutput(current.outputType)
-                ? "bg-(--surface-accent-soft) font-bold text-(--status-available-fg)"
-                : "bg-(--gray-bg) text-(--gray-fg)",
-            )}
-          >
-            {patientVisibilityCopy(current.outputType).badge}
-          </span>
-        </div>
-
-        {/*
-          The active tab's own bottom edge overlaps this panel's top border by
-          one pixel (see `-mb-px` above), so the seam between them disappears
-          exactly where the tab sits. `ArtifactCard` renders `embedded` here
-          -- no border, no rounded corners, no header of its own -- since this
-          panel is that chrome now.
-        */}
-        <div
-          key={current.outputType}
-          role="tabpanel"
-          id={`deck-panel-${current.outputType}`}
-          aria-labelledby={`deck-tab-${current.outputType}`}
-          className="min-w-0 max-h-[min(640px,calc(100dvh-16rem))] overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-1 duration-200"
-        >
-          {STATUS_COPY[current.status] ? (
-            <p className="px-4 pt-3 text-sm text-(--text-muted)">{STATUS_COPY[current.status]}</p>
-          ) : null}
-          {current.artifact ? (
+        <div key={selected} className="min-w-0">
+          {selected === "follow_up" ? (
+            <CareContinuityPanel followUp={followUp} />
+          ) : selected === "history" ? (
+            <AuthorizedArtifactHistory
+              history={history}
+              cursor={historyCursor}
+              busy={busy}
+              onLoadMore={onLoadMoreHistory}
+              onInspectArtifact={onInspectHistory}
+            />
+          ) : selectedNotNeeded ? (
+            <NotNeededPane
+              outputType={selected}
+              hasDraft={removedDraftTypes.has(selected)}
+              onRestore={() => onRestore(selected)}
+            />
+          ) : authoring === selected && !selectedEntry ? (
+            <div className="p-4 sm:p-5">
+              <PhysicianAuthoringForm
+                outputType={selected}
+                busy={busy}
+                onCancel={() => setAuthoring(null)}
+                onSave={async (type, payload) => {
+                  await onAuthor(type, payload);
+                  setAuthoring(null);
+                }}
+              />
+            </div>
+          ) : selectedEntry?.artifact ? (
             <ArtifactCard
-              embedded
-              artifact={current.artifact}
+              artifact={selectedEntry.artifact}
               intake={intake}
               busy={busy}
-              regenerating={generating.has(current.outputType)}
+              regenerating={generating.has(selected)}
               specimen={specimen}
               defaultSignerName={defaultSignerName}
-              canRegenerate={canRegenerate}
-              onAmend={(payload) => onAmend(current.artifact!, payload)}
-              onFinalize={handleFinalize}
-              onRelease={() => onRelease(current.artifact!)}
-              onRegenerate={() => onRegenerate(current.outputType)}
-              onDiscard={onDiscard ? () => handleDiscardWithFallback(current.outputType) : undefined}
-              canDiscard={current.outputType !== "plan" && current.status !== "released"}
+              canRegenerate={draftingOpen && aiEligibleTypes.has(selected)}
+              onAmend={(payload) => onAmend(selectedEntry.artifact!, payload)}
+              onFinalize={(signature) => handleFinalize(selectedEntry.artifact!, signature)}
+              onRelease={() => onRelease(selectedEntry.artifact!)}
+              onRegenerate={() => onDraft(selected)}
+              onDiscard={() => handleDiscard(selected)}
+              canDiscard={selected !== "plan" && entryStatus(selectedEntry) === "needs_review"}
               onNext={() => {
-                if (nextUnsigned) {
-                  onActiveChange(nextUnsigned.outputType);
-                } else if (nextEntry) {
-                  onActiveChange(nextEntry.outputType);
-                }
+                const next = nextPendingAfter(selected);
+                if (next) onActiveChange(next);
               }}
-              hasNext={Boolean(nextUnsigned || nextEntry)}
+              hasNext={Boolean(nextPendingAfter(selected))}
+              command={command}
+            />
+          ) : selectedEntry ? (
+            <GeneratingPlaceholder
+              outputType={selected}
+              onCancel={cancellableTypes?.has(selected) && onCancelDraft ? () => onCancelDraft(selected) : undefined}
             />
           ) : (
-            <GeneratingPlaceholder
-              outputType={current.outputType}
-              onCancel={onDiscard ? () => handleDiscardWithFallback(current.outputType) : undefined}
+            <StartDocument
+              outputType={selected}
+              busy={busy}
+              aiAvailable={draftingOpen && aiEligibleTypes.has(selected)}
+              aiUnavailableReason={
+                !draftingOpen
+                  ? aiUnavailableReason ?? "AI drafting is on hold. You can still write it yourself."
+                  : "AI drafting isn't available for this diagnosis. You can write it yourself."
+              }
+              onDraft={() => onDraft(selected)}
+              onWrite={() => setAuthoring(selected)}
+              onNotNeeded={selected === "plan" ? undefined : () => onNotNeeded(selected)}
             />
           )}
         </div>
       </div>
 
-      {/* Tab-triggered discard confirmation modal */}
-      {discardTarget && onDiscard ? (
-        <AlertDialog open={Boolean(discardTarget)} onOpenChange={(open) => !open && setDiscardTarget(null)}>
-          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
-            <AlertDialogHeader className="space-y-1.5 text-left">
-              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
-                Discard {OUTPUT_LABELS[discardTarget]} draft?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
-                Are you sure you want to remove this unreviewed {OUTPUT_LABELS[discardTarget].toLowerCase()} draft? It has not been signed or released, and the patient cannot see it. You can re-add it at any time from &ldquo;+ Add Document&rdquo;.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
-              <AlertDialogCancel className="rounded-full text-xs">
-                Keep draft
-              </AlertDialogCancel>
-              <AlertDialogAction
-                className="rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs hover:bg-rose-700"
-                onClick={() => {
-                  const target = discardTarget;
-                  setDiscardTarget(null);
-                  handleDiscardWithFallback(target);
-                }}
-              >
-                <Trash2 className="size-3.5 mr-1" />
-                Discard draft
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
-
-      {/* Batch sign confirmation modal */}
       {specimen && unsignedEntries.length > 1 ? (
-        <AlertDialog open={batchSigningOpen} onOpenChange={setBatchSigningOpen}>
-          <AlertDialogContent className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xl">
-            <AlertDialogHeader className="space-y-1.5 text-left">
-              <AlertDialogTitle className="text-base font-bold text-(--text-heading)">
-                Sign all {unsignedEntries.length} reviewed documents?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
-                This will finalize and apply your registered digital signature ({specimen.signerName}) to all currently drafted deliverables:
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            <ul className="space-y-1.5 py-2 text-xs font-semibold text-(--text-body)">
-              {unsignedEntries.map((e) => (
-                <li key={e.outputType} className="flex items-center gap-2 rounded-lg border border-(--border-subtle) bg-(--surface-warm-soft) p-2">
-                  <Clock className="size-3.5 text-(--status-soon-fg)" />
-                  <span>{OUTPUT_LABELS[e.outputType]}</span>
-                  <span className="ml-auto rounded-full border border-(--status-soon-fg)/30 bg-(--status-soon-bg) px-2 py-0.5 text-[10px] font-bold text-(--status-soon-fg)">
-                    Draft · To sign
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <AlertDialogFooter className="flex-row items-center justify-end gap-2 pt-2">
-              <AlertDialogCancel
+        <ResponsiveSheet
+          open={batchSigningOpen}
+          onOpenChange={(open) => !batchSigningInProgress && setBatchSigningOpen(open)}
+          icon={FileSignature}
+          title="Sign the documents you reviewed?"
+          description={`Your saved signature (${specimen.signerName}) goes on each ticked document. Drafts you have not opened start unticked: open them first, or tick them to confirm you reviewed them.`}
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="primary"
+                shape="pill"
+                disabled={batchSigningInProgress || batchEntries.length === 0}
+                onClick={handleBatchSign}
+              >
+                {batchSigningInProgress ? <Spinner className="size-4" /> : <FileSignature className="size-4" />}
+                {batchSigningInProgress
+                  ? "Signing…"
+                  : `Sign ${batchEntries.length} ${batchEntries.length === 1 ? "document" : "documents"}`}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                shape="pill"
                 disabled={batchSigningInProgress}
-                className="rounded-full text-xs"
+                onClick={() => setBatchSigningOpen(false)}
               >
                 Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                disabled={batchSigningInProgress}
-                onClick={handleBatchSign}
-                className="rounded-full bg-(--action-primary) text-xs font-bold text-white shadow-2xs hover:bg-(--action-primary-hover)"
-              >
-                {batchSigningInProgress ? (
-                  <>
-                    <Spinner className="size-3.5 mr-1" />
-                    Signing documents…
-                  </>
-                ) : (
-                  <>
-                    <PenLine className="size-3.5 mr-1" />
-                    Sign all {unsignedEntries.length} documents
-                  </>
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </>
+          }
+        >
+          <ul className="flex flex-col gap-1.5">
+            {unsignedEntries.map((entry) => {
+              const edited = entry.artifact ? computeArtifactProvenance(entry.artifact) === "edited" : false;
+              const opened = openedTypes.has(entry.outputType);
+              return (
+                <li key={entry.outputType}>
+                  <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2 text-sm font-medium text-(--text-body)">
+                    <Checkbox
+                      aria-label={`Sign ${OUTPUT_LABELS[entry.outputType]}`}
+                      checked={batchSelection.has(entry.outputType)}
+                      disabled={batchSigningInProgress}
+                      onCheckedChange={(checked) => toggleBatchEntry(entry.outputType, checked === true)}
+                    />
+                    <span>{OUTPUT_LABELS[entry.outputType]}</span>
+                    <StatusText tone={edited || opened ? "neutral" : "attention"} size="sm" className="ml-auto">
+                      {edited ? "Edited" : opened ? "Opened" : "Not opened yet"}
+                    </StatusText>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </ResponsiveSheet>
       ) : null}
-    </section>
+    </div>
+  );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="inline-flex min-w-5 items-center justify-center rounded-md border border-(--border-default) bg-(--surface-card) px-1 font-sans text-xs font-semibold text-(--text-body)">
+      {children}
+    </kbd>
+  );
+}
+
+function ChecklistRow({
+  rowKey,
+  muted = false,
+  selected,
+  onSelect,
+  icon: Icon,
+  spinning,
+  label,
+  status,
+}: {
+  rowKey: ChecklistKey;
+  /** Not needed: still listed so it can be added back, but stepped back. */
+  muted?: boolean;
+  selected: boolean;
+  onSelect: (key: ChecklistKey) => void;
+  icon?: React.ComponentType<{ className?: string }>;
+  spinning?: boolean;
+  label: string;
+  status: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      data-row={rowKey}
+      aria-current={selected ? "true" : undefined}
+      tabIndex={selected ? 0 : -1}
+      onClick={() => onSelect(rowKey)}
+      className={cn(
+        "flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-(--focus-ring) focus-visible:outline-none lg:min-h-11",
+        selected
+          ? "bg-(--surface-accent-soft) font-semibold text-(--text-heading) ring-1 ring-(--action-primary)/25 ring-inset"
+          : muted
+            ? "font-medium text-(--text-muted) hover:bg-(--surface-warm-soft)"
+            : "font-medium text-(--text-body) hover:bg-(--surface-warm-soft)",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-lg",
+          selected ? "bg-(--surface-card) text-(--action-primary-active)" : "bg-(--surface-warm-soft) text-(--text-muted)",
+        )}
+      >
+        {spinning ? <Spinner className="size-3.5" /> : Icon ? <Icon className="size-4" /> : null}
+      </span>
+      {/* Wraps the status under the name instead of truncating the name in a narrow list. */}
+      <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <span className="min-w-0 leading-snug">{label}</span>
+        {status}
+      </span>
+    </button>
+  );
+}
+
+/** Title, status and the facts about the open row: who wrote it, who can see it. */
+function PaneHeader({
+  selected,
+  entry,
+  notNeeded,
+  onBack,
+}: {
+  selected: ChecklistKey;
+  entry?: DeckEntry;
+  notNeeded: boolean;
+  onBack: () => void;
+}) {
+  const title =
+    selected === "follow_up" ? "Follow-up" : selected === "history" ? "Earlier versions" : OUTPUT_LABELS[selected];
+  const status =
+    selected === "follow_up" || selected === "history"
+      ? null
+      : DOCUMENT_STATUS[notNeeded ? "not_needed" : entryStatus(entry)];
+  const patientReadable = selected !== "follow_up" && selected !== "history" && isPatientReadableOutput(selected);
+  const meta = [
+    entry?.artifact ? provenanceLabel(entry.artifact) : null,
+    selected === "follow_up"
+      ? "Optional"
+      : selected === "history"
+        ? null
+        : patientReadable
+          ? "Patient sees it after release"
+          : "Your records only",
+    entry?.artifact ? `Assessment v${entry.artifact.assessmentVersion} · version ${entry.artifact.artifactRevision}` : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-(--border-subtle) px-4 py-3 sm:px-5 max-lg:pt-1.5">
+      <Button
+        type="button"
+        variant="ghost"
+        shape="pill"
+        className="-ml-2 h-11 gap-1.5 px-2 text-(--text-link) lg:hidden"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" /> Documents
+      </Button>
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+        <h3 className="text-base font-bold text-(--text-heading)">{title}</h3>
+        {status ? (
+          <StatusText tone={status.tone} icon={status.icon}>
+            {status.label}
+          </StatusText>
+        ) : null}
+        {meta.length > 0 ? (
+          <p className="w-full text-xs text-(--text-muted) sm:ml-auto sm:w-auto">{meta.join(" · ")}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** An unstarted document: what it is, and the two ways to start it. */
+function StartDocument({
+  outputType,
+  busy,
+  aiAvailable,
+  aiUnavailableReason,
+  onDraft,
+  onWrite,
+  onNotNeeded,
+}: {
+  outputType: CdsProtectedOutputType;
+  busy: boolean;
+  aiAvailable: boolean;
+  aiUnavailableReason: string;
+  onDraft: () => void;
+  onWrite: () => void;
+  /** Omitted for the Plan, which every consultation keeps. */
+  onNotNeeded?: () => void;
+}) {
+  const label = OUTPUT_LABELS[outputType].toLowerCase();
+  return (
+    <div data-slot="start-document" className="flex flex-col gap-4 p-4 sm:p-5">
+      <p className="text-sm text-(--text-body)">{OUTPUT_DESCRIPTIONS[outputType]}</p>
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <StartOption
+          icon={FileText}
+          title="Draft with AI"
+          description={
+            aiAvailable
+              ? `A first draft from your confirmed Assessment. You review, edit and sign it.`
+              : aiUnavailableReason
+          }
+          disabled={busy || !aiAvailable}
+          onClick={onDraft}
+          tone="ai"
+        />
+        <StartOption
+          icon={PenLine}
+          title="Write it myself"
+          description={`Start from a blank ${label}. No AI involved.`}
+          disabled={busy}
+          onClick={onWrite}
+        />
+      </div>
+      {onNotNeeded ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--border-subtle) pt-3">
+          <Button
+            type="button"
+            variant="ghost"
+            shape="pill"
+            className="-ml-2 h-11 gap-1.5 px-3 text-(--text-muted) hover:text-(--text-heading) lg:h-9"
+            disabled={busy}
+            onClick={onNotNeeded}
+          >
+            <CircleMinus className="size-4" /> Not needed for this patient
+          </Button>
+          <span className="text-xs text-(--text-muted)">You can add it back any time.</span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 /**
- * What a document looks like while the server is still writing it.
+ * A document the physician removed or marked not needed. It stays in the
+ * list so the decision is visible and reversible, and Finish stops counting
+ * it as missing.
+ */
+function NotNeededPane({
+  outputType,
+  hasDraft,
+  onRestore,
+}: {
+  outputType: CdsProtectedOutputType;
+  /** A removed draft exists and comes back exactly as it was. */
+  hasDraft: boolean;
+  onRestore: () => void;
+}) {
+  const label = OUTPUT_LABELS[outputType].toLowerCase();
+  return (
+    <div data-slot="not-needed" className="flex flex-col items-start gap-3 p-4 sm:p-5">
+      <p className="text-sm text-(--text-body)">
+        {hasDraft
+          ? `You removed this ${label} draft. The patient never saw it. Adding it back restores the draft as it was.`
+          : `You marked the ${label} as not needed for this consultation. It won't be listed as missing when you finish.`}
+      </p>
+      <Button
+        type="button"
+        variant="outline"
+        shape="pill"
+        className="h-11 border-(--border-default) lg:h-9"
+        onClick={onRestore}
+      >
+        <Undo2 className="size-4" /> Add it back
+      </Button>
+    </div>
+  );
+}
+
+function StartOption({
+  icon: Icon,
+  title,
+  description,
+  disabled,
+  onClick,
+  tone = "neutral",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  disabled: boolean;
+  onClick: () => void;
+  tone?: "neutral" | "ai";
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "group flex min-h-24 items-start gap-3 rounded-xl border bg-(--surface-card) p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-(--focus-ring) focus-visible:outline-none disabled:cursor-not-allowed",
+        disabled
+          ? "border-dashed border-(--border-default)"
+          : tone === "ai"
+            ? "border-(--ai-border)/60 hover:bg-(--ai-bg)"
+            : "border-(--border-default) hover:border-(--action-primary)/60 hover:bg-(--surface-warm-soft)",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-lg",
+          disabled
+            ? "bg-(--gray-bg) text-(--text-subtle)"
+            : tone === "ai"
+              ? "bg-(--ai-bg) text-(--ai-fg)"
+              : "bg-(--surface-accent-soft) text-(--action-primary-active)",
+        )}
+      >
+        <Icon className="size-4.5" />
+      </span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className={cn("text-sm font-semibold", disabled ? "text-(--text-muted)" : "text-(--text-heading)")}>
+          {title}
+        </span>
+        <span className="text-sm leading-snug text-(--text-muted)">{description}</span>
+      </span>
+    </button>
+  );
+}
 
 /**
- * What a document looks like while the server is still writing it.
- *
- * Generation previously produced no visible change at all until the artifact
- * arrived — the button simply went quiet — so a physician could not tell a slow
- * draft from a press that had not registered, and pressed again. This occupies
- * the space the document will fill, in the violet that says what is filling it.
+ * What a document looks like while the server is still writing it, so a slow
+ * draft never looks like a press that did not register.
  */
 function GeneratingPlaceholder({
   outputType,
@@ -792,31 +965,23 @@ function GeneratingPlaceholder({
       data-output-type={outputType}
       aria-busy="true"
       aria-live="polite"
-      className="flex flex-col gap-3 p-4"
+      className="flex flex-col gap-3 p-4 sm:p-5"
     >
-      <div className="flex items-center justify-between">
-        <p className="flex items-center gap-2 text-sm font-bold text-(--ai-fg)">
-          <PenLine className="size-4" />
-          Drafting {OUTPUT_LABELS[outputType].toLowerCase()}…
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-sm font-semibold text-(--ai-fg)">
+          <Spinner className="size-4" />
+          Drafting the {OUTPUT_LABELS[outputType].toLowerCase()}…
         </p>
         {onCancel ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="rounded-full text-xs text-(--text-muted) hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 gap-1 h-7 cursor-pointer"
-            onClick={onCancel}
-          >
-            <X className="size-3 text-rose-600" />
-            <span>Cancel drafting</span>
+          <Button type="button" variant="ghost" shape="pill" onClick={onCancel}>
+            Cancel draft
           </Button>
         ) : null}
       </div>
       <p className="text-sm text-(--text-muted)">
-        You can start another document while this one finishes — nothing is lost by
-        moving on.
+        You can open another document while this finishes. Nothing is lost by moving on.
       </p>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 rounded-xl bg-(--surface-warm-soft) p-3.5">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-5/6" />
