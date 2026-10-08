@@ -394,10 +394,10 @@ function DeclineDialog({
 
   return (
     <Dialog open={entry !== null} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" data-slot="decline-dialog">
+      <DialogContent className="border border-(--border-subtle) bg-(--surface-card) sm:max-w-md shadow-xl" data-slot="decline-dialog">
         <DialogHeader>
-          <DialogTitle>Decline this request?</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-base font-bold text-(--text-heading)">Decline this request?</DialogTitle>
+          <DialogDescription className="text-xs text-(--text-muted) leading-relaxed">
             {entry?.patientName ?? `Ref ${shortRef}`} will be cancelled and fully
             refunded, and the slot will be released back to your availability.
             This cannot be undone.
@@ -405,7 +405,7 @@ function DeclineDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="decline-note" className="text-xs">
+          <Label htmlFor="decline-note" className="text-xs font-semibold text-(--text-heading)">
             Note to patient (optional)
           </Label>
           <Textarea
@@ -433,10 +433,12 @@ function DeclineDialog({
           </span>
         ) : null}
 
-        <DialogFooter>
+        <DialogFooter className="flex items-center justify-end gap-2 pt-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
+            className="h-9 text-xs"
             onClick={() => handleOpenChange(false)}
             disabled={decline.isPending}
           >
@@ -445,6 +447,8 @@ function DeclineDialog({
           <Button
             type="button"
             variant="destructive"
+            size="sm"
+            className="h-9 text-xs font-semibold"
             onClick={() => entry && decline.mutate(entry.booking.bookingId)}
             disabled={decline.isPending}
           >

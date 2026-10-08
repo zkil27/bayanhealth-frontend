@@ -352,7 +352,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
             <AlertDialogFooter>
               <AlertDialogCancel className="h-12 text-sm sm:h-8">Keep consulting</AlertDialogCancel>
               <AlertDialogAction
-                className="h-12 bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 sm:h-8"
+                className="h-12 bg-(--danger-fg) text-sm font-semibold text-white hover:bg-(--danger-fg)/90 sm:h-8"
                 onClick={() => {
                   setConfirmEndOpen(false);
                   handleComplete();

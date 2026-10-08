@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, isValid, parseISO } from "date-fns";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { AsyncView } from "@/components/async-view";
@@ -12,6 +12,7 @@ import type { AsyncState } from "@/lib/asyncView";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
@@ -803,15 +804,32 @@ export function DoctorScheduleView() {
                   if (!open) setDrawerDate(null);
                 }}
               >
-                <DrawerContent className="mx-auto w-full max-w-2xl">
+                <DrawerContent className="mx-auto w-full max-w-2xl rounded-t-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
                   {drawerDate && (
                     <>
-                      <DrawerHeader>
-                        <DrawerTitle>{formatDateHeading(drawerDate)}</DrawerTitle>
-                        <DrawerDescription>
-                          Every slot published for this day. Booked slots are
-                          read-only.
-                        </DrawerDescription>
+                      <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <span className="text-[10px] font-bold tracking-wider text-(--teal-700) uppercase">
+                              Day Schedule
+                            </span>
+                            <DrawerTitle className="text-base font-bold text-(--text-heading)">{formatDateHeading(drawerDate)}</DrawerTitle>
+                            <DrawerDescription className="text-xs text-(--text-muted) mt-0.5">
+                              Every slot published for this day. Booked slots are read-only.
+                            </DrawerDescription>
+                          </div>
+                          <DrawerClose
+                            render={
+                              <button
+                                type="button"
+                                aria-label="Close"
+                                className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                              >
+                                <X className="size-4" />
+                              </button>
+                            }
+                          />
+                        </div>
                       </DrawerHeader>
                       <div className="flex flex-col gap-6 overflow-y-auto px-4 pb-6">
                         <section className="flex flex-col gap-3">

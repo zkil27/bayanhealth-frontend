@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, CalendarOff, Clock, Stethoscope } from "lucide-react";
+import { Calendar, CalendarOff, Clock, Stethoscope, X } from "lucide-react";
 
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
@@ -167,38 +168,59 @@ export function DoctorHistory() {
 
   return (
     <Drawer swipeDirection="right">
-      <DrawerTrigger>
-        <div className="relative cursor-pointer rounded-lg p-2 transition-all duration-300 hover:bg-primary hover:text-white">
-          <Calendar />
-          {showIndicator && (
-            <span
-              data-slot="doctor-schedule-indicator"
-              data-state={failed ? "unavailable" : "scheduled"}
-              aria-label={
-                failed
-                  ? "Today's schedule could not be loaded"
-                  : "You have consultations scheduled today"
+      <DrawerTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Today's schedule"
+            className="relative flex size-9 items-center justify-center rounded-lg border border-(--border-subtle) bg-(--surface-card) text-(--text-muted) transition-colors hover:border-(--border-default) hover:bg-(--surface-accent-soft) hover:text-(--action-primary)"
+          >
+            <Calendar className="size-4" />
+            {showIndicator && (
+              <span
+                data-slot="doctor-schedule-indicator"
+                data-state={failed ? "unavailable" : "scheduled"}
+                aria-label={
+                  failed
+                    ? "Today's schedule could not be loaded"
+                    : "You have consultations scheduled today"
+                }
+                className={cn(
+                  "absolute right-1 top-1 size-2 rounded-full ring-2 ring-background",
+                  failed ? "bg-(--danger-fg)" : "bg-(--teal-700)",
+                )}
+              />
+            )}
+          </button>
+        }
+      />
+      <DrawerContent className="flex flex-col p-0 sm:max-w-md border-l border-(--border-subtle) bg-(--surface-card) shadow-2xl">
+        <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <DrawerTitle className="text-base font-bold text-(--text-heading)">Today&apos;s Schedule</DrawerTitle>
+              <DrawerDescription className="text-xs text-(--text-muted) mt-0.5">
+                {state.status === "loading"
+                  ? "Loading your schedule…"
+                  : failed
+                    ? SCHEDULE_ERROR_MESSAGE
+                    : `${appointments.length} ${
+                        appointments.length === 1 ? "consultation" : "consultations"
+                      } scheduled`}
+              </DrawerDescription>
+            </div>
+            <DrawerClose
+              render={
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                >
+                  <X className="size-4" />
+                </button>
               }
-              className={cn(
-                "absolute right-0 bottom-0 size-4 rounded-full ring-2 ring-background",
-                failed ? "bg-destructive" : "bg-orange-500",
-              )}
             />
-          )}
-        </div>
-      </DrawerTrigger>
-      <DrawerContent className="flex flex-col p-0 sm:max-w-md">
-        <DrawerHeader className="border-b p-6 pb-4">
-          <DrawerTitle>Today&apos;s Schedule</DrawerTitle>
-          <DrawerDescription>
-            {state.status === "loading"
-              ? "Loading your schedule…"
-              : failed
-                ? SCHEDULE_ERROR_MESSAGE
-                : `${appointments.length} ${
-                    appointments.length === 1 ? "consultation" : "consultations"
-                  } scheduled`}
-          </DrawerDescription>
+          </div>
         </DrawerHeader>
 
         <ScrollArea className="h-96 flex-1 pb-5">

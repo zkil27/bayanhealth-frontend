@@ -197,6 +197,7 @@ export function AccountControls({ className }: { className?: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className="bg-(--danger-fg) text-white font-semibold hover:bg-(--danger-fg)/90 cursor-pointer"
               disabled={pending}
               onClick={() => {
                 void signOut();

@@ -122,10 +122,10 @@ export function BlockTimeDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-md" data-slot="block-time-dialog">
+      <DialogContent className="border border-(--border-subtle) bg-(--surface-card) sm:max-w-md shadow-xl" data-slot="block-time-dialog">
         <DialogHeader>
-          <DialogTitle>Block time</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-base font-bold text-(--text-heading)">Block time</DialogTitle>
+          <DialogDescription className="text-xs text-(--text-muted) leading-relaxed">
             {formatShiftSummary(date, startTime, endTime)}. Blocked time cannot
             be booked by patients.
           </DialogDescription>
@@ -222,8 +222,24 @@ export function BlockTimeDialog({
 
           <BlockTimeStatus plan={plan} result={result} error={error} />
 
-          <DialogFooter>
-            <Button type="submit" disabled={!canSubmit}>
+          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs"
+              onClick={() => onOpenChange(false)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              className="h-9 text-xs font-semibold"
+              disabled={!canSubmit}
+            >
               {busy ? "Blocking…" : "Block time"}
             </Button>
           </DialogFooter>

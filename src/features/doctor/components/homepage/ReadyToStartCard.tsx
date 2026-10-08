@@ -3,7 +3,7 @@
 import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CircleDot, Eye, TicketCheck, TriangleAlert, UserRoundX, Video } from "lucide-react";
+import { CircleDot, Eye, TicketCheck, TriangleAlert, UserRoundX, Video, X } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -358,18 +358,22 @@ function NoShowControl({ item }: { item: ReadyToStartItem }) {
             </>
           )}
         </AlertDialogTrigger>
-        <AlertDialogContent>
+        <AlertDialogContent className="border border-(--border-subtle) bg-(--surface-card) sm:max-w-md shadow-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Record this patient as a no-show?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-bold text-(--text-heading)">Record this patient as a no-show?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
               The held payment will be partially captured under our no-show
               policy, the rest released, and this booking cancelled. This
               cannot be undone from here.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Not yet</AlertDialogCancel>
-            <AlertDialogAction data-slot="no-show-confirm" onClick={assertNoShow}>
+            <AlertDialogCancel className="h-10 text-xs sm:h-8">Not yet</AlertDialogCancel>
+            <AlertDialogAction
+              data-slot="no-show-confirm"
+              onClick={assertNoShow}
+              className="h-10 bg-(--danger-fg) text-xs font-semibold text-white hover:bg-(--danger-fg)/90 sm:h-8"
+            >
               Yes, record no-show
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -415,19 +419,37 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
         size="sm"
         onClick={() => setOpen(true)}
         data-slot="ready-to-start-view-trigger"
+        className="h-7 px-2.5 text-xs font-semibold"
       >
         <Eye className="mr-1.5 size-3.5" />
         View
       </Button>
-      <DrawerContent className="mx-auto w-full max-w-2xl">
-        <DrawerHeader className="flex items-center justify-between">
-          <DrawerTitle>{name}</DrawerTitle>
-          <DrawerClose className="text-xs text-muted-foreground hover:text-foreground">
-            Close
-          </DrawerClose>
+      <DrawerContent className="mx-auto w-full max-w-2xl rounded-t-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
+        <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-bold tracking-wider text-(--teal-700) uppercase">
+                Intake Record
+              </span>
+              <DrawerTitle className="text-base font-bold text-(--text-heading)">{name}</DrawerTitle>
+            </div>
+            <DrawerClose
+              render={
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                >
+                  <X className="size-4" />
+                </button>
+              }
+            />
+          </div>
         </DrawerHeader>
-        <DoctorConsultationAccess bookingId={bookingId} />
-        <ReadyIntakeContent bookingId={bookingId} />
+        <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-6">
+          <DoctorConsultationAccess bookingId={bookingId} />
+          <ReadyIntakeContent bookingId={bookingId} />
+        </div>
       </DrawerContent>
     </Drawer>
   );

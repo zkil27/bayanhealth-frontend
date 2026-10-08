@@ -2,7 +2,7 @@
 
 import { Info, Link2 } from "lucide-react";
 
-import AppButton from "@/components/primitives/AppButton";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -71,98 +71,106 @@ export function DoctorDashboardIntakeButton() {
 
   return (
     <Dialog>
-      <DialogTrigger>
-        <div className="relative cursor-pointer rounded-lg p-2 transition-all duration-300 hover:bg-primary hover:text-white">
-          <Link2 />
-        </div>
-      </DialogTrigger>
-      <DialogContent className="bg-linear-to-b from-sky-100 to-card to-40% bg-size-[100%_101%] p-6 sm:max-w-sm dark:from-sky-900">
-        <DialogHeader className="items-center">
-          <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-sky-600/10 sm:mx-0 dark:bg-sky-400/10">
-            <Link2 className="size-6 text-sky-600 dark:text-sky-400" />
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Send Intake Link"
+            className="flex size-9 items-center justify-center rounded-lg border border-(--border-subtle) bg-(--surface-card) text-(--text-muted) transition-colors hover:border-(--border-default) hover:bg-(--surface-accent-soft) hover:text-(--action-primary)"
+          >
+            <Link2 className="size-4" />
+          </button>
+        }
+      />
+      <DialogContent className="border border-(--border-subtle) bg-(--surface-card) p-6 sm:max-w-md shadow-xl">
+        <DialogHeader className="items-center text-center">
+          <div className="mb-3 flex size-12 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-warm) text-(--teal-700)">
+            <Link2 className="size-5" />
           </div>
-          <DialogTitle>Send Intake Link</DialogTitle>
-          <DialogDescription className="text-center text-xs">
-            Send Intake Link directly to Patients for faster Booking.
+          <DialogTitle className="text-base font-bold text-(--text-heading)">Send Intake Link</DialogTitle>
+          <DialogDescription className="text-center text-xs text-(--text-muted)">
+            Send an encrypted intake form link directly to patients for faster pre-consultation triage.
           </DialogDescription>
         </DialogHeader>
         <form
           id={formId}
           onSubmit={handleSubmit}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 mt-2"
         >
-          <div className="grid gap-3">
-            <Label htmlFor={emailId}>Patient Name</Label>
+          <div className="grid gap-2">
+            <Label htmlFor={emailId} className="text-xs font-semibold text-(--text-heading)">Patient Name</Label>
             <Input
               type="text"
               id={emailId}
               name="patientName"
               value={patientName}
               onChange={(e) => handlePatient(e.target.value)}
-              placeholder="Enter Patient Name"
+              placeholder="e.g. Maria Santos"
+              className="h-10 text-sm"
             />
           </div>
-          <div className="grid gap-3">
-            <Label htmlFor={contactId}>Mobile or Email</Label>
+          <div className="grid gap-2">
+            <Label htmlFor={contactId} className="text-xs font-semibold text-(--text-heading)">Mobile or Email</Label>
             <Input
               id={contactId}
               value={contactValue}
               onChange={(e) => handleContactChange(e.target.value)}
               placeholder="+63 912 345 6789 or patient@email.com"
+              className="h-10 text-sm"
             />
             {contactType && (
-              <p className="text-xs text-primary">
+              <p className="text-xs font-medium text-(--teal-700)">
                 Will send via {contactType === "email" ? "email" : "SMS"}
               </p>
             )}
           </div>
         </form>
-        <DialogFooter className="space-y-2 pt-4 sm:flex-col">
-          <AppButton type="submit" variant="business" form={formId}>
+        <DialogFooter className="flex-col gap-3 pt-3 sm:flex-col">
+          <Button type="submit" variant="primary" form={formId} className="h-11 w-full text-sm sm:h-9">
             Send Intake Link
-          </AppButton>
-          <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
-            <span className="text-xs text-muted-foreground">Or Send via</span>
+          </Button>
+          <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-(--border-subtle) after:h-px after:flex-1 after:bg-(--border-subtle)">
+            <span className="text-[11px] font-medium text-(--text-subtle) uppercase tracking-wider">Or share via</span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             {Object.entries(socialShareLogos).map(([key, value]) => (
-              <AppButton
+              <Button
                 key={key}
+                type="button"
                 onClick={() => handleSocialShare(value.name)}
                 variant="outline"
-                className="flex size-12 flex-1 cursor-pointer flex-col border-none hover:bg-muted"
+                className="flex size-11 flex-1 flex-col items-center justify-center gap-1 rounded-xl border border-(--border-subtle) bg-(--surface-warm)/50 p-1 hover:bg-(--surface-warm-soft)"
               >
-                {value.icon}
-                <span className="text-xs">{value.name}</span>
-              </AppButton>
+                <span className="size-4 shrink-0">{value.icon}</span>
+                <span className="text-[10px] text-(--text-muted)">{value.name}</span>
+              </Button>
             ))}
           </div>
-          <Popover>
-            <PopoverTrigger
-              render={
-                <AppButton
-                  variant="outline"
-                  className="ml-auto w-20 border-0 text-[10px] text-secondary hover:bg-muted"
-                >
-                  <Info className="text-secondary" />
-                  <span>Reminder</span>
-                </AppButton>
-              }
-            ></PopoverTrigger>
-            <PopoverContent sideOffset={-60} alignOffset={200} align="start">
-              <PopoverHeader>
-                <PopoverTitle>Sending Intake Link Policy</PopoverTitle>
-                <PopoverDescription>
-                  Sending Intake Link Policy. Sending Intake Link Policy.
-                  Sending Intake Link Policy. Sending Intake Link Policy.
-                  Sending Intake Link Policy. Sending Intake Link Policy.
-                  Sending Intake Link Policy. Sending Intake Link Policy.
-                  Sending Intake Link Policy.
-                </PopoverDescription>
-                <AppButton>More info</AppButton>
-              </PopoverHeader>
-            </PopoverContent>
-          </Popover>
+          <div className="flex justify-end pt-1">
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="gap-1 text-[11px] text-(--text-muted) hover:text-(--text-heading)"
+                  >
+                    <Info className="size-3 text-(--teal-700)" />
+                    <span>Intake policy</span>
+                  </Button>
+                }
+              />
+              <PopoverContent sideOffset={8} align="end" className="w-72 p-3">
+                <PopoverHeader className="gap-1">
+                  <PopoverTitle className="text-xs font-semibold text-(--text-heading)">Clinical Intake Link Policy</PopoverTitle>
+                  <PopoverDescription className="text-xs leading-relaxed text-(--text-muted)">
+                    Links are single-use and expire upon submission. Medical information submitted by the patient is securely encrypted and routed directly to your incoming triage queue.
+                  </PopoverDescription>
+                </PopoverHeader>
+              </PopoverContent>
+            </Popover>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

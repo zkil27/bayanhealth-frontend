@@ -102,7 +102,7 @@ export function TriageDetailsModal({
             <span className="rounded-md border border-(--status-soon-fg)/25 bg-(--status-soon-bg) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-soon-fg) uppercase">
               Pre-Acceptance Review
             </span>
-            <p className="mt-1 font-mono text-xs text-(--text-subtle)">
+            <p id="triage-details-title" className="mt-1 font-mono text-xs text-(--text-subtle)">
               Ref {item.bookingId.slice(-6).toUpperCase()}
             </p>
           </div>
@@ -110,9 +110,9 @@ export function TriageDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex size-11 items-center justify-center rounded-xl text-(--text-subtle) sm:size-auto sm:p-2 transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body)"
+            className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
           >
-            <X className="size-5" />
+            <X className="size-4" />
           </button>
         </div>
 
@@ -216,7 +216,7 @@ export function TriageDetailsModal({
           <Button type="button" variant="outline" size="sm" className="h-12 px-4 text-sm sm:h-7 sm:px-2.5 sm:text-[0.8rem]" onClick={onClose}>
             Back to queue
           </Button>
-          <Button type="button" size="sm" className="h-12 flex-1 text-sm sm:h-7 sm:text-[0.8rem]" onClick={onProceedToAccept}>
+          <Button type="button" variant="primary" size="sm" className="h-12 flex-1 text-sm font-semibold sm:h-7 sm:text-[0.8rem]" onClick={onProceedToAccept}>
             Proceed to accept →
           </Button>
         </div>

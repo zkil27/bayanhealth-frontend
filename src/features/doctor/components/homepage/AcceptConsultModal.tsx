@@ -113,16 +113,16 @@ export function AcceptConsultModal({
             <span className="rounded-md border border-(--status-available-fg)/25 bg-(--status-available-bg) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
               Clinical Duty Confirmation
             </span>
-            <h3 className="mt-1 text-base font-bold text-(--text-heading)">Accept this patient?</h3>
+            <h3 id="accept-consult-title" className="mt-1 text-base font-bold text-(--text-heading)">Accept this patient?</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
             aria-label="Close"
-            className="flex size-11 items-center justify-center rounded-xl text-(--text-subtle) sm:size-auto sm:p-2 transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-body) disabled:opacity-40"
+            className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading) disabled:opacity-40"
           >
-            <X className="size-5" />
+            <X className="size-4" />
           </button>
         </div>
 
@@ -157,7 +157,7 @@ export function AcceptConsultModal({
           ) : null}
 
           <div className="flex items-start gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-warm)/60 p-3 text-(--text-muted)">
-            <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+            <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-(--teal-700)" />
             <p className="leading-relaxed">
               Accepting assigns you as the doctor of record for this booking. You will start the
               consultation separately from the queue once you&apos;re ready.
@@ -175,7 +175,7 @@ export function AcceptConsultModal({
           <Button type="button" variant="outline" size="sm" className="h-12 px-4 text-sm sm:h-7 sm:px-2.5 sm:text-[0.8rem]" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="button" size="sm" className="h-12 flex-1 text-sm sm:h-7 sm:text-[0.8rem]" onClick={onConfirm} disabled={isSubmitting}>
+          <Button type="button" variant="primary" size="sm" className="h-12 flex-1 text-sm font-semibold sm:h-7 sm:text-[0.8rem]" onClick={onConfirm} disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Spinner className="mr-1.5 size-3.5" />

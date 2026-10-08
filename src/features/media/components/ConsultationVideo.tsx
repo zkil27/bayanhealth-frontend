@@ -907,7 +907,7 @@ function LeaveConfirmDialog({
           </Button>
           <Button
             type="button"
-            className="bg-rose-600 text-white hover:bg-rose-700"
+            className="bg-(--danger-fg) text-white font-semibold hover:bg-(--danger-fg)/90"
             onClick={() => {
               onOpenChange(false);
               onConfirm();

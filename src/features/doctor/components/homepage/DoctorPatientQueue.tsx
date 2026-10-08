@@ -3,9 +3,20 @@
 import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, RefreshCw, UserRoundX, Video } from "lucide-react";
+import { Eye, RefreshCw, UserRoundX, Video, X } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -573,20 +584,38 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
         size="sm"
         onClick={() => setOpen(true)}
         data-slot="ready-to-start-view-trigger"
+        className="h-7 px-2.5 text-xs font-semibold"
       >
         <Eye className="size-3.5" aria-hidden />
         {/* Icon-only on desktop; spelled out on phones, where it shares a full-width strip. */}
         <span className="sm:sr-only">View intake</span>
       </Button>
-      <DrawerContent className="mx-auto w-full max-w-2xl">
-        <DrawerHeader className="flex items-center justify-between">
-          <DrawerTitle>{name}</DrawerTitle>
-          <DrawerClose className="text-xs text-muted-foreground hover:text-foreground">
-            Close
-          </DrawerClose>
+      <DrawerContent className="mx-auto w-full max-w-2xl rounded-t-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
+        <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-bold tracking-wider text-(--teal-700) uppercase">
+                Intake Record
+              </span>
+              <DrawerTitle className="text-base font-bold text-(--text-heading)">{name}</DrawerTitle>
+            </div>
+            <DrawerClose
+              render={
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                >
+                  <X className="size-4" />
+                </button>
+              }
+            />
+          </div>
         </DrawerHeader>
-        <DoctorConsultationAccess bookingId={bookingId} />
-        <ReadyIntakeContent bookingId={bookingId} />
+        <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-6">
+          <DoctorConsultationAccess bookingId={bookingId} />
+          <ReadyIntakeContent bookingId={bookingId} />
+        </div>
       </DrawerContent>
     </Drawer>
   );
@@ -636,22 +665,44 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
 
   return (
     <div className="flex flex-col items-end gap-1" data-slot="no-show-control">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={!waitElapsed || isAsserting}
-        onClick={() => {
-          if (window.confirm("Record this patient as a no-show? This cannot be undone from here.")) {
-            assertNoShow();
+      <AlertDialog>
+        <AlertDialogTrigger
+          data-slot="no-show-trigger"
+          disabled={!waitElapsed || isAsserting}
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="size-11 text-(--danger-fg) sm:h-7 sm:w-auto"
+              title={waitElapsed ? "Patient didn't show" : "Waiting out the ten-minute window"}
+              aria-label={waitElapsed ? "Patient didn't show" : "Patient didn't show (available after the ten-minute wait)"}
+            >
+              {isAsserting ? <Spinner className="size-3.5" /> : <UserRoundX className="size-3.5" />}
+            </Button>
           }
-        }}
-        className="size-11 text-(--danger-fg) sm:h-7 sm:w-auto"
-        title={waitElapsed ? "Patient didn't show" : "Waiting out the ten-minute window"}
-        aria-label={waitElapsed ? "Patient didn't show" : "Patient didn't show (available after the ten-minute wait)"}
-      >
-        {isAsserting ? <Spinner className="size-3.5" /> : <UserRoundX className="size-3.5" />}
-      </Button>
+        />
+        <AlertDialogContent className="border border-(--border-subtle) bg-(--surface-card) sm:max-w-md shadow-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-bold text-(--text-heading)">Record this patient as a no-show?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-(--text-muted) leading-relaxed">
+              The held payment will be partially captured under our no-show
+              policy, the rest released, and this booking cancelled. This
+              cannot be undone from here.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-10 text-xs sm:h-8">Not yet</AlertDialogCancel>
+            <AlertDialogAction
+              data-slot="no-show-confirm"
+              onClick={assertNoShow}
+              className="h-10 bg-(--danger-fg) text-xs font-semibold text-white hover:bg-(--danger-fg)/90 sm:h-8"
+            >
+              Yes, record no-show
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {errorMessage ? (
         <span data-slot="no-show-error" className="sr-only">
           {errorMessage}

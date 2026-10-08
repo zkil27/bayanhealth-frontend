@@ -66,98 +66,131 @@ export function SignatureDrawer({ consultationId }: SignatureDrawerProps) {
 
   return (
     <Drawer>
-      <DrawerTrigger>
-        <div className="fixed right-4 bottom-0 left-4 cursor-pointer">
-          <div className="mx-auto max-w-md rounded-t-xl border bg-secondary px-2 py-1 shadow-lg">
-            <div className="flex items-center justify-between text-xs text-secondary-foreground">
-              <span className="flex items-center gap-1">
-                <FileWarning className="size-4" />
-                {isHydrating ? "Loading documents…" : `${pending.length} item${pending.length === 1 ? "" : "s"} pending signature`}
-              </span>
-              <ChevronUp className="text-muted-foreground" />
+      <DrawerTrigger
+        render={
+          <button
+            type="button"
+            className="fixed right-4 bottom-0 left-4 z-30 cursor-pointer outline-none"
+            aria-label="Pending signatures"
+          >
+            <div className="mx-auto max-w-md rounded-t-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-1.5 shadow-lg transition-transform hover:-translate-y-0.5">
+              <div className="flex items-center justify-between text-xs text-(--text-heading)">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <FileWarning className="size-4 text-(--status-soon-fg)" />
+                  {isHydrating ? "Loading documents…" : `${pending.length} item${pending.length === 1 ? "" : "s"} pending signature`}
+                </span>
+                <ChevronUp className="size-4 text-(--text-muted)" />
+              </div>
             </div>
-          </div>
-        </div>
-      </DrawerTrigger>
+          </button>
+        }
+      />
 
-      <DrawerContent data-vaul-no-drag>
-        <DrawerClose className="fixed top-0 right-0 p-4" aria-label="Close review and sign">
-          <X />
-        </DrawerClose>
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center justify-center gap-1"><Pen className="size-5" />Review &amp; Sign</DrawerTitle>
+      <DrawerContent data-vaul-no-drag className="mx-auto w-full max-w-4xl rounded-t-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
+        <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-lg border border-(--teal-700)/20 bg-(--teal-700)/10 text-(--teal-700)">
+                <Pen className="size-4" />
+              </span>
+              <div>
+                <span className="text-[10px] font-bold tracking-wider text-(--teal-700) uppercase">
+                  Clinical Attestation
+                </span>
+                <DrawerTitle className="text-base font-bold text-(--text-heading)">Review &amp; Sign Documents</DrawerTitle>
+              </div>
+            </div>
+            <DrawerClose
+              render={
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                >
+                  <X className="size-4" />
+                </button>
+              }
+            />
+          </div>
         </DrawerHeader>
-        <div className="flex gap-4 p-4">
+        <div className="flex flex-col md:flex-row gap-4 p-5 max-h-[65dvh] overflow-y-auto overscroll-contain">
           <div className="flex w-full flex-col gap-2">
             {rows.map((row) => {
               const Icon = row.icon;
               const exists = row.document.document !== null;
               const busy = row.document.status === "finalizing";
               return (
-                <div key={row.type} className="rounded-lg border p-4">
+                <div key={row.type} className="rounded-xl border border-(--border-subtle) bg-(--surface-warm)/40 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="flex items-center gap-1 font-medium"><Icon className="size-4" />{row.label}</div>
-                      {row.description ? <div className="text-sm text-muted-foreground">{row.description}</div> : null}
+                      <div className="flex items-center gap-1.5 font-semibold text-sm text-(--text-heading)">
+                        <Icon className="size-4 text-(--teal-700)" />
+                        {row.label}
+                      </div>
+                      {row.description ? <div className="text-xs text-(--text-muted) mt-0.5">{row.description}</div> : null}
                     </div>
                     {row.document.isFinalized ? (
-                      <span className="text-sm text-status-completed-foreground">Finalized</span>
+                      <span className="rounded-md bg-(--status-available-bg) px-2 py-0.5 text-xs font-semibold text-(--status-available-fg)">
+                        Finalized
+                      </span>
                     ) : exists ? (
-                      <Button type="button" size="sm" disabled={!canFinalize || busy} onClick={() => void finalizeRow(row)}>
+                      <Button type="button" variant="primary" size="sm" className="h-8 text-xs font-semibold" disabled={!canFinalize || busy} onClick={() => void finalizeRow(row)}>
                         {busy ? "Finalizing…" : `Finalize ${row.label}`}
                       </Button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Not authored</span>
+                      <span className="text-xs text-(--text-subtle)">Not authored</span>
                     )}
                   </div>
                   {results[row.type] ? (
-                    <p className={results[row.type].startsWith("Finalized") ? "mt-2 text-xs text-status-completed-foreground" : "mt-2 text-xs text-destructive"}>
+                    <p className={results[row.type].startsWith("Finalized") ? "mt-2 text-xs font-medium text-(--status-available-fg)" : "mt-2 text-xs text-(--danger-fg)"}>
                       {results[row.type]}
                     </p>
                   ) : row.document.error ? (
-                    <p className="mt-2 text-xs text-destructive">{row.document.error.message}</p>
+                    <p className="mt-2 text-xs text-(--danger-fg)">{row.document.error.message}</p>
                   ) : null}
                 </div>
               );
             })}
           </div>
 
-          <div className="w-full space-y-4 rounded-lg border p-4">
-            <div className="font-medium">Electronic Signature</div>
-            <label htmlFor="signer-name" className="text-sm font-medium">Signer Name</label>
-            <input
-              id="signer-name"
-              type="text"
-              placeholder="Full legal name"
-              className="w-full rounded-md border bg-background p-2"
-              value={signerName}
-              maxLength={120}
-              onChange={(event) => setSignerName(event.target.value)}
-            />
+          <div className="w-full space-y-4 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4">
+            <div className="text-sm font-bold text-(--text-heading)">Electronic Signature</div>
+            <div className="space-y-1">
+              <label htmlFor="signer-name" className="text-xs font-semibold text-(--text-heading)">Signer Name</label>
+              <input
+                id="signer-name"
+                type="text"
+                placeholder="Full legal name"
+                className="w-full rounded-lg border border-(--border-subtle) bg-(--surface-card) px-3 py-2 text-sm text-(--text-body) outline-none focus:border-(--action-primary)"
+                value={signerName}
+                maxLength={120}
+                onChange={(event) => setSignerName(event.target.value)}
+              />
+            </div>
             <div className="flex items-center gap-2">
-              <input id="reviewed" type="checkbox" checked={reviewedChecked} onChange={(event) => setReviewedChecked(event.target.checked)} />
-              <label htmlFor="reviewed" className="text-sm">I have reviewed every document I am finalizing</label>
+              <input id="reviewed" type="checkbox" checked={reviewedChecked} onChange={(event) => setReviewedChecked(event.target.checked)} className="size-4 accent-(--teal-700) rounded" />
+              <label htmlFor="reviewed" className="text-xs text-(--text-body)">I have reviewed every document I am finalizing</label>
             </div>
             <SignaturePadDialog onSave={setStrokes} />
-            <div className="rounded-md bg-muted p-3 text-sm">
-              <p className="flex items-center gap-1 font-medium"><Scale className="size-5" />Legal Disclaimer</p>
-              <p className="text-xs text-muted-foreground">Finalizing applies this electronic signature and immediately releases that document to the patient.</p>
+            <div className="rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft)/60 p-3 text-xs">
+              <p className="flex items-center gap-1.5 font-semibold text-(--text-heading)"><Scale className="size-4 text-(--teal-700)" />Legal Disclaimer</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-(--text-muted)">Finalizing applies this electronic signature and immediately releases that document to the patient record.</p>
             </div>
           </div>
         </div>
-        <DrawerFooter>
-          {!validConsultationId ? <p className="text-sm text-destructive">Open a valid consultation before signing documents.</p> : null}
-          {!isHydrating && pending.length === 0 ? <p className="text-sm text-muted-foreground">No authored drafts are waiting for signature.</p> : null}
+        <DrawerFooter className="border-t border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          {!validConsultationId ? <p className="text-xs font-semibold text-(--danger-fg)">Open a valid consultation before signing documents.</p> : null}
+          {!isHydrating && pending.length === 0 ? <p className="text-xs text-(--text-muted)">No authored drafts are waiting for signature.</p> : null}
           <Button
             type="button"
-            className="w-full"
-            size="lg"
+            variant="primary"
+            className="w-full h-11 text-sm font-semibold sm:h-9"
             disabled={!canFinalize || pending.length === 0 || isFinalizingAll}
             onClick={() => void handleFinalizeRemaining()}
           >
             {isFinalizingAll ? "Finalizing documents…" : "Finalize remaining documents"}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">Documents finalize independently; any failure is shown beside that document.</p>
+          <p className="text-center text-[11px] text-(--text-subtle)">Documents finalize independently; any failure is shown beside that document.</p>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

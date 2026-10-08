@@ -11,7 +11,7 @@ import {
   CommandInput,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { ArrowDown, ArrowUp, CornerDownLeft } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, CornerDownLeft } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 
 export interface MedicalCodeSuggestionHandle {
@@ -76,26 +76,36 @@ export const MedicalCodeSuggestionCommandList = forwardRef<
     <CommandDialog
       open={open}
       onOpenChange={handleOpenChange}
-      className=" sm:max-w-2xl  rounded-lg border gap-0"
+      className="sm:max-w-2xl rounded-2xl border border-(--border-subtle) bg-(--surface-card) shadow-2xl gap-0 overflow-hidden"
     >
-      <div className="rounded-t-xl bg-secondary p-4 text-secondary-foreground">
-        CPG
+      <div className="flex items-center gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-4 py-3">
+        <span className="flex size-7 items-center justify-center rounded-lg bg-(--navy-700) text-(--teal-700) shadow-xs">
+          <BookOpen className="size-4" />
+        </span>
+        <div>
+          <h2 className="text-xs font-bold text-(--text-heading)">
+            Clinical Practice Guidelines (CPG)
+          </h2>
+          <p className="text-[11px] text-(--text-muted)">
+            Search and reference diagnostic guidelines &amp; medical codes
+          </p>
+        </div>
       </div>
-      <Command className="flex h-full w-full max-w-2xl flex-row overflow-hidden">
+      <Command className="flex h-full w-full max-w-2xl flex-row overflow-hidden bg-transparent">
         
         <div className="flex h-full w-1/2 flex-1 flex-col overflow-hidden">
           <CommandInput
-            className="text-xs text-foreground"
+            className="text-xs text-(--text-heading)"
             placeholder="Type Search..."
           />
           <CommandList className="max-h-none flex-1 overflow-y-auto pb-6">
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty className="py-6 text-center text-xs text-(--text-muted)">No results found.</CommandEmpty>
 
             {limitedSuggestions.length > 0 && (
               <>
                 <CommandGroup
                   heading="Suggestions"
-                  className="space-y-1 **:[[cmdk-group-heading]]:rounded-lg **:[[cmdk-group-heading]]:bg-secondary **:[[cmdk-group-heading]]:text-secondary-foreground"
+                  className="space-y-1 **:[[cmdk-group-heading]]:rounded-md **:[[cmdk-group-heading]]:bg-(--surface-subtle) **:[[cmdk-group-heading]]:text-(--text-muted) **:[[cmdk-group-heading]]:text-[10px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider"
                 >
                   {limitedSuggestions.map((item, index) => (
                     <CommandItem
@@ -103,7 +113,7 @@ export const MedicalCodeSuggestionCommandList = forwardRef<
                       value={item}
                       onSelect={() => onSelect(item)}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className="data-selected:bg-primary data-selected:text-primary-foreground"
+                      className="data-selected:bg-(--surface-active) data-selected:text-(--text-heading) cursor-pointer"
                       data-selected={index === selectedIndex}
                     >
                       {item}
@@ -117,7 +127,7 @@ export const MedicalCodeSuggestionCommandList = forwardRef<
             {items.length > 0 && (
               <CommandGroup
                 heading="Medical Codes"
-                className="space-y-1 **:[[cmdk-group-heading]]:rounded-lg **:[[cmdk-group-heading]]:bg-secondary **:[[cmdk-group-heading]]:text-secondary-foreground"
+                className="space-y-1 **:[[cmdk-group-heading]]:rounded-md **:[[cmdk-group-heading]]:bg-(--surface-subtle) **:[[cmdk-group-heading]]:text-(--text-muted) **:[[cmdk-group-heading]]:text-[10px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider"
               >
                 {items.map((item, index) => {
                   const realIndex = limitedSuggestions.length + index;
@@ -127,7 +137,7 @@ export const MedicalCodeSuggestionCommandList = forwardRef<
                       value={item}
                       onSelect={() => onSelect(item)}
                       onMouseEnter={() => setSelectedIndex(realIndex)}
-                      className="data-selected:bg-primary data-selected:text-primary-foreground"
+                      className="data-selected:bg-(--surface-active) data-selected:text-(--text-heading) cursor-pointer"
                       data-selected={realIndex === selectedIndex}
                     >
                       {item}
@@ -139,25 +149,25 @@ export const MedicalCodeSuggestionCommandList = forwardRef<
           </CommandList>
         </div>
 
-        <div className="relative flex h-full w-1/2 flex-col justify-between border-l bg-muted/40 p-4 pb-24">
+        <div className="relative flex h-full w-1/2 flex-col justify-between border-l border-(--border-subtle) bg-(--surface-warm-soft) p-4 pb-24">
           <div className="flex flex-col gap-2">
-            <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            <h3 className="text-xs font-semibold tracking-wider text-(--text-muted) uppercase">
               CPG Preview
             </h3>
-            <p className="text-xs leading-relaxed text-foreground/80">
+            <div className="text-xs leading-relaxed text-(--text-body)">
               {totalItems[selectedIndex] ? (
                 <>
-                  Focused Code:
-                  <span className="mt-1 block font-mono font-bold text-secondary">
+                  <span className="text-(--text-muted)">Focused Code:</span>
+                  <span className="mt-1 block font-mono font-bold text-(--teal-700)">
                     {totalItems[selectedIndex]}
                   </span>
                 </>
               ) : (
-                <span className="text-muted-foreground italic">
+                <span className="text-(--text-muted) italic">
                   No item highlighted
                 </span>
               )}
-            </p>
+            </div>
           </div>
 
           <div className="absolute right-3 bottom-3 left-3 flex gap-1.5 border-t border-border/60 bg-transparent pt-3">

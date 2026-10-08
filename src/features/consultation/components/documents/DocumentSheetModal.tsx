@@ -146,9 +146,10 @@ export function DocumentSheetModal({
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               type="button"
-              variant="ghost"
+              variant="primary"
+              size="sm"
               onClick={handlePrint}
-              className="bg-(--teal-700) hover:bg-(--teal-600) text-white font-semibold text-xs h-8.5 px-3.5 gap-2 rounded-lg shadow-sm cursor-pointer transition-all"
+              className="gap-2 cursor-pointer font-semibold shadow-xs"
             >
               <Printer className="size-3.5" />
               <span>Print / Save PDF</span>

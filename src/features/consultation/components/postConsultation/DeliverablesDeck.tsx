@@ -397,6 +397,9 @@ export function DeliverablesDeck({
           id: "finalize-signature",
         });
       }
+    } catch {
+      // The workspace already showed which document failed. Stop there and
+      // keep the sheet open; anything signed before it stays signed.
     } finally {
       setBatchSigningInProgress(false);
     }

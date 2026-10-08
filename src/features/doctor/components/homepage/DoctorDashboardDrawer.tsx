@@ -1,4 +1,4 @@
-import AppButton from "@/components/primitives/AppButton";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerClose,
@@ -8,14 +8,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Check, Ticket, X } from "lucide-react";
+import { Ticket, X } from "lucide-react";
 import { onAcceptBooking, patientBoardInfo } from "../../types/bookingBoard.types";
 import { useState } from "react";
 import { BookingRequestContent } from "./BookingRequestContent";
 import { DoctorConsultationAccess } from "./DoctorConsultationAccess";
 import { IssueIntakeLinkButton } from "./IssueIntakeLinkButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { bookingServices } from "@/types/booking.types";
 import { toast } from "sonner";
 
@@ -53,70 +52,59 @@ export function DoctorDashboardDrawer({
     setOpen(false);
   };
 
+  const service = bookingServices.find((s) => s.value === patient.serviceRequested);
+
   return (
     <Drawer onOpenChange={setOpen} open={open}>
       <DrawerTrigger
         render={
-          // Outline rather than the solid `business` fill used elsewhere: this
-          // button sits beside the solid-teal Accept action
-          // (`IncomingRequestsCard`), and two solid buttons of the same weight
-          // read as two equally strong calls to action when only one — Accept
-          // — is the primary one.
-          <AppButton type="button" variant="outline">
+          <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs font-semibold">
             View
-          </AppButton>
+          </Button>
         }
       />
 
-      <DrawerContent className="mx-auto w-full max-w-lg rounded-t-4xl border border-border">
-        <DrawerHeader>
-          <div className="flex items-center justify-center p-2">
-            <span className="absolute top-5 left-5 flex items-center gap-1 font-bold text-primary capitalize">
-              <Ticket />
-              booking request
+      <DrawerContent className="mx-auto w-full max-w-lg rounded-t-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card) shadow-2xl">
+        <DrawerHeader className="border-b border-(--border-subtle) bg-(--surface-warm) px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-(--teal-700)/25 bg-(--teal-700)/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--teal-700) uppercase">
+              <Ticket className="size-3" />
+              Booking Request
             </span>
 
-            <DrawerClose className="absolute top-5 right-5 cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DrawerClose>
+            <DrawerClose
+              render={
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                >
+                  <X className="size-4" />
+                </button>
+              }
+            />
           </div>
 
-          <DrawerTitle className="flex justify-center">
-            <div className="mr-4 flex items-center justify-center gap-2 text-lg">
-              <Avatar className="relative size-15">
-                <AvatarImage src={patient.avatar} />
-                <AvatarFallback>{patient.initials}</AvatarFallback>
-              </Avatar>
-              {patient.name}
-            </div>
-          </DrawerTitle>
-          <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span className="flex flex-col items-center justify-center rounded-lg bg-muted p-2 text-muted-foreground">
-              <Badge variant="outline" className="h-10 border-none text-xl">
-                <span>
-                  {(() => {
-                    const Icon =
-                      bookingServices.find(
-                        (s) => s.value === patient.serviceRequested,
-                      )?.sticker || Check;
-                    return <Icon className="size-6" />;
-                  })()}
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar className="size-12 rounded-xl border border-(--border-subtle)">
+              <AvatarImage src={patient.avatar} />
+              <AvatarFallback className="rounded-xl font-bold">{patient.initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <DrawerTitle className="text-base font-bold text-(--text-heading) truncate">
+                {patient.name}
+              </DrawerTitle>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-(--text-muted)">
+                <span className="font-medium text-(--teal-800)">
+                  {service?.label || "General Consultation"}
                 </span>
-                {bookingServices.find(
-                  (service) => service.value === patient.serviceRequested,
-                )?.label || "Unknown Service"}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="flex items-center gap-0.5 border-0 p-1 text-xs text-muted-foreground"
-              >
-                {new Date(patient.timestamp).toLocaleString()}
-              </Badge>
-            </span>
+                <span className="text-(--text-subtle)">·</span>
+                <span>{new Date(patient.timestamp).toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         </DrawerHeader>
-        <div className="relative">
+        <div className="relative max-h-[60dvh] overflow-y-auto overscroll-contain">
           {/*
             Video call and chat entry for the assigned doctor. `ConsultationVideo`
             (inside `DoctorConsultationAccess`) requests a Join_Credential from
@@ -126,29 +114,31 @@ export function DoctorDashboardDrawer({
           */}
           <DoctorConsultationAccess bookingId={patient.bookingId} />
           <BookingRequestContent patient={patient} />
-          <div className="px-4 pb-28">
+          <div className="px-4 pb-6">
             <IssueIntakeLinkButton bookingId={patient.bookingId} />
           </div>
         </div>
 
-        <DrawerFooter className="sticky bottom-0 w-full border-t border-border bg-background p-4">
-          <div className="flex w-full justify-center gap-2">
-            <AppButton
+        <DrawerFooter className="sticky bottom-0 w-full border-t border-(--border-subtle) bg-(--surface-warm) px-4 py-3 sm:px-6">
+          <div className="flex w-full items-center justify-between gap-3">
+            <Button
               type="button"
               onClick={() => handleSendElsewhere(patient)}
-              variant="ghost"
-              className="text-xs hover:bg-muted"
+              variant="outline"
+              size="sm"
+              className="h-11 px-3 text-xs sm:h-8"
             >
               Send to Other Doctors
-            </AppButton>
-            <AppButton
+            </Button>
+            <Button
               type="button"
               onClick={() => handleAccept(patient)}
-              variant="business"
-              className="max-w-96 flex-1"
+              variant="primary"
+              size="sm"
+              className="h-11 flex-1 text-sm font-semibold sm:h-8 sm:text-xs"
             >
-              Confirm & Send Intake
-            </AppButton>
+              Confirm &amp; Send Intake
+            </Button>
           </div>
         </DrawerFooter>
       </DrawerContent>

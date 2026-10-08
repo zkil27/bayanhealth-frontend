@@ -172,6 +172,9 @@ export function ArtifactCard(props: ArtifactCardProps) {
     try {
       await props.onAmend(draft);
       setEditing(false);
+    } catch {
+      // The workspace already showed the error. Keep the editor open so the
+      // physician's changes are not lost, and let them try again.
     } finally {
       setSaving(false);
     }
@@ -184,6 +187,9 @@ export function ArtifactCard(props: ArtifactCardProps) {
       setSigning(false);
       setAttested(false);
       setDrawn([]);
+    } catch {
+      // The workspace already showed the error. Keep the sheet open, with the
+      // attestation and any drawn signature intact, so signing can be retried.
     } finally {
       setSubmitting(false);
     }

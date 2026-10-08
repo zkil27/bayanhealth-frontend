@@ -7,6 +7,21 @@
 
 ## Log Entries
 
+### [2026-10-08] Post-Consult: Failed Sign / Save No Longer Crashes the Page
+
+- **Target Route / Surface**: `/doctor/post-consultation/id`, the Sign sheet, document editing, and Sign several.
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED: `catch` in `sign` and `saveEdit`]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED: `catch` in `handleBatchSign`]
+- **Design Intent & Problem Solved**:
+  - The workspace's `finalize` / `amend` handlers show the error as a toast, then re-throw so the UI can stay open.
+  - The callers only had `try/finally`, so the re-thrown error became an unhandled rejection: a full-screen "Runtime ApiError" overlay in development, and a silent console error in production.
+  - Each caller now catches it and keeps its sheet or editor open, with the attestation, drawn signature or edited text intact, so the doctor can retry.
+  - Sign several stops at the failing document; earlier ones stay signed.
+  - Reproduced by signing in demo mode, where `finalizeArtifact` has no demo stub and calls the real API, which rejects `localhost`. Verified with a failed Save changes: 0 unhandled rejections, no overlay, editor still open.
+- **Device Optimization**: All.
+- **Upstream Porting Notes**: UI error handling only; the handlers and API calls are unchanged.
+
 ### [2026-10-08] Emergency Modal Modernization: SendToErControl Consistency & ResponsiveSheet Alignment
 
 - **Target Route / Surface**: `/doctor/post-consultation/[id]` emergency trigger and "Send patient to ER" confirmation modal (`SendToErControl`).
