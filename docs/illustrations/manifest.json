@@ -339,5 +339,49 @@
     "bytes": 12484,
     "attempts": 1,
     "status": "ok"
+  },
+  {
+    "id": "services/konsulta",
+    "file": "/illustrations/services/konsulta.webp",
+    "width": 192,
+    "height": 195,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 10316,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "services/pa-schedule",
+    "file": "/illustrations/services/pa-schedule.webp",
+    "width": 192,
+    "height": 127,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 9898,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "services/fit-to-work",
+    "file": "/illustrations/services/fit-to-work.webp",
+    "width": 192,
+    "height": 179,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 7902,
+    "attempts": 1,
+    "status": "ok"
+  },
+  {
+    "id": "services/sick-leave",
+    "file": "/illustrations/services/sick-leave.webp",
+    "width": 192,
+    "height": 134,
+    "sizeClass": "sm",
+    "onDark": false,
+    "bytes": 6420,
+    "attempts": 1,
+    "status": "ok"
   }
 ]
