@@ -138,10 +138,18 @@ export const reproductiveHealthSchema = z.object({
 });
 
 export const baselineVitalsSchema = z.object({
-  systolicBp: optionalNumber(z.number().int().min(40).max(300)),
-  diastolicBp: optionalNumber(z.number().int().min(20).max(200)),
-  heartRateBpm: optionalNumber(z.number().int().min(20).max(300)),
-  spo2Percent: optionalNumber(z.number().int().min(50).max(100)),
+  systolicBp: optionalNumber(
+    z.number().int("Whole number only").min(40, "40–300 mmHg").max(300, "40–300 mmHg"),
+  ),
+  diastolicBp: optionalNumber(
+    z.number().int("Whole number only").min(20, "20–200 mmHg").max(200, "20–200 mmHg"),
+  ),
+  heartRateBpm: optionalNumber(
+    z.number().int("Whole number only").min(20, "20–300 bpm").max(300, "20–300 bpm"),
+  ),
+  spo2Percent: optionalNumber(
+    z.number().int("Whole number only").min(50, "50–100%").max(100, "50–100%"),
+  ),
 });
 
 /**
@@ -173,11 +181,21 @@ export const safetyScreenSchema = z.object({
  * value outside them is rejected here and dropped by the backend, never clamped.
  */
 export const vitalsSchema = z.object({
-  temperatureC: optionalNumber(z.number().min(30).max(45)),
-  systolicBp: optionalNumber(z.number().int().min(40).max(300)),
-  diastolicBp: optionalNumber(z.number().int().min(20).max(200)),
-  heartRateBpm: optionalNumber(z.number().int().min(20).max(300)),
-  spo2Percent: optionalNumber(z.number().int().min(50).max(100)),
+  temperatureC: optionalNumber(
+    z.number().min(30, "30–45 °C").max(45, "30–45 °C"),
+  ),
+  systolicBp: optionalNumber(
+    z.number().int("Whole number only").min(40, "40–300 mmHg").max(300, "40–300 mmHg"),
+  ),
+  diastolicBp: optionalNumber(
+    z.number().int("Whole number only").min(20, "20–200 mmHg").max(200, "20–200 mmHg"),
+  ),
+  heartRateBpm: optionalNumber(
+    z.number().int("Whole number only").min(20, "20–300 bpm").max(300, "20–300 bpm"),
+  ),
+  spo2Percent: optionalNumber(
+    z.number().int("Whole number only").min(50, "50–100%").max(100, "50–100%"),
+  ),
 });
 
 export const consultationSchema = z.object({

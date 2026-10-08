@@ -476,25 +476,112 @@ function HomeVitals() {
       {/* A plain 2x2: every vital gets an equal-sized card, none commandeering the whole row. */}
       <Reveal open={show}>
         <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-canvas) p-4">
-          <VitalCard id="bp-label" label="Blood pressure" icon={<HeartPulse className="size-4" />}>
-            <div role="group" aria-labelledby="bp-label" className="flex items-center gap-1.5">
-              <VitalInput name="systolicBp" label="Systolic (mmHg)" placeholder="120" min={40} max={300} bare />
-              <span aria-hidden className="text-sm font-medium text-(--text-subtle)">/</span>
-              <VitalInput name="diastolicBp" label="Diastolic (mmHg)" placeholder="80" min={20} max={200} bare />
-            </div>
-          </VitalCard>
+          <BloodPressureCard />
           <VitalCard label="Temperature" icon={<Thermometer className="size-4" />}>
-            <VitalInput name="temperatureC" label="Temperature (°C)" placeholder="37.0" unitSuffix="°C" step="0.1" min={30} max={45} bare />
+            <VitalInput name="temperatureC" label="Temperature (°C)" placeholder="37.0" unitSuffix="°C" step="0.1" min={30} max={45} hint="30.0 – 45.0 °C" />
           </VitalCard>
           <VitalCard label="Heart rate" icon={<Activity className="size-4" />}>
-            <VitalInput name="heartRateBpm" label="Heart rate (bpm)" placeholder="72" unitSuffix="bpm" min={20} max={300} bare />
+            <VitalInput name="heartRateBpm" label="Heart rate (bpm)" placeholder="72" unitSuffix="bpm" min={20} max={300} hint="20 – 300 bpm" />
           </VitalCard>
           <VitalCard label="Oxygen" icon={<Droplet className="size-4" />}>
-            <VitalInput name="spo2Percent" label="Oxygen saturation (SpO₂ %)" placeholder="98" unitSuffix="% SpO₂" min={50} max={100} bare />
+            <VitalInput name="spo2Percent" label="Oxygen saturation (SpO₂ %)" placeholder="98" unitSuffix="% SpO₂" min={50} max={100} hint="50 – 100% SpO₂" />
           </VitalCard>
         </div>
       </Reveal>
     </section>
+  );
+}
+
+/**
+ * Dedicated Blood Pressure vital card: locks Systolic and Diastolic inputs
+ * side-by-side with the slash separator in a unified row, with a full-width
+ * single-line status footer below (eliminating multiline sub-column error wraps).
+ */
+function BloodPressureCard() {
+  const { control } = useFormContext<DynamicIntakeFormValues>();
+  return (
+    <Controller
+      name={`${VITALS}.systolicBp` as FieldPath<DynamicIntakeFormValues>}
+      control={control}
+      render={({ field: sysField, fieldState: sysState }) => (
+        <Controller
+          name={`${VITALS}.diastolicBp` as FieldPath<DynamicIntakeFormValues>}
+          control={control}
+          render={({ field: diaField, fieldState: diaState }) => {
+            const hasError = Boolean(sysState.error || diaState.error);
+            const errorMsg =
+              sysState.error && diaState.error
+                ? "Range: 40–300 / 20–200"
+                : sysState.error
+                  ? sysState.error.message || "40–300 mmHg"
+                  : diaState.error
+                    ? diaState.error.message || "20–200 mmHg"
+                    : null;
+
+            return (
+              <VitalCard id="bp-label" label="Blood pressure" icon={<HeartPulse className="size-4" />}>
+                <div role="group" aria-labelledby="bp-label" className="flex items-center gap-1.5">
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      id="vital-systolicBp"
+                      type="number"
+                      inputMode="decimal"
+                      min={40}
+                      max={300}
+                      placeholder="120"
+                      aria-label="Systolic blood pressure (mmHg)"
+                      aria-invalid={sysState.invalid || undefined}
+                      title={sysState.error?.message}
+                      className={cn(
+                        COMPACT_INPUT,
+                        "min-h-12 text-center text-base font-semibold",
+                        sysState.invalid && "border-(--danger-border) focus-visible:ring-(--danger-border) bg-(--danger-bg)/10 text-(--danger-fg)",
+                      )}
+                      value={sysField.value == null ? "" : String(sysField.value)}
+                      onChange={(e) => sysField.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                    />
+                  </div>
+                  <span aria-hidden className="text-base font-bold text-(--text-subtle) shrink-0">/</span>
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      id="vital-diastolicBp"
+                      type="number"
+                      inputMode="decimal"
+                      min={20}
+                      max={200}
+                      placeholder="80"
+                      aria-label="Diastolic blood pressure (mmHg)"
+                      aria-invalid={diaState.invalid || undefined}
+                      title={diaState.error?.message}
+                      className={cn(
+                        COMPACT_INPUT,
+                        "min-h-12 text-center text-base font-semibold",
+                        diaState.invalid && "border-(--danger-border) focus-visible:ring-(--danger-border) bg-(--danger-bg)/10 text-(--danger-fg)",
+                      )}
+                      value={diaField.value == null ? "" : String(diaField.value)}
+                      onChange={(e) => diaField.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-1.5 flex h-4 items-center justify-center text-center">
+                  {hasError && errorMsg ? (
+                    <span role="alert" className="flex items-center gap-1 text-[11px] font-semibold text-(--danger-fg) leading-none truncate">
+                      <TriangleAlert className="size-3 shrink-0" />
+                      {errorMsg}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-medium text-(--text-subtle) leading-none">
+                      mmHg (e.g. 120/80)
+                    </span>
+                  )}
+                </div>
+              </VitalCard>
+            );
+          }}
+        />
+      )}
+    />
   );
 }
 
@@ -536,7 +623,7 @@ function VitalInput({
   max,
   step,
   unitSuffix,
-  bare = false,
+  hint,
 }: {
   name: keyof NonNullable<Teleconsult["vitals"]>;
   label: string;
@@ -544,10 +631,8 @@ function VitalInput({
   min: number;
   max: number;
   step?: string;
-  /** Shown as a quiet suffix inside the input (e.g. "°C") instead of crowding the card's header label. */
   unitSuffix?: string;
-  /** Visually label-less (the value lives inside a `VitalCard`); keeps an accessible name. */
-  bare?: boolean;
+  hint?: string;
 }) {
   const { control } = useFormContext<DynamicIntakeFormValues>();
   const id = `vital-${name}`;
@@ -556,8 +641,8 @@ function VitalInput({
       name={`${VITALS}.${name}` as FieldPath<DynamicIntakeFormValues>}
       control={control}
       render={({ field, fieldState }) => (
-        <div className={bare ? "min-w-0 flex-1" : undefined}>
-          <label htmlFor={id} className={bare ? "sr-only" : "mb-1 block text-xs font-bold text-(--text-muted) uppercase"}>
+        <div className="min-w-0">
+          <label htmlFor={id} className="sr-only">
             {label}
           </label>
           <div className="relative">
@@ -570,7 +655,13 @@ function VitalInput({
               step={step}
               placeholder={placeholder}
               aria-invalid={fieldState.invalid || undefined}
-              className={cn(COMPACT_INPUT, "min-h-12 text-base font-semibold", bare && "text-center", unitSuffix && "pr-11")}
+              title={fieldState.error?.message}
+              className={cn(
+                COMPACT_INPUT,
+                "min-h-12 text-base font-semibold",
+                unitSuffix && "pr-11",
+                fieldState.invalid && "border-(--danger-border) focus-visible:ring-(--danger-border) bg-(--danger-bg)/10 text-(--danger-fg)",
+              )}
               value={field.value == null ? "" : String(field.value)}
               onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
             />
@@ -580,7 +671,18 @@ function VitalInput({
               </span>
             ) : null}
           </div>
-          {fieldState.error ? <p className="mt-1 text-xs text-(--danger-fg)">{fieldState.error.message}</p> : null}
+          <div className="mt-1.5 flex h-4 items-center justify-center text-center">
+            {fieldState.error ? (
+              <span role="alert" className="flex items-center gap-1 text-[11px] font-semibold text-(--danger-fg) leading-none truncate">
+                <TriangleAlert className="size-3 shrink-0" />
+                {fieldState.error.message}
+              </span>
+            ) : hint ? (
+              <span className="text-[11px] font-medium text-(--text-subtle) leading-none">
+                {hint}
+              </span>
+            ) : null}
+          </div>
         </div>
       )}
     />

@@ -9,6 +9,131 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-02] Consultation Intake Vitals & Blood Pressure Layout & Error Formatting Redesign
+
+- **Target Route / Surface**: `/patient/booking/intake/[bookingId]` (`ConcernSafetyStep.tsx`), `intakeSchema.ts`
+- **Files Modified**:
+  - `src/features/booking/components/consultation/intake/ConcernSafetyStep.tsx` [MODIFIED]
+  - `src/features/booking/schemas/intakeSchema.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Broken Inline Error Wrapping in Sub-Columns**:
+    - Previously, `VitalInput` rendered inline `<p>` error messages inside the tiny 50px sub-column under each input. For paired inputs like Blood Pressure (`systolicBp` and `diastolicBp`), long Zod error sentences wrapped 4–5 times vertically, trapping the separator `/` floating awkwardly between two multi-line error blocks and ballooning the card height.
+    - Extracted a dedicated `BloodPressureCard` that locks the systolic and diastolic inputs and the slash `/` on a permanently unified horizontal baseline.
+    - Moved feedback into a reserved, full-width 16px bottom status footer (`h-4 mt-1.5`) below the inputs row.
+  - **Zero Layout Shift Across 2x2 Vitals Grid**:
+    - In normal state, each vital card displays a quiet reference hint (e.g. `mmHg (e.g. 120/80)`, `30.0 – 45.0 °C`).
+    - When an input fails validation, the footer smoothly transforms into a single-line clinical alert with vector `TriangleAlert` icon (`⚠️ Range: 40–300 / 20–200`).
+    - Because the footer space is pre-allocated, the card NEVER stretches, jumps, or distorts the 2x2 vitals grid.
+  - **Replaced Raw Compiler Assertions with Human Clinical Ranges**:
+    - Updated `vitalsSchema` and `baselineVitalsSchema` in `intakeSchema.ts` to replace raw Zod validator assertions (`"Too small: expected number to be >=40"`) with clean clinical boundaries (`"40–300 mmHg"`, `"20–200 mmHg"`).
+    - Preserved full accessible tooltips via HTML5 `title` attributes on invalid fields.
+- **Device Optimization**: Mobile & desktop grid consistency; zero layout shift on form validation.
+- **Tokens & Primitives Used**: `TriangleAlert`, `COMPACT_INPUT`, semantic colors `var(--danger-border)`, `var(--danger-fg)`, `var(--danger-bg)`, `var(--text-subtle)`.
+- **Upstream Porting Notes**: Component-scoped presentation refinement in `ConcernSafetyStep.tsx` and custom error strings in `intakeSchema.ts`. Preserved all FormContext registrations, validation boundaries, and API payload contracts.
+
+
+### [2026-10-02] Doctor Preferences Choice Pills Full-Width Expansion
+
+- **Target Route / Surface**: `/patient/booking/createBooking?mode=on-demand` (`OnDemandBooking.tsx`), `/patient/profile/doctor-preferences` (`DoctorPreferencesContent.tsx`)
+- **Files Modified**:
+  - `src/features/booking/components/BrandUI.tsx` [MODIFIED]
+  - `src/features/booking/components/GenderPreference.tsx` [MODIFIED]
+  - `src/features/booking/components/LanguageSelect.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Full-Width Span Across to Right Margin**:
+    - Previously, both `GenderPreference` (`[ Any ] [ Female ] [ Male ]`) and `LanguageSelect` (`[ Any ] [ Tagalog ] [ English ]`) rendered as auto-width inline pills hugging the left side of the container, leaving an awkward dead space on the right side and creating small, narrow click/tap targets.
+    - Updated both components to use `grid w-full grid-cols-3 gap-2` with `w-full justify-center` pill buttons, allowing the choices to span the entire card width evenly to the right margin.
+  - **Enhanced Mobile & Desktop Tap Ergonomics**:
+    - Each choice now provides a wide, comfortable tap surface (min 44px height, full equal-width column distribution) meeting WCAG 2.1 AA tap target standards and making thumb selection effortless on mobile devices.
+- **Device Optimization**: Mobile thumb reach and desktop clickable surface enlargement.
+- **Tokens & Primitives Used**: Tailwind `grid-cols-3`, `w-full`, `justify-center`, `BrandUI` `TogglePill`.
+- **Upstream Porting Notes**: Component-scoped presentation refinement in `BrandUI.tsx`, `GenderPreference.tsx`, and `LanguageSelect.tsx`. Preserved all props, form control bindings, and selection logic.
+
+
+### [2026-10-02] Patient Navigation: Archived In-App Chat Tab
+
+- **Target Route / Surface**: Patient desktop rail and mobile bottom bar (`src/components/layout/nav-items.ts`)
+- **Files Modified**:
+  - `src/components/layout/nav-items.ts` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - Commented out the "Chat" entry in `PATIENT_NAV`, mirroring the doctor-side archive. Both the desktop rail and the mobile bar read this list, so the tab disappears from both: Home, Health, Book, Med Ed (Soon), Profile.
+  - Non-destructive: `/patient/chat`, `/patient/chat/[bookingId]` and all chat components are untouched. Reinstate by uncommenting the entry.
+  - Other in-page links to chat remain (`ConciergePanel`, booking detail "chat" link).
+- **Device Optimization**: Mobile bottom bar drops from 5 to 4 tappable items (Med Ed is already hidden there), giving each target more width.
+- **Upstream Porting Notes**: Single configuration change. No routing, API, or data hook alterations.
+
+### [2026-10-02] Patient Booking Path Chooser Mobile-First Layout Redesign
+
+- **Target Route / Surface**: `/patient/booking` (`BookingPathChooser.tsx`)
+- **Files Modified**:
+  - `src/features/booking/components/patient/BookingPathChooser.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Eliminated Massive Mobile Vertical Scrolling (~1,000px height reduction)**:
+    - Previously, `/patient/booking` rendered two massive 520px-tall cards stacked end-to-end on mobile, followed by 3 stacked clinical context cards and an emergency banner. The entire screen stretched over 1,700px in height, hiding the "Book for later" option completely below the fold and feeling desktop-first.
+    - Responsive card layout: on mobile screens (`< md`), the huge 160px-tall center illustration block is replaced with a compact `size="xs"` brand illustration thumbnail in the top-right of the card header. On desktop (`>= md`), the spacious full-width illustration plate remains for clinical cockpit balance.
+    - Both primary booking paths ("Consult Now" and "Book for later") are now immediately visible and directly comparable in the mobile viewport above the fold with zero friction.
+  - **Replaced 3-Card Stack with Progressive Disclosure Accordion on Mobile**:
+    - Replaced the 3 separate stacked white cards ("What's included", "Prepare for your consult", "Triage & clinical scope") with a single interactive `Accordion` (`defaultValue={["included"]}`) on mobile.
+    - Preserves desktop 3-column scannable cockpit density (`hidden md:grid md:grid-cols-3 md:gap-4`) while saving ~300px of scrolling bloat on mobile phones.
+  - **Enhanced Mobile Ergonomics & Tap Targets**:
+    - Ensured primary action buttons have full-width thumb-zone reach (`min-h-11 sm:min-h-12` 44-48px targets).
+    - Emergency "Call 911" button enhanced with a minimum 44px touch target.
+    - Tamed bottom padding from redundant shell offsets (`pb-6 sm:pb-12`).
+- **Device Optimization**: Mobile-first enhancement for Patient booking flow; Desktop-first density retained on wide displays.
+- **Tokens & Primitives Used**: `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` from `@/components/ui/accordion`, `Illustration` (`size="xs"` mobile, `size="md"` desktop), BayanHealth tokens `var(--action-primary)`, `var(--surface-accent-soft)`, `var(--status-available-fg)`.
+- **Upstream Porting Notes**: Component-scoped presentation redesign in `BookingPathChooser.tsx`. Preserved all routes, query hooks (`useQuery`), accessibility data slots (`data-slot="booking-path-chooser"`, `data-slot="emergency-note"`), and exported helper `OtherPathNote`.
+
+
+### [2026-10-02] Active Consultation Banner & Hero Card Anti-AI Slop Redesign & Theme Responsiveness
+
+- **Target Route / Surface**: Omnipresent Patient Shell Rejoin Ribbon (`/patient/*`), Patient Home Dashboard Hero (`/patient`)
+- **Files Modified**:
+  - `src/features/patient/components/ActiveConsultationBanner.tsx` [MODIFIED]
+  - `src/features/patient/components/homepage/PatientHome.tsx` [MODIFIED]
+  - `src/features/patient/components/homepage/PatientHomeHero.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Full Light/Dark Theme Responsiveness via Semantic Surface Tokens**:
+    - Previously, attempting to bind the banner to raw ramp tokens (`bg-(--navy-900)` and `text-(--white)`) caused visual inversion issues in Dark Mode: in `bayanhealth-tokens.css`, the raw ramp `--navy-900` inverts to `#f8f4e3` (cream/offwhite text color) in dark mode, causing the banner background to render as cream with washed-out white text.
+    - Converted all banner tokens to authoritative semantic aliases: `bg-(--surface-card)` (renders `#fefdfb` in light mode, `#161d26` in dark mode), `border-b border-(--border-subtle)` (`#dfe8ee` in light, `#1f2a35` in dark), and typography to `text-(--text-heading)` and `text-(--text-muted)`. Both light and dark modes now maintain perfect contrast, high legibility, and zero color clipping.
+  - **Eliminated Gratuitous Pulsing Radar Ping (`animate-ping`)**:
+    - Removed AI-slop pulsing radio beacons from `ActiveConsultationBanner`, `PatientHome` (`LiveActivityCard`), and `PatientHomeHero` (`LiveRoomHero`). Replaced with calm, authoritative vector Lucide SVG iconography and solid semantic status dots, honoring `UI_UX_AGENT.md` Rule #9 and preventing visual agitation for stressed patients.
+  - **De-cluttered Pill-Over-Pill Stacking**:
+    - Removed the nested uppercase pill badge (`rounded-full bg-teal-800/80 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-teal-200`).
+    - Established clear typographic hierarchy: prominent Taglish status headline (`"Bukas ang iyong consultation room"` or `"May aktibong konsulta"`) accompanied by secondary reassurance microcopy (`text-(--text-muted)`).
+  - **Accessible Touch Target Ergonomics**:
+    - Upgraded the "Bumalik sa Konsulta" CTA from a cramped `h-8` (32px) pill to an accessible `min-h-9 sm:min-h-8 px-3.5 py-1.5` button with high-contrast Bayan Teal fill (`bg-(--action-primary)`), white text, and tactile active press feedback.
+    - Expanded the dismiss button hit target from `size-7` (28px) to `size-9 sm:size-8` with high-visibility hover states (`text-(--text-muted) hover:text-(--text-heading) hover:bg-(--surface-warm)`) and clear keyboard focus rings.
+  - **Color Token Standardization in Home Cards**:
+    - Cleaned up leftover unsemantic Tailwind colors (`text-slate-900`, `text-slate-600`, `bg-teal-50/80`, `border-teal-600`) in `LiveActivityCard`, rebinding them strictly to `--text-heading`, `--text-body`, `--surface-accent-soft`, and `--action-primary`.
+- **Tokens & Primitives Used**: `bg-(--surface-card)`, `border-(--border-subtle)`, `bg-(--surface-accent-soft)`, `text-(--status-available-fg)`, `text-(--text-heading)`, `text-(--text-muted)`, `text-(--text-subtle)`, `bg-(--action-primary)`, `text-(--action-primary-text)`, `bg-(--action-primary-hover)`, `rounded-(--radius-md)`, `rounded-(--radius-pill)`.
+- **Upstream Porting Notes**: Component-scoped presentation changes. Preserves all existing `activeConsultationStorage` session listeners, event subscriptions, dismiss states, route suppression checks, and `data-slot` testing attributes.
+
+### [2026-10-02] Patient Waiting Room (FindingStep) Layout Modernization & Anchored Illustration Plate
+
+- **Target Route / Surface**: Patient Consultation Booking Flow — Step 3: Finding / Waiting Room (`/patient/booking/createBooking`)
+- **Files Modified**:
+  - `src/features/booking/components/consultation/FindingStep.tsx` [MODIFIED]
+- **Design Intent & Problem Solved**:
+  - **Anchored Spotlight Illustration vs. Floating Clip-Art**:
+    - Previously, `<Illustration name="patient/finding-doctor" size="lg" />` was rendered as a standalone 224px block centered at the top of a wide empty card with left-aligned headings below it. This caused the illustration to float adrift like an accidental sticker, pushing critical live status indicators and progress below the fold.
+    - Recomposed the hero section into a responsive split header (`sm:flex sm:items-center sm:justify-between`):
+      - **Desktop/Tablet**: Left side houses the live badge, `UserSearch` icon with title and subhead, and patient match preference chips. The right side nestles the illustration inside a warm, softly framed spotlight plate (`bg-(--surface-warm-soft)` with subtle 1px border), giving it intentional visual ground and balancing the card horizontally.
+      - **Mobile**: Reordered via `flex-col-reverse` with a compact spotlight plate (`h-28 w-36`) that anchors gracefully above the status heading without consuming disproportionate vertical space.
+  - **Eliminated Cross-Hue Muddy Gradient ("AI Slop")**:
+    - Removed `bg-gradient-to-b from-(--teal-100) to-(--surface-warm)` from the Heartbeat progress card.
+    - Standardized on a crisp 1px solid border (`border-(--teal-200)`) with a clean brand surface (`bg-(--surface-warm)/30`), providing high contrast for the ECG waveform and MomoTrust Display percentage.
+  - **Consolidated Fragmented Reassurance Cards**:
+    - Replaced two separate, mismatched informational strips (one cream, one light teal) with a single, structured Clinical Assurance Card (`bg-(--surface-warm)/60 border border-(--border-subtle)`).
+    - Unified the doctor broadcast guarantee and payment hold refund protection with clean Lucide vector icons (`Radio` and `ShieldCheck`) and a subtle 1px divider.
+  - **Elevated Elapsed Wait Timer**:
+    - Converted the elapsed wait timer into a dedicated live tracking row with tabular display typography, clean timer icon, and preserved test data attribute (`data-slot="on-demand-wait-elapsed"`).
+  - **Mobile Touch Target Ergonomics**:
+    - Upgraded the "Cancel request" button from `h-[42px]` to `h-12 min-h-12` (fulfilling the mandatory 48px mobile touch target standard) and responsive full-width styling on mobile (`w-full sm:w-auto`).
+  - **Preserved Upstream Test Contracts**:
+    - Retained all `data-slot` attributes (`finding-step-live`, `finding-step-spinner`, `finding-step-progress`, `on-demand-wait`, `on-demand-wait-elapsed`, `on-demand-wait-cancel`, `on-demand-wait-cancel-confirm`, `on-demand-wait-cancelled`, `on-demand-wait-error`).
+- **Tokens & Primitives Used**: `bg-(--surface-warm-soft)`, `bg-(--surface-warm)/60`, `bg-(--surface-warm)/30`, `border-(--teal-200)`, `border-(--border-subtle)`, `text-(--teal-800)`, `text-(--teal-700)`, `text-(--gold-700)`, `bg-(--gold-100)`, `bg-(--gold-600)`.
+- **Upstream Porting Notes**: Component-scoped presentation refinement in `FindingStep.tsx`. Zero business logic, polling hook, or booking contract changes.
+
 ### [2026-10-02] Custom Illustrations Replace Icons In Empty, Success & Waiting States (Patient, Doctor, Shared)
 
 - **Target Route / Surface**: Patient booking wizard (Finding, Confirmation, Completed steps), Book tab path chooser (`/patient/booking`), patient home / health / chart / chat empties, doctor homepage queue and request cards, doctor KYC, Moonlight, completed consultations, post-consultation deliverables, chat panels, consultation video waiting stage

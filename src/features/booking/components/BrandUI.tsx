@@ -54,7 +54,7 @@ export function TogglePill({
       aria-pressed={selected}
       data-selected={selected ? "" : undefined}
       className={cn(
-        "inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-pill) border px-4 py-1.5 text-[14px] transition-colors",
+        "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-(--radius-pill) border px-4 py-1.5 text-[14px] transition-colors",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
         selected
           ? "border-(--action-primary) bg-(--surface-accent-soft) font-bold text-(--status-available-fg)"
