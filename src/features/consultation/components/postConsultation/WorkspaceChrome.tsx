@@ -1,35 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Check, Lock, ShieldAlert, Stethoscope } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { PatientSafetyStrip } from "@/features/doctor/components/PatientSafetyStrip";
 
 import type { WorkspacePhase } from "./workspacePhase";
 
-const PHASES: ReadonlyArray<{ id: WorkspacePhase; label: string }> = [
-  { id: "review", label: "Review" },
-  { id: "assess", label: "Assess" },
-  { id: "deliver", label: "Deliver" },
+const PHASES: ReadonlyArray<{ id: WorkspacePhase; label: string; hint: string }> = [
+  { id: "review", label: "Review", hint: "Read the intake and write your S and O notes" },
+  { id: "assess", label: "Assess", hint: "Confirm your diagnosis and ICD-10 code" },
+  { id: "deliver", label: "Deliver", hint: "Draft, sign and release documents" },
 ];
 
-/** Up to two uppercase initials for the header avatar. */
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join("");
-}
-
 /**
- * Review → Assess → Deliver, as W1's header draws it.
+ * Review → Assess → Deliver, as progress (desktop, `lg` and up).
  *
- * The workspace previously had no notion of progress at all: the assessment
- * editor, the generation controls, and the drafted-document list were three
- * sections of one scroll, all rendered at all times, so "what have I done and
- * what is left" had to be inferred from which buttons happened to be disabled.
+ * Every step is labelled; it used to show only the current step's name, so a
+ * first-time doctor saw "① ② ③ Deliver" and had to guess the other two.
  */
 export function WorkspaceStepper({
   phase,
@@ -45,63 +34,37 @@ export function WorkspaceStepper({
     <ol
       data-slot="workspace-stepper"
       data-phase={phase}
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-1"
       aria-label="Post-consultation progress"
     >
       {PHASES.map((step, index) => {
         const done = index < currentIndex;
-        const current = index === currentIndex;
-        // Deliver is drawn as unreachable rather than merely pending when a red
-        // flag is active: for W2 there is no later step to get to.
+        const isCurrent = index === currentIndex;
         const unreachable = Boolean(blocked) && step.id === "deliver";
 
         return (
-          <li key={step.id} className="flex items-center gap-1.5">
+          <li key={step.id} className="flex items-center gap-1" title={step.hint}>
             {index > 0 ? (
               <span
                 aria-hidden
-                className={cn(
-                  // Decorative; dropped on phones so the stepper, Intake and Refresh fit one row.
-                  "h-px w-3 max-sm:hidden sm:w-4 xl:w-6 transition-colors",
-                  done || current ? "bg-(--action-primary)" : "bg-(--border-default)",
-                )}
+                className={cn("h-px w-4 xl:w-6", done || isCurrent ? "bg-(--action-primary)" : "bg-(--border-default)")}
               />
             ) : null}
             <span
               data-step={step.id}
-              data-state={
-                unreachable ? "unreachable" : done ? "done" : current ? "current" : "pending"
-              }
-              aria-current={current ? "step" : undefined}
+              data-state={unreachable ? "unreachable" : done ? "done" : isCurrent ? "current" : "pending"}
+              aria-current={isCurrent ? "step" : undefined}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs sm:text-sm font-semibold transition-colors",
+                "flex items-center gap-1.5 rounded-full px-2 py-1 text-sm font-semibold",
                 done && "text-(--status-available-fg)",
-                current && "bg-(--surface-accent-soft) text-(--status-available-fg)",
-                !done && !current && "text-(--text-subtle)",
+                isCurrent && "bg-(--surface-accent-soft) text-(--text-heading)",
+                !done && !isCurrent && "text-(--text-subtle)",
                 unreachable && "text-(--danger-fg)",
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px]",
-                  done && "border-(--action-primary) bg-(--action-primary) text-white",
-                  current && "border-(--action-primary) text-(--status-available-fg)",
-                  !done && !current && "border-(--border-default)",
-                  unreachable && "border-(--danger-border) text-(--danger-fg)",
-                )}
-              >
-                {done ? (
-                  <Check className="size-3" />
-                ) : unreachable ? (
-                  <Lock className="size-3" />
-                ) : (
-                  index + 1
-                )}
-              </span>
-              <span className={cn("transition-opacity", current ? "inline" : "hidden xl:inline")}>
-                {step.label}
-              </span>
+              <StepMark index={index} done={done} current={isCurrent} locked={unreachable} />
+              {step.label}
+              {done ? <span className="sr-only">(done)</span> : null}
             </span>
           </li>
         );
@@ -110,16 +73,105 @@ export function WorkspaceStepper({
   );
 }
 
+function StepMark({
+  index,
+  done,
+  current,
+  locked,
+}: {
+  index: number;
+  done: boolean;
+  current: boolean;
+  locked: boolean;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex size-5 shrink-0 items-center justify-center rounded-full border text-xs",
+        done && "border-(--action-primary) bg-(--action-primary) text-(--action-primary-text)",
+        current && !done && "border-(--action-primary) text-(--status-available-fg)",
+        !done && !current && "border-(--border-default)",
+        locked && "border-(--border-default) text-(--text-subtle)",
+      )}
+    >
+      {done ? <Check className="size-3" /> : locked ? <Lock className="size-3" /> : index + 1}
+    </span>
+  );
+}
+
 /**
- * The workspace header: who this consultation is for, where it is, and the one
- * action that ends it.
+ * The same three steps as a phone's navigation (below `lg`).
  *
- * Identity now comes from the structured intake demographics (ADR follow-up to
- * the vitals work): `patientName` when the booking carries one, plus an age
- * derived from the recorded birth date and the recorded sex. Each piece is
- * shown only when the patient actually supplied it — with no name the header
- * falls back to the chief complaint and the consultation reference, exactly as
- * it did before those fields existed on the contract.
+ * On a phone each step is its own screen, and this is how the doctor moves
+ * between them: three 44px segments, one tap each, the one on screen filled.
+ * A finished step carries a check. Deliver stays tappable before the
+ * Assessment is confirmed so the tap can explain why it is not open yet,
+ * rather than being a dead, greyed-out button.
+ */
+export function PhoneStepTabs({
+  view,
+  phase,
+  deliverLocked,
+  onSelect,
+  className,
+}: {
+  /** The step on screen. */
+  view: WorkspacePhase;
+  /** How far the consultation actually is. */
+  phase: WorkspacePhase;
+  deliverLocked: boolean;
+  onSelect: (view: WorkspacePhase) => void;
+  className?: string;
+}) {
+  const phaseIndex = PHASES.findIndex((step) => step.id === phase);
+
+  return (
+    <nav aria-label="Post-consultation steps" className={cn("w-full", className)}>
+      <ol className="grid grid-cols-3 gap-1 rounded-xl bg-(--surface-warm-soft) p-1">
+        {PHASES.map((step, index) => {
+          const selected = step.id === view;
+          const done = index < phaseIndex;
+          const locked = step.id === "deliver" && deliverLocked;
+          return (
+            <li key={step.id}>
+              <button
+                type="button"
+                data-step={step.id}
+                aria-current={selected ? "step" : undefined}
+                aria-disabled={locked || undefined}
+                onClick={() => onSelect(step.id)}
+                className={cn(
+                  "flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg px-1 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-(--focus-ring) focus-visible:outline-none",
+                  selected
+                    ? "bg-(--surface-card) text-(--text-heading) shadow-[0_1px_2px_rgb(7_73_114/0.12)]"
+                    : locked
+                      ? "text-(--text-subtle)"
+                      : "text-(--text-muted) active:bg-(--surface-card)/60",
+                )}
+              >
+                <StepMark index={index} done={done} current={selected} locked={locked} />
+                {step.label}
+                {done ? <span className="sr-only">(done)</span> : null}
+                {locked ? <span className="sr-only">(opens after you confirm the assessment)</span> : null}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/**
+ * The workspace header: who this consultation is for, where it stands, and
+ * the actions that apply to the whole consultation.
+ *
+ * Desktop: one row, identity on the left, progress and actions on the right.
+ * Phone: identity with Intake and ER on the first row, recorded allergies on
+ * their own full-width line (never truncated into a chip), then the three
+ * step tabs. The tabs step aside while the keyboard is up, so a note being
+ * typed is not squeezed between two sticky bars; identity and allergies stay.
  */
 export function WorkspaceHeader({
   consultationId,
@@ -130,9 +182,11 @@ export function WorkspaceHeader({
   allergies,
   phase,
   blocked,
-  statusLabel,
-  statusTone,
+  view,
+  deliverLocked,
+  onSelectView,
   actions,
+  phoneActions,
 }: {
   consultationId: string;
   chiefComplaint?: string;
@@ -142,104 +196,70 @@ export function WorkspaceHeader({
   age?: number;
   /** Human-readable sex label, e.g. "Male". */
   sex?: string;
-  /**
-   * The patient's recorded allergies, as free text, when it is something a
-   * physician should be warned about rather than an asserted "None". Shown as
-   * a persistent high-priority tag so it stays visible no matter which SOAP
-   * card or patient-rail tab is in view — it previously lived inside the
-   * Objective vitals card, where it read as one more reading rather than a
-   * standing warning.
-   */
+  /** Recorded allergies worth warning about; omitted for an asserted "None". */
   allergies?: string;
   phase: WorkspacePhase;
   blocked?: boolean;
-  statusLabel: string;
-  statusTone: "active" | "danger" | "done";
+  /** The phone screen currently shown. */
+  view: WorkspacePhase;
+  deliverLocked: boolean;
+  onSelectView: (view: WorkspacePhase) => void;
+  /** Desktop actions, beside the stepper. */
   actions?: React.ReactNode;
+  /** Phone actions, on the identity row. */
+  phoneActions?: React.ReactNode;
 }) {
-  const name = patientName?.trim();
-  const heading = name || chiefComplaint?.trim() || "Post-consultation";
-  const formattedAge =
-    typeof age === "number" ? (age === 0 ? "<1 y/o (infant)" : `${age} y/o`) : null;
-  const identityParts = [
-    formattedAge,
-    sex?.trim() || null,
-    `Konsulta #${consultationId}`,
-  ].filter(Boolean);
-
   return (
     <header
       data-slot="workspace-header"
-      // Sticky below `lg`: on a phone the page is one long column, and the
-      // patient's identity, allergies and the stepper must not scroll away
-      // while a prescription is being written further down.
-      className="flex w-full max-w-full min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-xs max-lg:sticky max-lg:top-0 max-lg:z-30 max-lg:pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4 sm:py-3 md:px-6"
+      className="flex w-full max-w-full min-w-0 flex-col gap-2 border-b border-(--border-subtle) bg-(--surface-card) px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 max-lg:sticky max-lg:top-0 max-lg:z-30 sm:px-4 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4 lg:px-6 lg:py-2.5"
     >
-      <div className="flex min-w-0 flex-1 sm:flex-initial items-center gap-2.5 sm:gap-3">
+      <div className="flex min-w-0 items-center gap-2 lg:flex-1 lg:gap-3">
         <Link
           href="/doctor/history"
           aria-label="Back to consultation history"
-          className="flex size-11 sm:size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-body) transition-colors hover:bg-(--surface-warm-soft)"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl text-(--text-body) transition-colors hover:bg-(--surface-warm-soft) lg:size-9 lg:border lg:border-(--border-default)"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-5 lg:size-4" />
         </Link>
-        <span
-          aria-hidden
-          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-(--surface-brand) text-xs sm:text-sm font-bold text-(--text-on-brand)"
-        >
-          {name ? initials(name) : <Stethoscope className="size-4.5 sm:size-5" />}
-        </span>
-        <div className="flex min-w-0 flex-col">
-          <h1 className="truncate font-display text-base sm:text-lg font-bold text-(--text-heading)">
-            {heading}
-          </h1>
-          <p className="truncate text-[11px] sm:text-xs font-semibold text-(--text-muted)">
-            {name ? identityParts.join(" · ") : `#${consultationId}`}
-          </p>
-        </div>
-        <span
-          data-slot="workspace-status"
-          className={cn(
-            "ml-1 hidden sm:flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold",
-            statusTone === "active" && "bg-(--status-available-bg) text-(--status-available-fg)",
-            statusTone === "danger" && "bg-(--danger-bg) text-(--danger-fg)",
-            statusTone === "done" && "bg-(--gray-bg) text-(--gray-fg)",
-          )}
-        >
-          {statusTone === "danger" ? (
-            <ShieldAlert className="size-3.5" />
-          ) : (
-            <Check className="size-3.5" />
-          )}
-          {statusLabel}
-        </span>
-        {allergies ? (
-          <span
-            data-slot="header-allergy-tag"
-            className="hidden md:flex shrink-0 items-center gap-1.5 rounded-full border border-(--danger-border) bg-(--danger-bg) px-2.5 py-0.5 text-xs font-bold text-(--danger-fg)"
-          >
-            <AlertTriangle className="size-3.5 shrink-0" />
-            Allergies: {allergies}
-          </span>
-        ) : null}
+
+        <PatientSafetyStrip
+          className="min-w-0 flex-1"
+          name={patientName}
+          fallbackTitle={chiefComplaint}
+          age={age}
+          sex={sex}
+          reference={`Konsulta #${consultationId}`}
+          allergies={allergies}
+          hideAvatarBelowLg
+          allergiesClassName="max-lg:hidden"
+        />
+
+        {phoneActions ? <div className="flex shrink-0 items-center gap-1.5 lg:hidden">{phoneActions}</div> : null}
       </div>
 
       {allergies ? (
-        // The `md+` tag above sits inside the identity row; on phones there is
-        // no room there, so the same warning gets its own full-width line.
         <p
           data-slot="header-allergy-line"
-          className="flex basis-full items-center gap-1.5 rounded-lg border border-(--danger-border) bg-(--danger-bg) px-2.5 py-1 text-xs font-bold text-(--danger-fg) md:hidden"
+          className="flex items-start gap-1.5 rounded-lg border border-(--danger-border)/50 bg-(--danger-bg) px-3 py-1.5 text-sm font-bold text-(--danger-fg) lg:hidden"
         >
-          <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span className="min-w-0">Allergies: {allergies}</span>
         </p>
       ) : null}
 
-      <div className="flex min-w-0 shrink-0 items-center gap-2.5 max-sm:w-full max-sm:justify-between sm:gap-3 lg:gap-4">
+      <div className="flex min-w-0 items-center justify-end gap-4 max-lg:hidden">
         <WorkspaceStepper phase={phase} blocked={blocked} />
         {actions}
       </div>
+
+      <PhoneStepTabs
+        className="lg:hidden max-lg:group-has-[textarea:focus]/ws:hidden max-lg:group-has-[input:focus]/ws:hidden"
+        view={view}
+        phase={phase}
+        deliverLocked={deliverLocked}
+        onSelect={onSelectView}
+      />
     </header>
   );
 }

@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
-import type { DoctorSignatureSpecimen } from "@/features/doctor/lib/api/kyc";
 import { ClinicalDocumentSheet } from "./ClinicalDocumentSheet";
 import type { ClinicalDocumentArtifact } from "./types";
 import { OUTPUT_LABELS } from "../postConsultation/workspacePhase";
@@ -19,9 +18,13 @@ interface DocumentSheetModalProps {
   onOpenChange: (open: boolean) => void;
   artifact: ClinicalDocumentArtifact | undefined;
   intake?: BookingIntakeForm | null;
-  specimen?: DoctorSignatureSpecimen | undefined;
+  /** The patient's own name, for the patient's view. */
+  patientName?: string;
   doctorName?: string;
   isHistoricalArchive?: boolean;
+  doctorSpecialty?: string;
+  doctorLicenseNumber?: string;
+  doctorPtrNumber?: string;
 }
 
 export function DocumentSheetModal({
@@ -29,9 +32,12 @@ export function DocumentSheetModal({
   onOpenChange,
   artifact,
   intake,
-  specimen,
+  patientName,
   doctorName,
   isHistoricalArchive = false,
+  doctorSpecialty,
+  doctorLicenseNumber,
+  doctorPtrNumber,
 }: DocumentSheetModalProps) {
   if (!artifact) return null;
 
@@ -41,7 +47,7 @@ export function DocumentSheetModal({
 
   const docTitle = OUTPUT_LABELS[artifact.outputType] || "Clinical Document";
   const isDraft = artifact.lifecycleStatus === "generated";
-  const patientName = intake?.patientName || "—";
+  const headerPatientName = patientName || intake?.patientName || "—";
   const caseId = artifact.consultationId || intake?.bookingId || "—";
 
   return (
@@ -50,8 +56,10 @@ export function DocumentSheetModal({
         showCloseButton={false}
         className={cn(
           "!fixed !top-1/2 !left-1/2 !-translate-x-1/2 !-translate-y-1/2",
-          "!w-[96vw] !max-w-6xl !h-[92vh] !max-h-[94vh]",
-          "p-0 gap-0 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl flex flex-col z-50 text-slate-100",
+          // Full screen on a phone; a framed lightbox from sm up.
+          "!w-full !max-w-none !h-[100dvh] !max-h-[100dvh] rounded-none",
+          "sm:!w-[96vw] sm:!max-w-6xl sm:!h-[92vh] sm:!max-h-[94vh] sm:rounded-2xl",
+          "p-0 gap-0 overflow-hidden border border-slate-700/80 bg-slate-900 shadow-2xl flex flex-col z-50 text-slate-100",
         )}
       >
         <style
@@ -93,20 +101,21 @@ export function DocumentSheetModal({
         />
 
         {/* Top Professional Inspector Toolbar */}
-        <header className="h-14 shrink-0 bg-slate-900 border-b border-slate-800 px-5 flex items-center justify-between z-10 select-none">
+        <header className="h-14 shrink-0 bg-slate-900 border-b border-slate-800 px-3 sm:px-5 flex items-center justify-between gap-2 z-10 select-none pt-[env(safe-area-inset-top,0px)] box-content">
           {/* Left: Document Info */}
+          {/* On a phone only the title stays: the paper itself shows the status and patient. */}
           <div className="flex items-center gap-3 min-w-0">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--navy-700) text-white shadow-xs">
+            <span className="hidden sm:flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--navy-700) text-white shadow-xs">
               <FileText className="size-4 text-(--teal-700)" />
             </span>
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
                 <DialogTitle className="text-sm font-bold text-white tracking-tight truncate">
                   {docTitle}
                 </DialogTitle>
                 <span
                   className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                    "hidden sm:inline text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap",
                     isDraft
                       ? "bg-red-950/80 text-red-400 border border-red-800/60"
                       : isHistoricalArchive
@@ -121,8 +130,8 @@ export function DocumentSheetModal({
                       : "OFFICIAL RECORD"}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                Patient: <span className="text-slate-200 font-medium">{patientName}</span> · Case ID: <span className="font-mono text-slate-300">{caseId}</span>
+              <p className="hidden sm:block text-[11px] text-slate-400 truncate mt-0.5">
+                Patient: <span className="text-slate-200 font-medium">{headerPatientName}</span> · Case ID: <span className="font-mono text-slate-300">{caseId}</span>
               </p>
             </div>
           </div>
@@ -134,9 +143,10 @@ export function DocumentSheetModal({
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               type="button"
+              variant="ghost"
               onClick={handlePrint}
               className="bg-(--teal-700) hover:bg-(--teal-600) text-white font-semibold text-xs h-8.5 px-3.5 gap-2 rounded-lg shadow-sm cursor-pointer transition-all"
             >
@@ -159,7 +169,7 @@ export function DocumentSheetModal({
         </header>
 
         {/* Document Lightbox Canvas */}
-        <div className="flex-1 min-h-0 bg-slate-900 overflow-y-auto overflow-x-hidden p-2.5 sm:p-6 md:p-10 flex justify-center items-start">
+        <div className="flex-1 min-h-0 bg-slate-900 overflow-y-auto overflow-x-hidden p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6 md:p-10 flex justify-center items-start">
           <div className="w-full max-w-[800px] flex flex-col items-center">
             {/* Historical Archive Notice Banner */}
             {isHistoricalArchive && (
@@ -177,17 +187,21 @@ export function DocumentSheetModal({
               </div>
             )}
 
-            {/* White Physical Paper Document */}
+            {/* White Physical Paper Document. A size container: the sheet lays out by
+                its own width, so a phone gets a readable column while print keeps the page. */}
             <div
               id="printable-document-sheet"
-              className="w-full bg-white text-slate-900 rounded-xs shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden"
+              className="@container w-full bg-white text-slate-900 rounded-xs shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden"
             >
               <ClinicalDocumentSheet
                 artifact={artifact}
                 intake={intake}
-                specimen={specimen}
+                patientName={patientName}
                 doctorName={doctorName}
-                className="p-4 sm:p-8 md:p-12"
+                doctorSpecialty={doctorSpecialty}
+                doctorLicenseNumber={doctorLicenseNumber}
+                doctorPtrNumber={doctorPtrNumber}
+                className="p-5 @lg:p-8 @xl:p-12"
               />
             </div>
 

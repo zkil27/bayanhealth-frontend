@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { buildRebookingUrl } from "../../lib/rebookingUrl";
 import { Booking } from "../../types/booking.types";
 import { BrandCtaButton } from "../BrandUI";
+import { DoctorProfileLink } from "../DoctorProfileLink";
 
 /** Format minor units as a currency amount, or return null when unpriced. */
 function formatAmount(amountCents?: number, currency?: string): string | null {
@@ -195,6 +196,8 @@ export function CompletedStep({ booking }: { booking: Booking }) {
           </p>
         </div>
       </div>
+
+      <DoctorProfileLink doctorId={booking.doctorId} className="mt-2" />
     </div>
   );
 }

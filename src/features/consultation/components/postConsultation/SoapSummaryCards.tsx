@@ -19,24 +19,24 @@ import type {
 } from "@/features/doctor/lib/api/bookingIntake";
 
 /**
- * The read-only Subjective / Objective strip from the post-consult design (W1).
+ * The patient's own intake, read-only, as it appears inside the Subjective and
+ * Objective sections of the workspace.
  *
- * Both cards are context the physician reads while writing the Assessment — they
- * never write back here, so nothing in this file is editable. The Objective card
- * shows only the vitals the patient actually recorded at intake: an unrecorded
- * reading renders as "—", never a defaulted or invented number, matching the
- * no-fabrication rule the patient-details panel already keeps.
+ * This used to be a separate two-column strip above a separate "Your notes"
+ * card, so S and O each appeared twice on the page under the same letter. Now
+ * each SOAP section carries the patient's record at the top (`SubjectiveIntake`,
+ * `ObjectiveIntake`) and the physician's own words beneath it.
  *
- * Allergies used to render here as a warning pill inside vitals — clinically the
- * wrong place, since an allergy is not a vital sign and a physician scanning
- * Objective for the day's readings could miss it entirely. It now lives as a
- * persistent tag in the workspace header (`WorkspaceHeader`), visible regardless
- * of which SOAP card or patient-rail tab is in view.
+ * No fabrication: an unrecorded reading renders as "—", never a defaulted
+ * number. Allergies are not shown here; an allergy is not a vital sign and
+ * lives in the persistent patient banner (`PatientSafetyStrip`).
  */
+type HighlightTone = "normal" | "attention" | "danger";
+
 interface ClinicalHighlight {
-  icon?: ReactNode;
+  icon?: ComponentType<{ className?: string }>;
   label: string;
-  tone?: "normal" | "warning" | "critical";
+  tone: HighlightTone;
 }
 
 function getClinicalHighlights(
@@ -49,182 +49,116 @@ function getClinicalHighlights(
   const safetyScreen = details?.safetyScreen;
   const highlights: ClinicalHighlight[] = [];
 
-  if (symptomReview?.onset?.trim()) {
-    highlights.push({
-      icon: <Clock className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
-      label: `Onset: ${symptomReview.onset.trim()}`,
-      tone: "normal",
-    });
-  }
-
-  if (symptomReview?.characteristics?.trim()) {
-    highlights.push({
-      icon: <Activity className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
-      label: symptomReview.characteristics.trim(),
-      tone: "normal",
-    });
-  }
-
-  if (symptomReview?.location?.trim()) {
-    highlights.push({
-      icon: <MapPin className="size-3 text-(--teal-700) dark:text-(--teal-400) shrink-0" />,
-      label: symptomReview.location.trim(),
-      tone: "normal",
-    });
-  }
-
-  if (safetyScreen?.feverDays && safetyScreen.feverDays > 0) {
-    highlights.push({
-      icon: <Thermometer className="size-3 text-amber-700 dark:text-amber-400 shrink-0" />,
-      label: `Fever: ${safetyScreen.feverDays}d`,
-      tone: "warning",
-    });
-  }
-
   if (safetyScreen?.chestPain === true) {
-    highlights.push({
-      icon: <TriangleAlert className="size-3 text-(--danger-fg) shrink-0" />,
-      label: "Chest pain reported",
-      tone: "critical",
-    });
+    highlights.push({ icon: TriangleAlert, label: "Chest pain reported", tone: "danger" });
   }
-
   if (safetyScreen?.dyspnea === true) {
-    highlights.push({
-      icon: <Wind className="size-3 text-amber-700 dark:text-amber-400 shrink-0" />,
-      label: "Dyspnea reported",
-      tone: "warning",
-    });
+    highlights.push({ icon: Wind, label: "Dyspnea reported", tone: "attention" });
   }
-
-  if (purpose?.complaintTags && purpose.complaintTags.length > 0) {
-    for (const tag of purpose.complaintTags.slice(0, 3)) {
-      highlights.push({
-        label: `#${tag.replace(/_/g, " ")}`,
-        tone: "normal",
-      });
-    }
+  if (safetyScreen?.feverDays && safetyScreen.feverDays > 0) {
+    highlights.push({ icon: Thermometer, label: `Fever ${safetyScreen.feverDays}d`, tone: "attention" });
+  }
+  if (symptomReview?.onset?.trim()) {
+    highlights.push({ icon: Clock, label: `Onset ${symptomReview.onset.trim()}`, tone: "normal" });
+  }
+  if (symptomReview?.characteristics?.trim()) {
+    highlights.push({ icon: Activity, label: symptomReview.characteristics.trim(), tone: "normal" });
+  }
+  if (symptomReview?.location?.trim()) {
+    highlights.push({ icon: MapPin, label: symptomReview.location.trim(), tone: "normal" });
+  }
+  for (const tag of purpose?.complaintTags?.slice(0, 3) ?? []) {
+    highlights.push({ label: tag.replace(/_/g, " "), tone: "normal" });
   }
 
   return highlights;
 }
 
-export function SoapSummaryCards({
-  intake,
-}: {
-  intake: BookingIntakeForm | null | undefined;
-}) {
-  const details = intake?.sections.details;
+const HIGHLIGHT_TONE: Record<HighlightTone, string> = {
+  normal: "border-(--border-subtle) bg-(--surface-card) text-(--text-body)",
+  attention: "border-(--attention-border)/40 bg-(--attention-bg) text-(--attention-fg)",
+  danger: "border-(--danger-border)/50 bg-(--danger-bg) text-(--danger-fg)",
+};
+
+function IntakeEmpty({ children }: { children: ReactNode }) {
+  return <p className="text-sm text-(--text-muted)">{children}</p>;
+}
+
+/** What the patient reported: chief complaint, flagged symptoms, their own words. */
+export function SubjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
   const purpose = intake?.sections.purpose;
-  const hasVitals = details?.vitals && hasAnyVital(details.vitals);
-  const clinicalHighlights = getClinicalHighlights(intake);
+  const highlights = getClinicalHighlights(intake);
+
+  if (intake === undefined) return <IntakeEmpty>Loading intake…</IntakeEmpty>;
+  if (!purpose?.chiefComplaint?.trim() && highlights.length === 0) {
+    return <IntakeEmpty>The patient did not submit a chief complaint.</IntakeEmpty>;
+  }
 
   return (
-    <div
-      data-slot="soap-summary-cards"
-      className="grid grid-cols-1 gap-3 rounded-[12px] border border-(--border-subtle) bg-(--surface-card) px-3.5 py-2.5 shadow-2xs divide-y divide-(--border-subtle) lg:grid-cols-2 lg:gap-4 lg:divide-y-0 lg:divide-x lg:divide-(--border-subtle)"
-    >
-      {/* S: Subjective */}
-      <div className="flex min-w-0 items-start gap-2.5 pb-2.5 lg:pb-0 lg:pr-2">
-        <span
-          aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
-        >
-          S
-        </span>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted) shrink-0">
-              Subjective:
-            </span>
-            {intake === undefined ? (
-              <span className="text-xs text-(--text-muted)">Loading intake…</span>
-            ) : !purpose?.chiefComplaint?.trim() ? (
-              <span className="text-xs text-(--text-muted) italic">No chief complaint submitted</span>
-            ) : (
-              <p
-                className="text-[13.5px] font-semibold text-(--text-heading) leading-snug"
-                title={purpose.chiefComplaint}
+    <div data-slot="subjective-intake" className="flex flex-col gap-2">
+      {purpose?.chiefComplaint?.trim() ? (
+        <p className="text-[15px] leading-snug font-semibold text-(--text-heading)">
+          {purpose.chiefComplaint}
+        </p>
+      ) : null}
+      {highlights.length > 0 ? (
+        <ul aria-label="Reported symptoms" className="flex flex-wrap gap-1.5">
+          {highlights.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <li
+                key={`${item.label}-${index}`}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium",
+                  HIGHLIGHT_TONE[item.tone],
+                )}
               >
-                {purpose.chiefComplaint}
-              </p>
-            )}
-          </div>
-
-          {/* Clinical Highlights from Intake Symptom Review */}
-          {clinicalHighlights.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              {clinicalHighlights.map((item, idx) => (
-                <span
-                  key={idx}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-none transition-colors",
-                    item.tone === "critical"
-                      ? "border-(--danger-border)/50 bg-(--danger-bg) text-(--danger-fg)"
-                      : item.tone === "warning"
-                        ? "border-amber-300/80 bg-amber-50/80 text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
-                        : "border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-body)",
-                  )}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {purpose?.patientVerbatim?.trim() ? (
-            <p
-              className="text-xs text-(--text-muted) italic leading-normal pl-0.5 line-clamp-1"
-              title={`Patient verbatim: "${purpose.patientVerbatim}"`}
-            >
-              &ldquo;{purpose.patientVerbatim}&rdquo;
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      {/* O: Objective */}
-      <div className="flex min-w-0 items-start gap-2.5 pt-2.5 lg:pt-0 lg:pl-4">
-        <span
-          aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-md bg-(--surface-brand-soft) text-xs font-bold text-(--navy-700) dark:text-(--navy-300) select-none"
-        >
-          O
-        </span>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
-              Objective Vitals
-            </span>
-          </div>
-          {intake === undefined ? (
-            <p className="text-xs text-(--text-muted)">Loading vitals…</p>
-          ) : hasVitals ? (
-            <div className="grid grid-cols-2 gap-1.5">
-              {VITALS.map((vital) => {
-                const vitalsData = details!.vitals as IntakeVitals;
-                const sanityFlag = vital.sanityCheck(vitalsData);
-                const clinicalTriage = vital.clinicalTriage(vitalsData);
-                return (
-                  <VitalTile
-                    key={vital.key}
-                    icon={vital.icon}
-                    label={vital.label}
-                    value={vital.format(vitalsData)}
-                    sanityFlag={sanityFlag}
-                    clinicalTriage={clinicalTriage}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-(--text-muted)">No vitals recorded for this consultation</p>
-          )}
-        </div>
-      </div>
+                {Icon ? <Icon className="size-3.5 shrink-0" /> : null}
+                {item.label}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {purpose?.patientVerbatim?.trim() ? (
+        <p className="text-sm text-(--text-muted) italic">&ldquo;{purpose.patientVerbatim}&rdquo;</p>
+      ) : null}
     </div>
   );
+}
+
+/** The vitals the patient recorded at intake, each flagged in words when abnormal. */
+export function ObjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
+  const vitals = intake?.sections.details?.vitals;
+
+  if (intake === undefined) return <IntakeEmpty>Loading vitals…</IntakeEmpty>;
+  if (!vitals || !hasAnyVital(vitals)) {
+    return <IntakeEmpty>No vitals were recorded for this consultation.</IntakeEmpty>;
+  }
+
+  return (
+    <ul
+      data-slot="objective-intake"
+      aria-label="Patient-recorded vitals"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+    >
+      {VITALS.map((vital) => (
+        <VitalTile
+          key={vital.key}
+          icon={vital.icon}
+          label={vital.label}
+          value={vital.format(vitals)}
+          sanityFlag={vital.sanityCheck(vitals)}
+          clinicalTriage={vital.clinicalTriage(vitals)}
+        />
+      ))}
+    </ul>
+  );
+}
+
+/** One line for a folded Subjective section. */
+export function subjectiveIntakeSummary(intake: BookingIntakeForm | null | undefined): string | undefined {
+  return intake?.sections.purpose?.chiefComplaint?.trim() || undefined;
 }
 
 type VitalSeverity = "normal" | "warning" | "critical" | "unverified";
@@ -233,6 +167,20 @@ interface ClinicalTriageResult {
   severity: VitalSeverity;
   label?: string;
 }
+
+const VITAL_TONE: Record<VitalSeverity, string> = {
+  normal: "border-(--border-subtle) bg-(--surface-card)",
+  warning: "border-(--attention-border)/50 bg-(--attention-bg)",
+  unverified: "border-dashed border-(--attention-border)/60 bg-(--surface-card)",
+  critical: "border-(--danger-border)/60 bg-(--danger-bg)",
+};
+
+const VITAL_FLAG_TEXT: Record<VitalSeverity, string> = {
+  normal: "text-(--text-muted)",
+  warning: "text-(--attention-fg)",
+  unverified: "text-(--attention-fg)",
+  critical: "text-(--danger-fg)",
+};
 
 function VitalTile({
   icon: Icon,
@@ -249,83 +197,38 @@ function VitalTile({
   /** Clinical status derived from standard diagnostic thresholds. */
   clinicalTriage?: ClinicalTriageResult;
 }) {
-  const isUnverified = Boolean(sanityFlag);
-  const severity: VitalSeverity = isUnverified
-    ? "unverified"
-    : clinicalTriage?.severity ?? "normal";
-  const flagText = isUnverified ? sanityFlag : clinicalTriage?.label;
-
-  const styleConfig: Record<
-    VitalSeverity,
-    {
-      container: string;
-      icon: string;
-      label: string;
-      value: string;
-      badge: string;
-    }
-  > = {
-    normal: {
-      container: "border-(--border-subtle) bg-(--surface-warm-soft)/60 text-(--text-heading)",
-      icon: "text-(--teal-700)",
-      label: "text-(--text-muted)",
-      value: "text-(--text-heading)",
-      badge: "",
-    },
-    warning: {
-      container:
-        "border-amber-300/90 bg-amber-50/90 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200 ring-1 ring-amber-300/50 shadow-2xs",
-      icon: "text-amber-700 dark:text-amber-400",
-      label: "text-amber-800 dark:text-amber-300",
-      value: "font-extrabold text-amber-950 dark:text-amber-100",
-      badge: "text-amber-800 dark:text-amber-300",
-    },
-    critical: {
-      container:
-        "border-(--danger-border)/50 bg-(--danger-bg) text-(--danger-fg) ring-1 ring-(--danger-border)/40 shadow-2xs",
-      icon: "text-(--danger-fg)",
-      label: "text-(--danger-fg)/90",
-      value: "font-extrabold text-(--danger-fg)",
-      badge: "text-(--danger-fg)",
-    },
-    unverified: {
-      container:
-        "border-dashed border-amber-400 bg-amber-50/60 text-amber-900 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-200 shadow-2xs",
-      icon: "text-amber-700 dark:text-amber-400",
-      label: "text-amber-800 dark:text-amber-300",
-      value: "font-semibold text-amber-950 dark:text-amber-100",
-      badge: "text-amber-800 dark:text-amber-300",
-    },
-  };
-
-  const style = styleConfig[severity];
+  const severity: VitalSeverity = sanityFlag ? "unverified" : clinicalTriage?.severity ?? "normal";
+  const flagText = sanityFlag ?? clinicalTriage?.label;
 
   return (
-    <div
+    <li
       data-slot="vital-tile"
       data-vital={label}
       data-severity={severity}
-      role={severity !== "normal" ? "status" : undefined}
       aria-label={`${label}: ${value}${flagText ? ` (${flagText})` : ""}`}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors",
-        style.container,
-      )}
+      className={cn("flex min-w-0 flex-col gap-0.5 rounded-xl border px-3 py-2", VITAL_TONE[severity])}
     >
-      <Icon className={cn("size-3.5 shrink-0", style.icon)} />
-      <span className={cn("text-[10px] font-bold uppercase tracking-wider", style.label)}>
-        {label}:
+      <span className="flex items-center gap-1.5 text-xs font-medium text-(--text-muted)">
+        <Icon className="size-3.5 shrink-0" />
+        {label}
       </span>
-      <span className={cn("text-xs sm:text-[13px] font-bold tabular-nums", style.value)}>
-        {value}
-      </span>
-      {flagText ? (
-        <span className={cn("flex items-center gap-0.5 text-[10px] font-bold tracking-tight", style.badge)}>
-          <TriangleAlert className="size-3 shrink-0" />
-          ({flagText})
+      <span className="flex flex-wrap items-baseline gap-x-1.5">
+        <span
+          className={cn(
+            "text-base font-bold tabular-nums",
+            severity === "critical" ? "text-(--danger-fg)" : "text-(--text-heading)",
+          )}
+        >
+          {value}
         </span>
-      ) : null}
-    </div>
+        {flagText ? (
+          <span className={cn("flex items-center gap-0.5 text-xs font-semibold", VITAL_FLAG_TEXT[severity])}>
+            <TriangleAlert className="size-3 shrink-0" aria-hidden />
+            {flagText}
+          </span>
+        ) : null}
+      </span>
+    </li>
   );
 }
 
@@ -452,6 +355,118 @@ const VITALS: ReadonlyArray<{
   },
 ];
 
+/**
+ * The recorded vitals as one line, e.g. "Temp 38.2°C, BP 120/80", for
+ * pre-filling the doctor's Objective and for the folded Objective summary.
+ * Unrecorded readings are left out rather than written as "—"; null when
+ * nothing was recorded.
+ */
+export function formatIntakeVitalsLine(vitals: IntakeVitals | undefined): string | null {
+  if (!vitals) return null;
+  const parts = VITALS.map((vital) => ({ label: vital.label, value: vital.format(vitals) }))
+    .filter(({ value }) => value !== NOT_RECORDED)
+    .map(({ label, value }) => `${label} ${value}`);
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
 function hasAnyVital(vitals: IntakeVitals): boolean {
   return Object.values(vitals).some((value) => typeof value === "number");
+}
+
+/* ── Folded-section summaries ─────────────────────────────────────────────── */
+
+const SUMMARY_TONE: Record<HighlightTone, string> = {
+  normal: "bg-(--surface-warm-soft) text-(--text-body)",
+  attention: "bg-(--attention-bg) text-(--attention-fg)",
+  danger: "bg-(--danger-bg) text-(--danger-fg)",
+};
+
+function severityTone(severity: VitalSeverity): HighlightTone {
+  if (severity === "critical") return "danger";
+  if (severity === "warning" || severity === "unverified") return "attention";
+  return "normal";
+}
+
+/**
+ * A folded Objective, as one chip per recorded vital: a muted label, a bold
+ * value, and the abnormal ones tinted and marked. Was one muted sentence
+ * ("Temp 38.2°C, BP 118/76, …") where a fever looked like every other number.
+ */
+export function ObjectiveSummary({
+  intake,
+  fallback,
+}: {
+  intake: BookingIntakeForm | null | undefined;
+  /** The doctor's own Objective line, when no vitals were recorded. */
+  fallback?: string;
+}) {
+  const vitals = intake?.sections.details?.vitals;
+  const items = vitals
+    ? VITALS.map((vital) => {
+        const value = vital.format(vitals);
+        const severity: VitalSeverity = vital.sanityCheck(vitals)
+          ? "unverified"
+          : vital.clinicalTriage(vitals)?.severity ?? "normal";
+        return { key: vital.key, label: vital.label, value, tone: severityTone(severity) };
+      }).filter((item) => item.value !== NOT_RECORDED)
+    : [];
+
+  if (items.length === 0) {
+    return <span className="min-w-0 truncate">{fallback ?? "No vitals recorded"}</span>;
+  }
+  return (
+    <>
+      {items.map((item) => (
+        <span
+          key={item.key}
+          data-slot="summary-vital"
+          className={cn(
+            "inline-flex shrink-0 items-baseline gap-1 rounded-md px-1.5 py-0.5",
+            SUMMARY_TONE[item.tone],
+          )}
+        >
+          <span className={cn("text-xs", item.tone === "normal" && "text-(--text-muted)")}>{item.label}</span>
+          <span className={cn("font-semibold tabular-nums", item.tone === "normal" && "text-(--text-heading)")}>
+            {item.value}
+          </span>
+          {item.tone !== "normal" ? <TriangleAlert className="size-3 shrink-0 self-center" aria-label="flagged" /> : null}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/**
+ * A folded Subjective: flagged symptoms first, as chips, so a red flag is
+ * never the part cut off by truncation; then the complaint in body color.
+ */
+export function SubjectiveSummary({
+  intake,
+  text,
+}: {
+  intake: BookingIntakeForm | null | undefined;
+  /** The doctor's first line, else the patient's chief complaint. */
+  text?: string;
+}) {
+  const flagged = getClinicalHighlights(intake).filter((item) => item.tone !== "normal");
+  return (
+    <>
+      {flagged.map((item, index) => {
+        const Icon = item.icon;
+        return (
+          <span
+            key={`${item.label}-${index}`}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
+              SUMMARY_TONE[item.tone],
+            )}
+          >
+            {Icon ? <Icon className="size-3 shrink-0" /> : null}
+            {item.label}
+          </span>
+        );
+      })}
+      {text ? <span className="min-w-0 truncate font-medium text-(--text-body)">{text}</span> : null}
+    </>
+  );
 }

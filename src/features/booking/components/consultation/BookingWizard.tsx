@@ -3,7 +3,7 @@
 import { StepsIndicator } from "./StepsIndicator";
 import { FindingStep } from "./FindingStep";
 import { IntakeStep } from "./IntakeStep";
-import { Video, X } from "lucide-react";
+import { Undo2, Video } from "lucide-react";
 import { useFinding } from "../../hooks/useFinding";
 import type { Booking } from "../../types/booking.types";
 import { useState } from "react";
@@ -56,7 +56,9 @@ export function BookingWizard({ booking }: BookingWizardProps) {
   const isReview = reviewStep !== null;
   const completedSteps = STEPS.map((_, i) => i < currentStepIndex);
   const handleStepClick = (stepIndex: number) => {
-    if (stepIndex < currentStepIndex) {
+    if (stepIndex === currentStepIndex) {
+      setReviewStep(null);
+    } else if (stepIndex < currentStepIndex) {
       setReviewStep(stepIndex);
     }
   };
@@ -114,16 +116,26 @@ export function BookingWizard({ booking }: BookingWizardProps) {
               : "rounded-[18px] p-4 lg:p-6",
           )}
         >
+          {/*
+            The way back used to be a small italic X, which demo patients did not
+            find: having tapped back to review the form, they believed they had
+            lost the waiting screen. The return is now the banner's primary action.
+          */}
           {isReview && (
-            <div className="mb-3 flex animate-in items-center justify-between gap-1 rounded-(--radius-md) border border-(--border-default) bg-(--surface-warm) px-3 py-1.5 text-[11px] text-(--text-muted) italic duration-300 fade-in">
-              <span>Reviewing a completed step</span>
+            <div
+              data-slot="wizard-review-banner"
+              className="mb-4 flex animate-in flex-col gap-3 rounded-[14px] border-2 border-(--action-primary) bg-(--surface-brand-soft) p-3.5 duration-300 fade-in sm:flex-row sm:items-center sm:justify-between"
+            >
+              <p className="text-[14px] font-bold text-(--text-heading)">
+                You&apos;re looking back at a finished step.
+              </p>
               <button
                 type="button"
-                aria-label="Close review"
                 onClick={handleCloseReview}
-                className="text-(--text-muted) not-italic hover:text-(--text-heading)"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-(--action-primary) px-4 text-[14px] font-bold text-white hover:bg-(--action-primary-hover)"
               >
-                <X className="size-3.5" />
+                <Undo2 className="size-4" aria-hidden />
+                Back to current step: {STEPS[currentStepIndex]?.label}
               </button>
             </div>
           )}

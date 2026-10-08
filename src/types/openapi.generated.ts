@@ -334,6 +334,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/bookings/{bookingId}/emergency-referral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tell the patient to go to an emergency room now
+         * @description The assigned doctor advises the patient to go to the nearest emergency room
+         *     (ADR-20261005-02). Sets `emergencyAdvisedAt` (first time only) and an optional
+         *     short note on the booking; the patient's app shows a red "go to the ER now"
+         *     alert and is pushed a booking hint over the user channel.
+         *
+         *     This is an instruction, not generated clinical content, so it needs no
+         *     Assessment and is never gated by the AI. The signed Clinical Referral the
+         *     patient brings with them (urgency `emergency`) is written separately.
+         *
+         *     **Required role**: `doctor` (the booking's assigned doctor; anyone else is `404`).
+         *     The booking must be `confirmed`, `in_progress` or `completed`.
+         *
+         *     **Idempotency**: Required.
+         *
+         */
+        post: operations["createEmergencyReferral"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/bookings/{bookingId}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my rating for a consultation
+         * @description The rating the patient gave this consultation, so the page can show it
+         *     instead of asking again. `404` when they have not rated it.
+         *
+         *     **Required role**: `patient` (own booking only; another patient's booking
+         *     is `404`).
+         *
+         */
+        get: operations["getConsultationRating"];
+        put?: never;
+        /**
+         * Rate a completed consultation
+         * @description The patient rates their doctor once the consultation is completed,
+         *     typically while waiting for their documents (10-02 demo). One rating
+         *     per booking; a second is `409 STATE_CONFLICT`.
+         *
+         *     The doctor's public average (`DoctorPublicSummary.ratingAverage`) is
+         *     updated in the same transaction. The comment is never public: it is
+         *     stored for admin review only, because free text can carry health
+         *     information (ADR-20261005-03).
+         *
+         *     **Required role**: `patient` (own booking only; another patient's booking
+         *     is `404`). The booking must be `completed` with an assigned doctor,
+         *     otherwise `409 STATE_CONFLICT`.
+         *
+         *     **Idempotency**: Required.
+         *
+         */
+        post: operations["createConsultationRating"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/bookings/{bookingId}/no-show": {
         parameters: {
             query?: never;
@@ -1240,6 +1316,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/consultations/{consultationId}/clinical-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the physician's own Subjective, Objective and Assessment notes
+         * @description Returns the notes the assigned physician wrote for this consultation, so the
+         *     post-consult workspace can show and edit them. `404` when none exist yet;
+         *     the workspace then pre-fills from the patient's intake.
+         *
+         *     Internal clinical documentation: never patient-visible, never sent to the
+         *     AI, never logged.
+         *
+         *     **Required role**: `doctor` (the consultation's assigned physician only).
+         *
+         */
+        get: operations["getConsultationClinicalNotes"];
+        /**
+         * Save the physician's own Subjective, Objective and Assessment notes
+         * @description Creates or replaces the physician's notes for this consultation (10-02 demo:
+         *     doctors need their own editable S and O, and their own Assessment, rather
+         *     than the patient's intake shown read-only).
+         *
+         *     One record per consultation. `expectedRevision` is `0` to create and the
+         *     current `revision` to replace; anything else is `409 STATE_CONFLICT`, so
+         *     two open tabs cannot silently overwrite each other.
+         *
+         *     Internal clinical documentation: never patient-visible, never sent to the
+         *     AI, never logged. Distinct from the confirmed Assessment's diagnosis, which
+         *     stays the gate for drafting (ADR-20260703-01).
+         *
+         *     **Required role**: `doctor` (the consultation's assigned physician only).
+         *
+         *     **Idempotency**: Required.
+         *
+         */
+        put: operations["putConsultationClinicalNotes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/patients/me/lab-orders": {
         parameters: {
             query?: never;
@@ -1424,7 +1547,13 @@ export interface paths {
         put?: never;
         /**
          * Send booking chat message
-         * @description HTTP fallback for sending chat messages. Message is persisted before any WebSocket delivery attempt.
+         * @description Send a chat message. The message is persisted before any WebSocket delivery attempt,
+         *     and clients send through this route even while connected (the socket is receive-only
+         *     in practice, since a socket send has no acknowledgement).
+         *
+         *     **Open only during the consultation** (ADR-20260930-02): chat is the fallback when a
+         *     camera or microphone fails. Before the doctor starts the consultation and after it
+         *     ends, this returns `409 STATE_CONFLICT`. The transcript stays readable afterwards.
          *
          *     **Write-before-emit**: DynamoDB write precedes realtime fan-out.
          *
@@ -1797,6 +1926,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List consultation ratings with their comments
+         * @description Every patient rating, newest first, optionally for one doctor
+         *     (ADR-20261005-03). The only place rating comments can be read; they are
+         *     never public. Ratings of 2 stars or fewer are worth following up.
+         *
+         *     **Required role**: `admin`
+         *
+         */
+        get: operations["adminListRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/notification-events": {
         parameters: {
             query?: never;
@@ -2098,6 +2252,39 @@ export interface paths {
          *
          */
         get: operations["verifyPrescription"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/public/documents/{verificationCode}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify a released CDS artifact's authenticity
+         * @description Public verification endpoint for any of the five patient-facing CDS artifacts
+         *     (Clinical Referral, Diagnostic Request, E-Prescription, Medical Certificate, Health
+         *     Guide) released via `POST /v1/cds/consultations/{consultationId}/outputs/{artifactId}/releases`
+         *     (ADR-20260927-01). Returns only verification status and non-PHI metadata — never a
+         *     patient name or clinical content.
+         *
+         *     Additive to, and independent of, the legacy `/v1/public/prescriptions/{verificationCode}/verify`
+         *     endpoint, which stays untouched. `plan` and `final_icd` are internal-only and never issue a
+         *     verification code, so a code for either never resolves here.
+         *
+         *     **Authentication**: None (public endpoint)
+         *
+         *     **PHI exposure**: None.
+         *
+         */
+        get: operations["verifyDocument"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2453,6 +2640,12 @@ export interface paths {
          *     `ROUTINE`. The transition clears only matching clinical red-flag/acknowledgment locks and may
          *     create the next immutable token-family epoch; it never issues a token or clears other locks.
          *
+         *     With `mode: physician_override` the assigned, confirming physician instead proceeds on their
+         *     own clinical judgment while the episode is still non-routine (ADR-20261005-01). The same fences
+         *     apply and the same locks clear; the override is recorded on the gate, bound to this episode and
+         *     assignment, so re-evaluating the unchanged clinical situation does not relock while any new
+         *     red flag does.
+         *
          *     **Required role**: `doctor`
          *
          *     **Assignment scope**: Currently assigned physician only; mismatch is concealed as `404`.
@@ -2529,14 +2722,134 @@ export interface paths {
          *     A consultation that does not exist, one the caller is not a participant in,
          *     and one with no released prescription all return the same `404`.
          *
-         *     This response is **not a dispensable prescription document**. It carries no
-         *     prescriber identity, licence number, or signature, and is not a verifiable
-         *     instrument; it is the patient's read of what their physician recorded.
+         *     A dispensable prescription document (ADR-20260926-01): the response
+         *     carries the prescribing doctor's `prescriberName`,
+         *     `prescriberLicenseNumber`, and `signature`, and the same artifact is
+         *     verifiable by a pharmacy through
+         *     `GET /v1/public/documents/{verificationCode}/verify`
+         *     (ADR-20260927-01) using the code encoded in the document's QR.
          *
          *     Never cached: responses carry `Cache-Control: no-store`.
          *
          */
         get: operations["getReleasedPrescription"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cds/consultations/{consultationId}/medical-certificate/released": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the released medical certificate for a consultation
+         * @description **Required role**: the consultation's own `patient`, or its assigned `doctor`.
+         *
+         *     Identical authorization and concealment rules to
+         *     `getReleasedPatientEducation`: returns the artifact **only** when it is
+         *     both `released` and `patientVisible` and not stale. A generated or
+         *     finalized-but-unreleased certificate is indistinguishable from absent —
+         *     the physician's release is the only event that makes it readable.
+         *
+         *     A consultation that does not exist, one the caller is not a participant in,
+         *     and one with no released medical certificate all return the same `404`.
+         *
+         *     A dispensable instrument (ADR-20260926-01): the response carries the
+         *     certifying doctor's `prescriberName`, `prescriberLicenseNumber`, and
+         *     `signature`, and the same artifact is verifiable through
+         *     `GET /v1/public/documents/{verificationCode}/verify`
+         *     (ADR-20260927-01) using the code encoded in the document's QR.
+         *
+         *     Never cached: responses carry `Cache-Control: no-store`.
+         *
+         */
+        get: operations["getReleasedMedicalCertificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cds/consultations/{consultationId}/diagnostic-request/released": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the released diagnostic request for a consultation
+         * @description **Required role**: the consultation's own `patient`, or its assigned `doctor`.
+         *
+         *     Identical authorization and concealment rules to
+         *     `getReleasedPatientEducation`: returns the artifact **only** when it is
+         *     both `released` and `patientVisible` and not stale. A generated or
+         *     finalized-but-unreleased diagnostic request is indistinguishable from
+         *     absent — the physician's release is the only event that makes it
+         *     readable.
+         *
+         *     A consultation that does not exist, one the caller is not a participant in,
+         *     and one with no released diagnostic request all return the same `404`.
+         *
+         *     Carries the issuing doctor's `prescriberName`,
+         *     `prescriberLicenseNumber`, and `signature` (ADR-20260930-01), the same
+         *     way a prescription does; a missing approved profile fails the read with
+         *     the same `404`. It is verifiable through
+         *     `GET /v1/public/documents/{verificationCode}/verify`
+         *     (ADR-20260927-01) using the code encoded in the document's QR.
+         *
+         *     Never cached: responses carry `Cache-Control: no-store`.
+         *
+         */
+        get: operations["getReleasedDiagnosticRequest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cds/consultations/{consultationId}/clinical-referral/released": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the released clinical referral for a consultation
+         * @description **Required role**: the consultation's own `patient`, or its assigned `doctor`.
+         *
+         *     Identical authorization and concealment rules to
+         *     `getReleasedPatientEducation`: returns the artifact **only** when it is
+         *     both `released` and `patientVisible` and not stale. A generated or
+         *     finalized-but-unreleased referral is indistinguishable from absent —
+         *     the physician's release is the only event that makes it readable.
+         *
+         *     A consultation that does not exist, one the caller is not a participant in,
+         *     and one with no released clinical referral all return the same `404`.
+         *
+         *     Carries the issuing doctor's `prescriberName`,
+         *     `prescriberLicenseNumber`, and `signature` (ADR-20260930-01), the same
+         *     way a prescription does; a missing approved profile fails the read with
+         *     the same `404`. It is verifiable through
+         *     `GET /v1/public/documents/{verificationCode}/verify`
+         *     (ADR-20260927-01) using the code encoded in the document's QR.
+         *
+         *     Never cached: responses carry `Cache-Control: no-store`.
+         *
+         */
+        get: operations["getReleasedClinicalReferral"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2658,14 +2971,21 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Generate a protected final ICD artifact
-         * @description Assessment-gated final ICD generation. **Required role**: `doctor`.
-         *     **Assignment scope**: Current assigned and confirming physician only; mismatch is `404`.
-         *     Fixed behavior is `200` fenced publication or `202` atomic async admission; all responses are
-         *     `no-store`, and denials perform zero inference and fallback calls.
+         * Retired Final ICD generation
+         * @deprecated
+         * @description Terminal retired route (ADR-20261006-02). The Final ICD is the physician's ICD-10 code,
+         *     confirmed with the Assessment (`icd10` on the confirmation and update requests); no model
+         *     proposes or writes one. Every request, including an empty request, is rejected with
+         *     `410 LEGACY_CDS_ROUTE_RETIRED`; no request body is accepted and no inference, fallback,
+         *     draft, or artifact side effect occurs. Existing `final_icd` artifacts stay readable in
+         *     output history.
+         *
+         *     **Required role**: `doctor`
+         *
+         *     **Assignment scope**: Not applicable; this route is terminally retired.
          *
          */
-        post: operations["createCdsFinalIcdGeneration"];
+        post: operations["rejectRetiredCdsFinalIcdGeneration"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2696,7 +3016,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/cds/consultations/{consultationId}/lab-request-generations": {
+    "/v1/cds/consultations/{consultationId}/diagnostic-request-generations": {
         parameters: {
             query?: never;
             header?: never;
@@ -2706,21 +3026,26 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Generate a protected laboratory-request artifact
-         * @description Assessment-gated laboratory-request generation. **Required role**: `doctor`.
+         * Generate a protected diagnostic-request artifact
+         * @description Assessment-gated diagnostic-request generation. **Required role**: `doctor`.
          *     **Assignment scope**: Current assigned and confirming physician only; mismatch is `404`.
          *     Fixed behavior is `200` fenced publication or `202` atomic async admission; all responses are
          *     `no-store`, and denials perform zero inference and fallback calls.
          *
+         *     Merges the former lab-request and imaging-request artifacts into one form carrying a
+         *     `modality` (ADR-20260924-02 item 3). Generating this artifact also creates the tracked
+         *     lab order (`CONSULT#<id>` / `LABORDER#<id>`), so the document and the patient's tracked
+         *     order can never drift apart (ADR-20260924-02 item 4).
+         *
          */
-        post: operations["createCdsLabRequestGeneration"];
+        post: operations["createCdsDiagnosticRequestGeneration"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/cds/consultations/{consultationId}/imaging-request-generations": {
+    "/v1/cds/consultations/{consultationId}/clinical-referral-generations": {
         parameters: {
             query?: never;
             header?: never;
@@ -2730,14 +3055,15 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Generate a protected imaging-request artifact
-         * @description Assessment-gated imaging-request generation. **Required role**: `doctor`.
-         *     **Assignment scope**: Current assigned and confirming physician only; mismatch is `404`.
-         *     Fixed behavior is `200` fenced publication or `202` atomic async admission; all responses are
-         *     `no-store`, and denials perform zero inference and fallback calls.
+         * Generate a protected clinical-referral artifact
+         * @description Assessment-gated clinical-referral generation (ADR-20260924-02 item 1, new). **Required
+         *     role**: `doctor`. **Assignment scope**: Current assigned and confirming physician only;
+         *     mismatch is `404`. Fixed behavior is `200` fenced publication or `202` atomic async
+         *     admission; all responses are `no-store`, and denials perform zero inference and fallback
+         *     calls.
          *
          */
-        post: operations["createCdsImagingRequestGeneration"];
+        post: operations["createCdsClinicalReferralGeneration"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2762,6 +3088,39 @@ export interface paths {
          *
          */
         post: operations["createCdsPatientEducationGeneration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cds/consultations/{consultationId}/physician-authored-outputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write a protected output yourself, without AI
+         * @description The assigned physician writes any of the seven output types themselves (ADR-20261005-01).
+         *     Assessment-first still holds: the session must be ended and the physician's own Assessment
+         *     confirmed. No gate token, catalogue eligibility, or routine red-flag evaluation is required, so
+         *     an uncatalogued diagnosis and a red-flag case can both be documented. The payload passes the
+         *     same closed per-type validation as a generated payload.
+         *
+         *     The result is a `generated` artifact with `source: physician`, unsigned and invisible to the
+         *     patient, that goes through the existing amendment, finalization and release transitions. A
+         *     Diagnostic Request also creates the patient's tracked lab order in the same transaction.
+         *
+         *     **Required role**: `doctor`
+         *
+         *     **Assignment scope**: Currently assigned and confirming physician only; mismatch is `404`.
+         *
+         */
+        post: operations["createCdsPhysicianAuthoredOutput"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2845,6 +3204,10 @@ export interface paths {
          *     assignment and confirmation ownership, effective freshness, policy activation, artifact/gate/
          *     release revisions, and release authorization. Only a finalized, non-stale, complete-provenance
          *     artifact is eligible. Release never substitutes for finalization.
+         *
+         *     Only the five patient-facing types are releasable (ADR-20260924-02). A `plan` or `final_icd`
+         *     artifact is internal: signing is its last step, and a release request for one returns `409`
+         *     `OUTPUT_TYPE_NOT_ELIGIBLE` with no change to the artifact.
          *
          *     **Required role**: `doctor`
          *
@@ -3506,6 +3869,18 @@ export interface components {
              */
             createdAt?: string;
         };
+        /**
+         * @description The service the patient chose when booking (teleconsult, a sick-leave
+         *     consult, or a fitness certificate), shown back to the patient and the
+         *     doctor. Distinct from `serviceType`, the coarse routing class.
+         *
+         *     Optional and absent on bookings created before it existed; clients treat
+         *     absent as `teleconsult`.
+         *
+         * @example fit-for-work
+         * @enum {string}
+         */
+        RequestedService: "teleconsult" | "sick-leave" | "fit-for-work" | "fit-for-travel" | "fit-for-climb" | "fit-for-school";
         CreateBookingRequest: {
             /**
              * @description Type of consultation service
@@ -3513,6 +3888,7 @@ export interface components {
              * @enum {string}
              */
             serviceType: "general" | "specialist" | "follow_up" | "emergency";
+            requestedService?: components["schemas"]["RequestedService"];
             /**
              * Format: date-time
              * @description Requested appointment time (must be in the future)
@@ -3807,6 +4183,16 @@ export interface components {
              * @enum {string}
              */
             serviceType: "general" | "specialist" | "follow_up" | "emergency";
+            requestedService?: components["schemas"]["RequestedService"];
+            /**
+             * Format: date-time
+             * @description When the assigned doctor told the patient to go to an emergency room
+             *     (ADR-20261005-02). Absent otherwise.
+             *
+             */
+            emergencyAdvisedAt?: string;
+            /** @description The doctor's short instruction with that advice, when given. */
+            emergencyNote?: string;
             /**
              * Format: date-time
              * @description Scheduled appointment time
@@ -4202,6 +4588,10 @@ export interface components {
         DoctorProfileUpsertRequest: {
             fullName: string;
             licenseNumber: string;
+            /** @description Philippine PTR (Professional Tax Receipt) number. Optional, same
+             *     validation and persistence pattern as `licenseNumber`.
+             *      */
+            ptrNumber?: string;
             specialty?: string;
             phoneNumber?: string;
             /** @description Doctor accepts on-demand matching (Slice 4) */
@@ -4506,6 +4896,7 @@ export interface components {
             bookingId: string;
             /** @enum {string} */
             serviceType: "general" | "specialist" | "follow_up" | "emergency";
+            requestedService?: components["schemas"]["RequestedService"];
             /** @enum {string} */
             channel: "video" | "audio" | "chat";
             /** Format: date-time */
@@ -4563,6 +4954,38 @@ export interface components {
             fullName: string;
             specialty?: string;
             onDemandAvailable?: boolean;
+            /** @description Average patient rating, one decimal place. Present only once the
+             *     doctor has at least 5 ratings, so one or two early ratings never
+             *     define a doctor publicly (ADR-20261005-03).
+             *      */
+            ratingAverage?: number;
+            /** @description Number of ratings behind `ratingAverage`; present with it. */
+            ratingCount?: number;
+        };
+        EmergencyReferralRequest: {
+            /** @description Optional short instruction shown to the patient with the alert. */
+            note?: string;
+        };
+        ConsultationRating: {
+            bookingId: string;
+            stars: number;
+            /** @description Visible to the patient who wrote it and to admins only. */
+            comment?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AdminConsultationRating: {
+            bookingId: string;
+            doctorId: string;
+            doctorName?: string;
+            stars: number;
+            comment?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ConsultationRatingCreateRequest: {
+            stars: number;
+            comment?: string;
         };
         DoctorProfile: {
             doctorId: string;
@@ -4570,6 +4993,10 @@ export interface components {
             email: string;
             fullName: string;
             licenseNumber: string;
+            /** @description Philippine PTR (Professional Tax Receipt) number. Optional, same
+             *     validation and persistence pattern as `licenseNumber`.
+             *      */
+            ptrNumber?: string;
             specialty?: string;
             phoneNumber?: string;
             onDemandAvailable?: boolean;
@@ -4680,11 +5107,11 @@ export interface components {
         BookingMessageType: "text";
         /** @description One chat message on a booking.
          *
-         *     `sessionId` and `consultationId` are **optional** because chat opens before
-         *     the consultation starts (ADR-20260809-05). A message sent while the booking
-         *     is `confirmed` — after a doctor is assigned, before the consultation is
-         *     started — belongs to the booking and to no session, because no session
-         *     exists yet. Messages sent during the consultation carry both.
+         *     `sessionId` and `consultationId` are **optional** because chat used to open
+         *     before the consultation started (ADR-20260809-05): a message sent while the
+         *     booking was `confirmed` belongs to the booking and to no session. Since
+         *     ADR-20260930-02 new messages can be sent only during the consultation and
+         *     carry both, but earlier pre-consult messages still read back without them.
          *
          *     A client must therefore treat both as absent-capable and key the
          *     conversation on `bookingId`, which every message has.
@@ -4737,9 +5164,9 @@ export interface components {
         BookingStatePresence: components["schemas"]["BookingPresenceResponse"] & {
             activeConnections: number;
         };
-        /** @description `session` is absent before the consultation starts. Chat is available in
-         *     that phase, so this response is no longer a proxy for "the consultation is
-         *     live" — read `booking.status` for that (ADR-20260809-05).
+        /** @description `session` is absent before the consultation starts. Read `booking.status` to
+         *     tell whether the consultation is live; chat is sendable only while it is
+         *     `in_progress` (ADR-20260930-02).
          *      */
         BookingStateResponse: {
             booking: components["schemas"]["Booking"];
@@ -4926,6 +5353,29 @@ export interface components {
             targetDate: string;
             reason: string;
         };
+        ClinicalNotes: {
+            consultationId: string;
+            /** @description The physician's Subjective, in their own words. Empty when not written. */
+            subjective: string;
+            /** @description The physician's Objective findings. Empty when not written. */
+            objective: string;
+            /** @description The physician's reasoning behind the Assessment. Empty when not written. */
+            assessmentNotes: string;
+            revision: number;
+            /** @description The physician who last saved the notes. */
+            authoredByActorId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ClinicalNotesWriteRequest: {
+            subjective: string;
+            objective: string;
+            assessmentNotes: string;
+            /** @description `0` to create; otherwise the `revision` being replaced. */
+            expectedRevision: number;
+        };
         /**
          * @description `pending_upload` — the physician has ordered the test; the patient has
          *     not uploaded a result. `under_review` — the patient has uploaded a
@@ -5053,6 +5503,21 @@ export interface components {
             /** @description Prescriber name shown on the prescription */
             issuerName?: string;
         };
+        /** @description Public, non-PHI verification result for one of the five patient-facing CDS artifacts
+         *     (ADR-20260927-01). Mirrors `PrescriptionVerificationResult`'s style exactly; carries an
+         *     `outputType` because, unlike the legacy prescription-only endpoint, this one endpoint
+         *     serves five artifact kinds.
+         *      */
+        DocumentVerificationResult: {
+            verified: boolean;
+            outputType?: components["schemas"]["CdsProtectedOutputType"];
+            /** Format: date-time */
+            issuedAt?: string;
+            /** Format: date-time */
+            validUntil?: string;
+            /** @description Releasing doctor's name. */
+            issuerName?: string;
+        };
         ConsultationDocumentExportUrlResponse: {
             /**
              * Format: uri
@@ -5132,6 +5597,28 @@ export interface components {
             confirmedEditableAssessmentDigest: components["schemas"]["CdsDigest"];
             confirmedAssessmentDigest: components["schemas"]["CdsDigest"];
             assessmentVersion: number;
+            /** @description The physician's ICD-10 code for the confirmed diagnosis (ADR-20261006-02). Present on every
+             *     Assessment confirmed or updated after the Final ICD moved into the Assessment; absent only on
+             *     older confirmations, which must be updated (not re-attested) to add one.
+             *      */
+            icd10?: components["schemas"]["CdsIcd10Code"];
+        };
+        /** @description A WHO ICD-10 code chosen by the physician. No model ever proposes or writes one. */
+        CdsIcd10Code: {
+            /** @constant */
+            system: "ICD-10";
+            code: string;
+            description: string;
+        };
+        /** @description Prefill from the reviewed diagnosis-to-ICD-10 map for the editable diagnosis's catalog entry.
+         *     The physician confirms or edits it; absent for an unmapped manual diagnosis.
+         *      */
+        CdsIcd10Suggestion: {
+            /** @constant */
+            system: "ICD-10";
+            code: string;
+            description: string;
+            mapVersion: string;
         };
         CdsAssessmentState: {
             consultationId: string;
@@ -5146,6 +5633,7 @@ export interface components {
             editableCatalogEntryId?: string;
             editableCatalogVersion?: string;
             editableGenerationEligibility?: components["schemas"]["CdsGenerationEligibility"];
+            editableIcd10Suggestion?: components["schemas"]["CdsIcd10Suggestion"];
             confirmed?: components["schemas"]["CdsConfirmedAssessment"];
             assessmentVersion: number;
             assignmentRevision: number;
@@ -5183,6 +5671,8 @@ export interface components {
             consultationId: string;
             /** @description Must equal the authenticated Cognito `sub`. */
             physicianActorId: string;
+            /** @description The physician's code for the editable diagnosis; prefilled from `editableIcd10Suggestion` when present. */
+            icd10: components["schemas"]["CdsIcd10Code"];
             expectedAssessmentVersion: number;
             expectedEditableAssessmentRevision: number;
             expectedEditableAssessmentDigest: components["schemas"]["CdsDigest"];
@@ -5200,6 +5690,10 @@ export interface components {
             changeType: "update" | "reattest";
             /** @description For re-attestation, must exactly equal the current confirmed diagnosis. */
             diagnosis: string;
+            /** @description For re-attestation, the code must exactly equal the current confirmed code. A changed code is
+             *     an Assessment update, with the same staleness rules as a changed diagnosis.
+             *      */
+            icd10: components["schemas"]["CdsIcd10Code"];
             expectedAssessmentVersion: number;
             expectedConfirmedAssessmentDigest: components["schemas"]["CdsDigest"];
             expectedAssignmentRevision: number;
@@ -5393,6 +5887,21 @@ export interface components {
             expectedPolicyActivationRevision: number;
             /** @constant */
             acknowledged: true;
+            /**
+             * @description `routine_reevaluation` (default) clears the episode only after a fresh
+             *     routine evaluation. `physician_override` is the assigned physician
+             *     proceeding on their own clinical judgment while the episode is still
+             *     non-routine (ADR-20261005-01); `overrideReason` is then required.
+             *
+             * @default routine_reevaluation
+             * @enum {string}
+             */
+            mode: "routine_reevaluation" | "physician_override";
+            /** @description Required with `physician_override`: why the physician is proceeding.
+             *     Stored on the safety episode for clinical review; never logged or sent
+             *     to the audit outbox.
+             *      */
+            overrideReason?: string;
         };
         CdsRedFlagAcknowledgmentResult: {
             consultationId: string;
@@ -5404,7 +5913,7 @@ export interface components {
             remainingLockReasons: components["schemas"]["CdsGateLockReason"][];
         };
         /** @enum {string} */
-        CdsProtectedOutputType: "plan" | "prescription" | "final_icd" | "medical_certificate" | "lab_request" | "imaging_request" | "patient_education";
+        CdsProtectedOutputType: "plan" | "prescription" | "final_icd" | "medical_certificate" | "diagnostic_request" | "clinical_referral" | "patient_education";
         CdsProtectedGenerationRequest: {
             /** @description Required assertion; must exactly equal the path `consultationId`. */
             consultationId: string;
@@ -5417,10 +5926,9 @@ export interface components {
         };
         CdsPlanGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
         CdsPrescriptionGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
-        CdsFinalIcdGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
         CdsMedicalCertificateGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
-        CdsLabRequestGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
-        CdsImagingRequestGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
+        CdsDiagnosticRequestGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
+        CdsClinicalReferralGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
         CdsPatientEducationGenerationRequest: components["schemas"]["CdsProtectedGenerationRequest"];
         CdsPlanPayload: {
             summary: string;
@@ -5435,6 +5943,10 @@ export interface components {
             frequency: string;
             duration: string;
             instructions: string;
+            /** @description Number of refills authorized. Absent means not specified by the
+             *     prescriber, not zero.
+             *      */
+            refills?: number;
         };
         CdsPrescriptionPayload: {
             medications: components["schemas"]["CdsPrescriptionMedication"][];
@@ -5454,26 +5966,52 @@ export interface components {
             /** Format: date */
             validThrough: string;
         };
-        CdsLabRequestItem: {
-            testName: string;
+        /** @description One ordered item on a Diagnostic Request. `testName` is used for
+         *     `lab`/`urinalysis`/`other` items; `studyName`/`bodyRegion` are used for
+         *     `imaging` items. `rationale` and `priority` are required on every item
+         *     regardless of modality — they are the clinically load-bearing fields
+         *     the safety harness and the frontend depend on.
+         *      */
+        CdsDiagnosticRequestItem: {
+            testName?: string;
+            studyName?: string;
+            bodyRegion?: string;
             rationale: string;
             /** @enum {string} */
             priority: "routine" | "urgent";
         };
-        CdsLabRequestPayload: {
-            tests: components["schemas"]["CdsLabRequestItem"][];
-            instructions?: string;
-        };
-        CdsImagingRequestItem: {
-            studyName: string;
-            bodyRegion: string;
-            rationale: string;
+        /** @description The merged lab/imaging/urinalysis/other diagnostic request
+         *     (ADR-20260924-02 item 3). One coherent artifact with a single
+         *     `modality`, carrying the list of items ordered under it. Generating
+         *     this artifact also creates the tracked lab order
+         *     (`backend/src/lib/lab-order.ts`), so the document and the tracked
+         *     order can never drift apart.
+         *      */
+        CdsDiagnosticRequestPayload: {
             /** @enum {string} */
-            priority: "routine" | "urgent";
-        };
-        CdsImagingRequestPayload: {
-            studies: components["schemas"]["CdsImagingRequestItem"][];
+            modality: "lab" | "imaging" | "urinalysis" | "other";
+            items: components["schemas"]["CdsDiagnosticRequestItem"][];
             instructions?: string;
+        };
+        /** @description The Clinical Referral artifact (ADR-20260924-02 item 1, new). Carries
+         *     only physician-authored fields — no field implies data the physician
+         *     did not enter. Diagnosis lives on the Assessment, not here.
+         *      */
+        CdsClinicalReferralPayload: {
+            reasonForReferral: string;
+            /** @description Free text per the ADR's own note: whether this becomes a
+             *     structured field is out of scope here.
+             *      */
+            receivingFacilityOrSpecialty?: string;
+            /**
+             * @description `emergency` means the patient should go to an emergency room now; the
+             *     referral is what they bring (ADR-20261005-02).
+             *
+             * @enum {string}
+             */
+            urgency: "routine" | "urgent" | "emergency";
+            clinicalSummary: string;
+            followUp?: string;
         };
         CdsPatientEducationSection: {
             heading: string;
@@ -5514,6 +6052,17 @@ export interface components {
             sections: components["schemas"]["CdsPatientEducationSection"][];
             warningSigns: string[];
         };
+        /** @description Public verification code of a released patient-facing artifact
+         *     (`clinical_referral`, `diagnostic_request`, `prescription`,
+         *     `medical_certificate`, `patient_education`), verified at
+         *     `GET /v1/public/documents/{verificationCode}/verify`. Issued on
+         *     release (ADR-20260927-01) and stored encrypted on the artifact
+         *     (ADR-20260928-01): returned in the release response, on the assigned
+         *     doctor's current-outputs read, and on the patient's released-document
+         *     reads. Never present for `plan` or `final_icd`, and absent when the
+         *     stored code cannot be read.
+         *      */
+        CdsArtifactVerificationCode: string;
         /** @description A released patient-education artifact, as the patient reads it.
          *
          *     Deliberately narrow. It carries the approved content, the release
@@ -5522,32 +6071,157 @@ export interface components {
          *     revision fences, digests, ruleset version, policy activation revision,
          *     eligibility digest, physician actor id, or red-flag evaluation id. Those
          *     exist to authorize generation and are not the patient's to see.
+         *
+         *     Attributed, not dispensable (ADR-20260930-01): the issuing doctor's
+         *     identity and signature are included when their approved profile can
+         *     be read, and omitted otherwise, so a missing profile never hides the
+         *     guide or its warning signs from the patient.
          *      */
         CdsReleasedPatientEducation: {
             consultationId: string;
             /** Format: date-time */
             releasedAt: string;
             payload: components["schemas"]["CdsPatientEducationPayload"];
+            /** @description The issuing doctor's `DoctorProfile.fullName`. */
+            prescriberName?: string;
+            /** @description The issuing doctor's `DoctorProfile.licenseNumber`. */
+            prescriberLicenseNumber?: string;
+            /** @description The issuing doctor's `DoctorProfile.specialty`, when on file. */
+            prescriberSpecialty?: string;
+            /** @description The issuing doctor's `DoctorProfile.ptrNumber` (Professional Tax Receipt), when on file. */
+            prescriberPtrNumber?: string;
+            signature?: components["schemas"]["ElectronicSignature"];
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
         };
         /** @description A released prescription artifact, as the patient reads it.
          *
-         *     The same narrow envelope as `CdsReleasedPatientEducation` — content,
-         *     release timestamp, and nothing else. None of the gate machinery that
-         *     surrounds the artifact internally is present: no gate token, assessment
-         *     version, revision fences, digests, ruleset version, policy activation
-         *     revision, eligibility digest, physician actor id, or red-flag evaluation
-         *     id. Those authorize generation and are not the patient's to see.
+         *     The same narrow envelope as `CdsReleasedPatientEducation` for the
+         *     gate machinery — no gate token, assessment version, revision fences,
+         *     digests, ruleset version, policy activation revision, eligibility
+         *     digest, or red-flag evaluation id. Those authorize generation and are
+         *     not the patient's to see.
          *
-         *     Not a dispensable instrument: no prescriber identity, licence number, or
-         *     signature is included, and nothing here is verifiable by a pharmacy.
+         *     A dispensable instrument (ADR-20260926-01): `prescriberName`,
+         *     `prescriberLicenseNumber`, and `signature` carry the prescribing
+         *     doctor's identity and signature, sourced from their KYC-approved
+         *     `DoctorProfile` and the signature captured at finalization. A
+         *     pharmacy can verify the document through
+         *     `GET /v1/public/documents/{verificationCode}/verify`
+         *     (ADR-20260927-01).
          *      */
         CdsReleasedPrescription: {
             consultationId: string;
             /** Format: date-time */
             releasedAt: string;
             payload: components["schemas"]["CdsPrescriptionPayload"];
+            /** @description The prescribing doctor's `DoctorProfile.fullName`. */
+            prescriberName: string;
+            /** @description The prescribing doctor's `DoctorProfile.licenseNumber`. */
+            prescriberLicenseNumber: string;
+            /** @description The prescribing doctor's `DoctorProfile.specialty`, when on file. */
+            prescriberSpecialty?: string;
+            /** @description The prescribing doctor's `DoctorProfile.ptrNumber` (Professional Tax Receipt), when on file. */
+            prescriberPtrNumber?: string;
+            signature: components["schemas"]["ElectronicSignature"];
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
         };
-        CdsProtectedArtifactPayload: components["schemas"]["CdsPlanPayload"] | components["schemas"]["CdsPrescriptionPayload"] | components["schemas"]["CdsFinalIcdPayload"] | components["schemas"]["CdsMedicalCertificatePayload"] | components["schemas"]["CdsLabRequestPayload"] | components["schemas"]["CdsImagingRequestPayload"] | components["schemas"]["CdsPatientEducationPayload"];
+        /** @description A released medical certificate artifact, as the patient reads it.
+         *
+         *     Mirrors `CdsReleasedPrescription` exactly, field for field: the same
+         *     narrow envelope, and the same dispensable-instrument prescriber
+         *     identity and signature (ADR-20260926-01), because a medical
+         *     certificate is legally dispensable output under the same ADR.
+         *      */
+        CdsReleasedMedicalCertificate: {
+            consultationId: string;
+            /** Format: date-time */
+            releasedAt: string;
+            payload: components["schemas"]["CdsMedicalCertificatePayload"];
+            /** @description The certifying doctor's `DoctorProfile.fullName`. */
+            prescriberName: string;
+            /** @description The certifying doctor's `DoctorProfile.licenseNumber`. */
+            prescriberLicenseNumber: string;
+            /** @description The certifying doctor's `DoctorProfile.specialty`, when on file. */
+            prescriberSpecialty?: string;
+            /** @description The certifying doctor's `DoctorProfile.ptrNumber` (Professional Tax Receipt), when on file. */
+            prescriberPtrNumber?: string;
+            signature: components["schemas"]["ElectronicSignature"];
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
+        };
+        /** @description A released diagnostic request artifact, as the patient reads it.
+         *
+         *     The same narrow envelope as `CdsReleasedPatientEducation` for the
+         *     gate machinery, plus the requesting doctor's identity and signature
+         *     (ADR-20260930-01): a laboratory or imaging centre acts on it, so it
+         *     carries the same `prescriberName`, `prescriberLicenseNumber`, and
+         *     `signature` as `CdsReleasedPrescription`.
+         *      */
+        CdsReleasedDiagnosticRequest: {
+            consultationId: string;
+            /** Format: date-time */
+            releasedAt: string;
+            payload: components["schemas"]["CdsDiagnosticRequestPayload"];
+            /** @description The requesting doctor's `DoctorProfile.fullName`. */
+            prescriberName: string;
+            /** @description The requesting doctor's `DoctorProfile.licenseNumber`. */
+            prescriberLicenseNumber: string;
+            /** @description The requesting doctor's `DoctorProfile.specialty`, when on file. */
+            prescriberSpecialty?: string;
+            /** @description The requesting doctor's `DoctorProfile.ptrNumber` (Professional Tax Receipt), when on file. */
+            prescriberPtrNumber?: string;
+            signature: components["schemas"]["ElectronicSignature"];
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
+        };
+        /** @description A released clinical referral artifact, as the patient reads it.
+         *
+         *     The same narrow envelope as `CdsReleasedPatientEducation` for the
+         *     gate machinery, plus the referring doctor's identity and signature
+         *     (ADR-20260930-01): the receiving clinician acts on it, so it carries
+         *     the same `prescriberName`, `prescriberLicenseNumber`, and `signature`
+         *     as `CdsReleasedPrescription`.
+         *      */
+        CdsReleasedClinicalReferral: {
+            consultationId: string;
+            /** Format: date-time */
+            releasedAt: string;
+            payload: components["schemas"]["CdsClinicalReferralPayload"];
+            /** @description The referring doctor's `DoctorProfile.fullName`. */
+            prescriberName: string;
+            /** @description The referring doctor's `DoctorProfile.licenseNumber`. */
+            prescriberLicenseNumber: string;
+            /** @description The referring doctor's `DoctorProfile.specialty`, when on file. */
+            prescriberSpecialty?: string;
+            /** @description The referring doctor's `DoctorProfile.ptrNumber` (Professional Tax Receipt), when on file. */
+            prescriberPtrNumber?: string;
+            signature: components["schemas"]["ElectronicSignature"];
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
+        };
+        CdsProtectedArtifactPayload: components["schemas"]["CdsPlanPayload"] | components["schemas"]["CdsPrescriptionPayload"] | components["schemas"]["CdsFinalIcdPayload"] | components["schemas"]["CdsMedicalCertificatePayload"] | components["schemas"]["CdsDiagnosticRequestPayload"] | components["schemas"]["CdsClinicalReferralPayload"] | components["schemas"]["CdsPatientEducationPayload"];
         /** @enum {string} */
         CdsArtifactStaleReason: "assessment_changed" | "assessment_cleared" | "assignment_changed" | "clinical_input_changed" | "gate_revoked" | "policy_changed" | "generation_eligibility_changed" | "postflight_failed" | "legacy_incomplete_provenance";
         CdsProtectedArtifact: {
@@ -5583,8 +6257,14 @@ export interface components {
             releasedAt?: string;
             effectiveStale: boolean;
             staleReason?: components["schemas"]["CdsArtifactStaleReason"];
-            /** @enum {string} */
-            source: "llm" | "template";
+            /**
+             * @description `llm` and `template` come from the AI pipeline. `physician` is a document the physician
+             *     wrote themselves with no AI (ADR-20261005-01); it is bound to the session, assignment and
+             *     confirmed Assessment rather than to a gate token, and goes stale only when those change.
+             *
+             * @enum {string}
+             */
+            source: "llm" | "template" | "physician";
             payload: components["schemas"]["CdsProtectedArtifactPayload"];
             signature?: components["schemas"]["ElectronicSignature"];
             /** @description Whether the assigned physician has replaced this artifact's generated payload with
@@ -5603,6 +6283,12 @@ export interface components {
              *     finalization and release.
              *      */
             physicianEditRevision?: number;
+            verificationCode?: components["schemas"]["CdsArtifactVerificationCode"];
+            /**
+             * Format: date-time
+             * @description Until when `verificationCode` verifies publicly (ADR-20260928-01).
+             */
+            verificationValidUntil?: string;
         };
         CdsGeneratedArtifact: components["schemas"]["CdsProtectedArtifact"] & {
             /** @constant */
@@ -5755,6 +6441,16 @@ export interface components {
             /** @description Complete replacement payload. Validated against the closed schema for the stored
              *     artifact's `outputType`; partial payloads are rejected `422`.
              *      */
+            payload: components["schemas"]["CdsProtectedArtifactPayload"];
+        };
+        CdsPhysicianAuthoredOutputRequest: {
+            /** @description Must equal the path `consultationId`. */
+            consultationId: string;
+            /** @description Must equal the authenticated Cognito `sub`. */
+            physicianActorId: string;
+            assessmentVersion: number;
+            outputType: components["schemas"]["CdsProtectedOutputType"];
+            /** @description The complete document, validated against the closed schema for `outputType`. */
             payload: components["schemas"]["CdsProtectedArtifactPayload"];
         };
         /** @description Non-authoritative historical legacy draft. It cannot establish Assessment, gate state,
@@ -7231,6 +7927,154 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createEmergencyReferral: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Client-generated UUID v4 for idempotent writes.
+                 *
+                 *     - Same key with same payload within 24 hours returns cached response
+                 *     - Same key with different payload returns 409 Conflict
+                 *     - Keys expire after 24 hours
+                 *
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                /** @description Booking identifier */
+                bookingId: components["parameters"]["BookingIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmergencyReferralRequest"];
+            };
+        };
+        responses: {
+            /** @description The booking, now carrying the emergency advice. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Booking"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getConsultationRating: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                /** @description Booking identifier */
+                bookingId: components["parameters"]["BookingIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rating. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsultationRating"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createConsultationRating: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Client-generated UUID v4 for idempotent writes.
+                 *
+                 *     - Same key with same payload within 24 hours returns cached response
+                 *     - Same key with different payload returns 409 Conflict
+                 *     - Keys expire after 24 hours
+                 *
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                /** @description Booking identifier */
+                bookingId: components["parameters"]["BookingIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsultationRatingCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Rating recorded. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsultationRating"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
             500: components["responses"]["InternalError"];
         };
     };
@@ -9009,6 +9853,97 @@ export interface operations {
             500: components["responses"]["InternalError"];
         };
     };
+    getConsultationClinicalNotes: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                /** @description Consultation identifier */
+                consultationId: components["parameters"]["ConsultationIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The notes. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ClinicalNotes"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    putConsultationClinicalNotes: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Client-generated UUID v4 for idempotent writes.
+                 *
+                 *     - Same key with same payload within 24 hours returns cached response
+                 *     - Same key with different payload returns 409 Conflict
+                 *     - Keys expire after 24 hours
+                 *
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Required caller correlation identifier for assessment-first CDS writes.
+                 * @example cds-command-abc123
+                 */
+                "X-Correlation-ID": components["parameters"]["RequiredCorrelationId"];
+            };
+            path: {
+                /** @description Consultation identifier */
+                consultationId: components["parameters"]["ConsultationIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicalNotesWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Notes saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ClinicalNotes"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalError"];
+        };
+    };
     getMyLabOrders: {
         parameters: {
             query?: never;
@@ -10101,6 +11036,47 @@ export interface operations {
             500: components["responses"]["InternalError"];
         };
     };
+    adminListRatings: {
+        parameters: {
+            query?: {
+                doctorId?: string;
+                /** @description Page size for listing bookings. */
+                limit?: components["parameters"]["ListBookingsLimit"];
+                /** @description Opaque pagination cursor returned in `meta.pagination.cursor`. */
+                cursor?: components["parameters"]["ListBookingsCursor"];
+            };
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of ratings. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminConsultationRating"][];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
     adminListNotificationEvents: {
         parameters: {
             query: {
@@ -10715,6 +11691,42 @@ export interface operations {
             500: components["responses"]["InternalError"];
         };
     };
+    verifyDocument: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                /** @description Opaque verification code issued when a prescription is finalized */
+                verificationCode: components["parameters"]["VerificationCodePath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verification result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentVerificationResult"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalError"];
+        };
+    };
     rejectLegacyCdsSoap: {
         parameters: {
             query?: never;
@@ -11293,6 +12305,114 @@ export interface operations {
             500: components["responses"]["InternalError"];
         };
     };
+    getReleasedMedicalCertificate: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                consultationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Released medical certificate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CdsReleasedMedicalCertificate"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getReleasedDiagnosticRequest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                consultationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Released diagnostic request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CdsReleasedDiagnosticRequest"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getReleasedClinicalReferral: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Optional client-provided correlation ID for distributed tracing.
+                 *     If not provided, `requestId` is used for tracing.
+                 *
+                 * @example client-correlation-abc123
+                 */
+                "X-Correlation-ID"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                consultationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Released clinical referral */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CdsReleasedClinicalReferral"];
+                        meta: components["schemas"]["ResponseMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
     listCdsCurrentOutputs: {
         parameters: {
             query?: never;
@@ -11446,7 +12566,7 @@ export interface operations {
             503: components["responses"]["CdsServiceUnavailable"];
         };
     };
-    createCdsFinalIcdGeneration: {
+    rejectRetiredCdsFinalIcdGeneration: {
         parameters: {
             query?: never;
             header: {
@@ -11472,23 +12592,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CdsFinalIcdGenerationRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            200: components["responses"]["CdsProtectedGenerationCompleted"];
-            202: components["responses"]["CdsProtectedGenerationAccepted"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["CdsGateForbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["CdsStateConflict"];
-            422: components["responses"]["UnprocessableEntity"];
-            429: components["responses"]["CdsRateLimited"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["CdsServiceUnavailable"];
+            410: components["responses"]["LegacyCdsRouteRetired"];
         };
     };
     createCdsMedicalCertificateGeneration: {
@@ -11536,7 +12642,7 @@ export interface operations {
             503: components["responses"]["CdsServiceUnavailable"];
         };
     };
-    createCdsLabRequestGeneration: {
+    createCdsDiagnosticRequestGeneration: {
         parameters: {
             query?: never;
             header: {
@@ -11564,7 +12670,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CdsLabRequestGenerationRequest"];
+                "application/json": components["schemas"]["CdsDiagnosticRequestGenerationRequest"];
             };
         };
         responses: {
@@ -11581,7 +12687,7 @@ export interface operations {
             503: components["responses"]["CdsServiceUnavailable"];
         };
     };
-    createCdsImagingRequestGeneration: {
+    createCdsClinicalReferralGeneration: {
         parameters: {
             query?: never;
             header: {
@@ -11609,7 +12715,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CdsImagingRequestGenerationRequest"];
+                "application/json": components["schemas"]["CdsClinicalReferralGenerationRequest"];
             };
         };
         responses: {
@@ -11669,6 +12775,49 @@ export interface operations {
             429: components["responses"]["CdsRateLimited"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["CdsServiceUnavailable"];
+        };
+    };
+    createCdsPhysicianAuthoredOutput: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Client-generated UUID v4 for idempotent writes.
+                 *
+                 *     - Same key with same payload within 24 hours returns cached response
+                 *     - Same key with different payload returns 409 Conflict
+                 *     - Keys expire after 24 hours
+                 *
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Required caller correlation identifier for assessment-first CDS writes.
+                 * @example cds-command-abc123
+                 */
+                "X-Correlation-ID": components["parameters"]["RequiredCorrelationId"];
+            };
+            path: {
+                /** @description Consultation identifier */
+                consultationId: components["parameters"]["ConsultationIdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CdsPhysicianAuthoredOutputRequest"];
+            };
+        };
+        responses: {
+            201: components["responses"]["CdsProtectedArtifactAmendedResponse"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["CdsStateConflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["CdsRateLimited"];
+            500: components["responses"]["InternalError"];
         };
     };
     createCdsProtectedArtifactAmendment: {

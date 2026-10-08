@@ -50,7 +50,7 @@ export function StepsIndicator({
         {/* Horizontal track (mobile) */}
         <span
           aria-hidden
-          className="absolute top-[12px] right-[13px] left-[13px] h-[3px] rounded-full bg-(--ink-100) lg:hidden"
+          className="absolute top-[12px] right-[13px] left-[13px] h-[3px] rounded-full bg-(--gray-bg) lg:hidden"
         />
         <span
           aria-hidden
@@ -60,7 +60,7 @@ export function StepsIndicator({
         {/* Vertical track (desktop) */}
         <span
           aria-hidden
-          className="absolute top-[13px] bottom-[13px] left-[11.5px] hidden w-[3px] rounded-full bg-(--ink-100) lg:block"
+          className="absolute top-[13px] bottom-[13px] left-[11.5px] hidden w-[3px] rounded-full bg-(--gray-bg) lg:block"
         />
         <span
           aria-hidden
@@ -73,7 +73,11 @@ export function StepsIndicator({
           const isActive = i === currentStep && reviewStep === null;
           const isCompleted =
             (completedSteps && i < currentStep) || completedSteps[i];
-          const canReview = isCompleted && !isReviewing;
+          // While a completed step is open for review, the current step must stay
+          // tappable: it was disabled like any unfinished step, so once a patient
+          // tapped back they had no way to return to, say, the waiting screen.
+          const isReturnTarget = i === currentStep && reviewStep !== null;
+          const canReview = (isCompleted || isReturnTarget) && !isReviewing;
 
           return (
             <button
@@ -91,21 +95,21 @@ export function StepsIndicator({
                   "flex size-[26px] shrink-0 items-center justify-center rounded-full border-2 bg-(--surface-card) transition-colors",
                   isCompleted || isReviewing
                     ? "border-(--action-primary) bg-(--action-primary) text-white"
-                    : isActive
+                    : isActive || isReturnTarget
                       ? "border-(--action-primary)"
                       : "border-(--border-default)",
                 )}
               >
                 {isCompleted || isReviewing ? (
                   <Check className="size-3.5" strokeWidth={3} />
-                ) : isActive ? (
+                ) : isActive || isReturnTarget ? (
                   <span className="size-[10px] rounded-[5px] bg-(--action-primary)" />
                 ) : null}
               </span>
               <span
                 className={cn(
                   "text-center text-[11px] leading-tight lg:text-left lg:text-[13px]",
-                  isActive || isReviewing
+                  isActive || isReviewing || isReturnTarget
                     ? "font-bold text-(--text-heading)"
                     : isCompleted
                       ? "font-semibold text-(--text-heading)"
@@ -121,7 +125,9 @@ export function StepsIndicator({
 
       {completedSteps.some(Boolean) && (
         <p className="mt-3 text-center text-[11px] text-(--text-subtle) lg:mt-4 lg:text-left">
-          Tap a completed step to review
+          {reviewStep !== null
+            ? `Tap "${steps[currentStep]?.label}" to return to where you are`
+            : "Tap a completed step to review"}
         </p>
       )}
     </div>

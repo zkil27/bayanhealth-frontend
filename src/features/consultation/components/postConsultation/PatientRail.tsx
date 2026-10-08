@@ -27,7 +27,7 @@ export function PatientRail({
         data-slot="patient-rail"
         data-collapsed="true"
         aria-label="Patient intake (collapsed)"
-        className="flex flex-col items-center gap-3 rounded-[14px] border border-(--border-subtle) bg-(--surface-card) py-3.5 shadow-xs"
+        className="flex flex-col items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-card) py-3.5"
       >
         <Button
           type="button"
@@ -44,7 +44,7 @@ export function PatientRail({
           <FileText className="size-4" />
         </span>
         <span
-          className="text-[11px] font-bold text-(--text-muted) tracking-wider uppercase [writing-mode:vertical-lr] rotate-180"
+          className="text-xs font-semibold text-(--text-muted) [writing-mode:vertical-lr] rotate-180"
         >
           Intake
         </span>
@@ -62,18 +62,18 @@ export function PatientRail({
     <aside
       data-slot="patient-rail"
       aria-label="Patient intake"
-      className="flex w-full flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) shadow-xs"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-card)"
     >
       <div className="flex items-center justify-between border-b border-(--border-subtle) bg-(--surface-warm-soft)/60 px-3.5 py-2.5">
         <div className="flex items-center gap-2">
           <FileText className="size-4 text-(--teal-700)" />
-          <h2 className="text-xs font-bold text-(--text-heading)">Patient Intake</h2>
+          <h2 className="text-sm font-bold text-(--text-heading)">Patient intake</h2>
           {intake ? (
             <Badge
               variant="outline"
-              className="gap-1 border-(--border-default) px-1.5 py-0 text-[10px] font-semibold text-(--text-muted) capitalize"
+              className="gap-1 border-(--border-default) px-1.5 py-0 text-xs font-semibold text-(--text-muted) capitalize"
             >
-              <ClipboardCheck className="size-2.5 text-(--teal-700)" /> {intake.status}
+              <ClipboardCheck className="size-3 text-(--teal-700)" /> {intake.status}
             </Badge>
           ) : null}
         </div>

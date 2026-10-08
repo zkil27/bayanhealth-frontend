@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
-import { BookOpenCheck, Check, FileText, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BookOpenCheck, Check, FileText, ListChecks, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
 import { Spinner } from "@/components/ui/spinner";
+import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
 import { cn } from "@/lib/utils";
 import type {
   CdsAssessment,
@@ -61,6 +63,19 @@ export interface CandidatePickerProps {
 }
 
 export function CandidatePicker(props: CandidatePickerProps) {
+  /*
+    On a phone the guideline opens as a bottom sheet over the list, with
+    "Use …" under the thumb, instead of a panel pushed above the list. Closing
+    the sheet only hides it; tapping a suggestion again reopens it.
+  */
+  const isPhone = useIsBreakpoint("max", 1024);
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+  const sheetOpen = isPhone && Boolean(props.focused) && dismissedFor !== props.focused;
+  const focusCandidate = (name: string) => {
+    setDismissedFor(null);
+    props.onFocus(name);
+  };
+
   const source = useMemo(() => {
     const value = props.preview?.sourceReference;
     if (!value || typeof value !== "object") return null;
@@ -91,25 +106,31 @@ export function CandidatePicker(props: CandidatePickerProps) {
         <div className="min-w-0">
           <h3
             id="candidate-heading"
-            className="text-[15px] font-bold text-(--text-heading)"
+            className="text-sm font-semibold text-(--text-heading)"
           >
-            Diagnosis suggestions
+            Diagnosis suggestions <span className="font-normal text-(--text-muted)">(optional)</span>
           </h3>
-          <p className="text-xs text-(--text-muted)">
-            Keep typing above to filter this list, or pick one to read its
-            guideline summary — choosing is a separate step, and typing your
-            own diagnosis instead remains available.
+          <p className="text-sm text-(--text-muted)">
+            From the patient&apos;s intake, only when you ask. Pick one to read its guideline, then choose to use it.
           </p>
         </div>
         <Button
           type="button"
           variant="outline"
-          size="sm"
-          className="rounded-full"
+          shape="pill"
+          className="border-(--border-default) max-lg:h-11"
           disabled={props.busy || Boolean(props.assessment.confirmed)}
           onClick={props.onStart}
         >
-          <RefreshCw className="size-4" /> Start fresh
+          {props.evaluation ? (
+            <>
+              <RefreshCw className="size-4" /> Start fresh
+            </>
+          ) : (
+            <>
+              <ListChecks className="size-4" /> Suggest diagnoses (AI)
+            </>
+          )}
         </Button>
       </div>
 
@@ -117,7 +138,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
       props.evaluation.routing.outcome !== "ROUTINE" ? (
         <div
           role="alert"
-          className="rounded-[12px] border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--text-body)"
+          className="rounded-xl border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--text-body)"
         >
           <strong className="text-(--danger-fg)">
             {routingOutcomeLabel(props.evaluation.routing.outcome)}
@@ -134,13 +155,12 @@ export function CandidatePicker(props: CandidatePickerProps) {
       ) : null}
 
       {!props.evaluation ? (
-        <p className="rounded-[12px] bg-(--surface-warm-soft) p-3 text-sm text-(--text-muted)">
-          No suggestions loaded yet. Focus the diagnosis field above, or press{" "}
-          <span className="font-medium text-(--text-heading)">Start fresh</span>
-          .
+        <p className="rounded-xl bg-(--surface-warm-soft) p-3 text-sm text-(--text-muted)">
+          No suggestions loaded. Type your diagnosis above, or press{" "}
+          <span className="font-medium text-(--text-heading)">Suggest diagnoses (AI)</span>.
         </p>
       ) : props.suppressed ? (
-        <p className="rounded-[12px] bg-(--surface-warm-soft) p-3 text-sm font-medium text-(--text-body)">
+        <p className="rounded-xl bg-(--surface-warm-soft) p-3 text-sm font-medium text-(--text-body)">
           Routine candidates and the CPG preview are suppressed by current
           safety routing.
         </p>
@@ -167,7 +187,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
 
             <ul
               aria-label="Diagnosis candidates"
-              className="flex max-h-72 min-w-0 flex-col gap-1 overflow-y-auto rounded-[12px] border border-(--border-subtle) p-1"
+              className="flex min-w-0 flex-col gap-1 rounded-xl border border-(--border-subtle) p-1 lg:max-h-72 lg:overflow-y-auto"
             >
               {props.evaluation.candidates.map((candidate) => {
                 const active = candidate.diagnosisName === props.focused;
@@ -176,9 +196,9 @@ export function CandidatePicker(props: CandidatePickerProps) {
                     <button
                       type="button"
                       aria-pressed={active}
-                      onClick={() => props.onFocus(candidate.diagnosisName)}
+                      onClick={() => focusCandidate(candidate.diagnosisName)}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-sm transition-colors",
+                        "flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
                         active
                           ? "bg-(--surface-accent-soft) font-medium text-(--text-heading)"
                           : "text-(--text-body) hover:bg-(--surface-warm-soft)",
@@ -201,8 +221,8 @@ export function CandidatePicker(props: CandidatePickerProps) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="self-start rounded-full"
+                shape="pill"
+                className="self-start border-(--border-default) max-lg:h-11"
                 onClick={props.onMore}
                 disabled={props.busy}
               >
@@ -219,7 +239,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
           <aside
             data-slot="cpg-preview"
             aria-live="polite"
-            className="order-1 min-w-0 self-start rounded-[12px] border border-(--ai-border) bg-(--ai-bg) p-3 lg:sticky lg:top-4 lg:order-2"
+            className="order-1 min-w-0 self-start rounded-xl border border-(--ai-border) bg-(--ai-bg) p-3 max-lg:hidden lg:sticky lg:top-4 lg:order-2"
           >
             {props.previewLoading && !props.preview ? (
               <p className="flex items-center gap-2 text-sm text-(--ai-fg)">
@@ -229,7 +249,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <BookOpenCheck className="size-4 shrink-0 text-(--ai-fg)" />
-                  <h4 className="min-w-0 flex-1 text-[15px] font-bold text-(--text-heading)">
+                  <h4 className="min-w-0 flex-1 text-base font-bold text-(--text-heading)">
                     {props.preview.diagnosisName}
                   </h4>
                   <span className="flex items-center gap-1 rounded-full bg-(--ai-bg-strong) px-2 py-0.5 text-xs font-bold text-(--ai-fg)">
@@ -242,7 +262,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
 
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <h5 className="text-xs font-bold tracking-wide text-(--text-subtle) uppercase">
+                    <h5 className="text-xs font-semibold text-(--text-muted)">
                       Support facts
                     </h5>
                     <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-(--text-body)">
@@ -254,7 +274,7 @@ export function CandidatePicker(props: CandidatePickerProps) {
                     </ul>
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold tracking-wide text-(--text-subtle) uppercase">
+                    <h5 className="text-xs font-semibold text-(--text-muted)">
                       Confirmation questions
                     </h5>
                     <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-(--text-body)">
@@ -281,7 +301,9 @@ export function CandidatePicker(props: CandidatePickerProps) {
                 */}
                 <Button
                   type="button"
-                  className="mt-3 w-full rounded-full bg-(--action-primary) text-white shadow-[inset_0_-3.2px_0_0_rgba(0,0,0,0.2)] hover:bg-(--action-primary-hover) sm:w-auto"
+                  variant="primary"
+                  shape="pill"
+                  className="mt-3 w-full max-lg:h-11 sm:w-auto"
                   disabled={props.busy}
                   onClick={() => props.onSelect(props.preview!.diagnosisName)}
                 >
@@ -298,6 +320,69 @@ export function CandidatePicker(props: CandidatePickerProps) {
           </aside>
         </div>
       )}
+
+      {isPhone ? (
+        <ResponsiveSheet
+          open={sheetOpen}
+          onOpenChange={(open) => {
+            if (!open) setDismissedFor(props.focused);
+          }}
+          icon={BookOpenCheck}
+          title={props.preview?.diagnosisName ?? props.focused ?? "Guideline"}
+          description="Guideline summary from the approved catalogue. Read it, then choose."
+          footer={
+            props.preview ? (
+              <>
+                <Button
+                  type="button"
+                  variant="primary"
+                  shape="pill"
+                  disabled={props.busy}
+                  onClick={() => props.onSelect(props.preview!.diagnosisName)}
+                >
+                  <Check className="size-4" /> Use {props.preview.diagnosisName}
+                </Button>
+                <Button type="button" variant="ghost" shape="pill" onClick={() => setDismissedFor(props.focused)}>
+                  Back to suggestions
+                </Button>
+              </>
+            ) : undefined
+          }
+        >
+          {props.previewLoading && !props.preview ? (
+            <p className="flex items-center gap-2 text-sm text-(--ai-fg)">
+              <Spinner className="size-4" /> Loading guideline summary…
+            </p>
+          ) : props.preview ? (
+            <div className="flex flex-col gap-3 text-sm">
+              <p className="font-medium text-(--danger-fg)">{props.preview.instruction}</p>
+              <div>
+                <h5 className="text-xs font-semibold text-(--text-muted)">Support facts</h5>
+                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-(--text-body)">
+                  {props.preview.patientFacts.slice(0, 3).map((fact) => (
+                    <li key={`${fact.label}-${fact.value}`}>
+                      {fact.label}: {fact.value}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h5 className="text-xs font-semibold text-(--text-muted)">Confirmation questions</h5>
+                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-(--text-body)">
+                  {props.preview.confirmationQuestions.slice(0, 3).map((question) => (
+                    <li key={question.questionId}>{question.question}</li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-xs text-(--text-muted)">
+                {source
+                  ? `Approved source: ${source.title} · ${source.publisher} · ${source.date} · ${source.reviewStatus}`
+                  : "Approved source metadata unavailable."}
+              </p>
+            </div>
+          ) : null}
+        </ResponsiveSheet>
+      ) : null}
     </section>
   );
 }

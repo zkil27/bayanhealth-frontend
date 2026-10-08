@@ -9,6 +9,236 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-08] Emergency Modal Modernization: SendToErControl Consistency & ResponsiveSheet Alignment
+
+- **Target Route / Surface**: `/doctor/post-consultation/[id]` emergency trigger and "Send patient to ER" confirmation modal (`SendToErControl`).
+- **Files Modified**:
+  - `src/features/consultation/components/emergency/SendToErControl.tsx` [MODIFIED: re-architected with `ResponsiveSheet`, unified form field container, character counter, emergency protocol banner, danger styling]
+  - `src/components/ui/responsive-sheet.tsx` [MODIFIED: added optional `iconClassName` prop to support alert/emergency icon color overrides]
+- **Design Intent & Problem Solved**:
+  - **Inconsistent Raw AlertDialog**: The previous Send to ER modal used a cramped raw `AlertDialog` (`max-w-xs sm:max-w-sm`) that contradicted the consultation workspace's modal standards (`ResponsiveSheet`).
+  - **Color Semantics Alignment**: In the previous modal, the "Send to ER" button defaulted to Brand Teal (`bg-primary`), while the "Not now" button used an outline with a teal border (`border-primary`). Having a routine teal button for an irreversible emergency dispatch violated the BayanHealth token rule ("Red = emergency only"). The confirmation button is now solid danger red (`bg-(--danger-fg) text-white`) with a `Siren` icon and `Spinner` during sending, while "Not now" is a clean neutral ghost pill.
+  - **Ergonomics & Hierarchy**: Upgraded form structure with a dedicated `Label` container, character counter (`{note.length}/500`), helper text, and a high-visibility clinical emergency protocol callout informing the doctor that the patient will see a red 911 alert banner.
+  - **Mobile vs Desktop Platform Parity**: On phones (<1024px), `ResponsiveSheet` renders as a bottom sheet drawer with 48px touch targets in the thumb zone (doctor-mobile PLAN.md rule 2). On desktop, it renders as a framed, centered clinical dialog (`sm:max-w-md`) with warm footer separation.
+- **Tokens & Primitives Used**: `ResponsiveSheet`, `Button`, `Label`, `Textarea`, `Spinner`, `--danger-fg`, `--danger-bg`, `--danger-border`, `--surface-card`, `--surface-warm-soft`, `--text-heading`, `--text-muted`.
+- **Upstream Porting Notes**: Drop-in replacement for `SendToErControl.tsx`. Preserves all external props (`bookingId`, `emergencyAdvisedAt`, `onSent`, `urgent`, `className`), internal API calls (`sendEmergencyReferral`), and test selectors (`data-slot="send-to-er"`, `data-slot="send-to-er-confirm"`, `data-slot="er-advised"`). Requires `iconClassName` prop on `ResponsiveSheet`.
+
+### [2026-10-08] Post-Consult: Skimmable Folded S / O / A Summaries
+
+- **Target Route / Surface**: `/doctor/post-consultation/id`, the one-line summaries shown when the Subjective, Objective and Assessment sections are folded (desktop, Deliver phase).
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/SoapSummaryCards.tsx` [MODIFIED: adds `ObjectiveSummary`, `SubjectiveSummary`]
+  - `src/features/consultation/components/postConsultation/WorkspaceSection.tsx` [MODIFIED: summary slot is a single non-wrapping flex line]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED: uses the new summaries]
+- **Design Intent & Problem Solved**:
+  - The summaries were muted sentences, so an abnormal vital looked like every other number.
+  - **O:** one chip per recorded vital, with a muted label and a bold tabular value. Abnormal or unverified readings are tinted (attention / danger) and marked with a triangle, using the same thresholds as the open section.
+  - **S:** flagged symptoms (fever, dyspnea, chest pain) come first as chips, so truncation never hides them. The complaint follows in body color.
+  - **A:** the confirmed diagnosis in bold, with the ICD-10 code in a monospace chip when one is recorded.
+- **Device Optimization**: Desktop. On phones these sections are their own open screens, so the summaries are not shown.
+- **Tokens & Primitives Used**: `--attention-*`, `--danger-*`, `--surface-warm-soft`, Lucide `TriangleAlert`.
+- **Upstream Porting Notes**: Display only; the thresholds are the existing `VITALS` triage in `SoapSummaryCards.tsx`.
+
+### [2026-10-08] Post-Consult on a Phone: One Screen, One Job, One Thumb (+ Remove / Not Needed)
+
+- **Target Route / Surface**: `/doctor/post-consultation/id` below `lg` (phones, small tablets, landscape). Desktop layout unchanged except the Remove / Not needed work, the document toolbar, and sheets that stay dialogs on desktop.
+- **Builds on**: "Post-Consult Redesign (1/5)–(5/5)" below; port those first.
+- **Files Modified**:
+  - `src/components/ui/responsive-sheet.tsx` [NEW: bottom sheet below `lg`, dialog above]
+  - `src/components/ui/sticky-action-bar.tsx` [MODIFIED: callers size their own actions]
+  - `src/features/doctor/components/PatientSafetyStrip.tsx` [MODIFIED: `hideAvatarBelowLg`, `allergiesClassName`]
+  - `src/features/consultation/components/emergency/SendToErControl.tsx` [MODIFIED: "ER" label below `lg`]
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED: phone screens from the URL, not-needed persistence, per-screen next step, sheets]
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx` [MODIFIED: new `PhoneStepTabs`; phone header rows]
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx` [MODIFIED: URL-driven detail, Not needed / Add it back, sheet for Sign several]
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx` [MODIFIED: sticky thumb footer (Preview & print · More left, Edit · Sign right); Sign / Discard sheets; unsaved-edit guard]
+  - `src/features/consultation/components/postConsultation/CandidatePicker.tsx` [MODIFIED: guideline preview as a phone sheet]
+  - `src/features/consultation/components/postConsultation/ClinicalNotesCard.tsx` [MODIFIED: save on `visibilitychange`]
+  - `PhysicianAuthoringPanel.tsx`, `CareContinuityPanel.tsx` [MODIFIED: sticky phone footers]
+  - `ArtifactPayloadEditor.tsx` [MODIFIED: 16px inputs and 44px controls on phones]
+  - `WorkspaceSection.tsx` [MODIFIED: `headerClassName`]
+  - `documentStatus.ts` [MODIFIED: `not_needed`]
+  - `docs/specs/doctor-mobile/PLAN.md` §5.4 [MODIFIED: implementation note]
+- **Design Intent & Problem Solved** (research: Epic Haiku's "pend / save work, finish at a workstation", Hoober's thumb-zone field study, mobile EHR usability studies on text entry, Material/Apple sheet guidance, WebKit's missing `interactive-widget`):
+  - **Each phase is a screen.**
+    - On a phone, Review (S + O), Assess (A) and Deliver (the checklist) are separate screens switched by a 1 · 2 · 3 segmented control. Review was one ~2,800px scroll; it is now ~1,100px.
+    - Tapping a document opens it as its own screen with "← Documents".
+    - `?view=` and `?doc=` are written with `history.pushState`, so Android back and the iOS back swipe return to the list instead of leaving the workspace, and a reload lands on the same screen.
+  - **One primary action, at the bottom.**
+    - The bar's primary action is the screen's next step: **Write assessment →** on Review, **Confirm assessment** on Assess, then the next document on Deliver. Before, Confirm sat at the end of a long form.
+    - Finish is compact beside it; the primary grows.
+    - In a document, Edit and **Sign** / **Hold to release** / **Draft it again** are pinned to the bottom.
+  - **Remove / Not needed** (asked by the user).
+    - Drafts are discarded from **More → Discard draft** in the document footer. A labelled toolbar above the document was tried, then reverted at the user's request; Preview & print and More are back in the footer, left of Edit and Sign.
+    - Unstarted documents get **Not needed for this patient** (never the Plan).
+    - Either way the row reads **Not needed**, its pane offers **Add it back**, a toast offers Undo, and Finish stops listing it as "Not started".
+    - Stored per consultation in `localStorage` (try/catch; UI only), so it survives a reload.
+  - **Sheets on phones.** Sign, Remove, Finish, Clear assessment, Sign several and the guideline preview open as bottom sheets with 48px, full-width actions (primary first). Desktop keeps dialogs.
+  - **Keyboard-safe.** While an input or textarea has focus, the bottom bars and step tabs hide (CSS `group-has-[:focus]`, no JS). iOS Safari lets sticky bottom bars ride over the keyboard because it has no `interactive-widget`. Identity and allergies stay.
+  - **Interruption-proof.**
+    - Notes also save when the page is hidden (lock screen, app switch).
+    - An unsaved document edit warns on tab close.
+  - **Header.** Back · name · **Intake** · **ER** on one row. Allergies get a full-width line (never a truncated chip). The decorative avatar is gone on phones. Refresh moved into the lock notice (whose copy tells the doctor to refresh) and to the foot of the document list.
+- **Device Optimization**:
+  - Verified with Chrome DevTools-protocol device emulation (true 390×844, 360×780 and 844×390 viewports; headless windows cannot go below 500px) across Review, Assess, Deliver, document, Remove → Not needed → Add it back, the sheets, the red-flag state and back navigation.
+  - The automated audit found no tap target under 44px, no input under 16px, no text under 12px and no horizontal overflow.
+  - Typing mode verified with focus emulation.
+  - **Not verified:** real iOS Safari keyboard behaviour and gestures; test on a real iPhone and Android phone.
+- **Tokens & Primitives Used**: `ResponsiveSheet` (vaul `Drawer` / `Dialog`), `StickyActionBar`, `StatusText`, `useIsBreakpoint`, `--danger-*`, `--attention-*`, Lucide `CircleMinus`, `Undo2`, `ChevronRight`.
+- **Upstream Porting Notes**:
+  - No API or contract changes. Not needed reuses `discardedTypes` (client-only, as before) and adds `localStorage` persistence.
+  - The URL params are UI state only.
+  - If the main repo's router wraps `history.pushState`, pass a plain state object, not a copy of `history.state`: Next.js skips syncing `useSearchParams` for entries carrying its own internal marker.
+  - Verification: `tsc --noEmit` clean; eslint 0 errors (3 pre-existing effect warnings); `impeccable detect` 0 findings.
+
+### [2026-10-08] Post-Consult Redesign (1/5): Foundations — Attention Tokens, Button `primary` Variant, `StatusText`, `StickyActionBar`, `PatientSafetyStrip`, `WorkspaceSection`
+
+> Five entries, same day, one redesign of `/doctor/post-consultation/id`. **Port them in order 1 → 5**; later steps import what earlier ones add.
+
+- **Target Route / Surface**: shared primitives used by the post-consult workspace (and named by `docs/specs/doctor-mobile/PLAN.md`).
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css` [MODIFIED: `--amber-700/600/200/100` ramp; `--attention-fg/bg/border` in light and dark]
+  - `src/components/ui/button.tsx` [MODIFIED: additive `variant="primary"` and `shape="pill"`; defaults unchanged]
+  - `src/components/ui/status-text.tsx` [NEW]
+  - `src/components/ui/sticky-action-bar.tsx` [NEW]
+  - `src/features/doctor/components/PatientSafetyStrip.tsx` [NEW]
+  - `src/features/consultation/components/postConsultation/WorkspaceSection.tsx` [NEW: `WorkspaceSection`, `IntakeBlock`]
+- **Design Intent & Problem Solved**:
+  - "Needs your attention" had no token. It borrowed Gold (`--status-soon-*`), which PRODUCT.md reserves for "Soon", or raw Tailwind `amber-*`. A burnt-amber `--attention-*` set now carries it, away from Gold and Red.
+  - The primary teal button was hand-copied 11 times (`bg-(--action-primary) text-white shadow-[inset_0_-3.2px…]`). It is now `variant="primary"`.
+  - `StatusText`: one shape for every status (icon + word, sentence case, 12px minimum, never interactive), with semantic tones `neutral | ai | attention | info | success | danger`.
+  - `StickyActionBar`: bottom-pinned bar with safe-area padding; status on the left, actions on the right.
+  - `PatientSafetyStrip`: name, age/sex, reference and allergies in one reserved place (NIST IR 7804 wrong-patient guidance). The doctor-mobile spec already named these three components, but they had never been created.
+  - `WorkspaceSection`: the SOAP section shell (letter, title, folded one-line summary, meta, disclosure button with `aria-expanded`).
+- **Device Optimization**: buttons and bars reach 44px or more below `lg`.
+- **Tokens & Primitives Used**: `--attention-*`, `--ai-*`, `--status-available-*`, `--status-pilot-*`, `--danger-*`, `--action-primary*`.
+- **Upstream Porting Notes**: The token file is safe to mirror directly. `button.tsx` is additive, so diff and merge only the `primary` variant and the `shape` variant plus its default. Run `theme-hardcoded-color-scan.test.ts` because the amber ramp introduces new hex values.
+
+### [2026-10-08] Post-Consult Redesign (2/5): One Document Status Vocabulary & Copy Fixes
+
+- **Target Route / Surface**: `/doctor/post-consultation/id`.
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/documentStatus.ts` [NEW]
+  - `CandidatePicker.tsx`, `RedFlagOverrideControl.tsx`, `AssessmentFirstWorkspace.tsx` (toasts) [MODIFIED]
+  - `docs/specs/doctor-mobile/PLAN.md` §5.4 [MODIFIED: status list]
+- **Design Intent & Problem Solved**:
+  - One unsigned draft used to read "To sign", "Ready to sign", "Draft · Needs review", "Edited · Ready to sign", "awaiting your signature", "drafted · ready to sign" or "Drafted but not signed", depending on where you looked. There are now six statuses everywhere: **Not started · Drafting · Needs review · Signed · Released · Out of date**. Who wrote a draft is separate meta text: "AI draft", "AI draft, edited by you", "Written by you".
+  - Copy fixes:
+    - The confirm toast pointed to "Protected tools", a rail that is no longer mounted. It now points to Plan & documents.
+    - "Released. Nothing else was changed." → "{Document} released to the patient."
+    - "Re-check safety" → "Re-run the safety check".
+  - `Sparkles` on "Suggest diagnoses (AI)" breaks the brand's no-sparkle rule; it is now `ListChecks`. The picker's helper text is cut to one sentence.
+- **Device Optimization**: n/a (copy and vocabulary).
+- **Tokens & Primitives Used**: `StatusText`, `DOCUMENT_STATUS`.
+- **Upstream Porting Notes**: Copy only; no contract or enum changes. `cdsCopy.ts` is untouched.
+
+### [2026-10-08] Post-Consult Redesign (3/5): Plan & Documents Becomes a Checklist
+
+- **Target Route / Surface**: `/doctor/post-consultation/id`, the P section.
+- **Files Modified**:
+  - `DeliverablesDeck.tsx` [REWRITTEN: document checklist; `deriveDeckEntries` kept; adds `checklistProgress`, `entryStatus`, `CHECKLIST_TYPES`, `ChecklistKey`]
+  - `ArtifactCard.tsx` [REWRITTEN view layer: headerless pane body, one action order, "More" menu, shortcuts, Hold-to-release label; `AiProvenanceChip` / `ReviewStatusChip` removed; `computeArtifactProvenance` kept]
+  - `PhysicianAuthoringPanel.tsx` [MODIFIED: now `PhysicianAuthoringForm` for one type; `blankPayload`, `AUTHORABLE_TYPES` kept]
+  - `CareContinuityPanel.tsx` [REWRITTEN: `useFollowUpRecommendation` hook + panel body; same endpoints]
+  - `AuthorizedArtifactHistory.tsx` [REWRITTEN: "Earlier versions" list]
+- **Design Intent & Problem Solved**:
+  - **Three entry points become one.**
+    - Before: an "Add Document" menu and "+ Prescription" chips that drafted with AI, plus a separate "Write a document yourself" card whose chips were also labelled "+ Prescription" but opened a blank form.
+    - Now every document type is always a checklist row. An unstarted row offers **Draft with AI** and **Write it myself** side by side, each with a reason when unavailable.
+  - The tab strip truncated past four tabs ("Diagn…") and carried four badges per tab. Rows now show one status; the status wraps under the name rather than truncating it.
+  - Follow-up (Care Continuity) and Earlier versions (artifact history) are rows in the same list, so they are part of the Plan, not separate cards at the bottom. Background-draft cancel moved into the "Drafting" pane.
+  - **Document actions in one order:**
+    - Preview & print on the left; "More" (Redraft with AI, Discard draft) next to it; Edit and **Sign** on the right.
+    - "Preview Official Document" and "Full Sheet / Print" merged into **Preview & print**.
+    - Release reads **Hold to release to patient**, and a short press answers "Press and hold for 2 seconds". Before, a first click did visibly nothing.
+  - Signing: the attestation is a real `<label>` + checkbox (it was a `role=checkbox` div with a nested input). The sign button reads "Sign as {name}".
+  - **Desktop shortcuts:** ↑/↓ move between rows, E edits, S opens Sign. They are ignored inside text fields, dialogs and menus. The hint shows under the list. The attestation tick and the 2-second hold still apply.
+  - Raw `amber/sky/purple/rose/slate/indigo/emerald` classes are gone from these files.
+- **Device Optimization**: Desktop is an 18rem sticky list plus the open document. Below `lg` it is list → full-width detail with "← All documents"; buttons are 44px.
+- **Tokens & Primitives Used**: `StatusText`, `Button variant="primary" shape="pill"`, `--ai-*`, `--attention-*`, `--surface-accent-soft`, Lucide `FileText`, `PenLine`, `FileSignature`, `MoreHorizontal`, `CalendarClock`, `History`.
+- **Upstream Porting Notes**:
+  - Handlers, contracts and payload editors are unchanged. `onDraft` drafts and redrafts; `onAuthor` (from `authorPhysicianOutput`) replaces the old panel's `onSave`.
+  - Batch sign keeps its "only opened/edited drafts start ticked" rule.
+  - Discard is still client-only (`discardedTypes`), as before.
+
+### [2026-10-08] Post-Consult Redesign (4/5): The Workspace Reads as a SOAP Note
+
+- **Target Route / Surface**: `/doctor/post-consultation/id`.
+- **Files Modified**:
+  - `AssessmentFirstWorkspace.tsx` [MODIFIED: render tree only; every gate, assessment, generation and finalize handler unchanged; `AssessmentCard` → `AssessmentEditor`; new `LockNotice`, `NextStepBar`, `FinishGroup`]
+  - `SoapSummaryCards.tsx` [MODIFIED: split into `SubjectiveIntake` / `ObjectiveIntake`; vitals on tokens]
+  - `ClinicalNotesCard.tsx` [MODIFIED: `useClinicalNotes` hook + `ClinicalNoteField` + `NotesSaveState`; same GET/PUT and 409 handling]
+  - `PostConsultationSkeleton.tsx` [REWRITTEN to the new shape]
+- **Design Intent & Problem Solved**:
+  - The stepper said Review → Assess → Deliver, but the page looked the same in every phase. S and O appeared twice (intake strip, then "Your notes"), and **A appeared twice with different meanings** ("Assessment notes" vs "Your Assessment").
+  - Now there is one column, **S · O · A · P**:
+    - **S** and **O** each show the patient's intake read-only, then the doctor's own field.
+    - **A** holds the diagnosis, the ICD-10 code, the optional suggestions, the private clinical reasoning and the confirm action.
+    - **P** is the checklist, locked with "Opens after you confirm the Assessment" until then.
+  - **Phase folding:** in Deliver, S, O and A fold to one-line summaries (chief complaint; vitals line; diagnosis · ICD) so the documents come first. A stays open when the diagnosis cannot be AI-drafted. Manual toggles last until the phase changes.
+  - **Safety:** a red flag notice leads the page, above S. A non-safety hold sits right above P. The lock copy keeps the "what happened → what clears it" order.
+  - **Clear assessment** now asks for confirmation (it makes drafts stale and closes drafting). It was a single click.
+  - Notes no longer disable while saving, so tabbing from S to O does not lose focus. The "Notes saved." toast became an inline "Saved".
+- **Device Optimization**: Phone inputs use 16px text (no iOS zoom). Below `lg` the header, with identity and allergies, stays sticky.
+- **Tokens & Primitives Used**: `WorkspaceSection`, `IntakeBlock`, `--attention-*` for elevated vitals, `--danger-*` for critical vitals.
+- **Upstream Porting Notes**: The main repo's `AssessmentFirstWorkspace` may have newer handlers. Port only the JSX below `if (!assessment)` and the new subcomponents, keeping its logic. Section-fold state is UI-only (`sectionOverrides`).
+
+### [2026-10-08] Post-Consult Redesign (5/5): Patient Banner, Next-Step Bar, Quiet ER Button
+
+- **Target Route / Surface**: `/doctor/post-consultation/id` header and footer.
+- **Files Modified**:
+  - `WorkspaceChrome.tsx` [MODIFIED: `PatientSafetyStrip`; status pill removed; stepper labelled]
+  - `emergency/SendToErControl.tsx` [MODIFIED: `urgent` prop]
+  - `AssessmentFirstWorkspace.tsx` (`NextStepBar`, `FinishDocumentationControl`) [MODIFIED]
+  - `PatientRail.tsx`, `PatientDetails.tsx` [MODIFIED: sentence-case headings, 12px minimum]
+- **Design Intent & Problem Solved**:
+  - **Next-step bar** (`StickyActionBar`, every breakpoint). It always states where things stand and the one next action: "Go to Assessment" → "Review prescription →" → "Release …" → Finish. When the open document needs something, that document is the next step. It replaces the guidance strip, the "Complete Consultation" card and the header Finish button. **Finish now exists once**, and becomes primary when everything is done.
+  - The Finish dialog uses the same status words: Needs review / Signed, not released / Not started.
+  - **Stepper** labels every step from `md` up (it used to name only the current one) and has hover hints. Phones show "Step 2 of 3 · Assess". The "Assessment confirmed" pill beside the name repeated the stepper and is gone.
+  - **Send patient to ER** is a red outline by default and **solid red only while a red flag or safety hold is active**, so red keeps meaning "act now". It never moves.
+  - Refresh is an icon button.
+- **Device Optimization**: Verified at a true 390px viewport (DevTools emulation; `scrollWidth` = 390, no horizontal overflow) and at 1440px, in the Review, Deliver and red-flag states. Earlier "clipped" phone captures came from headless Chrome's 500px minimum window, not from the layout.
+- **Tokens & Primitives Used**: `StickyActionBar`, `PatientSafetyStrip`, `StatusText`, `--danger-*`.
+- **Upstream Porting Notes**:
+  - `SendToErControl` keeps its API; `urgent` is optional and defaults to the quiet style.
+  - Out of scope:
+    - `documents/*Sheet.tsx` keep their paper styling (slate on white is deliberate for print).
+    - `ProtectedToolsRail`, `CdsDraftsPanel`, `ConsultationDocumentPanel` and other unmounted legacy components were left untouched as agreed; the main repo can decide whether to delete them.
+  - Verification: `tsc --noEmit` clean; eslint 0 errors (warnings are pre-existing effect patterns or in untouched legacy files); `impeccable detect` 0 findings on all 19 changed files.
+
+### [2026-10-08] Upstream Sync: Doctor's Own Notes, ICD-10 on the Assessment, 7-Document Contract, Patient "Back to Current Step"
+
+- **Target Route / Surface**: `/doctor/post-consultation/id` (workspace, deliverables, document sheets) and the patient booking tracker (`/patient/booking/getBooking/[bookingId]`).
+- **Source**: Pulled **from** the main repo (`c1lc1l/BayanHealthMVP` `main` @ `b49c172`). This entry goes the opposite way from the others: it brings this fork up to main. Upstream commits: `94fbb53` (clinical notes), `a29000e` (ICD-10 on the Assessment), `ca6dfaf` (Plan / Final ICD never released), `9a2b328` (physician-authored documents), `1d6cfb1` (red-flag override), `c348db9` (send to ER), `939784b` (back to current step, doctor profile link).
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/AssessmentFirstWorkspace.tsx` [MODIFIED, 3-way merged]
+  - `src/features/consultation/components/postConsultation/ClinicalNotesCard.tsx` [NEW]
+  - `src/features/consultation/components/postConsultation/PhysicianAuthoringPanel.tsx` [NEW]
+  - `src/features/consultation/components/postConsultation/RedFlagOverrideControl.tsx` [NEW]
+  - `src/features/consultation/components/emergency/SendToErControl.tsx` [NEW]
+  - `src/features/consultation/lib/api/clinicalNotes.ts`, `emergencyReferral.ts` [NEW]
+  - `src/features/consultation/components/postConsultation/CandidatePicker.tsx`, `ArtifactCard.tsx`, `DeliverablesDeck.tsx`, `SoapSummaryCards.tsx`, `PatientDetails.tsx`, `AuthorizedArtifactHistory.tsx` [MODIFIED, merged]
+  - `src/features/consultation/components/postConsultation/ArtifactPayloadEditor.tsx`, `ArtifactPayloadView.tsx`, `workspacePhase.ts`, `ProtectedToolsRail.tsx` [REPLACED with upstream; the fork had not edited these since upstream ported them]
+  - `src/features/consultation/components/documents/ClinicalDocumentSheet.tsx`, `ClinicalReferralSheet.tsx`, `DiagnosticRequestSheet.tsx`, `DocumentSheetModal.tsx` [MODIFIED], `verification.ts` [NEW]
+  - `src/features/consultation/lib/api/assessmentFirst.ts`, `src/features/consultation/lib/cdsCopy.ts` [MODIFIED, merged]
+  - `src/types/openapi.generated.ts`, `src/types/cds-contract.ts` [REPLACED with upstream; the fork's copies were unedited upstream snapshots]
+  - `src/features/booking/lib/api/bookingDetail.ts` [MODIFIED: `emergencyAdvisedAt`, `emergencyNote`]
+  - `src/features/booking/components/consultation/BookingWizard.tsx`, `StepsIndicator.tsx`, `CompletedStep.tsx` [MODIFIED], `src/features/booking/components/DoctorProfileLink.tsx` [NEW]
+- **Design Intent & Problem Solved**:
+  - **The doctor writes their own S, O and Assessment notes.** A "Your notes" card (`ClinicalNotesCard`, "Only you can see these") pre-fills from the intake when nothing is saved yet and saves through `GET/PUT …/clinical-notes`. The intake strip above it is now labelled **Patient reported** / **Patient-recorded vitals**, so the patient's record and the doctor's notes are visibly separate.
+  - **ICD-10 is confirmed with the diagnosis.** The Assessment card has ICD-10 code and description fields, prefilled from `editableIcd10Suggestion`. The current backend requires `icd10` to confirm, so without this Confirm would fail.
+  - **AI suggestions only on request.** Focusing the diagnosis field no longer starts a candidate evaluation. Suggestions load from "Suggest diagnoses (AI)".
+  - **Doctor autonomy.** "Write a document yourself" (no AI), "Proceed on my clinical judgment" past a red flag (requires a reason), and a red **Send patient to ER** button in the workspace header. On phones the ER button stays in the header; Finish stays in the sticky bottom bar.
+  - **7-document contract.** Lab Request and Imaging Request are replaced by **Diagnostic Request** and **Clinical Referral**, matching the live backend. Plan and Final ICD can be signed but are never released ("Signed · Kept in your records").
+  - **Document sheets.** These now use container queries (`@container` on the modal paper, `@lg:` / `@xl:` in the sheets) and show the signature captured at signing instead of the profile specimen, so an unsigned draft never looks signed. A QR / "ACTIVE" badge appears only for a real server verification code.
+  - **Patient: a clear way back.** While reviewing a finished booking step, the banner leads with a large **Back to current step: {step}** button (replacing the small italic X), the current step stays tappable, and the hint reads "Tap "{step}" to return to where you are". The completed step adds **View doctor profile**.
+- **Kept from this fork (upstream differs)**: the SOAP strip's dual-column layout (only labels pulled), the read-only historical-archive mode in `DocumentSheetModal`, plain (non-sticky) error toasts, the Mobile Phase 3 Finish bar, and the removed signed-card footnote in `ArtifactCard`.
+- **Deliberately not pulled**: Download PDF in the document modal (it needs new `html-to-image` + `jspdf` dependencies), threading KYC credentials into the document footer, `/verify/[code]` with `BackOrHomeButton`, the post-consult `NextStepBanner`, and ratings.
+- **Fixes along the way**: `DeliverablesDeck` called `useState` after an early return (a rules-of-hooks violation). The hooks are now declared before it, as upstream does.
+- **Device Optimization**: Doctor desktop and mobile workspace; patient mobile booking tracker (the return button is 44px).
+- **Tokens & Primitives Used**: `--surface-brand-soft`, `--action-primary(-hover)`, `--text-link(-hover)`, `--gray-bg`, `Textarea`, `AlertDialog`, `Checkbox`, Lucide `Undo2`, `UserRound`, `TestTube2`, `UserCheck`.
+- **Upstream Porting Notes**: Nothing needs porting back. These changes come from main. Verified with `tsc --noEmit` (clean) and `next build` (passes).
+
 ### [2026-10-08] Doctor Mobile Phase 5: Profile Tabs & Account Controls on Phones
 
 - **Target Route / Surface**: `/doctor/profile` (and `/doctor/kyc`, which renders it) below `lg`. `/doctor/history` was checked and needed no change.

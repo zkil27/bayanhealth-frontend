@@ -6,15 +6,15 @@ import {
   ClipboardList,
   Clock,
   FileBadge,
-  FlaskConical,
   Hash,
   Lock,
   PenLine,
   Pill,
-  Scan,
   ShieldAlert,
   ShieldCheck,
+  TestTube2,
   Unlock,
+  UserCheck,
 } from "lucide-react";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -28,8 +28,8 @@ const TOOL_ICONS: Record<CdsProtectedOutputType, React.ComponentType<{ className
   prescription: Pill,
   final_icd: Hash,
   medical_certificate: FileBadge,
-  lab_request: FlaskConical,
-  imaging_request: Scan,
+  diagnostic_request: TestTube2,
+  clinical_referral: UserCheck,
   patient_education: BookOpen,
 };
 

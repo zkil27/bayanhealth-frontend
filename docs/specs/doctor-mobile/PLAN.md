@@ -202,12 +202,30 @@ The workspace already has three phases (`workspacePhase.ts`: `review | assess | 
 │ 1 of 3 signed   [ Release to patient ] (disabled until signed) │
 ```
 
-- Each row is a `DeliverablesDeck` entry (`deriveDeckEntries`) with a **text status**: Not started / Drafting… / Draft / Ready to sign / Signed / Released / Out of date (stale after an assessment change). Tapping a row opens that artifact full-screen (`ArtifactCard` → `ArtifactPayloadEditor`).
+- Each row is a `DeliverablesDeck` entry (`deriveDeckEntries`) with a **text status**: Not started / Drafting / Needs review / Signed / Released / Out of date (stale after an assessment change). Tapping a row opens that artifact full-screen (`ArtifactCard` → `ArtifactPayloadEditor`).
+  - *Updated 2026-10-08:* "Draft" and "Ready to sign" are merged into **Needs review**. Any unsigned draft can be signed, so splitting it by whether the doctor had edited it read as two different states. Who wrote a draft ("AI draft", "AI draft, edited by you", "Written by you") is now quiet meta text beside the status. The vocabulary lives in `postConsultation/documentStatus.ts` and renders through `StatusText`. Every row is always shown (unstarted ones read "Not started" and offer **Draft with AI** / **Write it myself**). See `CHANGELOG_UI_V2.md`, "Post-Consult Redesign".
 - Rows the doctor doesn't need can be removed ("Not needed" in the row's overflow menu, using the existing `discardedTypes` behavior), so the list only shows what's left.
 - **Prescription editor (mobile):** one medicine per card, fields stacked (drug, strength, sig, frequency, duration, qty). The allergy line stays pinned above the list. "+ Add medicine" sits at the bottom. The A4 preview (`PrescriptionPagedPreview`) is a "Preview as patient sees it" sheet, not inline.
 - **Signing:** **Sign** opens a sheet: summary of what's being signed, the doctor's saved signature specimen (`SignaturePreview`), and **Sign prescription** (primary). If no specimen is saved, the sheet routes to Profile → Signature and back. No drawing on the phone mid-flow.
 - **Release** is a separate, final, confirmed step: "Send signed documents to Sofia? She'll see them in her Health tab." It stays distinct from signing, mirroring the server's finalize/release split.
 - **Finish later:** the back arrow always says what's kept ("Your drafts are saved. Finish from Consults → Needs documentation."). This relies on existing server persistence, not new local storage.
+
+> **Implemented 2026-10-08** (see `CHANGELOG_UI_V2.md`, "Post-Consult on a Phone"). What shipped, and where it differs from the sketch above:
+>
+> - **Screens.**
+>   - Below `lg`, Review, Assess and Deliver are separate screens, switched by a three-segment control under the patient row, and an open document is its own screen ("← Documents").
+>   - The view lives in the URL (`?view=`, `?doc=`) through the native History API, so the phone's back gesture steps back through screens instead of leaving the workspace.
+>   - Deliver before confirmation is tappable and explains itself rather than being greyed out.
+> - **Thumb bar.**
+>   - The bottom bar carries each screen's next step: **Write assessment →** on Review, the real **Confirm assessment** on Assess, and the next document on Deliver.
+>   - A document's own Edit / Sign / Hold to release is pinned at the bottom while it is open.
+>   - Both bars, and the step tabs, step aside while a text field has focus (iOS keyboard).
+> - **Remove / Not needed.**
+>   - A labelled **Remove** on drafts, and **Not needed for this patient** on unstarted documents (never the Plan).
+>   - The row then reads **Not needed** with **Add it back**, and Finish no longer lists it as missing.
+>   - Kept per consultation in `localStorage` (UI only), not on the server.
+> - **Sheets.** Sign, Remove, Finish, Clear assessment, Sign several and the diagnosis guideline preview are bottom sheets below `lg` (`ResponsiveSheet`).
+> - **Not done.** Signature drawing is still offered in the sign sheet when no specimen is saved; the "route to Profile → Signature and back" step is not built.
 
 ### 5.5 Calendar (`/doctor/schedule`)
 
