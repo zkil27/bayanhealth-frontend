@@ -42,7 +42,7 @@ export default function DoctorLayout({
         <aside className="relative z-50 hidden h-full w-60 shrink-0 flex-col justify-between rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-raised) p-5 text-(--text-body) shadow-lg lg:flex">
           <SidebarContent />
         </aside>
-        <main className="bg-satin relative flex min-w-0 flex-1 flex-col overflow-x-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-[calc(8rem+env(safe-area-inset-bottom,0px))] lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pb-0 lg:group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-0">
+        <main className="bg-satin relative flex min-w-0 flex-1 flex-col overflow-x-hidden pb-[calc(6rem+env(safe-area-inset-bottom,0px))] group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-[calc(10rem+env(safe-area-inset-bottom,0px))] lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pb-0 lg:group-has-[[data-slot=live-encounter-return]]/doctor-shell:pb-0">
           <DoctorHeader />
           <Suspense fallback={<Loading />}>{children}</Suspense>
         </main>

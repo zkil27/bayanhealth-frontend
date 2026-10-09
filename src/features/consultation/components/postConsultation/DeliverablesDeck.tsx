@@ -589,7 +589,7 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
               onRelease={() => onRelease(selectedEntry.artifact!)}
               onRegenerate={() => onDraft(selected)}
               onDiscard={() => handleDiscard(selected)}
-              canDiscard={selected !== "plan" && entryStatus(selectedEntry) === "needs_review"}
+              canDiscard={entryStatus(selectedEntry) === "needs_review"}
               onNext={() => {
                 const next = nextPendingAfter(selected);
                 if (next) onActiveChange(next);

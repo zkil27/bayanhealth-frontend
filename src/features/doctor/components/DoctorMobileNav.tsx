@@ -41,57 +41,66 @@ export function DoctorMobileNav() {
     // `z-40`, one step under the dashboard's `z-50` sheets and dialogs, so an
     // open triage or accept sheet covers the bar rather than the bar hiding the
     // sheet's own action footer.
-    <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col lg:hidden">
+    <div className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] z-40 mx-auto flex max-w-md flex-col gap-2 pointer-events-none lg:hidden">
       {pathname !== "/doctor" ? <LiveEncounterReturn /> : null}
       <nav
         aria-label="Doctor navigation"
-        className="flex h-[calc(4rem+env(safe-area-inset-bottom,0px))] items-center justify-around gap-1 border-t border-(--border-subtle) bg-(--surface-raised) px-2 pb-[env(safe-area-inset-bottom,0px)] shadow-(--shadow-lg)"
+        data-slot="doctor-nav-pill"
+        className="pointer-events-auto relative h-16 w-full"
       >
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isNavItemActive(pathname, item.href);
-          const count = item.href === "/doctor" ? totalActive : 0;
+        {/* The visible surface lives on a child so Safari doesn't tint its toolbar from the fixed element. */}
+        <span
+          aria-hidden
+          className="absolute inset-0 rounded-full border border-(--border-subtle) bg-(--surface-raised) shadow-(--shadow-md)"
+        />
+        <div className="relative flex h-full items-center gap-1 p-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isNavItemActive(pathname, item.href);
+            const count = item.href === "/doctor" ? totalActive : 0;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-(--radius-card) px-1 transition-colors",
-                active
-                  ? "text-(--action-primary)"
-                  : "text-(--text-muted) hover:text-(--text-heading)",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-              )}
-            >
-              <span
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.title}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center justify-center rounded-full px-3 py-0.5 transition-colors",
-                  active ? "bg-(--surface-accent-soft)" : "",
+                  "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
+                  active
+                    ? "bg-(--surface-accent-soft) text-(--action-primary)"
+                    : "text-(--text-muted) hover:bg-(--surface-canvas) hover:text-(--text-heading)",
                 )}
               >
-                <Icon className="size-5 shrink-0" aria-hidden="true" />
-                {count > 0 ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -top-1 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--action-primary) px-1 text-[10px] leading-none font-bold text-(--text-on-brand) tabular-nums ring-2 ring-(--surface-raised)"
-                  >
-                    {count > 9 ? "9+" : count}
-                  </span>
-                ) : null}
-              </span>
-              <span className="truncate text-[11px] leading-none font-semibold">
-                {item.title}
-                {count > 0 ? (
-                  <span className="sr-only">
-                    {`, ${count} ${count === 1 ? "patient" : "patients"} in queue`}
-                  </span>
-                ) : null}
-              </span>
-            </Link>
-          );
-        })}
+                <span className="relative flex items-center justify-center">
+                  <Icon className="size-6 shrink-0" aria-hidden="true" />
+                  {count > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--action-primary) px-1 text-[10px] leading-none font-bold text-(--text-on-brand) tabular-nums ring-2 ring-(--surface-raised)"
+                    >
+                      {count > 9 ? "9+" : count}
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  className={cn(
+                    "max-w-full truncate text-[13px] leading-tight",
+                    active ? "font-semibold" : "font-medium",
+                  )}
+                >
+                  {item.title}
+                  {count > 0 ? (
+                    <span className="sr-only">
+                      {`, ${count} ${count === 1 ? "patient" : "patients"} in queue`}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );
@@ -120,7 +129,7 @@ function LiveEncounterReturn() {
     <Link
       href={href}
       data-slot="live-encounter-return"
-      className="flex h-14 items-center gap-3 border-t border-(--border-subtle) bg-(--surface-brand) px-4 text-(--text-on-brand) focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-(--focus-ring)"
+      className="pointer-events-auto flex h-14 items-center gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-brand) px-4 text-(--text-on-brand) shadow-(--shadow-md) transition-colors hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
     >
       <Video className="size-5 shrink-0 text-(--teal-300)" aria-hidden="true" />
       <span className="flex min-w-0 flex-1 flex-col">
@@ -129,9 +138,9 @@ function LiveEncounterReturn() {
         </span>
         <span className="truncate text-sm leading-tight font-bold">{item.name}</span>
       </span>
-      <span className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-(--teal-500) px-3.5 text-sm font-bold text-(--surface-brand)">
+      <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-(--teal-500) px-3.5 text-xs font-bold text-(--surface-brand)">
         {item.isInProgress ? "Return" : "Open room"}
-        <ArrowRight className="size-4" aria-hidden="true" />
+        <ArrowRight className="size-3.5" aria-hidden="true" />
       </span>
     </Link>
   );

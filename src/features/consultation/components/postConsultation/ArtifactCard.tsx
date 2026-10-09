@@ -104,7 +104,7 @@ export interface ArtifactCardProps {
   canRegenerate?: boolean;
   /** Remove this unsigned draft from the review (client-side only; the server copy is untouched). */
   onDiscard?: () => void;
-  /** Whether this draft can be discarded: unsigned drafts only, never the Plan. */
+  /** Whether this draft can be discarded: unsigned drafts only. */
   canDiscard?: boolean;
   intake?: BookingIntakeForm | null;
   /** Move to the next document that still needs something. */
@@ -339,7 +339,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
                   >
                     <MoreHorizontal className="size-4" aria-hidden /> More
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" sideOffset={6} className="min-w-52 rounded-xl p-1">
+                  <DropdownMenuContent align="start" side="top" sideOffset={8} className="min-w-52 rounded-xl p-1">
                     {props.onRegenerate ? (
                       <DropdownMenuItem
                         disabled={!props.canRegenerate}

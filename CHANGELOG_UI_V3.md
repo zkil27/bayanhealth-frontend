@@ -11,6 +11,41 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-09] Doctor Mobile Nav: Lifted Pill Harmonization (Matching Patient Side)
+
+- **Target Route / Surface**: Every doctor route below `lg` (bottom navigation in `/doctor`, `/doctor/schedule`, `/doctor/history`, `/doctor/profile`)
+- **Files Modified**:
+  - `src/features/doctor/components/DoctorMobileNav.tsx`:
+    - **Lifted Pill Structure**: Transformed the edge-docked bottom bar into an opaque pill lifted 12px above the safe area (`fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] z-40 mx-auto max-w-md h-16 rounded-full 1px border shadow-(--shadow-md)`), matching the exact design and ergonomics of the patient `NavBar`.
+    - **WebKit Safari Optimization**: Implemented the absolute positioned backdrop child pattern (`span aria-hidden`) to prevent mobile Safari 26 from sampling and tinting its bottom floating address bar from the fixed element.
+    - **Ergonomic Touch Targets**: Tabs are 56px-tall (`h-14`) rounded-full pill targets with 24px (`size-6`) icons, 13px labels, and `--surface-accent-soft` active indicator with `aria-current="page"`.
+    - **Queue Indicator**: Retained the live queue badge on the Dashboard tab, positioned cleanly relative to the icon.
+    - **Floating Live Encounter Card**: Rebuilt `LiveEncounterReturn` as a floating rounded card (`rounded-2xl`, `--shadow-md`, `--surface-brand`) positioned directly above the nav pill with `gap-2`.
+  - `src/app/doctor/(homepage)/layout.tsx`:
+    - `<main>` bottom clearance padding updated from `4.5rem` to `6rem` (+ safe area) to comfortably clear the lifted pill, and from `8rem` to `10rem` when the return-to-encounter card is mounted.
+- **Design Intent**:
+  - Cross-role design harmonization: provides the doctor mobile experience with the identical tactile, lifted pill ergonomics proven on the patient side.
+  - Eliminates the mobile Safari toolbar tap trap (WebKit bug 194235) where bottom-flush tabs fail to register taps when the browser bar is collapsed.
+- **Device Optimization**: Doctor mobile web (iPhone/Android mobile browsers).
+- **Tokens & Primitives Used**: `--surface-raised`, `--surface-brand`, `--surface-accent-soft`, `--action-primary`, `--border-subtle`, `--shadow-md`.
+- **Upstream Porting Notes**: Port `DoctorMobileNav.tsx` and the clearance padding in `layout.tsx` together.
+
+### [2026-10-09] Doctor Deliverables: Plan Draft Discard & Mobile Action Menu Elevation
+
+- **Target Route / Surface**: `/doctor/post-consultation/[consultationId]` (Deliverables Deck and ArtifactCard)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/DeliverablesDeck.tsx`:
+    - Removed `selected !== "plan"` restriction from `canDiscard`. Unsigned Plan drafts in `needs_review` status can now be discarded just like other deliverables (prescriptions, medical certificates, diagnostic requests, referrals, and education sheets).
+  - `src/features/consultation/components/postConsultation/ArtifactCard.tsx`:
+    - Updated `canDiscard` contract to reflect that any unsigned draft can be discarded.
+    - Set `side="top"` and `sideOffset={8}` on the "More" `DropdownMenuContent`. In sticky/docked bottom footers on mobile devices, this opens the actions menu upwards into the open viewport area above the footer, preventing it from covering the primary "Sign" button or colliding with the bottom safe area.
+- **Design Intent**:
+  - Allow physicians to discard AI-generated Plan drafts when starting over or choosing not to use an automated plan.
+  - Fix mobile ergonomics: ensure all secondary actions ("Redraft with AI", "Discard draft") are clearly accessible above the docked action bar without clipping.
+- **Device Optimization**: Mobile web and desktop clinical views.
+- **Tokens & Primitives Used**: `--danger-fg`, `--danger-bg`, `@base-ui/react/menu`.
+- **Upstream Porting Notes**: Port `DeliverablesDeck.tsx` and `ArtifactCard.tsx` together.
+
 ### [2026-10-09] Overlay & Modal Performance: Elimination of Backdrop-Blur Compositor Lag & Base UI Transition Harmonization
 
 - **Target Route / Surface**: Doctor consultation room (`/consultation/room/[bookingId]`), Doctor dashboard modals, and global `@base-ui` dialog/alert-dialog primitives.
