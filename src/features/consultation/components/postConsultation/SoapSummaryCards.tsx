@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
+import { memo, type ComponentType, type ReactNode } from "react";
 import {
   Activity,
   Clock,
@@ -85,7 +85,7 @@ function IntakeEmpty({ children }: { children: ReactNode }) {
 }
 
 /** What the patient reported: chief complaint, flagged symptoms, their own words. */
-export function SubjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
+export const SubjectiveIntake = memo(function SubjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
   const purpose = intake?.sections.purpose;
   const highlights = getClinicalHighlights(intake);
 
@@ -125,10 +125,10 @@ export function SubjectiveIntake({ intake }: { intake: BookingIntakeForm | null 
       ) : null}
     </div>
   );
-}
+});
 
 /** The vitals the patient recorded at intake, each flagged in words when abnormal. */
-export function ObjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
+export const ObjectiveIntake = memo(function ObjectiveIntake({ intake }: { intake: BookingIntakeForm | null | undefined }) {
   const vitals = intake?.sections.details?.vitals;
 
   if (intake === undefined) return <IntakeEmpty>Loading vitals…</IntakeEmpty>;
@@ -154,7 +154,7 @@ export function ObjectiveIntake({ intake }: { intake: BookingIntakeForm | null |
       ))}
     </ul>
   );
-}
+});
 
 /** One line for a folded Subjective section. */
 export function subjectiveIntakeSummary(intake: BookingIntakeForm | null | undefined): string | undefined {
@@ -392,7 +392,7 @@ function severityTone(severity: VitalSeverity): HighlightTone {
  * value, and the abnormal ones tinted and marked. Was one muted sentence
  * ("Temp 38.2°C, BP 118/76, …") where a fever looked like every other number.
  */
-export function ObjectiveSummary({
+export const ObjectiveSummary = memo(function ObjectiveSummary({
   intake,
   fallback,
 }: {
@@ -434,13 +434,13 @@ export function ObjectiveSummary({
       ))}
     </>
   );
-}
+});
 
 /**
  * A folded Subjective: flagged symptoms first, as chips, so a red flag is
  * never the part cut off by truncation; then the complaint in body color.
  */
-export function SubjectiveSummary({
+export const SubjectiveSummary = memo(function SubjectiveSummary({
   intake,
   text,
 }: {
@@ -469,4 +469,4 @@ export function SubjectiveSummary({
       {text ? <span className="min-w-0 truncate font-medium text-(--text-body)">{text}</span> : null}
     </>
   );
-}
+});

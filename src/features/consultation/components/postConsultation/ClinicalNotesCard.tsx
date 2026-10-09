@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Textarea } from "@/components/ui/textarea";
@@ -214,8 +214,11 @@ export function NotesSaveState({ state, prefilled }: { state: ClinicalNotesSaveS
 /**
  * One of the physician's note fields. Saves when the field loses focus, the
  * same moment the old card saved, so nothing is lost by moving on.
+ *
+ * Internally isolates fast local typing state with debounced sync to parent
+ * notes, ensuring typing at 60 FPS without triggering full-workspace re-renders.
  */
-export function ClinicalNoteField({
+export const ClinicalNoteField = memo(function ClinicalNoteField({
   notes,
   field,
   label,
@@ -229,6 +232,49 @@ export function ClinicalNoteField({
   hint?: string;
 }) {
   const id = `clinical-notes-${field}`;
+  const externalValue = notes.draft[field] ?? "";
+  const [localValue, setLocalValue] = useState(externalValue);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+
+  // Sync from external draft when external value changes (e.g. initial fetch or reset)
+  // unless the physician is actively typing into this field
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      setLocalValue(externalValue);
+    }
+  }, [externalValue]);
+
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const next = event.target.value;
+    isTypingRef.current = true;
+    setLocalValue(next);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      notes.setField(field, next);
+      isTypingRef.current = false;
+    }, 300);
+  };
+
+  const handleBlur = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    isTypingRef.current = false;
+    if (localValue !== notes.draft[field]) {
+      notes.setField(field, localValue);
+    }
+    void notes.save();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   return (
     <div data-slot="clinical-note-field" className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -239,14 +285,14 @@ export function ClinicalNoteField({
       </div>
       <Textarea
         id={id}
-        value={notes.draft[field]}
+        value={localValue}
         maxLength={CLINICAL_NOTE_MAX}
         placeholder={placeholder}
         className="min-h-20 rounded-xl text-base sm:text-sm"
         disabled={!notes.loaded}
-        onChange={(event) => notes.setField(field, event.target.value)}
-        onBlur={() => void notes.save()}
+        onChange={handleChange}
+        onBlur={handleBlur}
       />
     </div>
   );
-}
+});

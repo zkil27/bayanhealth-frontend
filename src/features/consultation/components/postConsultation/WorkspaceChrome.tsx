@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Check, Lock } from "lucide-react";
 
@@ -20,7 +21,7 @@ const PHASES: ReadonlyArray<{ id: WorkspacePhase; label: string; hint: string }>
  * Every step is labelled; it used to show only the current step's name, so a
  * first-time doctor saw "① ② ③ Deliver" and had to guess the other two.
  */
-export function WorkspaceStepper({
+export const WorkspaceStepper = memo(function WorkspaceStepper({
   phase,
   blocked,
 }: {
@@ -71,7 +72,7 @@ export function WorkspaceStepper({
       })}
     </ol>
   );
-}
+});
 
 function StepMark({
   index,
@@ -109,7 +110,7 @@ function StepMark({
  * Assessment is confirmed so the tap can explain why it is not open yet,
  * rather than being a dead, greyed-out button.
  */
-export function PhoneStepTabs({
+export const PhoneStepTabs = memo(function PhoneStepTabs({
   view,
   phase,
   deliverLocked,
@@ -161,7 +162,7 @@ export function PhoneStepTabs({
       </ol>
     </nav>
   );
-}
+});
 
 /**
  * The workspace header: who this consultation is for, where it stands, and
@@ -173,7 +174,7 @@ export function PhoneStepTabs({
  * step tabs. The tabs step aside while the keyboard is up, so a note being
  * typed is not squeezed between two sticky bars; identity and allergies stay.
  */
-export function WorkspaceHeader({
+export const WorkspaceHeader = memo(function WorkspaceHeader({
   consultationId,
   chiefComplaint,
   patientName,
@@ -187,6 +188,7 @@ export function WorkspaceHeader({
   onSelectView,
   actions,
   phoneActions,
+  isFieldFocused,
 }: {
   consultationId: string;
   chiefComplaint?: string;
@@ -208,6 +210,8 @@ export function WorkspaceHeader({
   actions?: React.ReactNode;
   /** Phone actions, on the identity row. */
   phoneActions?: React.ReactNode;
+  /** Whether a text input or textarea currently has focus (replaces CSS :has) */
+  isFieldFocused?: boolean;
 }) {
   return (
     <header
@@ -254,7 +258,7 @@ export function WorkspaceHeader({
       </div>
 
       <PhoneStepTabs
-        className="lg:hidden max-lg:group-has-[textarea:focus]/ws:hidden max-lg:group-has-[input:focus]/ws:hidden"
+        className={cn("lg:hidden group-data-[field-focused=true]/ws:hidden", isFieldFocused && "max-lg:hidden")}
         view={view}
         phase={phase}
         deliverLocked={deliverLocked}
@@ -262,4 +266,4 @@ export function WorkspaceHeader({
       />
     </header>
   );
-}
+});

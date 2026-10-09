@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { BookOpenCheck, Check, FileText, ListChecks, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ export interface CandidatePickerProps {
   onSelect: (diagnosisName: string) => void;
 }
 
-export function CandidatePicker(props: CandidatePickerProps) {
+export const CandidatePicker = memo(function CandidatePicker(props: CandidatePickerProps) {
   /*
     On a phone the guideline opens as a bottom sheet over the list, with
     "Use …" under the thumb, instead of a panel pushed above the list. Closing
@@ -385,4 +385,4 @@ export function CandidatePicker(props: CandidatePickerProps) {
       ) : null}
     </section>
   );
-}
+});

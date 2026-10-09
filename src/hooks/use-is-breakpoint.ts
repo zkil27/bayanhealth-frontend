@@ -1,12 +1,13 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react";
 
-type BreakpointMode = "min" | "max"
+type BreakpointMode = "min" | "max";
 
 /**
  * Hook to detect whether the current viewport matches a given breakpoint rule.
+ * Uses `useSyncExternalStore` to subscribe directly to `window.matchMedia`,
+ * preventing hydration re-render flashes and redundant state allocations.
  * Example:
  *   useIsBreakpoint("max", 768)   // true when width < 768
  *   useIsBreakpoint("min", 1024)  // true when width >= 1024
@@ -14,25 +15,27 @@ type BreakpointMode = "min" | "max"
 export function useIsBreakpoint(
   mode: BreakpointMode = "max",
   breakpoint = 768
-) {
-  const [matches, setMatches] = useState<boolean | undefined>(undefined)
+): boolean {
+  const query =
+    mode === "min"
+      ? `(min-width: ${breakpoint}px)`
+      : `(max-width: ${breakpoint - 1}px)`;
 
-  useEffect(() => {
-    const query =
-      mode === "min"
-        ? `(min-width: ${breakpoint}px)`
-        : `(max-width: ${breakpoint - 1}px)`
-
-    const mql = window.matchMedia(query)
-    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches)
-
-    // Set initial value
-    setMatches(mql.matches)
-
-    // Add listener
-    mql.addEventListener("change", onChange)
-    return () => mql.removeEventListener("change", onChange)
-  }, [mode, breakpoint])
-
-  return !!matches
+  return useSyncExternalStore(
+    (notify) => {
+      if (typeof window === "undefined" || !window.matchMedia) {
+        return () => {};
+      }
+      const mql = window.matchMedia(query);
+      mql.addEventListener("change", notify);
+      return () => mql.removeEventListener("change", notify);
+    },
+    () => {
+      if (typeof window === "undefined" || !window.matchMedia) {
+        return false;
+      }
+      return window.matchMedia(query).matches;
+    },
+    () => false
+  );
 }

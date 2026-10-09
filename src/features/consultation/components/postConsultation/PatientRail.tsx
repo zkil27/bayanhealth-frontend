@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ClipboardCheck, FileText, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake"
 import { PatientDetails } from "./PatientDetails";
 
 /** Sticky, scan-first patient context for the post-consult doctor workspace. */
-export function PatientRail({
+export const PatientRail = memo(function PatientRail({
   bookingId,
   intake,
   collapsed = false,
@@ -96,4 +97,4 @@ export function PatientRail({
       </div>
     </aside>
   );
-}
+});

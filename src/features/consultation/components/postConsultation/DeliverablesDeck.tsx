@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { memo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -217,7 +217,7 @@ export function checklistProgress(
  * its Sign dialog. Signing still needs the attestation tick, and releasing
  * still needs the two-second hold.
  */
-export function DeliverablesDeck({
+export const DeliverablesDeck = memo(function DeliverablesDeck({
   entries,
   active,
   onActiveChange,
@@ -679,7 +679,7 @@ export function DeliverablesDeck({
       ) : null}
     </div>
   );
-}
+});
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (

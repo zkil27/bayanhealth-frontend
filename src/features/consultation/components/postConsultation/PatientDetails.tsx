@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import {
   AlertTriangle,
   Baby,
@@ -57,7 +57,7 @@ import {
  * `demographics` field, which both this panel and the workspace header already
  * read the same way.
  */
-export function PatientDetails({
+export const PatientDetails = memo(function PatientDetails({
   bookingId,
   form,
 }: {
@@ -120,7 +120,7 @@ export function PatientDetails({
       }
     </AsyncView>
   );
-}
+});
 
 function Unavailable({ title, detail }: { title: string; detail: string }) {
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -158,6 +158,7 @@ export function AssessmentFirstWorkspace({
    * set one up is told once, in the card they are actually trying to sign.
    */
   const { profile: doctorProfile } = useMyDoctorProfile();
+  const [isFieldFocused, setIsFieldFocused] = useState(false);
 
   const [assessment, setAssessment] = useState<CdsAssessment | null>(null);
   const [draftDiagnosis, setDraftDiagnosis] = useState("");
@@ -1397,6 +1398,19 @@ export function AssessmentFirstWorkspace({
       data-slot="post-consultation-workspace"
       data-phase={phase}
       data-view={phoneView}
+      data-field-focused={isFieldFocused ? "true" : undefined}
+      onFocusCapture={(e) => {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+          setIsFieldFocused(true);
+        }
+      }}
+      onBlurCapture={(e) => {
+        const nextTarget = e.relatedTarget as HTMLElement | null;
+        if (!nextTarget || (nextTarget.tagName !== "INPUT" && nextTarget.tagName !== "TEXTAREA")) {
+          setIsFieldFocused(false);
+        }
+      }}
       className="group/ws flex min-h-full w-full max-w-full min-w-0 flex-col"
       aria-label="Post-consultation documentation"
     >
@@ -1412,6 +1426,7 @@ export function AssessmentFirstWorkspace({
         view={phoneView}
         deliverLocked={!confirmed}
         onSelectView={showView}
+        isFieldFocused={isFieldFocused}
         phoneActions={
           <>
             <Button
@@ -1459,135 +1474,141 @@ export function AssessmentFirstWorkspace({
           {/* A safety finding leads the page (every phone screen but an open document). */}
           {safetyLock ? <div className={docOpen ? "max-lg:hidden" : ""}>{lockNotice}</div> : null}
 
-          <WorkspaceSection
-            id="soap-s"
-            letter="S"
-            title="Subjective"
-            className={onPhone("review")}
-            summary={<SubjectiveSummary intake={intake} text={subjectiveSummary} />}
-            open={sectionOpen("S")}
-            onOpenChange={toggleFor("S")}
-            meta={<NotesSaveState state={notes.saveState} prefilled={notes.prefilled} />}
-          >
-            <div className="flex flex-col gap-4">
-              <IntakeBlock label="Patient reported">
-                <SubjectiveIntake intake={intake} />
-              </IntakeBlock>
-              <ClinicalNoteField
-                notes={notes}
-                field="subjective"
-                label="Your subjective notes"
-                hint="Private to you"
-                placeholder="What the patient told you, in your words."
-              />
-            </div>
-          </WorkspaceSection>
-
-          <WorkspaceSection
-            id="soap-o"
-            letter="O"
-            title="Objective"
-            className={onPhone("review")}
-            summary={<ObjectiveSummary intake={intake} fallback={firstLine(notes.draft.objective)} />}
-            open={sectionOpen("O")}
-            onOpenChange={toggleFor("O")}
-          >
-            <div className="flex flex-col gap-4">
-              <IntakeBlock label="Patient-recorded vitals">
-                <ObjectiveIntake intake={intake} />
-              </IntakeBlock>
-              <ClinicalNoteField
-                notes={notes}
-                field="objective"
-                label="Your objective findings"
-                hint="Private to you"
-                placeholder="What you observed or measured during the consult."
-              />
-            </div>
-          </WorkspaceSection>
-
-          <WorkspaceSection
-            id="soap-a"
-            letter="A"
-            title="Assessment"
-            className={onPhone("assess")}
-            summary={
-              assessment.confirmed ? (
-                <>
-                  <span className="min-w-0 truncate font-semibold text-(--text-heading)">
-                    {assessment.confirmed.diagnosis}
-                  </span>
-                  {confirmedIcd ? (
-                    <span className="shrink-0 rounded-md bg-(--surface-warm-soft) px-1.5 py-0.5 font-mono text-xs font-semibold text-(--text-heading)">
-                      ICD-10 {confirmedIcd.code}
-                    </span>
-                  ) : null}
-                </>
-              ) : (
-                assessmentSummary
-              )
-            }
-            open={sectionOpen("A")}
-            onOpenChange={toggleFor("A")}
-            meta={
-              safetyLock ? (
-                <StatusText tone="danger" icon={ShieldAlert}>
-                  Red flag
-                </StatusText>
-              ) : confirmed ? (
-                <StatusText tone="success" icon={CheckCircle2}>
-                  Confirmed
-                </StatusText>
-              ) : (
-                <StatusText tone="attention">Not confirmed</StatusText>
-              )
-            }
-          >
-            <AssessmentEditor
-              assessment={assessment}
-              allowedTypes={allowedTypes}
-              draftDiagnosis={draftDiagnosis}
-              onDraftDiagnosis={updateDraftDiagnosis}
-              busy={busy}
-              onSave={saveManual}
-              onConfirm={confirm}
-              onUpdate={() => updateOrReattest("update")}
-              onReattest={() => updateOrReattest("reattest")}
-              onClear={clear}
-              icd={confirmedIcd}
-              draftIcd={draftIcd}
-              onDraftIcd={editDraftIcd}
-              reasoning={
+          {!isPhone || (!docOpen && phoneView === "review") ? (
+            <WorkspaceSection
+              id="soap-s"
+              letter="S"
+              title="Subjective"
+              className={onPhone("review")}
+              summary={<SubjectiveSummary intake={intake} text={subjectiveSummary} />}
+              open={sectionOpen("S")}
+              onOpenChange={toggleFor("S")}
+              meta={<NotesSaveState state={notes.saveState} prefilled={notes.prefilled} />}
+            >
+              <div className="flex flex-col gap-4">
+                <IntakeBlock label="Patient reported">
+                  <SubjectiveIntake intake={intake} />
+                </IntakeBlock>
                 <ClinicalNoteField
                   notes={notes}
-                  field="assessmentNotes"
-                  label="Clinical reasoning"
-                  hint="Optional · private to you, never sent to the AI"
-                  placeholder="Why this diagnosis: differentials considered, what ruled them out."
+                  field="subjective"
+                  label="Your subjective notes"
+                  hint="Private to you"
+                  placeholder="What the patient told you, in your words."
                 />
-              }
-              picker={
-                <CandidatePicker
-                  assessment={assessment}
-                  evaluation={evaluation}
-                  preview={preview}
-                  focused={focusedCandidate}
-                  previewLoading={previewLoading}
-                  searching={searching}
-                  cursor={cursor}
-                  busy={busy}
-                  suppressed={Boolean(candidateSuppressed)}
-                  onStart={startEvaluation}
-                  onMore={() => runCandidateSearch(draftDiagnosis, cursor)}
-                  onFocus={loadPreview}
-                  onSelect={chooseCandidate}
+              </div>
+            </WorkspaceSection>
+          ) : null}
+
+          {!isPhone || (!docOpen && phoneView === "review") ? (
+            <WorkspaceSection
+              id="soap-o"
+              letter="O"
+              title="Objective"
+              className={onPhone("review")}
+              summary={<ObjectiveSummary intake={intake} fallback={firstLine(notes.draft.objective)} />}
+              open={sectionOpen("O")}
+              onOpenChange={toggleFor("O")}
+            >
+              <div className="flex flex-col gap-4">
+                <IntakeBlock label="Patient-recorded vitals">
+                  <ObjectiveIntake intake={intake} />
+                </IntakeBlock>
+                <ClinicalNoteField
+                  notes={notes}
+                  field="objective"
+                  label="Your objective findings"
+                  hint="Private to you"
+                  placeholder="What you observed or measured during the consult."
                 />
+              </div>
+            </WorkspaceSection>
+          ) : null}
+
+          {!isPhone || (!docOpen && phoneView === "assess") ? (
+            <WorkspaceSection
+              id="soap-a"
+              letter="A"
+              title="Assessment"
+              className={onPhone("assess")}
+              summary={
+                assessment.confirmed ? (
+                  <>
+                    <span className="min-w-0 truncate font-semibold text-(--text-heading)">
+                      {assessment.confirmed.diagnosis}
+                    </span>
+                    {confirmedIcd ? (
+                      <span className="shrink-0 rounded-md bg-(--surface-warm-soft) px-1.5 py-0.5 font-mono text-xs font-semibold text-(--text-heading)">
+                        ICD-10 {confirmedIcd.code}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  assessmentSummary
+                )
               }
-            />
-          </WorkspaceSection>
+              open={sectionOpen("A")}
+              onOpenChange={toggleFor("A")}
+              meta={
+                safetyLock ? (
+                  <StatusText tone="danger" icon={ShieldAlert}>
+                    Red flag
+                  </StatusText>
+                ) : confirmed ? (
+                  <StatusText tone="success" icon={CheckCircle2}>
+                    Confirmed
+                  </StatusText>
+                ) : (
+                  <StatusText tone="attention">Not confirmed</StatusText>
+                )
+              }
+            >
+              <AssessmentEditor
+                assessment={assessment}
+                allowedTypes={allowedTypes}
+                draftDiagnosis={draftDiagnosis}
+                onDraftDiagnosis={updateDraftDiagnosis}
+                busy={busy}
+                onSave={saveManual}
+                onConfirm={confirm}
+                onUpdate={() => updateOrReattest("update")}
+                onReattest={() => updateOrReattest("reattest")}
+                onClear={clear}
+                icd={confirmedIcd}
+                draftIcd={draftIcd}
+                onDraftIcd={editDraftIcd}
+                reasoning={
+                  <ClinicalNoteField
+                    notes={notes}
+                    field="assessmentNotes"
+                    label="Clinical reasoning"
+                    hint="Optional · private to you, never sent to the AI"
+                    placeholder="Why this diagnosis: differentials considered, what ruled them out."
+                  />
+                }
+                picker={
+                  <CandidatePicker
+                    assessment={assessment}
+                    evaluation={evaluation}
+                    preview={preview}
+                    focused={focusedCandidate}
+                    previewLoading={previewLoading}
+                    searching={searching}
+                    cursor={cursor}
+                    busy={busy}
+                    suppressed={Boolean(candidateSuppressed)}
+                    onStart={startEvaluation}
+                    onMore={() => runCandidateSearch(draftDiagnosis, cursor)}
+                    onFocus={loadPreview}
+                    onSelect={chooseCandidate}
+                  />
+                }
+              />
+            </WorkspaceSection>
+          ) : null}
 
           {/* Phone, Deliver: the confirmed diagnosis in one tappable line. */}
-          {confirmed ? (
+          {confirmed && (!isPhone || (!docOpen && phoneView === "deliver")) ? (
             <button
               type="button"
               data-slot="phone-assessment-summary"
@@ -1612,88 +1633,92 @@ export function AssessmentFirstWorkspace({
           ) : null}
 
           {/* A non-safety hold concerns drafting, so it sits right above the Plan it holds. */}
-          {hasLocks && !safetyLock ? <div className={onPhone("assess", "deliver")}>{lockNotice}</div> : null}
+          {hasLocks && !safetyLock && (!isPhone || (!docOpen && (phoneView === "assess" || phoneView === "deliver"))) ? (
+            <div className={onPhone("assess", "deliver")}>{lockNotice}</div>
+          ) : null}
 
-          <WorkspaceSection
-            id="soap-p"
-            letter="P"
-            title="Plan & documents"
-            className={phoneView === "deliver" ? undefined : "max-lg:hidden"}
-            headerClassName={docOpen ? "max-lg:hidden" : undefined}
-            locked={!confirmed}
-            summary={!confirmed ? "Opens after you confirm the Assessment" : undefined}
-            bodyClassName="p-0 sm:p-0 max-lg:border-t-0"
-            meta={
-              confirmed && progress.started > 0 ? (
-                <span className="text-xs font-semibold text-(--text-muted) tabular-nums">
-                  {progress.done} of {progress.started} done
-                </span>
-              ) : null
-            }
-          >
-            <DeliverablesDeck
-              entries={deckEntries}
-              active={phoneDoc ?? activeDeliverable}
-              onActiveChange={openDocument}
-              busy={busy}
-              generating={generating}
-              specimen={doctorProfile?.signature}
-              defaultSignerName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
-              draftingOpen={draftingOpen}
-              aiEligibleTypes={aiEligibleTypes}
-              aiUnavailableReason={
-                hasLocks
-                  ? "AI drafting is on hold until the notice above is cleared. You can still write it yourself."
-                  : undefined
+          {!isPhone || phoneView === "deliver" ? (
+            <WorkspaceSection
+              id="soap-p"
+              letter="P"
+              title="Plan & documents"
+              className={phoneView === "deliver" ? undefined : "max-lg:hidden"}
+              headerClassName={docOpen ? "max-lg:hidden" : undefined}
+              locked={!confirmed}
+              summary={!confirmed ? "Opens after you confirm the Assessment" : undefined}
+              bodyClassName="p-0 sm:p-0 max-lg:border-t-0"
+              meta={
+                confirmed && progress.started > 0 ? (
+                  <span className="text-xs font-semibold text-(--text-muted) tabular-nums">
+                    {progress.done} of {progress.started} done
+                  </span>
+                ) : null
               }
-              onAmend={amend}
-              onFinalize={finalize}
-              onRelease={release}
-              onDraft={(outputType) => void generate(outputType)}
-              onAuthor={authorDocument}
-              onDiscard={handleDiscard}
-              cancellableTypes={new Set(jobByType.keys())}
-              onCancelDraft={(outputType) => {
-                const job = jobByType.get(outputType);
-                if (job) cancelJob(job);
-              }}
-              intake={intake}
-              followUp={followUp}
-              history={history}
-              historyCursor={historyCursor}
-              onLoadMoreHistory={loadMoreHistory}
-              onInspectHistory={(artifact) => setInspectingHistoricalArtifact(artifact)}
-              mobileDetail={docOpen}
-              onCloseMobileDetail={closeDocument}
-              notNeeded={discardedTypes}
-              removedDraftTypes={removedDraftTypes}
-              onNotNeeded={handleDiscard}
-              onRestore={restoreType}
-              onRefresh={refreshAll}
-            />
-            {untypedJobs.length > 0 ? (
-              <ul className="flex flex-col gap-2 border-t border-(--border-subtle) p-4 sm:px-5">
-                {untypedJobs.map((job) => (
-                  <li key={job.jobId} className="flex flex-wrap items-center justify-between gap-2 text-sm text-(--text-body)">
-                    <span>Earlier draft · {job.status.replaceAll("_", " ")}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      shape="pill"
-                      className="h-11 lg:h-9"
-                      disabled={busy}
-                      onClick={() => cancelJob(job as CdsAsyncJob | CdsAsyncJobAccepted)}
-                    >
-                      Cancel
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </WorkspaceSection>
+            >
+              <DeliverablesDeck
+                entries={deckEntries}
+                active={phoneDoc ?? activeDeliverable}
+                onActiveChange={openDocument}
+                busy={busy}
+                generating={generating}
+                specimen={doctorProfile?.signature}
+                defaultSignerName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+                draftingOpen={draftingOpen}
+                aiEligibleTypes={aiEligibleTypes}
+                aiUnavailableReason={
+                  hasLocks
+                    ? "AI drafting is on hold until the notice above is cleared. You can still write it yourself."
+                    : undefined
+                }
+                onAmend={amend}
+                onFinalize={finalize}
+                onRelease={release}
+                onDraft={(outputType) => void generate(outputType)}
+                onAuthor={authorDocument}
+                onDiscard={handleDiscard}
+                cancellableTypes={new Set(jobByType.keys())}
+                onCancelDraft={(outputType) => {
+                  const job = jobByType.get(outputType);
+                  if (job) cancelJob(job);
+                }}
+                intake={intake}
+                followUp={followUp}
+                history={history}
+                historyCursor={historyCursor}
+                onLoadMoreHistory={loadMoreHistory}
+                onInspectHistory={(artifact) => setInspectingHistoricalArtifact(artifact)}
+                mobileDetail={docOpen}
+                onCloseMobileDetail={closeDocument}
+                notNeeded={discardedTypes}
+                removedDraftTypes={removedDraftTypes}
+                onNotNeeded={handleDiscard}
+                onRestore={restoreType}
+                onRefresh={refreshAll}
+              />
+              {untypedJobs.length > 0 ? (
+                <ul className="flex flex-col gap-2 border-t border-(--border-subtle) p-4 sm:px-5">
+                  {untypedJobs.map((job) => (
+                    <li key={job.jobId} className="flex flex-wrap items-center justify-between gap-2 text-sm text-(--text-body)">
+                      <span>Earlier draft · {job.status.replaceAll("_", " ")}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        shape="pill"
+                        className="h-11 lg:h-9"
+                        disabled={busy}
+                        onClick={() => cancelJob(job as CdsAsyncJob | CdsAsyncJobAccepted)}
+                      >
+                        Cancel
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </WorkspaceSection>
+          ) : null}
 
           <NextStepBar
-            className={docOpen ? "max-lg:hidden" : undefined}
+            className={cn(docOpen ? "max-lg:hidden" : undefined, isFieldFocused && "max-lg:hidden")}
             assessment={assessment}
             artifacts={liveCurrent}
             notNeededTypes={discardedTypes}
@@ -1709,17 +1734,20 @@ export function AssessmentFirstWorkspace({
             onGoToAssessment={goToAssessment}
             onGoToNotice={() => (isPhone ? window.scrollTo({ top: 0 }) : scrollToId("workspace-locks"))}
             onGoToDocument={goToDocument}
+            isFieldFocused={isFieldFocused}
           />
         </main>
 
-        <div className="order-2 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
-          <PatientRail
-            bookingId={bookingId}
-            intake={intake}
-            collapsed={patientRailCollapsed}
-            onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
-          />
-        </div>
+        {!isPhone ? (
+          <div className="order-2 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
+            <PatientRail
+              bookingId={bookingId}
+              intake={intake}
+              collapsed={patientRailCollapsed}
+              onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
+            />
+          </div>
+        ) : null}
       </div>
 
       <CustomBottomModal
@@ -1728,19 +1756,21 @@ export function AssessmentFirstWorkspace({
         title="Patient intake"
         description={intake?.patientName ?? undefined}
       >
-        <PatientDetails bookingId={bookingId} form={intake} />
+        {mobileIntakeOpen ? <PatientDetails bookingId={bookingId} form={intake} /> : null}
       </CustomBottomModal>
 
-      <DocumentSheetModal
-        open={Boolean(inspectingHistoricalArtifact)}
-        onOpenChange={(open) => {
-          if (!open) setInspectingHistoricalArtifact(null);
-        }}
-        artifact={inspectingHistoricalArtifact ?? undefined}
-        intake={intake}
-        doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
-        isHistoricalArchive={true}
-      />
+      {inspectingHistoricalArtifact ? (
+        <DocumentSheetModal
+          open={Boolean(inspectingHistoricalArtifact)}
+          onOpenChange={(open) => {
+            if (!open) setInspectingHistoricalArtifact(null);
+          }}
+          artifact={inspectingHistoricalArtifact ?? undefined}
+          intake={intake}
+          doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+          isHistoricalArchive={true}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1751,7 +1781,7 @@ export function AssessmentFirstWorkspace({
  * physician reads what happened before being handed a button. Refresh lives
  * here too, because several reasons say to refresh.
  */
-function LockNotice({
+const LockNotice = memo(function LockNotice({
   assessment,
   safetyLock,
   busy,
@@ -1861,7 +1891,7 @@ function LockNotice({
       </div>
     </section>
   );
-}
+});
 
 /**
  * The bar that always says what to do next, at the bottom of the column on
@@ -1874,7 +1904,7 @@ function LockNotice({
  * it, because it is a way out, not the next step. The whole bar steps aside
  * while the keyboard is up.
  */
-function NextStepBar({
+const NextStepBar = memo(function NextStepBar({
   className,
   assessment,
   artifacts,
@@ -1891,6 +1921,7 @@ function NextStepBar({
   onGoToAssessment,
   onGoToNotice,
   onGoToDocument,
+  isFieldFocused,
 }: {
   className?: string;
   assessment: CdsAssessment;
@@ -1908,6 +1939,7 @@ function NextStepBar({
   onGoToAssessment: () => void;
   onGoToNotice: () => void;
   onGoToDocument: (key: ChecklistKey) => void;
+  isFieldFocused?: boolean;
 }) {
   const confirmed = Boolean(assessment.confirmed);
   const held = assessment.lockReasons.length > 0;
@@ -2012,7 +2044,8 @@ function NextStepBar({
     <StickyActionBar
       aria-label="Next step"
       className={cn(
-        "max-lg:-mx-3 sm:max-lg:-mx-4 lg:rounded-2xl lg:border lg:pb-3 max-lg:group-has-[textarea:focus]/ws:hidden max-lg:group-has-[input:focus]/ws:hidden",
+        "max-lg:-mx-3 sm:max-lg:-mx-4 lg:rounded-2xl lg:border lg:pb-3 group-data-[field-focused=true]/ws:hidden",
+        isFieldFocused && "max-lg:hidden",
         className,
       )}
       status={status}
@@ -2029,7 +2062,7 @@ function NextStepBar({
       ) : null}
     </StickyActionBar>
   );
-}
+});
 
 function BarStatus({
   label,
@@ -2090,7 +2123,7 @@ function readFinalIcdPayload(
  * are ordered by consequence, with the destructive one apart on the left and
  * confirmed before it runs.
  */
-function AssessmentEditor({
+const AssessmentEditor = memo(function AssessmentEditor({
   assessment,
   allowedTypes,
   draftDiagnosis,
@@ -2302,7 +2335,7 @@ function AssessmentEditor({
       />
     </div>
   );
-}
+});
 
 /**
  * The ICD-10 code the physician confirms with the diagnosis (ADR-20261006-02).

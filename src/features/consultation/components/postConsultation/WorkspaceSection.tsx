@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ export type SoapLetter = "S" | "O" | "A" | "P";
  * Folding is a disclosure, not navigation: the header is one button with
  * `aria-expanded`, and nothing interactive sits inside it.
  */
-export function WorkspaceSection({
+export const WorkspaceSection = memo(function WorkspaceSection({
   id,
   letter,
   title,
@@ -138,13 +138,13 @@ export function WorkspaceSection({
       ) : null}
     </section>
   );
-}
+});
 
 /**
  * A read-only "from the patient's intake" block inside a section, visibly
  * separate from what the physician writes beneath it.
  */
-export function IntakeBlock({
+export const IntakeBlock = memo(function IntakeBlock({
   label = "From the patient's intake",
   children,
   className,
@@ -162,4 +162,4 @@ export function IntakeBlock({
       {children}
     </div>
   );
-}
+});
