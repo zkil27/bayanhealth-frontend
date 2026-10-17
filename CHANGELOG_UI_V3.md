@@ -11,6 +11,35 @@ This document serves as the active single source of truth for the **upstream AI 
 
 ## Log Entries
 
+### [2026-10-09] Doctor Schedule: Mobile Layout & Clinical Slot Time Precision Overhaul
+
+- **Target Route / Surface**: `/doctor/schedule` (Doctor Calendar & Schedule View)
+- **Files Modified**:
+  - `src/features/doctor/components/schedule/weekGridLayout.ts`:
+    - **Clinical slot time range fix**: Replaced hour-only `compactHour` with `compactTime` in `formatBlockRange`. Minutes are now preserved when non-zero, resolving the critical bug where half-hour slots and appointments rendered as truncated identical numbers (`2–2`, `3–3`, `10–10 · Scheduled`). Slots now format accurately as `2–2:30`, `3–3:30`, `10–10:30 · Scheduled`.
+  - `src/features/doctor/components/schedule/CalendarToolbar.tsx`:
+    - **Tiered mobile header structure**: Replaced unconstrained `flex flex-wrap` (which produced 4 disjointed rows of controls on mobile) with a structured responsive layout:
+      - Tier 1: Title ("Your Calendar") + View switcher segmented control (`[ Day | Week | Month ]`).
+      - Tier 2: Stepper (`[ < ] [ Today ] [ > ]`) + Date Range Label (`Friday, Oct 9, 2026`).
+      - Desktop: Seamlessly restores the wide single-line bar with spacious rhythm.
+  - `src/app/doctor/(homepage)/schedule/page.tsx`:
+    - Replaced rigid `h-[calc(100dvh-2rem)] overflow-hidden` with flexible responsive height (`min-h-[calc(100dvh-6rem)] lg:h-full lg:overflow-hidden`) and streamlined outer padding (`p-0.5 sm:p-2 md:p-4`), preventing the schedule from being compressed into a tiny ~350px box on mobile.
+  - `src/features/doctor/components/schedule/TimeGrid.tsx`:
+    - Increased `GRID_BODY_HEIGHT_PX` from 580 to 620 to provide comfortable vertical height (~31px) for 30-minute blocks.
+    - Responsive time gutter: Streamlined time column width to 46px on mobile (64px on desktop), giving 18px more horizontal width to the day schedule timeline.
+  - `src/features/doctor/components/schedule/DoctorScheduleView.tsx`:
+    - Grounded mobile `schedule-day-actions` into a clean card bar (`rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2`).
+    - Adjusted mobile card padding (`p-2 sm:p-4`).
+    - Restricted `minWidth: 760` strictly to Week view; Month view now scales responsively on mobile without unnecessary horizontal scrollbar.
+    - Added `pb-3` clearance around `CalendarLegend`.
+- **Design Intent**:
+  - Transform a cramped, disorganized mobile calendar view into an intuitive, touch-ergonomic clinical schedule.
+  - Ensure clinical time precision: doctors can instantly discern 30-minute appointments from 1-hour slots.
+  - Eliminate nested viewport height clamping and layout shifts.
+- **Device Optimization**: Mobile web (iPhone/Android mobile browsers) and desktop clinical cockpits.
+- **Tokens & Primitives Used**: `--surface-card`, `--border-subtle`, `--text-heading`, `--text-muted`, `--action-primary`.
+- **Upstream Porting Notes**: Port `weekGridLayout.ts`, `CalendarToolbar.tsx`, `TimeGrid.tsx`, `DoctorScheduleView.tsx`, and `schedule/page.tsx` together.
+
 ### [2026-10-09] Doctor Mobile Nav: Lifted Pill Harmonization (Matching Patient Side)
 
 - **Target Route / Surface**: Every doctor route below `lg` (bottom navigation in `/doctor`, `/doctor/schedule`, `/doctor/history`, `/doctor/profile`)
