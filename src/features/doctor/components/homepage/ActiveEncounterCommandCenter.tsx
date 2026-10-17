@@ -51,9 +51,12 @@ export function ActiveEncounterCommandCenter() {
 
   if (!active) {
     return (
+      // Idle state is hidden below `sm`: on a phone it only repeated the duty
+      // capsule directly above it ("Standby for calls" / "Duty paused") and
+      // pushed the queue a full card lower. The active state always shows.
       <div
         data-slot="active-encounter-command-center"
-        className="flex items-center justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-warm)/40 px-4 py-3 text-xs transition-colors"
+        className="hidden items-center justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-warm)/40 px-4 py-3 text-xs transition-colors sm:flex"
       >
         <div className="flex items-center gap-3">
           <span className="flex size-8 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-card) text-(--text-muted) shadow-2xs">

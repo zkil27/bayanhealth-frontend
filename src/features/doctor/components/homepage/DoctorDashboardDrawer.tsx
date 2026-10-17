@@ -58,7 +58,14 @@ export function DoctorDashboardDrawer({
     <Drawer onOpenChange={setOpen} open={open}>
       <DrawerTrigger
         render={
-          <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs font-semibold">
+          // `DrawerTrigger` stamps its own `data-slot`, which opts this out of
+          // the queue row's `h-11` phone rule, so phone sizing is set here.
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11 flex-auto px-2.5 text-sm font-semibold sm:h-7 sm:flex-none sm:text-xs"
+          >
             View
           </Button>
         }
@@ -77,9 +84,9 @@ export function DoctorDashboardDrawer({
                 <button
                   type="button"
                   aria-label="Close"
-                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                  className="-mr-2 flex size-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading) sm:mr-0 sm:size-8"
                 >
-                  <X className="size-4" />
+                  <X className="size-5 sm:size-4" />
                 </button>
               }
             />
@@ -119,7 +126,7 @@ export function DoctorDashboardDrawer({
           </div>
         </div>
 
-        <DrawerFooter className="sticky bottom-0 w-full border-t border-(--border-subtle) bg-(--surface-warm) px-4 py-3 sm:px-6">
+        <DrawerFooter className="sticky bottom-0 w-full border-t border-(--border-subtle) bg-(--surface-warm) px-4 pt-3 pb-[calc(0.75rem+var(--safe-bottom-max))] sm:px-6 sm:pb-3">
           <div className="flex w-full items-center justify-between gap-3">
             <Button
               type="button"

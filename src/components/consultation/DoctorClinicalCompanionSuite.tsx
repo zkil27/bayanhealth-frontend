@@ -4,6 +4,7 @@ import { ChevronsDown, ChevronsUp, ClipboardList, MessagesSquare } from "lucide-
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+import { ChatUnreadBadge, useChatTabUnread } from "@/components/consultation/chatUnread";
 import { ConsultationChatPanel } from "@/features/consultation/components/session/ConsultationChatPanel";
 import { PatientIntakeReferenceTab } from "@/features/consultation/components/session/PatientIntakeReferenceTab";
 import { RoomSafetyStrip } from "@/features/consultation/components/session/RoomSafetyStrip";
@@ -35,13 +36,18 @@ export function DoctorClinicalCompanionSuite({
   expanded?: boolean;
   onToggleExpanded?: () => void;
 }) {
+  const chatTabs = useChatTabUnread("intake");
   return (
     <div
       data-slot="doctor-clinical-companion-suite"
       className="flex h-full min-h-0 flex-1 flex-col text-(--text-body)"
     >
       <RoomSafetyStrip bookingId={bookingId} />
-      <Tabs defaultValue="intake" className="flex min-h-0 flex-1 flex-col gap-0">
+      <Tabs
+        value={chatTabs.tab}
+        onValueChange={(v) => chatTabs.setTab(String(v))}
+        className="flex min-h-0 flex-1 flex-col gap-0"
+      >
         <div className="flex shrink-0 items-center gap-2 border-b border-(--border-subtle) bg-(--surface-card) px-3 py-2">
           <TabsList className="h-11 w-full min-w-0 flex-1 gap-1 rounded-xl bg-(--border-subtle)/35 p-1 lg:h-8.5">
             <TabsTrigger
@@ -60,6 +66,7 @@ export function DoctorClinicalCompanionSuite({
               <MessagesSquare className="size-3.5" />
               <span className="sm:hidden">Chat</span>
               <span className="hidden sm:inline">Conversation</span>
+              <ChatUnreadBadge count={chatTabs.unread} />
             </TabsTrigger>
           </TabsList>
           {onToggleExpanded ? (
@@ -88,10 +95,14 @@ export function DoctorClinicalCompanionSuite({
           <PatientIntakeReferenceTab bookingId={bookingId} />
         </TabsContent>
 
-        <TabsContent value="chat" className="min-h-0 flex-1 overflow-hidden">
+        {/* Kept mounted so the conversation stays connected and can count
+            unread messages while the intake tab is open. */}
+        <TabsContent value="chat" keepMounted className="min-h-0 flex-1 overflow-hidden">
           <ConsultationChatPanel
             bookingId={bookingId}
             sessionId={sessionId}
+            active={chatTabs.chatActive}
+            onIncomingMessage={chatTabs.onIncomingMessage}
             embedded
             placeholder="Type a message to your patient…"
           />

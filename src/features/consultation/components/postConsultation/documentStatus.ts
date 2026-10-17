@@ -61,5 +61,7 @@ export function documentStatusOf(artifact: CdsProtectedArtifact): DocumentStatus
  */
 export function provenanceLabel(artifact: CdsProtectedArtifact): string {
   if (artifact.source === "physician") return "Written by you";
-  return artifact.physicianEdited ? "AI draft, edited by you" : "AI draft";
+  // Doctors asked for the instruction itself on anything the AI wrote, so an
+  // unedited draft says what to do, not only who wrote it.
+  return artifact.physicianEdited ? "AI draft, edited by you" : "AI draft, double-check before signing";
 }

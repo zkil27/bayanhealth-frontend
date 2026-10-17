@@ -39,6 +39,7 @@ import {
   redFlagFromScreen,
   type RedFlagState,
 } from "./ConcernSafetyStep";
+import { IntakeReceipt } from "../IntakeReceipt";
 import { IntakeNavFooter } from "./IntakeNavFooter";
 import { MedicalHistoryStep } from "./MedicalHistoryStep";
 import { PainAssessmentStep } from "./PainAssessmentStep";
@@ -315,7 +316,12 @@ export function AuthenticatedIntakeForm({
   }
 
   if (readOnly) {
-    return <ReadOnlyAuthenticatedIntake values={reviewValues} />;
+    return (
+      <>
+        <IntakeReceipt bookingId={booking.id} className="px-4 pt-4" />
+        <ReadOnlyAuthenticatedIntake values={reviewValues} />
+      </>
+    );
   }
 
   const pending = intake.saveStep.isPending || intake.submit.isPending;

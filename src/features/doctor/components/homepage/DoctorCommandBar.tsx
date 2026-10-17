@@ -135,9 +135,10 @@ export function DoctorCommandBar() {
                   {specialty}
                 </span>
               ) : null}
+              {/* Phones reach Profile from the avatar and the bottom nav; a 16px-tall text link here was a second, untappable door. */}
               <Link
                 href="/doctor/profile"
-                className="inline-flex items-center gap-1 font-semibold text-(--status-available-fg) hover:underline"
+                className="hidden items-center gap-1 font-semibold text-(--status-available-fg) hover:underline md:inline-flex"
               >
                 Profile <ArrowRight className="size-3" aria-hidden />
               </Link>

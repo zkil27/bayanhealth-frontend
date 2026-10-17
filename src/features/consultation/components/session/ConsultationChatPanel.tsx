@@ -34,6 +34,8 @@ export function ConsultationChatPanel({
   embedded = false,
   onFocusChange,
   placeholder = "Type a message to your doctor…",
+  active = true,
+  onIncomingMessage,
 }: {
   bookingId: string;
   sessionId?: string;
@@ -47,6 +49,14 @@ export function ConsultationChatPanel({
   onFocusChange?: (focused: boolean) => void;
   /** Composer placeholder. Defaults to the patient's wording; the doctor's suite passes its own. */
   placeholder?: string;
+  /**
+   * Whether the panel is the visible tab. A parent that keeps the panel
+   * mounted behind another tab passes `false`; the list scrolls to the newest
+   * message when it comes back into view.
+   */
+  active?: boolean;
+  /** A message from the other participant arrived after the first load, so a parent can show an unread badge. */
+  onIncomingMessage?: (count: number) => void;
 }) {
   const {
     messages,
@@ -64,6 +74,8 @@ export function ConsultationChatPanel({
       toast.error(sendError);
     }
   }, [sendError]);
+
+  useIncomingMessageAlerts(messages, isLoading, onIncomingMessage);
 
   return (
     <section
@@ -85,7 +97,7 @@ export function ConsultationChatPanel({
         <TransportBadge transport={transport} />
       </header>
 
-      <MessageList messages={messages} isLoading={isLoading} />
+      <MessageList messages={messages} isLoading={isLoading} active={active} />
 
       {sendError ? (
         <span data-slot="chat-send-error" className="sr-only">
@@ -145,17 +157,79 @@ function TransportBadge({
   );
 }
 
+/**
+ * Reports each message from the other participant (after the first load) to
+ * the parent, and while the browser tab is in the background prefixes the page
+ * title with the unread count. Messages already in the conversation when it
+ * first loads are not announced.
+ */
+function useIncomingMessageAlerts(
+  messages: DisplayMessage[],
+  isLoading: boolean,
+  onIncomingMessage?: (count: number) => void,
+) {
+  const seenRef = useRef<Set<string> | null>(null);
+  const onIncomingRef = useRef(onIncomingMessage);
+  const hiddenUnreadRef = useRef(0);
+  const baseTitleRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onIncomingRef.current = onIncomingMessage;
+  }, [onIncomingMessage]);
+
+  useEffect(() => {
+    const restoreTitle = () => {
+      if (baseTitleRef.current !== null) document.title = baseTitleRef.current;
+      baseTitleRef.current = null;
+      hiddenUnreadRef.current = 0;
+    };
+    const onVisibility = () => {
+      if (!document.hidden) restoreTitle();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      restoreTitle();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (seenRef.current === null) {
+      if (isLoading) return;
+      seenRef.current = new Set(messages.map((m) => m.messageId));
+      return;
+    }
+    const seen = seenRef.current;
+    let incoming = 0;
+    for (const m of messages) {
+      if (seen.has(m.messageId)) continue;
+      seen.add(m.messageId);
+      if (!m.isOwn && !m.pending) incoming += 1;
+    }
+    if (incoming === 0) return;
+
+    onIncomingRef.current?.(incoming);
+    if (document.hidden) {
+      if (baseTitleRef.current === null) baseTitleRef.current = document.title;
+      hiddenUnreadRef.current += incoming;
+      document.title = `(${hiddenUnreadRef.current}) New message · ${baseTitleRef.current}`;
+    }
+  }, [messages, isLoading]);
+}
+
 function MessageList({
   messages,
   isLoading,
+  active,
 }: {
   messages: DisplayMessage[];
   isLoading: boolean;
+  active: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+    if (active) endRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length, active]);
 
   if (isLoading && messages.length === 0) {
     return (

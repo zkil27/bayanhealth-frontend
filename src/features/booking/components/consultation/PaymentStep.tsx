@@ -10,6 +10,7 @@ import { useIdToken } from "@/stores/useAuthStore";
 import { holdBookingPayment } from "../../lib/api/payments";
 import type { Booking } from "../../types/booking.types";
 import { BrandCtaButton } from "../BrandUI";
+import { IntakeReceipt } from "./IntakeReceipt";
 
 interface PaymentStepProps {
   booking: Booking;
@@ -124,6 +125,7 @@ export function PaymentStep({ booking, isReview }: PaymentStepProps) {
    */
   return (
     <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
+      <IntakeReceipt bookingId={booking.id} className="mb-3" />
       <h3 className="mb-3 text-xl font-bold text-(--text-heading)">Your consultation fee</h3>
 
       <FeeReceipt booking={booking} amountLabel={amountLabel} />

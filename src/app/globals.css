@@ -273,7 +273,27 @@
   }
   html {
     @apply font-sans overflow-x-hidden;
+    /* iOS Safari inflates text in landscape without this; Android Chrome honours the unprefixed form. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Drop the grey native tap flash; `TapFeedback` and :active states carry press feedback. */
+    -webkit-tap-highlight-color: transparent;
   }
+}
+
+/*
+  Bottom safe area for *space reservations* (padding that keeps content clear of
+  fixed bottom UI). Chrome 135+ on Android draws edge-to-edge and animates
+  `safe-area-inset-bottom` as its bottom "chin" retracts; padding the page flow
+  with that dynamic value re-lays-out the whole page on every scroll frame.
+  `safe-area-max-inset-bottom` is the stable maximum, so the reservation is
+  computed once. Safari has no max variant and falls back to the regular inset,
+  which is already static there.
+  Fixed elements themselves keep `bottom: env(safe-area-inset-bottom)` so they
+  ride above the chin as it moves.
+*/
+:root {
+  --safe-bottom-max: env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 /* Woven "satin" page texture.

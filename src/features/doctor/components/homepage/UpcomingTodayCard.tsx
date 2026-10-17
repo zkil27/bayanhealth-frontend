@@ -106,7 +106,12 @@ export function UpcomingTodayCard() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-7 gap-1" aria-hidden>
+        {/*
+          Decorative (non-interactive) week strip. Hidden on phones, where it
+          read as a date picker that did nothing when tapped and pushed today's
+          entries below the fold; the banner already names the month.
+        */}
+        <div className="hidden grid-cols-7 gap-1 sm:grid" aria-hidden>
           {weekDays.map((day) => {
             const isToday = format(day, "yyyy-MM-dd") === date;
             return (
@@ -169,7 +174,7 @@ export function UpcomingTodayCard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="self-center text-xs"
+                className="h-11 self-center px-4 text-sm sm:h-7 sm:px-2.5 sm:text-xs"
                 onClick={() => setExpanded(true)}
               >
                 {hiddenCount} more
@@ -178,7 +183,7 @@ export function UpcomingTodayCard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="self-center text-xs"
+                className="h-11 self-center px-4 text-sm sm:h-7 sm:px-2.5 sm:text-xs"
                 onClick={() => setExpanded(false)}
               >
                 Show less
@@ -196,11 +201,11 @@ export function UpcomingTodayCard() {
         opens, so this is a second door onto real availability editing, not a
         second copy of it.
       */}
-      <div className="flex items-center justify-between border-t border-(--border-subtle) px-4 py-3 text-[11px]">
+      <div className="flex items-center justify-between gap-3 border-t border-(--border-subtle) px-4 py-1.5 text-[13px] sm:py-3 sm:text-[11px]">
         <span className="text-(--text-subtle)">Walk-ins are handled via the live queue</span>
         <Link
           href="/doctor/schedule"
-          className="font-bold text-(--status-available-fg) hover:underline"
+          className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 font-bold whitespace-nowrap text-(--status-available-fg) hover:underline sm:mr-0 sm:min-h-0 sm:px-0"
         >
           Calendar →
         </Link>

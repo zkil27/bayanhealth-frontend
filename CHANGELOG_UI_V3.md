@@ -10,6 +10,61 @@ This document serves as the active single source of truth for the **upstream AI 
 ---
 
 ## Log Entries
+### [2026-10-17] Upstream Sync, Batch 3 (Consultation Room): Unread Chat Badge
+- **Source**: `BayanHealthMVP` commit `decd497` (`feat(chat): new-message badge, title count and chime`). The chime (`messageChime.ts`) is intentionally not ported: it is audio behavior, not styling.
+- **Target Route / Surface**: Consultation room companion panes (patient `/patient/...` room, doctor room)
+- **Files Modified**:
+  - `src/components/consultation/chatUnread.tsx` (new): `useChatTabUnread` (controlled tab state, count resets when the chat tab opens) and `ChatUnreadBadge`. Badge restyled from upstream: `--danger-fg` token, text count ("9+" cap), 18px, no pulse animation, `aria-label` "N new messages". Never relies on color or motion alone.
+  - `PatientCompanionSuite.tsx` / `DoctorClinicalCompanionSuite.tsx`: tabs controlled by the hook, badge beside the chat tab label, chat `TabsContent` uses `keepMounted` so messages are counted while another tab is open.
+  - `ConsultationChatPanel.tsx`: new optional props `active` (default `true`) and `onIncomingMessage`. Adds `useIncomingMessageAlerts` (counts new messages from the other participant after first load; prefixes the browser tab title with the count while the page is hidden) and scrolls to the newest message when the tab becomes active again.
+- **Upstream Porting Notes**: Main repo already has this feature; only the badge visuals differ (token color, no pulse, larger count). Because the chat tab is now kept mounted, the realtime connection stays open while the intake tab is showing, same as upstream.
+- **Device Optimization**: Mobile (tab label stays visible next to the badge) and desktop.
+- **Tokens & Primitives Used**: `--danger-fg`.
+### [2026-10-17] Upstream Sync, Batch 2 (Patient): Intake Receipt
+- **Source**: `BayanHealthMVP` commit `f3cac87` (`IntakeReceipt` only). Commits `e17c79e` (known-conditions Yes/No, larger controls) came from this fork originally and is already present; `cece5db` (Fit to Climb) changes validation schema, so it is left out.
+- **Target Route / Surface**: `/patient/booking` wizard (Payment, Confirmation) and the read-only intake view
+- **Files Modified**:
+  - `src/features/booking/components/consultation/IntakeReceipt.tsx` (new): One-line status, Lucide `CheckCircle2` "Health form sent to your doctor" or `Eye` "Your doctor has seen your health form", with a short date. Renders nothing for a draft or while loading. Reads the existing `["booking-intake", bookingId, idToken]` query, so no new request.
+  - `ConfirmationStep.tsx`: receipt under the confirmation heading.
+  - `PaymentStep.tsx`: receipt above "Your consultation fee".
+  - `intake/AuthenticatedIntakeForm.tsx`: receipt above the read-only intake.
+- **Design Intent**: Patients could not tell whether their health form was accepted. Reassuring teal line, 15px text, no new card.
+- **Device Optimization**: Mobile first.
+- **Tokens & Primitives Used**: `--teal-800`, `--text-muted`.
+### [2026-10-17] Upstream Sync, Batch 1 (Doctor): "Double-check" Instruction on AI Output
+- **Source**: `BayanHealthMVP` commit `2434624` (`feat(cds-ui): tell doctors to double-check what the AI wrote`). Wording only, no logic.
+- **Target Route / Surface**: `/doctor` post-consultation workspace (Assessment candidate list, Deliverables deck, document history)
+- **Files Modified**:
+  - `src/features/consultation/components/postConsultation/documentStatus.ts`: `provenanceLabel` for an unedited AI draft now reads "AI draft, double-check before signing". Edited and physician-written labels unchanged. Kept as quiet meta text, not a new chip, to preserve the single status vocabulary.
+  - `src/features/consultation/components/postConsultation/CandidatePicker.tsx`: Added a one-line "AI suggestions. Double-check before you confirm a diagnosis." notice (Lucide `TriangleAlert`, `--ai-fg`) above the loaded candidate list and preview. Spans both columns on desktop. Not shown in the empty or suppressed states.
+- **Intentionally Not Ported**: upstream `NoShowControl` extraction (our fork already uses an in-app `AlertDialog` for no-show; extraction only serves the room-start logic flow) and its `ReviewStatusChip` wording (our fork replaced that chip with `DOCUMENT_STATUS`).
+- **Upstream Porting Notes**: Main repo should keep its `ReviewStatusChip` wording ("Double-check before signing"); only the CandidatePicker notice is structurally identical.
+- **Tokens & Primitives Used**: `--ai-fg`.
+
+### [2026-10-17] Doctor Dashboard: Mobile Web Pass (iOS Safari + Android Chrome)
+
+- **Target Route / Surface**: `/doctor` below `sm`/`lg` (phone), plus the doctor shell on every `/doctor/*` route. Desktop (`sm+` for sheet/row changes, `lg+` for the shell) is unchanged.
+- **Files Modified**:
+  - `src/app/globals.css`:
+    - `html`: `-webkit-text-size-adjust: 100%` / `text-size-adjust: 100%` (stops iOS landscape text inflation) and `-webkit-tap-highlight-color: transparent` (removes the grey native tap flash; `TapFeedback` and `:active` states remain). Applies app-wide.
+    - New `:root` token `--safe-bottom-max: env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px))`. Use it for *space reservations* (padding that keeps content clear of fixed bottom UI). Chrome 135+ on Android draws edge-to-edge and animates `safe-area-inset-bottom` as its bottom chin retracts; padding page flow with the dynamic value re-lays-out the page every scroll frame ([Chrome guide](https://developer.chrome.com/docs/css-ui/edge-to-edge)). Safari has no max variant and falls back to the regular inset. Fixed elements keep `bottom: env(safe-area-inset-bottom)`.
+  - `src/app/doctor/(homepage)/layout.tsx`: shell `min-h-screen`/`lg:h-screen` → `min-h-dvh`/`lg:h-dvh` (`100vh` is the toolbar-retracted height on mobile browsers, so the shell overflowed while toolbars showed). Phone padding `p-4` → `px-3 pt-3 pb-4` (`sm:p-4` restores it). `<main>` bottom reservation now uses `--safe-bottom-max`.
+  - `DoctorHome.tsx`: page gutter `px-4` → `px-1` below `sm`; the main-stage sheet is flat below `sm` (border, background, padding and shadow move to `sm:`). Stacked shell + page + sheet + row gutters had left a 360px phone ~270px per queue row, wrapping Review / Accept onto two lines.
+  - `DoctorCommandBar.tsx`: the "Profile →" text link is `hidden md:inline-flex` (16px-tall target; the avatar and the bottom nav already open Profile).
+  - `ActiveEncounterCommandCenter.tsx`: **idle** state is `hidden sm:flex` (on phones it only repeated the duty capsule above it). The active / ready-to-start state always shows.
+  - `DoctorPatientQueue.tsx`:
+    - Queue section divider is `sm:` only (stray rule on the flat phone layout).
+    - Row type on phones: name 15px, subtitle 13px, badge 11px, avatar `size-10`; desktop keeps 13 / 11.5 / 10px and `size-9`.
+    - `ViewIntakeDrawer` trigger: `h-11 flex-auto text-sm` on phones, `sm:h-7`. Its own `data-slot` had opted it out of the row's `h-11` rule, leaving it 28px.
+    - Intake drawer close button `size-11` on phones (`sm:size-8`); drawer body bottom padding includes `--safe-bottom-max`.
+    - "N more" / "Show less" buttons `h-11` on phones.
+  - `DoctorDashboardDrawer.tsx`: "View" trigger gets the same explicit phone sizing (`DrawerTrigger` stamps its own `data-slot`); close button `size-11` on phones; sticky footer bottom padding includes `--safe-bottom-max`.
+  - `TriageDetailsModal.tsx`: close button `size-11` on phones; `sm:max-h-[90vh]` → `sm:max-h-[90dvh]`.
+  - `UpcomingTodayCard.tsx`: decorative (non-interactive, `aria-hidden`) week strip is `hidden sm:grid`; footer text 13px on phones and "Calendar →" is a 44px-tall target; "N more" / "Show less" `h-11` on phones.
+- **Design Intent**: On a 390×844 phone both waiting patients and their Review / Accept actions now sit above the fold (previously the second row started under the nav pill). Full-page height at 360px dropped from ~1580px to ~1240px. Every tappable control on `/doctor` is ≥44px except the duty switch, whose visible track is 24px but whose `before:` hit area is already 48px.
+- **Verified**: Chrome (Playwright, `isMobile` + touch) at 360×800 and 390×844 with mocked request-pool data: no horizontal overflow, target audit clean, triage sheet footer in the thumb zone. `tsc --noEmit` and ESLint clean on changed files. Impeccable detector: no findings in changed files (two pre-existing gradient-text warnings in `globals.css` untouched). **Not verified**: real iOS Safari / WebKit (no iOS 26 device), Safari 26 bottom-toolbar behavior, and Chrome's edge-to-edge chin on a physical Android phone.
+- **Tokens & Primitives Used**: `--safe-bottom-max` (new), `--surface-card`, `--border-subtle`, `--text-heading`, `--text-muted`, `--status-available-fg`.
+- **Upstream Porting Notes**: Port `globals.css` first (the token is referenced by the layout and both drawers), then the eight component files together. No logic, API, or copy changes; `themeColor` stays teal.
 
 ### [2026-10-09] Doctor Schedule: Mobile Layout & Clinical Slot Time Precision Overhaul
 

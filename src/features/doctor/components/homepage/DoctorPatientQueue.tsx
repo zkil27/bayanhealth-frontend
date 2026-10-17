@@ -102,7 +102,9 @@ export function DoctorPatientQueue() {
   return (
     <section
       aria-labelledby="doctor-patient-queue-heading"
-      className="flex flex-col gap-3 border-t border-(--border-subtle) pt-4"
+      // The divider separates the queue from the command-center card inside the
+      // desktop sheet; on a flat phone layout it floated as a stray rule.
+      className="flex flex-col gap-3 sm:border-t sm:border-(--border-subtle) sm:pt-4"
     >
       <SectionLabel id="doctor-patient-queue-heading">Patient queue</SectionLabel>
 
@@ -344,7 +346,7 @@ function UnifiedQueueList() {
         <Button
           variant="ghost"
           size="sm"
-          className="self-center text-xs"
+          className="h-11 self-center px-4 text-sm sm:h-7 sm:px-2.5 sm:text-xs"
           onClick={() => setExpanded(true)}
         >
           {hiddenCount} more
@@ -353,7 +355,7 @@ function UnifiedQueueList() {
         <Button
           variant="ghost"
           size="sm"
-          className="self-center text-xs"
+          className="h-11 self-center px-4 text-sm sm:h-7 sm:px-2.5 sm:text-xs"
           onClick={() => setExpanded(false)}
         >
           Show less
@@ -429,23 +431,24 @@ function QueueRowShell({
       className="flex flex-col items-stretch gap-3 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar className="size-9 shrink-0">
+        <Avatar className="size-10 shrink-0 sm:size-9">
           {avatarSrc ? <AvatarImage src={avatarSrc} /> : null}
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
+        {/* Phone sizes are read at arm's length while walking; desktop keeps its dense 13 / 11.5px. */}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="truncate text-[13px] font-bold text-(--text-heading)">{name}</span>
+            <span className="truncate text-[15px] font-bold text-(--text-heading) sm:text-[13px]">{name}</span>
             <span
               className={cn(
-                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap",
+                "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap sm:text-[10px]",
                 tone.className,
               )}
             >
               {tone.label}
             </span>
           </div>
-          <p className="truncate text-[11.5px] text-(--text-muted)">{subtitle}</p>
+          <p className="truncate text-[13px] text-(--text-muted) sm:text-[11.5px]">{subtitle}</p>
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2 *:data-[slot=button]:h-11 *:data-[slot=button]:flex-auto *:data-[slot=button]:text-sm sm:flex-nowrap sm:gap-1.5 sm:*:data-[slot=button]:h-7 sm:*:data-[slot=button]:flex-none sm:*:data-[slot=button]:text-[0.8rem]">
@@ -584,7 +587,9 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
         size="sm"
         onClick={() => setOpen(true)}
         data-slot="ready-to-start-view-trigger"
-        className="h-7 px-2.5 text-xs font-semibold"
+        // Its own `data-slot` opts it out of the row's `h-11` phone rule, so the
+        // phone sizing is spelled out here.
+        className="h-11 flex-auto px-2.5 text-sm font-semibold sm:h-7 sm:flex-none sm:text-xs"
       >
         <Eye className="size-3.5" aria-hidden />
         {/* Icon-only on desktop; spelled out on phones, where it shares a full-width strip. */}
@@ -604,15 +609,15 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
                 <button
                   type="button"
                   aria-label="Close"
-                  className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+                  className="-mr-2 flex size-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading) sm:mr-0 sm:size-8"
                 >
-                  <X className="size-4" />
+                  <X className="size-5 sm:size-4" />
                 </button>
               }
             />
           </div>
         </DrawerHeader>
-        <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-6">
+        <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-[calc(1.5rem+var(--safe-bottom-max))] sm:pb-6">
           <DoctorConsultationAccess bookingId={bookingId} />
           <ReadyIntakeContent bookingId={bookingId} />
         </div>

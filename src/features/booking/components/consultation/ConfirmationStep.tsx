@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { IntakeReceipt } from "./IntakeReceipt";
 
 interface ConfirmationStepProps {
   booking: Booking;
@@ -104,6 +105,7 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
         <CheckCircle2 aria-hidden className="mt-0.5 size-6 shrink-0 text-(--teal-800)" />
         {heading}
       </h3>
+      <IntakeReceipt bookingId={booking.id} className="mt-3" />
 
       {/* One doctor card — the name used to appear here and again in the list below. */}
       <div className="mt-4 flex items-center gap-3.5 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4">

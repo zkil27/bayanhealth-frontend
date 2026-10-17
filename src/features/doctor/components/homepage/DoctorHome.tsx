@@ -20,7 +20,10 @@ import { UpcomingTodayCard } from "./UpcomingTodayCard";
  */
 export function DoctorHome() {
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full min-w-0 max-w-lg flex-col gap-4 px-4 pt-1 pb-4 sm:px-6 md:max-w-none md:px-8 lg:mx-0 lg:px-8">
+    // Phones: the shell already pads 12px, so the page adds only 4px. Stacked
+    // gutters (shell + page + card + row) left a 360px phone ~270px for a queue
+    // row, which forced Review / Accept onto two lines.
+    <div className="mx-auto flex h-full min-h-0 w-full min-w-0 max-w-lg flex-col gap-4 px-1 pt-1 pb-4 sm:px-6 md:max-w-none md:px-8 lg:mx-0 lg:px-8">
       {/* ------------------------------- top operational command bar -- */}
       <DoctorCommandBar />
 
@@ -30,7 +33,9 @@ export function DoctorHome() {
         <section
           data-slot="doctor-main-stage"
           aria-label="Clinical Workstation"
-          className="flex min-w-0 flex-col gap-4 rounded-(--radius-canvas) border border-(--border-subtle)/70 bg-(--surface-card) p-4 shadow-(--shadow-float) sm:p-5 lg:col-span-8 lg:h-full lg:min-h-0 lg:overflow-y-auto"
+          // Flat below `sm`: the queue rows are already bordered cards, so a
+          // sheet around them read as a card inside a card and cost 32px of width.
+          className="flex min-w-0 flex-col gap-4 sm:rounded-(--radius-canvas) sm:border sm:border-(--border-subtle)/70 sm:bg-(--surface-card) sm:p-5 sm:shadow-(--shadow-float) lg:col-span-8 lg:h-full lg:min-h-0 lg:overflow-y-auto"
         >
           <ActiveEncounterCommandCenter />
           <ScheduleCollisionBanner />

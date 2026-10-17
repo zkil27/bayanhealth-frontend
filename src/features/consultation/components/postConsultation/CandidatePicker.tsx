@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useMemo, useState } from "react";
-import { BookOpenCheck, Check, FileText, ListChecks, RefreshCw } from "lucide-react";
+import { BookOpenCheck, Check, FileText, ListChecks, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
@@ -166,6 +166,13 @@ export const CandidatePicker = memo(function CandidatePicker(props: CandidatePic
         </p>
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+          <p
+            data-slot="candidate-double-check"
+            className="flex items-center gap-1.5 text-xs font-semibold text-(--ai-fg) lg:col-span-2"
+          >
+            <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />
+            AI suggestions. Double-check before you confirm a diagnosis.
+          </p>
           {/*
             The list is second in source order and second on a wide screen, but
             drops below the preview on one column — with a single column the

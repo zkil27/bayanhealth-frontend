@@ -96,7 +96,7 @@ export function TriageDetailsModal({
       }}
     >
       {/* Below `sm` this docks to the bottom edge as a sheet, so the accept action sits in the thumb zone. */}
-      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-(--radius-canvas) border border-b-0 border-(--border-subtle) bg-(--surface-card) shadow-2xl sm:max-h-[90vh] sm:rounded-(--radius-canvas) sm:border-b">
+      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-(--radius-canvas) border border-b-0 border-(--border-subtle) bg-(--surface-card) shadow-2xl sm:max-h-[90dvh] sm:rounded-(--radius-canvas) sm:border-b">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--surface-warm) px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <span className="rounded-md border border-(--status-soon-fg)/25 bg-(--status-soon-bg) px-2 py-0.5 text-[10px] font-bold tracking-wider text-(--status-soon-fg) uppercase">
@@ -110,9 +110,9 @@ export function TriageDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex size-8 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading)"
+            className="-mr-2 flex size-11 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-warm-soft) hover:text-(--text-heading) sm:mr-0 sm:size-8"
           >
-            <X className="size-4" />
+            <X className="size-5 sm:size-4" />
           </button>
         </div>
 

@@ -15,6 +15,7 @@ import { useIdToken } from "@/stores/useAuthStore";
 
 import { fetchPatientIntake } from "@/features/booking/lib/api/patientIntake";
 import { fetchDoctorPublicProfile } from "@/features/booking/lib/api/doctors";
+import { ChatUnreadBadge, useChatTabUnread } from "@/components/consultation/chatUnread";
 import { ConsultationChatPanel } from "@/features/consultation/components/session/ConsultationChatPanel";
 import type {
   IntakeDetailsSection,
@@ -56,6 +57,7 @@ export function PatientCompanionSuite({
   onChatFocusChange?: (focused: boolean) => void;
 }) {
   const idToken = useIdToken();
+  const chatTabs = useChatTabUnread("chat");
 
   const intakeQuery = useQuery({
     queryKey: ["patient-intake", bookingId, idToken],
@@ -81,7 +83,11 @@ export function PatientCompanionSuite({
 
   return (
     <div data-slot="patient-companion-suite" className="flex h-full min-h-0 flex-1 flex-col text-(--text-body)">
-      <Tabs defaultValue="chat" className="flex min-h-0 flex-1 flex-col gap-0">
+      <Tabs
+        value={chatTabs.tab}
+        onValueChange={(v) => chatTabs.setTab(String(v))}
+        className="flex min-h-0 flex-1 flex-col gap-0"
+      >
         <div className="shrink-0 border-b border-(--border-subtle) bg-(--surface-card) p-2 sm:p-2.5">
           <TabsList className="h-auto w-full gap-1 rounded-xl bg-(--surface-warm) p-1 sm:rounded-2xl border border-(--border-subtle)">
             <TabsTrigger
@@ -91,6 +97,7 @@ export function PatientCompanionSuite({
               <MessageSquare className="size-4 shrink-0" />
               <span className="xs:hidden">Chat</span>
               <span className="hidden xs:inline">Doctor Chat</span>
+              <ChatUnreadBadge count={chatTabs.unread} />
             </TabsTrigger>
             <TabsTrigger
               value="intake"
@@ -110,7 +117,9 @@ export function PatientCompanionSuite({
           </TabsList>
         </div>
 
-        <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {/* Kept mounted so the conversation stays connected and can count
+            unread messages while another tab is open. */}
+        <TabsContent value="chat" keepMounted className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {doctorName ? (
             // Hidden below `sm`: the room header already names the doctor, and
             // on a phone this strip's two lines were what pushed the composer
@@ -127,6 +136,8 @@ export function PatientCompanionSuite({
               sessionId={sessionId}
               embedded
               onFocusChange={onChatFocusChange}
+              active={chatTabs.chatActive}
+              onIncomingMessage={chatTabs.onIncomingMessage}
             />
           </div>
         </TabsContent>
