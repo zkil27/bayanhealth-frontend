@@ -607,9 +607,9 @@ export function DoctorScheduleView() {
               {activeDay ? (
                 <div
                   data-slot="schedule-day-actions"
-                  className="flex items-center justify-between gap-3 lg:hidden"
+                  className="flex items-center justify-between gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2 lg:hidden shadow-2xs"
                 >
-                  <p className="text-sm text-(--text-muted)">
+                  <p className="text-xs sm:text-sm font-medium text-(--text-muted)">
                     <span className="font-bold text-(--teal-700)">
                       {activeDaySlots.filter((s) => s.status === "available").length}
                     </span>{" "}
@@ -628,9 +628,9 @@ export function DoctorScheduleView() {
                         anchor: rectFromMouseEvent(e),
                       });
                     }}
-                    className="h-11 rounded-full px-4 text-sm font-bold"
+                    className="h-8.5 rounded-full px-3 text-xs font-bold shrink-0"
                   >
-                    <Plus className="size-4" aria-hidden />
+                    <Plus className="size-3.5" aria-hidden />
                     Add availability
                   </Button>
                 </div>
@@ -645,10 +645,10 @@ export function DoctorScheduleView() {
                 scrolling region so they never scroll away from the content
                 they're framing.
               */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-3.5 shadow-xs sm:p-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-(--border-subtle) bg-(--surface-card) p-2 shadow-xs sm:p-4">
                 <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
                   <div className="min-h-0 flex-1 overflow-auto">
-                    <div style={{ minWidth: view === "day" ? 0 : 760 }}>
+                    <div style={{ minWidth: view === "week" ? 760 : 0 }}>
                       {view === "month" ? (
                         <MonthGrid
                           anchor={anchor}
@@ -732,12 +732,14 @@ export function DoctorScheduleView() {
                 </div>
               </div>
 
-              <CalendarLegend
-                palette={palette}
-                onChangeCategory={setCategory}
-                onReset={resetPalette}
-                persisted={persisted}
-              />
+              <div className="pb-3">
+                <CalendarLegend
+                  palette={palette}
+                  onChangeCategory={setCategory}
+                  onReset={resetPalette}
+                  persisted={persisted}
+                />
+              </div>
 
               {popover?.kind === "create" ? (
                 <AvailabilityPopover

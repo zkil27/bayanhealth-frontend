@@ -54,7 +54,7 @@ const MIN_BLOCK_PX = 16;
  * exact density behaviour doctors already see, just no longer split across
  * two different heights depending on which view is open.
  */
-const GRID_BODY_HEIGHT_PX = 580;
+const GRID_BODY_HEIGHT_PX = 620;
 
 export function densityForHeight(heightPx: number): BlockDensity {
   if (heightPx >= DENSITY_FULL_PX) return "full";
@@ -544,10 +544,19 @@ export function TimeGrid({
 
   return (
     <div
-      className="grid gap-x-0"
-      style={{
-        gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))`,
-      }}
+      className={cn(
+        "grid gap-x-0",
+        days.length === 1
+          ? "grid-cols-[46px_minmax(0,1fr)] sm:grid-cols-[64px_minmax(0,1fr)]"
+          : undefined,
+      )}
+      style={
+        days.length === 1
+          ? undefined
+          : {
+              gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))`,
+            }
+      }
     >
       <div className="relative flex flex-col">
         {/* Header spacer to match day column header */}
@@ -560,7 +569,7 @@ export function TimeGrid({
             return (
               <div
                 key={m}
-                className="absolute right-2.5 -translate-y-1/2 text-right text-xs font-semibold text-(--text-muted)"
+                className="absolute right-1.5 sm:right-2.5 -translate-y-1/2 text-right text-[11px] sm:text-xs font-semibold text-(--text-muted)"
                 style={{ top: `${topPct}%` }}
               >
                 {formatHourLabel(m)}

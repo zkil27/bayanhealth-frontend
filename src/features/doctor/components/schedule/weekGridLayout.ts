@@ -128,16 +128,17 @@ export function formatHourLabel(minutes: number): string {
   return `${hour12} ${period}`;
 }
 
-/** "8" / "12" — compact hour, for a block's own time-range label. */
-function compactHour(minutes: number): string {
+/** "8" / "8:30" — compact time with minutes when non-zero. */
+function compactTime(minutes: number): string {
   const hour24 = Math.floor(minutes / 60);
+  const mins = minutes % 60;
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-  return String(hour12);
+  return mins === 0 ? String(hour12) : `${hour12}:${String(mins).padStart(2, "0")}`;
 }
 
-/** "8–12" from a block's start/end minutes, for the D2 design's block label. */
+/** "8–12", "10–10:30", "2–2:30" from a block's start/end minutes, ensuring clinical precision. */
 export function formatBlockRange(startMinutes: number, endMinutes: number): string {
-  return `${compactHour(startMinutes)}–${compactHour(endMinutes)}`;
+  return `${compactTime(startMinutes)}–${compactTime(endMinutes)}`;
 }
 
 /** A block's vertical position within the grid, as CSS percentages. */
