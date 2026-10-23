@@ -1,12 +1,17 @@
+import { Quote } from "lucide-react";
+
 import { TESTIMONIALS_CONTENT, type Testimonial } from "./content";
 
 /**
  * "Stories from Filipino families" — illustrative consultation scenarios.
  *
  * Three short quotes. They are the kind of consult the product is built for
- * rather than statements from named patients on file, matching the honesty the
- * rest of the page keeps about what exists today (see {@link CareTracksSection},
- * {@link LandingMedia}).
+ * rather than statements from named patients on file, so the subheading says
+ * so and every story carries an "Illustrative" tag: a quote screenshotted on
+ * its own still reads honestly.
+ *
+ * Set as typography on a white band (quotes split by hairlines), not as a
+ * third row of identical white cards.
  */
 export function TestimonialsSection({
   testimonials,
@@ -17,41 +22,52 @@ export function TestimonialsSection({
     <section
       id="stories"
       aria-labelledby="stories-heading"
-      className="mx-auto max-w-7xl scroll-mt-20 px-4 pb-14 lg:px-8 lg:pb-20"
+      className="scroll-mt-16 border-y border-(--border-subtle) bg-(--surface-card) py-16 lg:py-24"
     >
-      <div className="flex max-w-2xl flex-col gap-2">
-        <h2
-          id="stories-heading"
-          className="font-display text-3xl font-bold text-balance text-(--text-heading) md:text-4xl"
-        >
-          {TESTIMONIALS_CONTENT.heading}
-        </h2>
-        <p className="text-[15px] leading-relaxed text-(--text-muted)">
-          {TESTIMONIALS_CONTENT.subheading}
-        </p>
-      </div>
-
-      <ul className="mt-10 grid items-stretch gap-6 md:grid-cols-3">
-        {testimonials.map((testimonial) => (
-          <li
-            key={testimonial.quote}
-            data-slot="testimonial"
-            className="flex h-full flex-col gap-4 rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-6 shadow-(--shadow-card)"
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="flex max-w-2xl flex-col gap-3">
+          <h2
+            id="stories-heading"
+            className="font-display text-3xl font-bold tracking-[-0.02em] text-balance text-(--text-heading) md:text-[2.75rem] md:leading-[1.1]"
           >
-            <blockquote className="flex-1 text-[15px] leading-relaxed text-(--text-muted)">
-              &ldquo;{testimonial.quote}&rdquo;
-            </blockquote>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-bold text-(--text-heading)">
-                &mdash; {testimonial.attribution}
-              </span>
-              <span className="text-[13px] text-(--text-subtle)">
-                {testimonial.context}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
+            {TESTIMONIALS_CONTENT.heading}
+          </h2>
+          <p className="text-base leading-relaxed text-(--text-muted)">
+            {TESTIMONIALS_CONTENT.subheading}
+          </p>
+        </div>
+
+        <ul className="mt-10 grid divide-y divide-(--border-subtle) md:grid-cols-3 md:divide-x md:divide-y-0">
+          {testimonials.map((testimonial) => (
+            <li
+              key={testimonial.quote}
+              data-slot="testimonial"
+              className="flex flex-col gap-5 py-6 first:pt-0 last:pb-0 md:px-8 md:py-0 md:first:pl-0 md:last:pr-0"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <Quote
+                  className="size-6 text-(--status-available-fg)"
+                  aria-hidden
+                />
+                <span className="rounded-(--radius-pill) border border-(--border-default) px-2.5 py-0.5 text-xs font-bold text-(--text-muted)">
+                  {TESTIMONIALS_CONTENT.label}
+                </span>
+              </div>
+              <blockquote className="flex-1 font-display text-lg leading-relaxed text-(--text-body)">
+                {testimonial.quote}
+              </blockquote>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[15px] font-bold text-(--text-heading)">
+                  {testimonial.attribution}
+                </span>
+                <span className="text-sm text-(--text-muted)">
+                  {testimonial.context}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

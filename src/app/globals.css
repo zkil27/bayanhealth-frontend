@@ -5,8 +5,6 @@
 /* Authoritative BayanHealth brand tokens (design export) — additive, kept
    separate from the shadcn tokens below rather than merged into them. */
 @import "../styles/bayanhealth-tokens.css";
-/* @import '../styles/_variables.scss';
-@import '../styles/_keyframe-animations.scss'; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -178,7 +176,7 @@
 
   --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Merriweather, ui-serif, serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --radius: 0.5rem;
 
@@ -339,108 +337,12 @@ body.bg-satin::before {
   position: fixed;
 }
 
-/* Off-screen rendering and layout skipping for below-the-fold sections */
-.content-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 700px;
-}
-
-/* In-app Reduced Motion mode: disables transitions, animations, and smooth scroll for low-spec devices and a11y */
-.reduce-motion,
-.reduce-motion *,
-.reduce-motion *::before,
-.reduce-motion *::after {
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-  scroll-behavior: auto !important;
-}
-
-/* Brand gradient helpers — the gradient itself lives in --gradient-brand
-   (bayanhealth-tokens.css). `.bg-gradient-brand` paints it as a fill;
-   `.text-gradient-brand` clips it to the glyphs, with a solid colour fallback
-   where background-clip: text is unsupported. */
-.bg-gradient-brand {
-  background-image: var(--gradient-brand);
-}
-.text-gradient-brand {
-  background-image: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  .text-gradient-brand {
-    color: var(--gradient-brand-end);
-    -webkit-text-fill-color: currentColor;
-  }
-}
-
 @keyframes cursor-tap-ping {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
 }
 .animate-cursor-tap-ping {
   animation: cursor-tap-ping 0.4s ease-out forwards;
-}
-
-/*
- * Care Recovery Roadmap (ECG journey). Every animation below changes paint
- * only — opacity or a transform on a mask/pseudo-element — so none of them can
- * move path coordinates, node positions, or surrounding layout.
- */
-@keyframes ecg-idle {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.6; }
-}
-.ecg-idle {
-  animation: ecg-idle 3.5s ease-in-out infinite;
-}
-
-/* SVG user units: the mask rect travels from x=-24 to past x=100. */
-@keyframes ecg-sweep {
-  from { transform: translateX(0); }
-  to { transform: translateX(130px); }
-}
-.ecg-sweep {
-  animation: ecg-sweep 2.4s linear infinite;
-}
-
-@keyframes journey-node-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50% { transform: scale(1.35); opacity: 0; }
-}
-/* The host must be positioned (the desktop node is `absolute`, the mobile icon
-   `relative`); it is not set here because unlayered CSS would beat Tailwind. */
-.journey-node-pulse::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  border: 2px solid var(--surface-nav-accent);
-  pointer-events: none;
-  animation: journey-node-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes journey-flow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
-}
-.journey-flow {
-  animation: journey-flow 1.5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ecg-idle,
-  .ecg-sweep,
-  .journey-flow,
-  .journey-node-pulse::before {
-    animation: none;
-  }
-  .ecg-idle { opacity: 0.5; }
-  /* Park the heartbeat highlight off the line rather than freezing it mid-way. */
-  .ecg-sweep { transform: translateX(-100px); }
 }
 
 @keyframes slide-from-right {
@@ -473,110 +375,9 @@ body.bg-satin::before {
   animation: slide-to-left 0.3s ease-out;
 }
 
-  
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-::view-transition-old(.nav-forward) {
-  --slide-offset: -60px;
-  animation:
-    150ms ease-in both fade reverse,
-    400ms ease-in-out both slide reverse;
-}
-::view-transition-new(.nav-forward) {
-  --slide-offset: 60px;
-  animation:
-    210ms ease-out 150ms both fade,
-    400ms ease-in-out both slide;
-}
- 
-::view-transition-old(.nav-back) {
-  --slide-offset: 60px;
-  animation:
-    150ms ease-in both fade reverse,
-    400ms ease-in-out both slide reverse;
-}
-::view-transition-new(.nav-back) {
-  --slide-offset: -60px;
-  animation:
-    210ms ease-out 150ms both fade,
-    400ms ease-in-out both slide;
-}
- 
-@keyframes slide {
-  from {
-    translate: var(--slide-offset);
-  }
-  to {
-    translate: 0;
-  }
-}
-
-@keyframes fade {
-  from {
-    filter: blur(3px);
-    opacity: 0;
-  }
-  to {
-    filter: blur(0);
-    opacity: 1;
-  }
-}
-
-
-.ProseMirror {
-  width: 100%;
-  word-break: break-word;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-.ProseMirror p {
-  max-width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.page {
-  width: 210mm;
-  min-height: 297mm;
-}
-
 @media print {
   @page {
     size: A4 portrait;
     margin: 0;
   }
-
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    break-after: page;
-    page-break-after: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin: 0;
-    overflow: visible;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .page:last-child {
-    break-after: auto;
-    page-break-after: auto;
-  }
-}
-
-/* Hide page break markers on screen */
-.page-break {
-  display: none;
 }

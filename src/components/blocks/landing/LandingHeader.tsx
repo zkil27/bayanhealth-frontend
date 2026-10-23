@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Stethoscope } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { AppLogoInHeader } from "@/components/primitives/Logo/AppLogo";
 
-import { CONSULT_HREF, NAV_LINKS } from "./content";
+import { NAV_LINKS, WAITLIST_CTA } from "./content";
 import { LandingButton } from "./LandingButton";
+import { LandingMobileMenu } from "./LandingMobileMenu";
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)";
@@ -15,6 +16,10 @@ export function LandingHeader() {
   // from the hero behind it. Opaque rather than translucent for the same reason
   // — a blurred, semi-transparent bar picks up the cream scrolling under it and
   // the separation disappears.
+  //
+  // One action: the waitlist button. On phones it moves into the menu sheet
+  // and the bottom bar (LandingStickyCta), so the 360px header holds only the
+  // logo and the menu trigger without crowding.
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-(--border-default) bg-(--surface-card)">
       <nav
@@ -23,30 +28,36 @@ export function LandingHeader() {
       >
         <Link
           href="/"
-          className={`inline-flex min-h-11 items-center justify-center rounded-md transition-opacity hover:opacity-80 ${focusRing}`}
+          className={`inline-flex min-h-12 items-center justify-center rounded-md transition-opacity hover:opacity-80 ${focusRing}`}
         >
           <AppLogoInHeader />
         </Link>
 
-        <div className="hidden sm:flex sm:items-center sm:gap-1">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href + link.label}
-              href={link.href}
-              // The underline grows from the left on hover/focus — a transform,
-              // so it animates cheaply and reverses on the way out.
-              className={`relative inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-(--text-muted) transition-colors after:absolute after:inset-x-3 after:bottom-2 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-current after:transition-transform after:duration-200 after:ease-out hover:text-(--text-heading) hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none ${focusRing}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="hidden sm:flex sm:items-center sm:gap-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                // The underline grows from the left on hover/focus — a transform,
+                // so it animates cheaply and reverses on the way out.
+                className={`relative inline-flex min-h-12 items-center rounded-md px-3 text-sm font-medium text-(--text-muted) transition-colors after:absolute after:inset-x-3 after:bottom-2.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-current after:transition-transform after:duration-200 after:ease-out hover:text-(--text-heading) hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none ${focusRing}`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
 
-        <div className="flex items-center gap-2">
-          <LandingButton href={CONSULT_HREF} size="sm">
-            <Stethoscope className="size-4" aria-hidden />
-            Consult a Doctor
+          <LandingButton
+            href={WAITLIST_CTA.href}
+            size="sm"
+            className="hidden sm:inline-flex"
+          >
+            {WAITLIST_CTA.label}
+            <ArrowRight className="size-4" aria-hidden />
           </LandingButton>
+
+          <LandingMobileMenu />
         </div>
       </nav>
     </header>

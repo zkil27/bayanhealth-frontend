@@ -6,17 +6,6 @@ import { cn } from "@/lib/utils";
 import { PATIENT_NAV, isNavItemActive } from "@/components/layout/nav-items";
 
 /**
- * Mobile brand mark — the same wordmark the desktop rail pins at its top,
- * shown only below `lg` where the rail itself is hidden. Closes the other
- * half of the cross-breakpoint inconsistency: the bar below already mirrors
- * the rail's six destinations, and this gives phones the same brand presence
- * the rail gives desktop.
- */
-export function PatientTopBar() {
-  return null;
-}
-
-/**
  * The patient mobile bottom bar: a lifted pill, built for mobile Safari.
  *
  * It renders {@link PATIENT_NAV} directly — the same destinations, in the same

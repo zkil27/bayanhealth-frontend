@@ -42,7 +42,7 @@ import { FormSection } from "../../../features/booking/components/FormSection";
 import { AboutYouFields } from "../../../features/booking/components/consultation/intake/AboutYouFields";
 import { AnimatedFieldError } from "@/components/blocks/AnimatedFieldErrorWrapper";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/tiptap-utils";
+import { cn } from "@/lib/utils";
 
 const GENDER_OPTIONS = ["male", "female", "prefer not to say"] as const;
 

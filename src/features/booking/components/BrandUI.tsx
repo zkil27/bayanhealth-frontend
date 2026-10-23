@@ -13,30 +13,6 @@ import { EMERGENCY_DISCLAIMER } from "../constants/bookingConstants";
  * these are presentation only.
  */
 
-/** Small teal icon chip + uppercase label that heads each form section. */
-export function SectionHeader({
-  icon,
-  children,
-  className,
-}: {
-  icon?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-center gap-2", className)}>
-      {icon != null && (
-        <span className="flex size-[26px] shrink-0 items-center justify-center rounded-(--radius-xs) bg-(--surface-accent-soft) text-(--status-available-fg) [&_svg]:size-3.5">
-          {icon}
-        </span>
-      )}
-      <span className="text-[12.5px] font-bold tracking-[1px] text-(--text-heading) uppercase">
-        {children}
-      </span>
-    </div>
-  );
-}
-
 /**
  * Pill toggle used for the doctor gender / language preference rows. Renders a
  * `<button type="button">`; the caller owns selection state.
@@ -66,40 +42,6 @@ export function TogglePill({
       {icon}
       {children}
     </button>
-  );
-}
-
-/** Icon + helper paragraph. `tone="danger"` renders the emergency red variant. */
-export function NoteRow({
-  icon,
-  tone = "muted",
-  children,
-  className,
-}: {
-  icon: ReactNode;
-  tone?: "muted" | "danger";
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-start gap-1.5", className)}>
-      <span
-        className={cn(
-          "mt-0.5 shrink-0 [&_svg]:size-3.5",
-          tone === "danger" ? "text-(--danger-fg)" : "text-(--text-muted)",
-        )}
-      >
-        {icon}
-      </span>
-      <p
-        className={cn(
-          "text-[13.5px] leading-[1.5]",
-          tone === "danger" ? "text-(--danger-fg)" : "text-(--text-muted)",
-        )}
-      >
-        {children}
-      </p>
-    </div>
   );
 }
 

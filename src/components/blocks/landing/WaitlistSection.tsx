@@ -18,8 +18,10 @@ import {
 } from "./content";
 import { LandingButtonFill, landingButtonClass } from "./LandingButton";
 
+// 48px tall with 16px text: under 16px, iOS Safari zooms the page on focus.
+// Placeholder uses --text-muted, since --text-subtle fell under 4.5:1 on white.
 const fieldClass =
-  "min-h-11 w-full rounded-(--radius-md) border border-(--border-default) bg-(--surface-card) px-3 text-[15px] text-(--text-body) transition-colors placeholder:text-(--text-subtle) focus-visible:border-(--border-focus) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60";
+  "min-h-12 w-full rounded-(--radius-md) border border-(--border-strong) bg-(--surface-raised) px-4 text-base text-(--text-body) transition-colors placeholder:text-(--text-muted) focus-visible:border-(--border-focus) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) aria-invalid:border-(--danger-border) disabled:opacity-60";
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
@@ -102,18 +104,15 @@ export function WaitlistSection({
       aria-labelledby={`${fieldId}-heading`}
       className="mx-auto w-full max-w-3xl scroll-mt-20 px-4 py-14 lg:px-8 lg:py-20"
     >
-      <div className="flex flex-col gap-6 rounded-(--radius-card) border border-(--gradient-brand-end) bg-(--surface-card) p-6 shadow-(--shadow-card) sm:p-8">
+      <div className="flex flex-col gap-6 rounded-(--radius-card) border border-(--gradient-brand-end) bg-(--surface-card) p-5 shadow-(--shadow-card) sm:p-8">
         <div className="flex flex-col gap-2">
-          <span className="w-fit rounded-(--radius-pill) bg-(--surface-accent-soft) px-3 py-1 text-xs font-bold tracking-(--tracking-overline) text-(--status-available-fg) uppercase">
-            {WAITLIST_CONTENT.eyebrow}
-          </span>
           <h2
             id={`${fieldId}-heading`}
-            className="font-display text-2xl font-bold text-(--text-heading) md:text-3xl"
+            className="font-display text-3xl font-bold tracking-[-0.02em] text-(--text-heading) md:text-4xl"
           >
             {heading}
           </h2>
-          <p className="text-[15px] leading-relaxed text-(--text-muted)">
+          <p className="text-base leading-relaxed text-(--text-muted)">
             {body}
           </p>
         </div>
@@ -202,7 +201,7 @@ export function WaitlistSection({
                   {WAITLIST_SEGMENTS.map((option) => (
                     <label
                       key={option.value}
-                      className={`flex min-h-11 cursor-pointer items-center justify-center rounded-(--radius-pill) border px-3 text-center text-sm font-medium transition-colors has-[:checked]:border-(--border-brand) has-[:checked]:bg-(--surface-accent-soft) has-[:checked]:font-bold has-[:checked]:text-(--status-available-fg) has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring) ${
+                      className={`flex min-h-12 cursor-pointer items-center justify-center rounded-(--radius-pill) border px-3 text-center text-[15px] font-medium transition-colors has-[:checked]:border-(--border-brand) has-[:checked]:bg-(--surface-accent-soft) has-[:checked]:font-bold has-[:checked]:text-(--status-available-fg) has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring) ${
                         role === option.value
                           ? "border-(--border-brand)"
                           : "border-(--border-default) text-(--text-muted) hover:bg-(--action-secondary-hover-surface)"
@@ -260,8 +259,8 @@ export function WaitlistSection({
               disabled={submitting}
               className={landingButtonClass(
                 "primary",
-                "sm",
-                "disabled:cursor-not-allowed disabled:opacity-70",
+                "md",
+                "mt-2 w-full disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:self-start",
               )}
             >
               <LandingButtonFill variant="primary" />

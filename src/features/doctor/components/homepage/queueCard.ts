@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 /**
  * Shell for the dashboard's queue cards (On-Demand, Ready to Start, Incoming,
  * Scheduled, Upcoming Today).
@@ -26,26 +24,3 @@ export const QUEUE_CARD_CLASS =
  */
 export const RAIL_CARD_CLASS =
   "flex w-full flex-col overflow-hidden rounded-(--radius-canvas) border border-(--border-subtle) bg-(--surface-card)";
-
-/** The tinted title bar of a queue card; pass the tone's bg/fg classes. */
-export function queueHeaderClass(tone: string): string {
-  return cn("flex w-full items-center gap-2 px-4 py-3 text-[15px] font-bold [&_svg]:size-4", tone);
-}
-
-/**
- * Bare section shell for a queue that lives *inside* the dashboard's unified
- * "Patient queue" panel (On-Demand, Ready to Start, Incoming) — no border, no
- * background, no shadow of its own. Three of these stacked with a divider
- * between them is what replaced the old page's three separately tinted boxes:
- * one card, three sections, not three cards.
- */
-export const QUEUE_SECTION_CLASS = "flex w-full flex-col gap-3";
-
-/**
- * A section's plain-text label — an icon and a count, coloured by text only
- * (never a full-width tint bar), so the unified queue reads as one list with
- * three labelled parts rather than three differently-branded widgets.
- */
-export function queueSectionHeaderClass(toneTextClass: string): string {
-  return cn("flex w-full items-center gap-2 text-[13.5px] font-bold [&_svg]:size-4", toneTextClass);
-}

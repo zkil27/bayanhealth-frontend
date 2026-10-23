@@ -1,13 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useIdToken } from "@/stores/useAuthStore";
 import { fetchBookingDetail } from "@/features/booking/lib/api/bookingDetail";
-import { ConsultationVideo } from "@/features/media/components/ConsultationVideo";
+
+/**
+ * Loaded on demand: this panel only renders inside the dashboard's intake
+ * drawer, so a static import put the Daily video SDK in the `/doctor` first
+ * load for every visit.
+ */
+const ConsultationVideo = dynamic(
+  () => import("@/features/media/components/ConsultationVideo").then((m) => m.ConsultationVideo),
+  { ssr: false, loading: () => <Skeleton className="h-24 w-full rounded-lg" /> },
+);
 
 /**
  * The doctor's access to the video call and the chat room for one booking.

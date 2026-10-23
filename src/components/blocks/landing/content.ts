@@ -42,14 +42,16 @@ export interface AudienceCard {
   description: string;
   cta: { label: string; href: string };
   /**
-   * Which button the card's call to action wears.
+   * Which path is the page's lead.
    *
-   * Exactly one card is primary. Two solid buttons side by side make the reader
-   * choose twice — once between the two paths, once between two equally loud
-   * buttons — so the consultation path (the page's purpose) takes the solid fill
-   * and the Med Hub path takes the outline.
+   * Exactly one card is primary. It is drawn larger and carries the solid
+   * waitlist button ({@link WAITLIST_CTA}) with its own `cta` as a quiet text
+   * link beside it. The secondary card carries only its text link, so the two
+   * paths never present two equally loud buttons.
    */
   ctaVariant: "primary" | "secondary";
+  /** {@link CareTrack} ids listed inside this card, in order. */
+  trackIds: string[];
   /** Path under `public/` for the card's photograph. */
   imageSrc: string;
   /** Alt text for the card's photograph. */
@@ -119,28 +121,46 @@ export const EMERGENCY_NOTICE =
 // --- Static content ----------------------------------------------------------
 
 /**
+ * The page's one conversion goal while BayanHealth is pre-launch.
+ *
+ * Every solid call to action on the landing page wears this exact label and
+ * goes to the waitlist form, so a visitor never has to work out whether
+ * "Consult a Doctor", "Start a consultation", and "Join Our Waitlist" are three
+ * different things. Booking and the Med Hub stay reachable as quiet text links.
+ * When booking goes live, repoint this one constant.
+ */
+export const WAITLIST_CTA = {
+  label: "Join the waitlist",
+  href: WAITLIST_HREF,
+} as const;
+
+/**
  * Header navigation.
  *
- * Pared back to the three destinations the pitch actually needs: the waitlist
- * (the page's current conversion goal), the Med Hub route, and Case Studies —
- * which has no page yet, so it points at `/coming-soon` rather than a dead
- * anchor. The section-scroll links ("For families", "How it works", …) were
- * dropped; the page is short enough to scroll and they competed with the CTA.
+ * The Med Hub route and Case Studies (which has no page yet, so it points at
+ * `/coming-soon` rather than a dead anchor). The waitlist is not a nav link:
+ * it is the header's solid button ({@link WAITLIST_CTA}), and listing it twice
+ * made the bar read as two competing actions. On phones these links move into
+ * the header's menu sheet.
  *
  * "Med Hub" rather than the page's own "Medical Resource Hub": the nav has room
  * for a label, not a title.
  */
 export const NAV_LINKS: NavLink[] = [
-  { label: "Join the Waitlist", href: WAITLIST_HREF },
   { label: "Med Hub", href: MEDICAL_HUB_HREF },
   { label: "Case Studies", href: COMING_SOON_HREF },
 ];
 
+/** Extra in-page anchors offered only in the phone menu, where scrolling is the long way round. */
+export const MOBILE_MENU_ANCHORS: NavLink[] = [
+  { label: "How it works", href: "/#paano-ito-gumagana" },
+  { label: "Common questions", href: "/#faq" },
+];
+
 export const HERO_CONTENT = {
-  eyebrow: "Built for Filipino Families",
-  headline: "Powering Healthcare for Every Bayan.",
-  /** The stretch of {@link HERO_CONTENT.headline} painted with the brand gradient. */
-  headlineAccent: "Every Bayan",
+  headline: "Powering healthcare for every Bayan.",
+  /** The stretch of {@link HERO_CONTENT.headline} set in solid brand teal. */
+  headlineAccent: "every Bayan",
   script: "Accessible care, guided by purpose.",
   body: "BayanHealth is now connecting patients, clinicians, and health systems — built for scale, designed for the Filipino context.",
   /**
@@ -179,6 +199,7 @@ export const AUDIENCES: AudienceCard[] = [
       "Talk to a licensed doctor by video, voice, or chat. Get a clear assessment, a prescription and referral when needed, and a care summary you can act on — without leaving home.",
     cta: { label: "Start a consultation", href: CONSULT_HREF },
     ctaVariant: "primary",
+    trackIds: ["general-consultation", "specialist-referral"],
     imageSrc: "/landing/family.png",
     imageAlt: "A Filipino family at home together during a video consultation.",
     accent: "green",
@@ -193,6 +214,7 @@ export const AUDIENCES: AudienceCard[] = [
       "Free, doctor-reviewed guidance on common symptoms and conditions. Read up first, then book a consultation when you need one.",
     cta: { label: "Open the Med Hub", href: MEDICAL_HUB_HREF },
     ctaVariant: "secondary",
+    trackIds: ["clinical-guidelines"],
     imageSrc: "/landing/consult-2.jpg",
     imageAlt: "A clinician reviewing guidance before a consultation.",
     accent: "blue",
@@ -200,7 +222,6 @@ export const AUDIENCES: AudienceCard[] = [
 ];
 
 export const JOURNEY_CONTENT = {
-  eyebrow: "The BayanHealth difference",
   heading: "Your care doesn't end at the consult.",
   subheading:
     "We guide you to the next step and follow up, so your care continues after the call.",
@@ -323,15 +344,14 @@ export const WAITLIST_SEGMENTS = [
 export type WaitlistSegment = (typeof WAITLIST_SEGMENTS)[number]["value"];
 
 export const WAITLIST_CONTENT = {
-  eyebrow: "Early access",
-  heading: "Join our Waitlist",
+  heading: "Join our waitlist",
   body: "Be the first to experience quality care within reach. Join our early access list.",
-  emailLabel: "Email Address",
+  emailLabel: "Email address",
   emailPlaceholder: "juan@example.ph",
-  nameLabel: "Full Name",
-  namePlaceholder: "Full name",
+  nameLabel: "Full name",
+  namePlaceholder: "Juan dela Cruz",
   segmentLabel: "I am a...",
-  organisationLabel: "Organization Name",
+  organisationLabel: "Organization name",
   organisationPlaceholder: "LGU, employer, or school",
   submitLabel: "Reserve my spot",
   submittingLabel: "Submitting...",
@@ -360,13 +380,14 @@ export const MED_HUB_CONVERSION = {
 // --- Care tracks -----------------------------------------------------------
 
 /**
- * The three ways in, shown as a row of cards under the audience split.
+ * The three ways in, listed inside the two audience cards (see
+ * {@link AudienceCard.trackIds}) rather than as a second row of cards that
+ * repeated the same choice.
  *
  * Each track carries a lucide icon that pictures what it is — a stethoscope for
  * a consult, a share glyph for a referral, an open book for the reading hub.
  * Exactly one track is the default (General Consultation): the page's whole
- * argument is that care starts there, so it carries the highlighted card and
- * the DEFAULT pill.
+ * argument is that care starts there, so it wears the "Start here" tag.
  */
 export interface CareTrack {
   id: string;
@@ -380,17 +401,11 @@ export interface CareTrack {
   isDefault?: boolean;
 }
 
-export const CARE_TRACKS_CONTENT = {
-  heading: "Care Always Within Reach",
-  subheading:
-    "We start with General Consultation so we can guide care quickly and safely.",
-} as const;
-
 export const CARE_TRACKS: CareTrack[] = [
   {
     id: "general-consultation",
     icon: Stethoscope,
-    title: "General Consultation",
+    title: "General consultation",
     description:
       "Common symptoms, quick answers, and clear next steps — all in one consult.",
     note: "Most patients start here and get what they need.",
@@ -399,7 +414,7 @@ export const CARE_TRACKS: CareTrack[] = [
   {
     id: "specialist-referral",
     icon: Share2,
-    title: "Specialist Referral",
+    title: "Specialist referral",
     description:
       "If a specialist is needed, we guide and match you after the first consult.",
     note: "No guesswork. Fees shown before booking.",
@@ -407,7 +422,7 @@ export const CARE_TRACKS: CareTrack[] = [
   {
     id: "clinical-guidelines",
     icon: BookOpen,
-    title: "Clinical Guidelines",
+    title: "Clinical guidelines",
     description:
       "Free health guidance for you and quick reads before you consult.",
     note: "Learn first, consult when needed.",
@@ -431,8 +446,13 @@ export interface Testimonial {
 }
 
 export const TESTIMONIALS_CONTENT = {
-  heading: "Stories From Filipino Families",
-  subheading: "Real consultations. Real relief. When care mattered most.",
+  heading: "Stories from Filipino families",
+  // Says plainly what these are. The previous "Real consultations. Real
+  // relief." claimed patient testimony the product does not have yet.
+  subheading:
+    "Illustrative stories, based on the kinds of consultations BayanHealth is built for.",
+  /** The tag on every story card, so no single quote reads as a real patient on its own. */
+  label: "Illustrative",
   cta: { label: "Start your consultation", href: CONSULT_HREF },
 } as const;
 
@@ -479,12 +499,6 @@ export interface Doctor {
 export const DOCTORS_CONTENT = {
   heading: "Care led by Filipino doctors",
   subheading: "Licensed, experienced, and rooted in the same communities we serve.",
-  /**
-   * Stands in for a real "talk to a doctor now" action until live consults
-   * ship — for now it routes to the waitlist form. Swap `href` and `label`
-   * when booking goes live.
-   */
-  cta: { label: "Join the waitlist", href: WAITLIST_HREF },
 } as const;
 
 export const DOCTORS: Doctor[] = [
@@ -520,14 +534,15 @@ export const FAQ_CONTENT = {
   subheading: "Quick answers before you start.",
   imageSrc: "/landing/consult-3.jpg",
   imageAlt: "A patient on a BayanHealth telehealth consultation.",
-  cta: { label: "Start a consultation", href: CONSULT_HREF },
 } as const;
 
 export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "How fast can I talk to a doctor?",
+    // Phrased as a target, not a measurement: the page is pre-launch, so
+    // there is no connection-time data to quote yet.
     answer:
-      "Most patients connect with a doctor in under 10 minutes, depending on availability.",
+      "Once we launch, we aim to connect you with a doctor in under 10 minutes, depending on availability.",
   },
   {
     question: "Is telehealth safe and private?",

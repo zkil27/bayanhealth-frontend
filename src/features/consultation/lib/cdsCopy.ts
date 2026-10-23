@@ -218,9 +218,9 @@ export function stepGuidance(input: {
   readonly confirmed: boolean;
   readonly lockReasons: readonly GateLockReason[];
   /**
-   * Whether drafting is currently authorised. See `deriveRailState` for why
-   * this is no longer "does the browser hold a gate token" — the token is
-   * acquired at draft time and the physician never manages it.
+   * Whether drafting is currently authorised. This is no longer "does the
+   * browser hold a gate token" — the token is acquired at draft time and the
+   * physician never manages it.
    */
   readonly draftingAuthorized: boolean;
   readonly eligibleOutputCount: number;

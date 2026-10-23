@@ -626,14 +626,10 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
   );
 }
 
-/** How often the no-show wait countdown is recomputed. */
-const NO_SHOW_TICK_MS = 1000;
-
 /**
- * "Patient didn't show" — carried over from `ReadyToStartCard` verbatim
- * (ADR-20260808-03, ADR-20260909-01): still gated to `on_demand` bookings with
- * a recorded `acceptedAt`, still disabled behind a live ten-minute countdown
- * rather than a rejected call.
+ * "Patient didn't show" (ADR-20260808-03, ADR-20260909-01): gated to
+ * `on_demand` bookings with a recorded `acceptedAt`, and disabled until the
+ * ten-minute wait elapses rather than letting the call be rejected.
  *
  * Exported so `ActiveEncounterCommandCenter` can render the same control for
  * a just-accepted, not-yet-started on-demand encounter — that row no longer
@@ -645,13 +641,21 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const { assertNoShow, isAsserting, isSettled, errorMessage } = useAssertNoShow(item.bookingId);
 
-  useEffect(() => {
-    const timer = setInterval(() => setNowMs(Date.now()), NO_SHOW_TICK_MS);
-    return () => clearInterval(timer);
-  }, []);
-
   const hasAcceptedAt = typeof item.acceptedAt === "string" && item.acceptedAt.length > 0;
-  if (item.bookingMode !== "on_demand" || !hasAcceptedAt) return null;
+  const isEligible = item.bookingMode === "on_demand" && hasAcceptedAt;
+  const acceptedAtMs = hasAcceptedAt ? new Date(item.acceptedAt as string).getTime() : Number.NaN;
+  const remainingMs = isEligible ? noShowWaitRemainingMs(acceptedAtMs, nowMs) : null;
+
+  // The control only changes once, when the wait elapses, so one timeout at the
+  // deadline replaces a per-row 1s ticker. Rows that can't assert a no-show, or
+  // have already settled, schedule nothing.
+  useEffect(() => {
+    if (!isEligible || isSettled || remainingMs === null) return;
+    const timer = setTimeout(() => setNowMs(Date.now()), remainingMs);
+    return () => clearTimeout(timer);
+  }, [isEligible, isSettled, remainingMs]);
+
+  if (!isEligible) return null;
 
   if (isSettled) {
     return (
@@ -664,8 +668,6 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
     );
   }
 
-  const acceptedAtMs = new Date(item.acceptedAt as string).getTime();
-  const remainingMs = noShowWaitRemainingMs(acceptedAtMs, nowMs);
   const waitElapsed = remainingMs === null;
 
   return (

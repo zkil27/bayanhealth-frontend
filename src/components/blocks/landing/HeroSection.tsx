@@ -1,13 +1,13 @@
-import { ArrowRight, CircleCheck, Stethoscope, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowRight, TriangleAlert } from "lucide-react";
 
 import {
-  CONSULT_HREF,
   EMERGENCY_NOTICE,
   HERO_ASSURANCES,
   HERO_CONTENT,
+  WAITLIST_CTA,
 } from "./content";
 import { HeroImageCycler } from "./HeroImageCycler";
-import { LandingButton } from "./LandingButton";
+import { LandingButton, LandingTextLink } from "./LandingButton";
 
 export interface HeroSectionProps {
   variant: "authenticated" | "unauthenticated";
@@ -15,6 +15,9 @@ export interface HeroSectionProps {
   roleLabel?: string;
   dashboardHref?: string;
 }
+
+/** Observed by {@link LandingStickyCta}: the phone CTA bar appears once this scrolls away. */
+export const HERO_SECTION_ID = "hero";
 
 export function HeroSection({
   variant,
@@ -24,32 +27,33 @@ export function HeroSection({
 }: HeroSectionProps) {
   const isAuthenticated = variant === "authenticated";
 
-  // Split the headline around the gradient-painted phrase so the h1's text
-  // content stays exactly HERO_CONTENT.headline.
+  // Split the headline around the accent phrase so the h1's text content
+  // stays exactly HERO_CONTENT.headline.
   const [headlineBefore, headlineAfter] = HERO_CONTENT.headline.split(
     HERO_CONTENT.headlineAccent,
   );
 
   return (
-    <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 lg:grid-cols-2 lg:gap-14 lg:px-8 lg:py-20">
+    <section
+      id={HERO_SECTION_ID}
+      className="mx-auto grid max-w-7xl items-center gap-10 px-4 pt-10 pb-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:px-8 lg:py-20"
+    >
       <div className="flex flex-col items-start gap-5">
-        <p className="flex items-center gap-2 text-xs font-bold tracking-[0.08em] text-(--status-available-fg) uppercase">
-          <Stethoscope className="size-4" aria-hidden />
-          {HERO_CONTENT.eyebrow}
-        </p>
-
         {/*
           The single h1 on the page. The authenticated variant greets the signed-in
           user instead of pitching the product to them — they have already bought
           in, and the job of this screen for them is to get out of the way.
+
+          The accent is solid Brand Teal rather than the gradient: emphasis
+          comes from colour against navy, not from gradient-clipped text.
         */}
-        <h1 className="font-display text-4xl leading-[1.08] font-bold text-balance text-(--text-heading) md:text-5xl">
+        <h1 className="font-display text-[2.5rem] leading-[1.05] font-bold tracking-[-0.02em] text-balance text-(--text-heading) md:text-6xl">
           {isAuthenticated && displayName ? (
             `Welcome back, ${displayName}`
           ) : (
             <>
               {headlineBefore}
-              <span className="text-gradient-brand">
+              <span className="text-(--action-primary)">
                 {HERO_CONTENT.headlineAccent}
               </span>
               {headlineAfter}
@@ -73,22 +77,29 @@ export function HeroSection({
           </>
         ) : (
           <>
-            <p className="font-script text-xl text-(--action-primary) italic">
+            <p className="font-script text-2xl text-(--action-primary)">
               {HERO_CONTENT.script}
             </p>
-            <p className="max-w-(--measure) text-[17px] leading-relaxed text-(--text-muted)">
+            <p className="max-w-(--measure) text-lg leading-relaxed text-(--text-muted)">
               {HERO_CONTENT.body}
             </p>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <LandingButton href={CONSULT_HREF}>
-                <Stethoscope className="size-4" aria-hidden />
-                Join Our Waitlist
+            {/*
+              One solid action. "See how it works" is a text link so the reader
+              is never asked to pick between two equally loud buttons.
+            */}
+            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-6">
+              <LandingButton href={WAITLIST_CTA.href}>
+                {WAITLIST_CTA.label}
+                <ArrowRight className="size-4" aria-hidden />
               </LandingButton>
-              <LandingButton href="/#paano-ito-gumagana" variant="secondary">
-                <CircleCheck className="size-4" aria-hidden />
-                See How It Works
-              </LandingButton>
+              <LandingTextLink
+                href="/#paano-ito-gumagana"
+                className="justify-center sm:justify-start"
+              >
+                See how it works
+                <ArrowDown className="size-4" aria-hidden />
+              </LandingTextLink>
             </div>
 
             {/*
@@ -106,11 +117,11 @@ export function HeroSection({
               {EMERGENCY_NOTICE}
             </p>
 
-            <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+            <ul className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5">
               {HERO_ASSURANCES.map((item) => (
                 <li
                   key={item.label}
-                  className="flex items-center gap-2 whitespace-nowrap text-sm text-(--text-muted)"
+                  className="flex items-center gap-2 text-sm font-medium text-(--text-body)"
                 >
                   <item.icon
                     className="size-4 shrink-0 text-(--status-available-fg)"
@@ -128,7 +139,7 @@ export function HeroSection({
         images={HERO_CONTENT.images}
         alt={HERO_CONTENT.imageAlt}
         priority
-        className="aspect-[4/3] w-full shadow-(--shadow-lg)"
+        className="aspect-[4/3] w-full shadow-(--shadow-lg) lg:aspect-[5/4]"
         sizes="(min-width: 1024px) 50vw, 100vw"
       />
     </section>

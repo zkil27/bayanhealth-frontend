@@ -1,17 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import TapFeedback from "@/components/blocks/TapFeedBack";
 import { SessionGuard } from "@/components/auth/SessionGuard";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-
-// For Typography later
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -75,7 +69,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${inter.className} h-full scroll-smooth antialiased`}
+      className={`${geistMono.variable} ${inter.className} h-full scroll-smooth antialiased`}
     >
       <body className="bg-satin flex min-h-dvh w-full flex-col scroll-smooth">
         <SessionGuard />

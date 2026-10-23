@@ -1,5 +1,5 @@
 import { FieldSeparator } from "@/components/ui/field";
-import { cn } from "@/lib/tiptap-utils";
+import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
 type FormSectionProps = {

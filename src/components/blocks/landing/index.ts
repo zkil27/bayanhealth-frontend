@@ -1,11 +1,12 @@
 export { LandingHeader } from "./LandingHeader";
 export { HeroSection } from "./HeroSection";
 export { FeaturesSection } from "./FeaturesSection";
-export { CareTracksSection } from "./CareTracksSection";
+export { LandingMobileMenu } from "./LandingMobileMenu";
+export { LandingStickyCta } from "./LandingStickyCta";
 export { TestimonialsSection } from "./TestimonialsSection";
 export { DoctorsSection } from "./DoctorsSection";
 export { FaqSection } from "./FaqSection";
-export { LandingButton } from "./LandingButton";
+export { LandingButton, LandingTextLink } from "./LandingButton";
 export { HeroImageCycler } from "./HeroImageCycler";
 export { HowItWorksSection } from "./HowItWorksSection";
 export { TrustSection } from "./TrustSection";

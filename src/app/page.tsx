@@ -6,13 +6,13 @@ import {
   LandingHeader,
   HeroSection,
   FeaturesSection,
-  CareTracksSection,
   TestimonialsSection,
   DoctorsSection,
   FaqSection,
   HowItWorksSection,
   WaitlistSection,
   FooterSection,
+  LandingStickyCta,
   AUDIENCES,
   CARE_TRACKS,
   TESTIMONIALS,
@@ -59,16 +59,25 @@ export default function Home() {
           roleLabel={roleLabel}
           dashboardHref={dashboardHref}
         />
-        <FeaturesSection features={AUDIENCES} />
-        <CareTracksSection tracks={CARE_TRACKS} />
-        <TestimonialsSection testimonials={TESTIMONIALS} />
-        <DoctorsSection doctors={DOCTORS} />
+        {/*
+          Order follows how a visitor decides: what it is (hero), how it works,
+          who the doctors are, which path fits, what others went through, the
+          remaining questions, then the sign-up. Bands alternate cream / teal /
+          white so each section reads as its own ground instead of another
+          white card on cream.
+        */}
         <HowItWorksSection steps={STEPS} />
+        <DoctorsSection doctors={DOCTORS} />
+        <FeaturesSection features={AUDIENCES} tracks={CARE_TRACKS} />
+        <TestimonialsSection testimonials={TESTIMONIALS} />
         <FaqSection items={FAQ_ITEMS} />
-        <WaitlistSection />
+        <div className="border-t border-(--border-subtle) bg-(--surface-card)">
+          <WaitlistSection />
+        </div>
       </main>
 
       <FooterSection />
+      {!showAuthed && <LandingStickyCta />}
     </div>
   );
 }

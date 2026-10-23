@@ -10,6 +10,108 @@ This document serves as the active single source of truth for the **upstream AI 
 ---
 
 ## Log Entries
+### [2026-10-20] Frontend Debloat: Dead Code, Unused Packages, Quick Bundle Fixes
+
+- **Target Route / Surface**: Doctor and patient apps (all routes). No visual change except the monospace font note below.
+- **Method**: Built a static import graph from every Next.js entry file (`page`, `layout`, `route`, `proxy`) and deleted files that no route can reach. Spot-checked with text search: the remaining name matches were in comments or other dead files.
+- **Files Deleted (165, ~25k lines)**: all tracked in git, so any file can be restored with `git checkout -- <path>`.
+  - **Doctor**: `RequestPool`, `history/DoctorHistory`, `chat/DoctorChatList`, and in `homepage/`: `BlockTimeDialog`, `DoctorDashboardIntakeButton`, `DoctorDutyCard`, `DoctorIdentityCard`, `DoctorShiftLedger`, `DoctorTodayStrip`, `IncomingRequestsCard`, `ReadyToStartCard`, `ScheduledRequestsCard`. Also `lib/api/presence.ts`, `lib/api/scheduledRequests.ts`, `lib/blockTime.ts`, `lib/postConsultationDate.ts`, and three unused type files.
+  - **Post-consult (old SOAP editor generation)**: `SOAPTextEditor`, `AssessmentTextEditor`, `SOAPContext`, `CdsDraftsPanel`, `ProtectedToolsRail`, `Signatures`, `AudioTrail`, `AudioMarkers`, `MediaUpload`, `ConsultationDocumentPanel`, `MedicalCodeSuggestionCommandList`, `PatientMoreDetails`, `postConsultation/PrescriptionCard`, `A4Docs/*`, `ConsultationDocumentsProvider`, `useConsultationDocument`, `useMediaUpload`, and `lib/api/{cdsDrafts,documentExport,mediaUpload}.ts`.
+  - **Patient home (previous generation)**: `PatientHomeView`, `PatientHomeHero`, `ScheduledHero`, `WeekCalendar`, `PostConsultHero`, `NextVisitCard`, `HealthGuidancePanel`, `CareRecoveryRoadmap` and 15 other `homepage/*` cards, the whole `homepage/journey/` folder, `PatientChartView`, `profile/PatientProfile`, `lib/api/patientHome.ts`, and `src/lib/patient/{careRoadmap,careJourney,calendarInvite}.ts`.
+  - **Booking**: the payment-proof flow (`PaymentProofUpload`, `PaymentProofReview`, `usePaymentProofUpload`, `paymentProof.ts`), `PatientBookingList`, `BookingCreateButton`, `BookingDirectoryHeader`, `BookingNavBar`, `HeartBeat`, `CheckupSection`, `lib/auth.ts`.
+  - **Shared**:
+    - the whole tiptap kit (`tiptap-ui*`, `tiptap-node`, `tiptap-icons`, `lib/tiptap-utils.ts`, `use-tiptap-editor`, `use-menu-navigation`, `use-composed-ref`) and all its `.scss`;
+    - 24 unused `components/ui/*` (including `waveform`, `audio-player`, `chart`, `carousel`, `phone-input`, `input-otp`, `resizable`, `combobox`, `menubar`);
+    - `reui/stepper`, `PatientPicker`, `AreaNav`, `SignOutButton`, `AdvertisementCarousel`, the auth `SignUpSubmissionLoader`, `DoctorScheduleAvailabilityForm`, `FileUploadField`;
+    - `hooks/use-auth.ts`, `lib/contrast.ts`, `lib/navigation.ts`;
+    - `styles/_variables.scss`, `styles/_keyframe-animations.scss` (only referenced by a commented-out `@import`), and `src/scss.d.ts`.
+- **Packages Removed**: `@aws-sdk/client-dynamodb`, `@aws-sdk/lib-dynamodb`, all `@tiptap/*` (6), `@floating-ui/react`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-slider`, `embla-carousel-react`, `embla-carousel-auto-scroll`, `input-otp`, `react-hotkeys-hook`, `react-phone-number-input`, `react-resizable-panels`, `recharts`, `tailwindcss-animated`, `vaul` (the live drawer uses `@base-ui/react/drawer`), and the `sass` devDependency (no `.scss` files remain).
+- **Files Modified**:
+  - `PersonDataSection.tsx`, `booking/components/FormSection.tsx`: import `cn` from `@/lib/utils` instead of `@/lib/tiptap-utils`. That file imported `@tiptap/react` and ProseMirror at the top level, so the patient intake and profile routes loaded editor code they never used. No call site has conflicting classes, so `twMerge` renders the same output.
+  - `DoctorConsultationAccess.tsx`: `ConsultationVideo` is now loaded with `next/dynamic` (`ssr: false`, `Skeleton` placeholder). Verified in the build manifests: the Daily SDK chunks no longer appear for `/doctor`; they load only on `/consultation/room/[bookingId]` and when the intake drawer opens.
+  - `DoctorPatientQueue.tsx` `NoShowControl`: replaced the per-row 1-second `setInterval`, which started before the eligibility guard and never stopped, with one `setTimeout` at the ten-minute deadline. Ineligible or settled rows schedule nothing. The control never showed a countdown, so the UI is unchanged.
+  - `PatientHome.tsx` `LiveActivityCard`: uses `formatDoctorName` instead of a hand-built `` `Dr. ${name}` `` (fixes "Dr. Dr." when the stored name already has the prefix).
+  - `app/layout.tsx`: removed `Geist` (sans), which was loaded on every page but never applied, because `--font-sans` is Inter.
+  - `app/globals.css`:
+    - `--font-mono` now uses `var(--font-geist-mono)`. **Visible change:** the old literal `"Geist Mono"` never matched next/font's hashed family name, so users without Geist Mono installed saw `ui-monospace`.
+    - Removed unused CSS: `.content-auto`, `.reduce-motion`, `.bg-/.text-gradient-brand`, the ECG/journey animations, `slide-up`, the unused `nav-forward`/`nav-back` view transitions with their `slide`/`fade` keyframes, `.ProseMirror`, `.page`, and `.page-break`.
+    - Kept `@media print { @page { size: A4 } }` because the document sheets call `window.print()`.
+  - Unused exports removed from live files:
+    - `workspacePhase.ts`: `deriveRailState`, `deriveToolRows`, `railBadgeLabel`, `staleArtifacts`, `RAIL_OUTPUT_TYPES`, `OUTPUT_TYPES`, plus the `ToolRow`/`ToolStatus`/`ToolRailState` types.
+    - `queueCard.ts`: `queueHeaderClass`, `QUEUE_SECTION_CLASS`, `queueSectionHeaderClass`.
+    - `BrandUI.tsx`: `SectionHeader`, `NoteRow`.
+    - `NavBar.tsx`: `PatientTopBar`, which returned `null`.
+    - `demoData.ts`: five unused `DEMO_*` constants.
+    - `pollIntervals.ts`: `PRESENCE_POLL_INTERVAL_MS`, plus comments describing deleted cards.
+    - `cdsCopy.ts`: a comment that pointed at `deriveRailState`.
+- **Not Changed (data-layer, needs main-repo decision)**:
+  - the `["booking", id, token]` cache-shape collision between `PatientBookingDetail` and `PatientChatRoom`;
+  - the missing QueryClient on `/intake/[token]`;
+  - the request pool no longer polling;
+  - demo-data fallbacks on network errors;
+  - background polling on patient home and booking detail;
+  - the four separate QueryClients.
+- **Upstream Porting Notes**: Delete the same file list (all were unreachable here; confirm the same in the main repo with its own import graph before deleting), then apply the modified files above as small diffs. Run `npm uninstall` for the package list rather than copying `package-lock.json`.
+- **Verified**:
+  - `tsc --noEmit` clean.
+  - ESLint on changed files: 0 errors; 3 warnings in `PersonDataSection.tsx` on lines not touched here.
+  - `next build --webpack` succeeds for all 52 routes. No `ProseMirror` in any static chunk.
+  - **Not verified**: a manual click-through of each route in a browser.
+
+### [2026-10-17] Landing Page Redesign: Phase 1 (Fixes) + Phase 2 (Structure)
+
+- **Target Route / Surface**: `/` (public landing page). The header and the waitlist form also render on `/coming-soon` and `/para-sa-organisasyon`.
+- **Files Modified**:
+  - `src/styles/bayanhealth-tokens.css`: **no net change.** A teal-800 swap for `--surface-inverse` and a new `--action-primary-strong` token were tried for contrast, then reverted at the user's request: the page stays on Brand Teal `--teal-700` (`#18a58c`). Known tradeoff: white text on teal-700 is ~3.1:1, which passes AA only for large text (≥18.66px bold / 24px), so button labels and the journey band's body copy remain below 4.5:1.
+  - `content.ts`:
+    - New `WAITLIST_CTA` ("Join the waitlist" → `/#waitlist`), the one label for every solid button on the page.
+    - New `MOBILE_MENU_ANCHORS`. `NAV_LINKS` drops "Join the Waitlist", now the header button.
+    - Removed fields: `HERO_CONTENT.eyebrow`, `JOURNEY_CONTENT.eyebrow`, `WAITLIST_CONTENT.eyebrow`, `CARE_TRACKS_CONTENT`, `DOCTORS_CONTENT.cta`, `FAQ_CONTENT.cta`.
+    - `AudienceCard` gains a required `trackIds`.
+    - Headings and track titles in sentence case.
+    - Stories subheading reads "Illustrative stories, based on the kinds of consultations BayanHealth is built for." (was "Real consultations. Real relief."). New `TESTIMONIALS_CONTENT.label`.
+    - FAQ answer now: "Once we launch, we aim to connect you with a doctor in under 10 minutes…" (approved by the user).
+  - `LandingButton.tsx`: primary fill stays `--action-primary` (Brand Teal). Both sizes are `min-h-12`; `md` uses 16px text. New `LandingTextLink` (underlined, 48px hit area) for secondary paths.
+  - `HeroSection.tsx`:
+    - Removed the uppercase eyebrow. The headline accent and script line are solid `--action-primary` (Brand Teal), no gradient text.
+    - One solid "Join the waitlist" button (previously "Join Our Waitlist" linked to `/patient/booking`). "See how it works" is a text link.
+    - Larger display type. Exports `HERO_SECTION_ID`.
+  - `LandingHeader.tsx`: single waitlist button, hidden below `sm`. Mounts `LandingMobileMenu`.
+  - `LandingMobileMenu.tsx` (new): phone-only right sheet (`ui/sheet`). 48px link rows, a 48px close button, the waitlist button at the bottom (thumb zone), and links close the sheet.
+  - `LandingStickyCta.tsx` (new): phone-only fixed bottom bar. It appears after the hero leaves the viewport and hides once `#waitlist` is on screen or scrolled past. While hidden it is `inert` and `invisible`; safe-area padding; `motion-reduce` respected.
+  - `FeaturesSection.tsx`: merged with the care tracks.
+    - The consult card is the wider lead (`lg:grid-cols-[1.45fr_1fr]`) with General consultation ("Start here") and Specialist referral listed inside it, plus the solid waitlist button and a "Start a consultation" text link.
+    - The Med Hub card lists Clinical guidelines and carries only a text link.
+    - Track icons are navy/teal only; the referral icon was red and the guidelines icon gold. Hover lift removed.
+    - New required prop: `tracks`.
+  - `CareTracksSection.tsx`: **deleted** (folded into `FeaturesSection`) and removed from `index.ts`.
+  - `HowItWorksSection.tsx`: band stays Brand Teal (`--surface-inverse` = teal-700). Eyebrow removed, all text solid white instead of 75–80% white (the most contrast this teal allows), steps no longer lift on hover. On desktop a 1px connector runs between the step icons; on phones the icon sits left of the text.
+  - `DoctorsSection.tsx`: removed the Embla auto-scroll marquee, which failed WCAG 2.2.2 and ignored reduced motion. Now a static white band: three columns split by hairlines on desktop, stacked portrait rows on phones. No longer a client component; CTA removed.
+  - `TestimonialsSection.tsx`: white band. Quotes are set as typography split by hairlines instead of cards; each carries an "Illustrative" tag and a Lucide `Quote` icon.
+  - `FaqSection.tsx`: outer card removed. The accordion is a ruled list with ≥48px triggers and 16px text; the chevron uses `--text-muted`. The CTA is the waitlist; the photo is hidden below `sm`.
+  - `WaitlistSection.tsx` (visual only; submit logic, field names, and `data-slot`s unchanged):
+    - Pill eyebrow removed. Inputs `min-h-12` with 16px text, so iOS no longer zooms on focus.
+    - Placeholder `--text-muted`; invalid fields get a red border.
+    - Segment chips `min-h-12`. Submit is `md` size, full width on phones.
+  - `src/app/page.tsx`:
+    - Section order is now hero → how it works → doctors → where to start → stories → FAQ → waitlist.
+    - The waitlist is wrapped in a white band.
+    - `LandingStickyCta` renders for signed-out visitors only.
+- **Design Intent**: The page had nine buttons with four labels for one pre-launch goal, claimed real testimonials, and failed AA contrast on its primary buttons and teal band. Five consecutive sections also used the same heading-plus-card-grid template. Now there is one action and honest copy, sections alternate cream / teal / white grounds, and the order follows how a visitor decides.
+- **Device Optimization**: Mobile first (patient): 48px targets, 16px inputs, menu sheet, sticky thumb-zone CTA. Desktop: asymmetric lead card, multi-column doctors and stories, wider hero type.
+- **Verified**: `tsc --noEmit` clean. ESLint clean on changed files (one pre-existing `set-state-in-effect` warning in `page.tsx`). Impeccable detector: no findings. Playwright (Edge) at 1440×900 and 390×844 (`isMobile`):
+  - no horizontal overflow
+  - no interactive element under 44px outside the footer
+  - inputs at 16px
+  - sticky bar hidden at the top, shown mid-page, hidden at the waitlist
+  - menu sheet opens
+  - **Not verified**: real iOS Safari, a physical Android phone, dark mode on the landing page, and screen-reader passes.
+- **Tokens & Primitives Used**: `--action-primary`, `--surface-inverse`, `--status-available-fg`, `--surface-card`, `--surface-brand`, `--surface-brand-soft`, `--surface-accent-soft`, `--border-subtle`, `--border-default`, `--border-strong`, `--text-muted`, `--text-link`; `ui/sheet`, `ui/accordion`.
+- **Upstream Porting Notes**:
+  - No token file changes to port.
+  - Port order: `content.ts`, `LandingButton.tsx`, the two new components, then the sections, then `page.tsx`. Delete `CareTracksSection.tsx` and its export.
+  - `embla-carousel-auto-scroll` is no longer imported by the landing page; leave the dependency in place unless nothing else uses it.
+  - `WAITLIST_CTA` is the single switch to repoint when booking goes live.
 ### [2026-10-17] Upstream Sync, Batch 3 (Consultation Room): Unread Chat Badge
 - **Source**: `BayanHealthMVP` commit `decd497` (`feat(chat): new-message badge, title count and chime`). The chime (`messageChime.ts`) is intentionally not ported: it is audio behavior, not styling.
 - **Target Route / Surface**: Consultation room companion panes (patient `/patient/...` room, doctor room)

@@ -31,9 +31,11 @@ const FILL: Record<LandingButtonVariant, string> = {
   secondary: "bg-(--action-primary)",
 };
 
+// Both sizes are 48px tall: the patient touch-target floor. `sm` only
+// tightens padding and type, for the header and in-card actions.
 const SIZE: Record<Size, string> = {
-  md: "min-h-12 px-6 text-[15px]",
-  sm: "min-h-11 px-4 text-sm",
+  md: "min-h-12 px-6 text-base",
+  sm: "min-h-12 px-5 text-sm",
 };
 
 export function landingButtonClass(
@@ -63,6 +65,32 @@ export function LandingButtonFill({
         FILL[variant],
       )}
     />
+  );
+}
+
+/**
+ * The quiet alternative to a {@link LandingButton}: an underlined text link
+ * with a 48px hit area. Used for the paths that exist but are not the page's
+ * one conversion goal (booking, the Med Hub), so they never compete with the
+ * solid waitlist button beside them.
+ */
+export function LandingTextLink({
+  href,
+  className,
+  children,
+  ...props
+}: Omit<LandingButtonProps, "variant" | "size">) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex min-h-12 items-center gap-1.5 rounded-(--radius-sm) text-base font-bold text-(--text-link) underline decoration-(--border-strong) decoration-1 underline-offset-4 transition-colors hover:text-(--status-available-fg) hover:decoration-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </Link>
   );
 }
 

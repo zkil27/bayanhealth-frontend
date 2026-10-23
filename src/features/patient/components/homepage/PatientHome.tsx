@@ -29,7 +29,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+import { cn, formatDoctorName } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { derivePatientHomeState, type PatientHomeDerivation } from "@/lib/patient/patientHomeState";
 import { fetchBookingPage, type BookingListItem } from "@/features/booking/lib/api/bookingList";
@@ -580,8 +580,8 @@ function LiveActivityCard({
     throwOnError: false,
   });
 
-  const doctorName = doctorQuery.data?.fullName
-    ? `Dr. ${doctorQuery.data.fullName}`
+  const doctorName = doctorQuery.data?.fullName?.trim()
+    ? formatDoctorName(doctorQuery.data.fullName)
     : "PRC Doctor";
 
   if (derivation.state === "LIVE_ROOM" && active) {
