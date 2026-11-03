@@ -42,12 +42,22 @@ export type ClinicalNotesSaveState = "idle" | "saving" | "unsaved" | "saved";
 export interface ClinicalNotes {
   draft: ClinicalNotesDraft;
   setField: (key: keyof ClinicalNotesDraft, value: string) => void;
-  /** Saves all three fields. A no-op when nothing changed. */
-  save: () => Promise<void>;
+  /**
+   * Saves all three fields. Resolves `true` when the notes on the server now
+   * match what is on screen (including when nothing changed), `false` when
+   * the save failed. A save already in flight is awaited, then anything typed
+   * since is saved too, so a caller that must not lose text (End consultation)
+   * can await it.
+   */
+  save: () => Promise<boolean>;
   loaded: boolean;
   saving: boolean;
   /** Fields pre-filled from the intake and not yet saved. */
   prefilled: boolean;
+  /** The last save attempt failed and the text on screen is not on the server. */
+  saveFailed: boolean;
+  /** Something on screen differs from the last saved version. */
+  dirty: boolean;
   saveState: ClinicalNotesSaveState;
 }
 
@@ -60,6 +70,14 @@ export interface ClinicalNotes {
  * section of the workspace, under the patient's intake for that section. The
  * contract is unchanged: one GET, one PUT with the revision for all three
  * fields, internal only, never sent to the AI or shown to the patient.
+ *
+ * Used by the post-consult workspace and by the consultation room's Notes tab
+ * (2026-11), so S and O written during the call are the same record.
+ *
+ * The draft, last-saved values and revision are mirrored in refs so `save`
+ * always sends what is on screen. It used to close over the render before the
+ * field's final `setField`, so leaving a field saved the text from before the
+ * last edit.
  */
 export function useClinicalNotes({
   consultationId,
@@ -70,13 +88,30 @@ export function useClinicalNotes({
   token: string;
   intake: BookingIntakeForm | null | undefined;
 }): ClinicalNotes {
-  const [draft, setDraft] = useState<ClinicalNotesDraft>(EMPTY);
-  const [saved, setSaved] = useState<ClinicalNotesDraft>(EMPTY);
-  const [revision, setRevision] = useState(0);
+  const [draft, setDraftState] = useState<ClinicalNotesDraft>(EMPTY);
+  const [saved, setSavedState] = useState<ClinicalNotesDraft>(EMPTY);
+  const [revision, setRevisionState] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
   const [saving, setSaving] = useState(false);
-  const savingRef = useRef(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const draftRef = useRef<ClinicalNotesDraft>(EMPTY);
+  const savedRef = useRef<ClinicalNotesDraft>(EMPTY);
+  const revisionRef = useRef(0);
+  const inFlightRef = useRef<Promise<boolean> | null>(null);
+
+  const setDraft = useCallback((next: ClinicalNotesDraft) => {
+    draftRef.current = next;
+    setDraftState(next);
+  }, []);
+  const setSaved = useCallback((next: ClinicalNotesDraft) => {
+    savedRef.current = next;
+    setSavedState(next);
+  }, []);
+  const setRevision = useCallback((next: number) => {
+    revisionRef.current = next;
+    setRevisionState(next);
+  }, []);
 
   const load = useCallback(
     () =>
@@ -94,11 +129,11 @@ export function useClinicalNotes({
         }
         return notes;
       }),
-    [consultationId, token],
+    [consultationId, token, setDraft, setSaved, setRevision],
   );
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !consultationId) return;
     let cancelled = false;
     void load()
       .catch(() => null)
@@ -108,7 +143,7 @@ export function useClinicalNotes({
     return () => {
       cancelled = true;
     };
-  }, [load, token]);
+  }, [load, token, consultationId]);
 
   // Pre-fill once, after the read says nothing is saved and the intake is in.
   useEffect(() => {
@@ -119,43 +154,61 @@ export function useClinicalNotes({
       setDraft(values);
       setPrefilled(true);
     }
-  }, [loaded, revision, prefilled, intake, draft]);
+  }, [loaded, revision, prefilled, intake, draft, setDraft]);
 
   const dirty =
     draft.subjective !== saved.subjective ||
     draft.objective !== saved.objective ||
     draft.assessmentNotes !== saved.assessmentNotes;
 
-  const save = useCallback(async () => {
-    const current = draft;
-    const changed =
-      current.subjective !== saved.subjective ||
-      current.objective !== saved.objective ||
-      current.assessmentNotes !== saved.assessmentNotes;
-    if (!changed || savingRef.current) return;
-    savingRef.current = true;
-    setSaving(true);
-    try {
-      const notes = await saveClinicalNotes(consultationId, token, current, revision);
-      setSaved({ subjective: notes.subjective, objective: notes.objective, assessmentNotes: notes.assessmentNotes });
-      setRevision(notes.revision);
-      setPrefilled(false);
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        await load().catch(() => null);
-        toast.error("These notes were changed in another tab", {
-          description: "The latest version is loaded. Re-apply your edit and save again.",
-        });
-      } else {
-        toast.error("Couldn't save your notes", {
-          description: error instanceof Error ? error.message : undefined,
-        });
-      }
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
+  const save = useCallback(async (): Promise<boolean> => {
+    // Let a save that is already running finish, then save whatever was typed
+    // after it started.
+    while (inFlightRef.current) {
+      await inFlightRef.current;
     }
-  }, [consultationId, draft, load, revision, saved, token]);
+    const current = draftRef.current;
+    const last = savedRef.current;
+    const changed =
+      current.subjective !== last.subjective ||
+      current.objective !== last.objective ||
+      current.assessmentNotes !== last.assessmentNotes;
+    if (!changed) return true;
+    if (!token || !consultationId) return false;
+
+    const attempt = (async () => {
+      setSaving(true);
+      try {
+        const notes = await saveClinicalNotes(consultationId, token, current, revisionRef.current);
+        setSaved({ subjective: notes.subjective, objective: notes.objective, assessmentNotes: notes.assessmentNotes });
+        setRevision(notes.revision);
+        setPrefilled(false);
+        setSaveFailed(false);
+        return true;
+      } catch (error) {
+        setSaveFailed(true);
+        if (error instanceof ApiError && error.status === 409) {
+          await load().catch(() => null);
+          toast.error("These notes were changed in another tab", {
+            description: "The latest version is loaded. Re-apply your edit and save again.",
+          });
+        } else {
+          toast.error("Couldn't save your notes", {
+            description: "Your text is still here. Try again in a moment.",
+          });
+        }
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    })();
+    inFlightRef.current = attempt;
+    try {
+      return await attempt;
+    } finally {
+      inFlightRef.current = null;
+    }
+  }, [consultationId, load, token, setSaved, setRevision]);
 
   // A phone gets locked, or the doctor switches to another app, mid-sentence.
   // Blur does not fire then, so save when the page is hidden as well.
@@ -171,9 +224,12 @@ export function useClinicalNotes({
     return () => document.removeEventListener("visibilitychange", onHide);
   }, []);
 
-  const setField = useCallback((key: keyof ClinicalNotesDraft, value: string) => {
-    setDraft((current) => ({ ...current, [key]: value }));
-  }, []);
+  const setField = useCallback(
+    (key: keyof ClinicalNotesDraft, value: string) => {
+      setDraft({ ...draftRef.current, [key]: value });
+    },
+    [setDraft],
+  );
 
   const saveState: ClinicalNotesSaveState = saving
     ? "saving"
@@ -183,7 +239,7 @@ export function useClinicalNotes({
         ? "saved"
         : "idle";
 
-  return { draft, setField, save, loaded, saving, prefilled, saveState };
+  return { draft, setField, save, loaded, saving, prefilled, saveFailed, dirty, saveState };
 }
 
 const SAVE_STATE_COPY: Record<ClinicalNotesSaveState, string> = {
@@ -200,7 +256,6 @@ export function NotesSaveState({ state, prefilled }: { state: ClinicalNotesSaveS
   return (
     <span
       aria-live="polite"
-      title={prefilled ? "Pre-filled from the intake. Edit it, and it saves when you leave the field." : undefined}
       className={cn(
         "text-xs font-medium",
         state === "saved" ? "text-(--status-available-fg)" : "text-(--text-muted)",

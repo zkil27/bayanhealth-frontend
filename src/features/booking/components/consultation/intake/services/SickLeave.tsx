@@ -38,7 +38,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
               render={({ field }) => (
                 <Input
                   type="date"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}
@@ -57,7 +57,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
               render={({ field }) => (
                 <Input
                   type="date"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}
@@ -80,7 +80,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
               render={({ field }) => (
                 <Input
                   placeholder="Enter company or school name"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}
@@ -99,7 +99,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
               render={({ field }) => (
                 <Input
                   placeholder="Department or grade level"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}
@@ -161,7 +161,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
                 render={({ field }) => (
                   <Input
                     placeholder="e.g., Fever, cough"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -180,7 +180,7 @@ export function SickLeave({ readOnly = false }: { readOnly?: boolean }) {
                 render={({ field }) => (
                   <Input
                     placeholder="When did symptoms start?"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}

@@ -321,7 +321,7 @@ function WindowNav({
         size="icon-xs"
         aria-label="Next week"
         disabled={atLatest}
-        className="text-white hover:bg-white/20 hover:text-white disabled:opacity-30"
+        className="text-white hover:bg-white/20 hover:text-white disabled:text-white/60"
         onClick={() => onStep(1)}
       >
         <ChevronRight className="size-3.5" />

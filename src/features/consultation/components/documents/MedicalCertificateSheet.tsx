@@ -190,7 +190,7 @@ export function MedicalCertificateSheet({
               <ClipboardList className="size-4" />
             </div>
             <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
-              <span className="font-semibold text-slate-900">Work / School Advice</span>
+              <span className="font-semibold text-slate-900">Recommendations / Remarks</span>
               <span className="text-slate-800 leading-relaxed">
                 {payload.restrictions ||
                   "May return to usual duties if able to work comfortably. Avoid strenuous physical exertion and seek reassessment if symptoms worsen or red flags occur."}

@@ -1,4 +1,7 @@
-# BayanHealth UI/UX Changelog (V3)
+# BayanHealth UI/UX Changelog (V3) [ARCHIVED]
+
+> **ARCHIVED / SUPERSEDED**: All current and future UI/UX changes are now logged in **[`CHANGELOG_UI_V4.md`](./CHANGELOG_UI_V4.md)**.
+> This document preserves the changelog history from 2026-10-01 up to 2026-10-23.
 
 All design, layout, styling, and UX modifications made in this fork must be logged here.  
 This document serves as the active single source of truth for the **upstream AI agent** that will synchronize and apply these UI improvements to the main repository, superseding [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) and [`CHANGELOG_UI.md`](./CHANGELOG_UI.md).

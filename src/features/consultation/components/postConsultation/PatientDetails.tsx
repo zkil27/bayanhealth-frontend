@@ -226,7 +226,7 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
           </Section>
         </div>
         <div className="rounded-[10px] border border-(--border-subtle) bg-(--surface-card) p-2.5 shadow-2xs">
-          <Section icon={<Pill className="size-3.5 shrink-0 text-(--teal-700)" />} label="Medications">
+          <Section icon={<Pill className="size-3.5 shrink-0 text-(--teal-700)" />} label="Current medications">
             <span className="text-xs font-medium text-(--text-body)">{medications || <NotAnswered />}</span>
           </Section>
         </div>
@@ -237,8 +237,8 @@ function IntakeDetails({ form }: { form: BookingIntakeForm }) {
         <SymptomReviewSection review={details?.symptomReview} />
       </Disclosure>
 
-      <Disclosure title="Medical & reproductive history">
-        <MedicalHistorySection history={details?.structuredMedicalHistory} />
+      <Disclosure title="Past medical history & reproductive health">
+        <MedicalHistorySection history={details?.structuredMedicalHistory} medications={medications} />
         <ReproductiveHealthSection health={details?.reproductiveHealth} />
       </Disclosure>
 
@@ -382,14 +382,21 @@ function Disclosure({
  * `medicalHistory` block. `noneReported` is an explicit patient assertion and
  * is rendered as one, not left blank.
  */
-function MedicalHistorySection({ history }: { history?: IntakeStructuredMedicalHistory }) {
+function MedicalHistorySection({
+  history,
+  medications,
+}: {
+  history?: IntakeStructuredMedicalHistory;
+  /** Maintenance medications, shown under the comorbidities they treat (pilot feedback 2026-11). */
+  medications?: string;
+}) {
   if (!history) return null;
   const conditionLabels = knownConditionLabels(history);
 
   return (
-    <Section icon={<ListChecks className="size-4 shrink-0" />} label="Known medical conditions">
+    <Section icon={<ListChecks className="size-4 shrink-0" />} label="Past medical history / Comorbidities">
       {history.noneReported ? (
-        "No known medical conditions reported"
+        "No past medical history reported"
       ) : conditionLabels.length > 0 || history.other ? (
         <div className="flex flex-wrap gap-1.5">
           {conditionLabels.map((label) => (
@@ -405,6 +412,13 @@ function MedicalHistorySection({ history }: { history?: IntakeStructuredMedicalH
       {history.details ? (
         <p className="mt-1.5 text-sm text-muted-foreground">{history.details}</p>
       ) : null}
+      {/* The patient enters medications as one free-text answer, so they are
+          listed beside the comorbidities as a block rather than paired to a
+          single condition (pairing needs a structured intake field). */}
+      <div className="mt-2 flex flex-col gap-0.5">
+        <span className="text-xs font-semibold text-(--text-muted)">Maintenance medications</span>
+        <span className="text-sm text-(--text-body)">{medications || <NotAnswered />}</span>
+      </div>
     </Section>
   );
 }

@@ -27,6 +27,16 @@ import type { components } from "@/types/openapi.generated";
 type GateLockReason = components["schemas"]["CdsGateLockReason"];
 type ArtifactStaleReason = components["schemas"]["CdsArtifactStaleReason"];
 
+/**
+ * The manual safety re-check control. Named for what it does, with its purpose
+ * spelled out beside it (pilot feedback 2026-11: "Re-run safety check" was
+ * unclear). Every string that points the physician at this control reads
+ * these, so the button and the instructions never drift apart.
+ */
+export const RECHECK_SAFETY_LABEL = "Check safety again";
+export const RECHECK_SAFETY_HINT =
+  "Runs the red-flag check against the latest intake. If nothing new is found, drafting reopens.";
+
 export interface LockReasonCopy {
   /** Short human label, used as the heading of the lock row. */
   readonly label: string;
@@ -57,20 +67,20 @@ const LOCK_REASON_COPY: Record<GateLockReason, LockReasonCopy> = {
     label: "The patient's clinical information changed",
     meaning:
       "New or updated intake was recorded after this Assessment, so the safety checks have to run again against the current information.",
-    nextAction: 'Select "Re-run safety check" below to unlock drafting.',
+    nextAction: 'Select "Check safety again" below to unlock drafting.',
     selfClearable: true,
   },
   evaluation_failed: {
     label: "The last safety check did not complete",
     meaning:
       "A safety evaluation failed to finish, so the system is holding protected actions closed rather than assuming the result.",
-    nextAction: 'Select "Re-run safety check" below to try again.',
+    nextAction: 'Select "Check safety again" below to try again.',
     selfClearable: true,
   },
   assessment_change: {
     label: "Assessment is mid-change",
     meaning:
-      "An Assessment update, re-attestation, or clear is in progress, so anything that depends on the Assessment stays closed until it settles.",
+      "An Assessment change, repeat confirmation, or clear is in progress, so anything that depends on the Assessment stays closed until it settles.",
     nextAction:
       'Select "Refresh" to load the settled Assessment, then confirm it again if needed.',
     selfClearable: true,
@@ -95,7 +105,7 @@ const LOCK_REASON_COPY: Record<GateLockReason, LockReasonCopy> = {
     meaning:
       "The assigned physician changed, so the previous physician's Assessment no longer authorises protected actions.",
     nextAction:
-      "The newly assigned physician must confirm or re-attest the Assessment. If that is you, confirm it below.",
+      "The newly assigned physician must confirm the Assessment again. If that is you, select \"Confirm again as is\" below.",
     selfClearable: true,
   },
   operator_hold: {
@@ -257,7 +267,7 @@ export function stepGuidance(input: {
       step: "assessment_changed",
       heading: "Dependent drafts are out of date",
       instruction:
-        "Re-check safety to unlock protected actions against the current clinical information.",
+        'Select "Check safety again" to reopen drafting against the latest intake.',
     };
   }
 
@@ -276,7 +286,7 @@ export function stepGuidance(input: {
       step: "assessment_confirmed",
       heading: "Assessment recorded, drafting not available for it",
       instruction:
-        "This diagnosis is not yet in the approved catalogue, so the system will not draft from it. Record it as-is, or confirm a catalogued diagnosis to enable drafting.",
+        "This diagnosis isn't on BayanHealth's reviewed diagnosis list yet, so the AI won't draft from it. Record it as it is and write the documents yourself, or confirm a listed diagnosis to use AI drafting.",
     };
   }
 
@@ -285,7 +295,7 @@ export function stepGuidance(input: {
       step: "assessment_confirmed",
       heading: "Drafting is on hold",
       instruction:
-        "Clear the hold listed above, then re-run the safety check to draft from this Assessment.",
+        'Clear the hold listed above, then select "Check safety again" to draft from this Assessment.',
     };
   }
 

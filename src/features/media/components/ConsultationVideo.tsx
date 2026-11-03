@@ -565,7 +565,7 @@ export function ConsultationVideo({
         className="flex h-full w-full items-center justify-between gap-2.5 bg-slate-950 px-3.5 py-1.5 text-white"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-xs font-black text-white shadow-xs">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-750) text-xs font-black text-white shadow-xs">
             {remoteTile?.label ? remoteTile.label.slice(0, 2).toUpperCase() : "DR"}
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border border-slate-950 bg-emerald-500" />
           </div>

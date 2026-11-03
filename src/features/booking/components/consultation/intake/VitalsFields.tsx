@@ -147,7 +147,7 @@ function NumberField({
               max={max}
               step={step}
               placeholder={placeholder}
-              className="h-11 bg-background"
+              className="h-12 bg-background text-base"
               value={
                 field.value === undefined || field.value === null
                   ? ""

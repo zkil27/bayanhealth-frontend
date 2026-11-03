@@ -540,12 +540,12 @@ export function physicianErrorMessage(error: unknown): string {
       // place of the one that failed to load. Keep it in any rewording.
       return "The reference summary is unavailable. No prior preview is shown, so continue with your own clinical judgement or try again.";
     case "ASSESSMENT_GENERATION_NOT_ELIGIBLE":
-      return "This diagnosis is not yet in the approved catalogue, so the system will not draft from it. You can still record it as your Assessment.";
+      return "This diagnosis isn't on BayanHealth's reviewed diagnosis list yet, so the AI won't draft from it. You can still record it as your Assessment.";
     case "OUTPUT_TYPE_NOT_ELIGIBLE":
       return "This document type is not available for the diagnosis you confirmed.";
     case "GATE_TOKEN_EXPIRED":
     case "EXPIRED_GATE_TOKEN":
-      return "Your drafting authorisation expired. Re-check safety to unlock drafting again.";
+      return "Your drafting permission expired. Try drafting again: the safety check runs again on its own.";
     case "RED_FLAG_BLOCKED":
       return "A safety finding takes this consultation off the routine remote pathway, so drafting is closed. Review the finding shown with the candidates.";
     case "RED_FLAG_ACKNOWLEDGMENT_REQUIRED":

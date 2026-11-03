@@ -95,7 +95,7 @@ export function PersonDataRelationshipSection({
   const triggerButton = (
     <Button
       variant="outline"
-      className="w-full justify-between bg-background font-normal capitalize"
+      className="min-h-12 w-full justify-between bg-background text-base font-normal capitalize"
     >
       {selectedOption ? selectedOption.label : "Select relationship"}
       <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />

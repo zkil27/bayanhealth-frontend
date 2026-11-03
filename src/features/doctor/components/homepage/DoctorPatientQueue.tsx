@@ -682,7 +682,6 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
               variant="outline"
               size="sm"
               className="size-11 text-(--danger-fg) sm:h-7 sm:w-auto"
-              title={waitElapsed ? "Patient didn't show" : "Waiting out the ten-minute window"}
               aria-label={waitElapsed ? "Patient didn't show" : "Patient didn't show (available after the ten-minute wait)"}
             >
               {isAsserting ? <Spinner className="size-3.5" /> : <UserRoundX className="size-3.5" />}
@@ -710,8 +709,13 @@ export function NoShowControl({ item }: { item: ReadyToStartItem }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Said on screen, not in a hover tooltip or screen-reader-only text
+          (pilot feedback 2026-11: hover help never shows on a tablet). */}
+      {!waitElapsed ? (
+        <span className="text-xs text-(--text-muted)">No-show after 10 min</span>
+      ) : null}
       {errorMessage ? (
-        <span data-slot="no-show-error" className="sr-only">
+        <span data-slot="no-show-error" role="alert" className="max-w-48 text-right text-xs font-medium text-(--danger-fg)">
           {errorMessage}
         </span>
       ) : null}

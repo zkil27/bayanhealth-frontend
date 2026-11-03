@@ -339,7 +339,7 @@ function MedicalCertificateEditor({
         />
       </div>
       <TextAreaField
-        label="Restrictions"
+        label="Recommendations / Remarks"
         optional
         value={payload.restrictions ?? ""}
         maxLength={2000}

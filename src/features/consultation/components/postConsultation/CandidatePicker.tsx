@@ -147,8 +147,11 @@ export const CandidatePicker = memo(function CandidatePicker(props: CandidatePic
             ? ` · ${props.evaluation.routing.safetyMessage}`
             : ""}
           {props.evaluation.routing.matchedRuleIds.length ? (
-            <p>
-              Safety rules: {props.evaluation.routing.matchedRuleIds.join(", ")}
+            // Rule IDs mean nothing clinically; they are kept, quietly, so a
+            // doctor can quote them to support (pilot feedback 2026-11).
+            <p className="mt-1 text-xs text-(--text-muted)">
+              Reference for support:{" "}
+              <span className="font-mono">{props.evaluation.routing.matchedRuleIds.join(", ")}</span>
             </p>
           ) : null}
         </div>
@@ -161,8 +164,8 @@ export const CandidatePicker = memo(function CandidatePicker(props: CandidatePic
         </p>
       ) : props.suppressed ? (
         <p className="rounded-xl bg-(--surface-warm-soft) p-3 text-sm font-medium text-(--text-body)">
-          Routine candidates and the CPG preview are suppressed by current
-          safety routing.
+          Diagnosis suggestions and guideline summaries are hidden while a safety
+          finding is active. Review the finding first.
         </p>
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
@@ -336,7 +339,7 @@ export const CandidatePicker = memo(function CandidatePicker(props: CandidatePic
           }}
           icon={BookOpenCheck}
           title={props.preview?.diagnosisName ?? props.focused ?? "Guideline"}
-          description="Guideline summary from the approved catalogue. Read it, then choose."
+          description="Guideline summary reviewed by BayanHealth. Read it, then choose."
           footer={
             props.preview ? (
               <>

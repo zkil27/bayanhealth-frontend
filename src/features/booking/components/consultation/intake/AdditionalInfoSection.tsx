@@ -223,7 +223,7 @@ export function AdditionalInfoSection() {
               htmlFor="user-consent"
               className="flex cursor-pointer items-start gap-3"
             >
-              <span className="text-xs text-muted-foreground">
+              <span className="text-base leading-relaxed text-foreground">
                 I confirm that the information provided is accurate and complete
                 to the best of my knowledge. I understand that this information
                 will be used to provide appropriate medical care.

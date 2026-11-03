@@ -48,7 +48,7 @@ import {
 import { ClinicalNoteField, NotesSaveState, useClinicalNotes } from "./ClinicalNotesCard";
 import { WorkspaceHeader } from "./WorkspaceChrome";
 import { IntakeBlock, WorkspaceSection } from "./WorkspaceSection";
-import { DOCUMENT_STATUS } from "./documentStatus";
+import { DOCUMENT_STATUS, documentStatusOf } from "./documentStatus";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import {
   deriveFinishReadiness,
@@ -102,7 +102,7 @@ import {
   updateConfirmedAssessment,
   updateEditableAssessment,
 } from "../../lib/api/assessmentFirst";
-import { lockReasonCopy, stepGuidance } from "../../lib/cdsCopy";
+import { RECHECK_SAFETY_HINT, RECHECK_SAFETY_LABEL, lockReasonCopy, stepGuidance } from "../../lib/cdsCopy";
 
 const outputLabels = OUTPUT_LABELS;
 const terminalJobs = new Set([
@@ -683,7 +683,7 @@ export function AssessmentFirstWorkspace({
       }
       toast.success(
         changeType === "reattest"
-          ? "Assessment re-attested under your name."
+          ? "Assessment confirmed again under your name."
           : "Assessment updated. Earlier drafts are now out of date and moved to history.",
       );
     });
@@ -954,7 +954,7 @@ export function AssessmentFirstWorkspace({
       });
       resetDerived();
       await refreshAssessment();
-      toast.info("Safety finding acknowledged. Re-run the safety check to reopen drafting.");
+      toast.info(`Safety finding acknowledged. Select "${RECHECK_SAFETY_LABEL}" to reopen drafting.`);
     }).finally(() => {
       acknowledgmentIssueRef.current = false;
     });
@@ -1493,7 +1493,11 @@ export function AssessmentFirstWorkspace({
                   notes={notes}
                   field="subjective"
                   label="Your subjective notes"
-                  hint="Private to you"
+                  hint={
+                    notes.prefilled
+                      ? "Private to you. Pre-filled from the intake: edit it freely. It saves when you leave the field."
+                      : "Private to you"
+                  }
                   placeholder="What the patient told you, in your words."
                 />
               </div>
@@ -1663,6 +1667,8 @@ export function AssessmentFirstWorkspace({
                 generating={generating}
                 specimen={doctorProfile?.signature}
                 defaultSignerName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+                doctorLicenseNumber={doctorProfile?.licenseNumber || undefined}
+                doctorSpecialty={doctorProfile?.specialty || undefined}
                 draftingOpen={draftingOpen}
                 aiEligibleTypes={aiEligibleTypes}
                 aiUnavailableReason={
@@ -1735,6 +1741,7 @@ export function AssessmentFirstWorkspace({
             onGoToNotice={() => (isPhone ? window.scrollTo({ top: 0 }) : scrollToId("workspace-locks"))}
             onGoToDocument={goToDocument}
             isFieldFocused={isFieldFocused}
+            recordNotes={{ subjective: notes.draft.subjective, objective: notes.draft.objective }}
           />
         </main>
 
@@ -1743,6 +1750,8 @@ export function AssessmentFirstWorkspace({
             <PatientRail
               bookingId={bookingId}
               intake={intake}
+              consultationId={consultationId}
+              token={token}
               collapsed={patientRailCollapsed}
               onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
             />
@@ -1768,6 +1777,8 @@ export function AssessmentFirstWorkspace({
           artifact={inspectingHistoricalArtifact ?? undefined}
           intake={intake}
           doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+          doctorLicenseNumber={doctorProfile?.licenseNumber || undefined}
+          doctorSpecialty={doctorProfile?.specialty || undefined}
           isHistoricalArchive={true}
         />
       ) : null}
@@ -1860,35 +1871,54 @@ const LockNotice = memo(function LockNotice({
         />
       ) : null}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">
-        <Button
-          type="button"
-          data-slot="banner-recheck-safety"
-          variant="primary"
-          shape="pill"
-          className="h-11 lg:h-9"
-          disabled={busy || !assessment.confirmed}
-          title={
-            !assessment.confirmed
-              ? "Confirm the Assessment first, then re-run the safety check to unlock drafting."
-              : undefined
-          }
-          onClick={onRecheck}
-        >
-          <ShieldAlert className="size-4" />
-          Re-run safety check
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          shape="pill"
-          className="h-11 border-(--border-default) bg-(--surface-card) lg:h-9"
-          disabled={busy}
-          onClick={onRefresh}
-        >
-          <RefreshCw className="size-4" /> Refresh
-        </Button>
-      </div>
+      {/* Pilot feedback (2026-11): doctors could not tell what "Re-run safety
+          check" did or when to use it. It now appears only when pressing it can
+          help (a confirmed Assessment held by a reason the physician clears
+          themselves, other than a mid-change Assessment, which Refresh settles),
+          and its purpose is written beside it rather than in a hover tooltip. */}
+      {(() => {
+        const canRecheck =
+          Boolean(assessment.confirmed)
+          && assessment.lockReasons.some(
+            (reason) => reason !== "assessment_change" && lockReasonCopy(reason).selfClearable,
+          );
+        return (
+          <div className="mt-3 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">
+              {canRecheck ? (
+                <Button
+                  type="button"
+                  data-slot="banner-recheck-safety"
+                  variant="primary"
+                  shape="pill"
+                  className="h-11 lg:h-9"
+                  disabled={busy}
+                  aria-describedby="workspace-recheck-hint"
+                  onClick={onRecheck}
+                >
+                  <ShieldAlert className="size-4" />
+                  {RECHECK_SAFETY_LABEL}
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                shape="pill"
+                className="h-11 border-(--border-default) bg-(--surface-card) lg:h-9"
+                disabled={busy}
+                onClick={onRefresh}
+              >
+                <RefreshCw className="size-4" /> Refresh
+              </Button>
+            </div>
+            {canRecheck ? (
+              <p id="workspace-recheck-hint" className="text-sm text-(--text-muted)">
+                {RECHECK_SAFETY_HINT}
+              </p>
+            ) : null}
+          </div>
+        );
+      })()}
     </section>
   );
 });
@@ -1922,6 +1952,7 @@ const NextStepBar = memo(function NextStepBar({
   onGoToNotice,
   onGoToDocument,
   isFieldFocused,
+  recordNotes,
 }: {
   className?: string;
   assessment: CdsAssessment;
@@ -1940,6 +1971,8 @@ const NextStepBar = memo(function NextStepBar({
   onGoToNotice: () => void;
   onGoToDocument: (key: ChecklistKey) => void;
   isFieldFocused?: boolean;
+  /** The S and O notes as they stand, for the full-record review in Finish. */
+  recordNotes: { subjective: string; objective: string };
 }) {
   const confirmed = Boolean(assessment.confirmed);
   const held = assessment.lockReasons.length > 0;
@@ -2058,6 +2091,7 @@ const NextStepBar = memo(function NextStepBar({
           artifacts={artifacts}
           notNeededTypes={notNeededTypes}
           emphasize={allDone}
+          recordNotes={recordNotes}
         />
       ) : null}
     </StickyActionBar>
@@ -2200,8 +2234,8 @@ const AssessmentEditor = memo(function AssessmentEditor({
               drafting at all. Said here, where the diagnosis is.
             */
             <p className="mt-2 text-(--text-body)">
-              AI drafting isn&apos;t available for this diagnosis because it is not in the approved catalogue.
-              You can still write any document yourself in Plan &amp; documents.
+              AI drafting isn&apos;t available for this diagnosis because it isn&apos;t on BayanHealth&apos;s reviewed
+              diagnosis list yet. You can still write any document yourself in Plan &amp; documents.
             </p>
           ) : null}
         </div>
@@ -2273,7 +2307,8 @@ const AssessmentEditor = memo(function AssessmentEditor({
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2 border-t border-(--border-subtle) pt-4 max-sm:[&>*]:flex-1">
+        <div className="flex flex-col gap-2 border-t border-(--border-subtle) pt-4">
+        <div className="flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">
           <Button
             type="button"
             variant="ghost"
@@ -2289,22 +2324,37 @@ const AssessmentEditor = memo(function AssessmentEditor({
             variant="outline"
             shape="pill"
             className="border-(--border-default) max-lg:h-11"
-            title="Confirm the same diagnosis again under your name, for example after the consultation was reassigned."
+            aria-describedby="assessment-commit-help"
             disabled={busy || !confirmed.icd10}
             onClick={onReattest}
           >
-            Re-attest unchanged
+            Confirm again as is
           </Button>
           <Button
             type="button"
             variant="primary"
             shape="pill"
             className="max-lg:h-11"
+            aria-describedby="assessment-commit-help"
             disabled={busy || !draftDiagnosis.trim() || !draftIcdValue || (!diagnosisChanged && !icdChanged)}
             onClick={onUpdate}
           >
-            Save as new version
+            Save changes
           </Button>
+        </div>
+        {/* Pilot feedback (2026-11): "Re-attest unchanged" and "Save as new
+            version" needed explaining, and the explanation lived in a hover
+            tooltip that never shows on a tablet. Both are said here instead. */}
+        <ul id="assessment-commit-help" className="flex flex-col gap-1 text-sm text-(--text-muted)">
+          <li>
+            <span className="font-semibold text-(--text-body)">Confirm again as is</span> puts the same diagnosis
+            under your name, for example after the consultation was reassigned to you.
+          </li>
+          <li>
+            <span className="font-semibold text-(--text-body)">Save changes</span> keeps the earlier version in the
+            record. Documents drafted from it are marked out of date.
+          </li>
+        </ul>
         </div>
       )}
 
@@ -2420,6 +2470,7 @@ function FinishDocumentationControl({
   artifacts,
   notNeededTypes,
   emphasize,
+  recordNotes,
 }: {
   assessment: CdsAssessment;
   artifacts: readonly CdsProtectedArtifact[];
@@ -2427,6 +2478,7 @@ function FinishDocumentationControl({
   notNeededTypes: ReadonlySet<CdsProtectedOutputType>;
   /** Everything is done: Finish becomes the primary action. */
   emphasize: boolean;
+  recordNotes: { subjective: string; objective: string };
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -2436,17 +2488,21 @@ function FinishDocumentationControl({
   const size = "h-11 shrink-0 px-4 lg:h-9";
 
   if (!readiness.canFinish) {
+    // Not a dead, greyed-out button with a hover tooltip (invisible on a
+    // tablet): it stays pressable and says why it is not open yet, the same
+    // pattern as the phone Deliver tab.
     return (
       <Button
         type="button"
         variant="outline"
         shape="pill"
-        disabled
+        aria-disabled
         data-slot="finish-documentation"
-        title="Confirm the Assessment first"
-        className={cn(size, "border-(--border-default)")}
+        className={cn(size, "border-(--border-default) text-(--text-muted)")}
+        onClick={() => toast.info("Finish opens after you confirm the Assessment.")}
       >
         Finish
+        <span className="sr-only">(opens after you confirm the Assessment)</span>
       </Button>
     );
   }
@@ -2471,7 +2527,7 @@ function FinishDocumentationControl({
         onOpenChange={setOpen}
         title={hasOutstanding ? "Finish with documents still open?" : "Finish this consultation?"}
         description="Your confirmed Assessment is saved. Leaving does not draft, sign, release or delete anything, and you can come back to finish later from your history."
-        className="sm:max-w-lg"
+        className="sm:max-w-2xl"
         footer={
           <>
             <Button
@@ -2490,6 +2546,7 @@ function FinishDocumentationControl({
           </>
         }
       >
+        <FinalRecordReview assessment={assessment} artifacts={artifacts} notes={recordNotes} />
         {hasOutstanding ? (
           <ul className="flex flex-col gap-2.5">
             {readiness.unreviewed.length > 0 ? (
@@ -2523,6 +2580,94 @@ function FinishDocumentationControl({
       </ResponsiveSheet>
     </>
   );
+}
+
+/**
+ * The whole clinical record, read-only, as the doctor is about to leave it.
+ * Pilot feedback (2026-11): doctors asked to review the final record before
+ * completion, not only the list of what is still open. Nothing here is
+ * editable; "Keep working" is the way back to change any of it.
+ */
+function FinalRecordReview({
+  assessment,
+  artifacts,
+  notes,
+}: {
+  assessment: CdsAssessment;
+  artifacts: readonly CdsProtectedArtifact[];
+  notes: { subjective: string; objective: string };
+}) {
+  const confirmed = assessment.confirmed;
+  const icd = confirmed?.icd10;
+  const documents = artifacts.filter((artifact) => artifact.outputType in OUTPUT_LABELS);
+
+  return (
+    <section
+      aria-labelledby="final-record-heading"
+      data-slot="final-record-review"
+      className="mb-4 rounded-xl border border-(--border-default) bg-(--surface-raised)"
+    >
+      <h3 id="final-record-heading" className="border-b border-(--border-subtle) px-3.5 py-2.5 text-sm font-bold text-(--text-heading)">
+        Your record for this consultation
+      </h3>
+      <dl className="divide-y divide-(--border-subtle) text-sm">
+        <RecordRow term="Subjective">
+          <RecordText value={notes.subjective} />
+        </RecordRow>
+        <RecordRow term="Objective">
+          <RecordText value={notes.objective} />
+        </RecordRow>
+        <RecordRow term="Assessment">
+          {confirmed ? (
+            <span className="font-semibold text-(--text-heading)">
+              {confirmed.diagnosis}
+              {icd ? (
+                <span className="ml-2 font-mono text-xs font-semibold text-(--text-muted)">
+                  ICD-10 {icd.code}
+                </span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="italic text-(--text-muted)">Not confirmed</span>
+          )}
+        </RecordRow>
+        <RecordRow term="Documents">
+          {documents.length > 0 ? (
+            <ul className="flex flex-col gap-1.5">
+              {documents.map((artifact) => {
+                const config = DOCUMENT_STATUS[documentStatusOf(artifact)];
+                return (
+                  <li key={artifact.artifactId} className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium text-(--text-body)">{OUTPUT_LABELS[artifact.outputType]}</span>
+                    <StatusText tone={config.tone} icon={config.icon}>
+                      {config.label}
+                    </StatusText>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <span className="italic text-(--text-muted)">No documents started</span>
+          )}
+        </RecordRow>
+      </dl>
+    </section>
+  );
+}
+
+function RecordRow({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-1 px-3.5 py-2.5 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:gap-3">
+      <dt className="text-xs font-semibold text-(--text-muted) sm:pt-0.5">{term}</dt>
+      <dd className="min-w-0">{children}</dd>
+    </div>
+  );
+}
+
+function RecordText({ value }: { value: string }) {
+  const text = value.trim();
+  if (!text) return <span className="italic text-(--text-muted)">Nothing written</span>;
+  return <p className="whitespace-pre-line text-(--text-body)">{text}</p>;
 }
 
 function FinishGroup({

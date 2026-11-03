@@ -83,7 +83,7 @@ export function FitForSchool({ readOnly = false }: { readOnly?: boolean }) {
             <FieldContent>
               <Input
                 placeholder="Enter school name"
-                className="h-11 bg-background"
+                className="h-12 bg-background text-base"
                 value={field.value || ""}
                 onChange={field.onChange}
                 disabled={readOnly}
@@ -108,7 +108,7 @@ export function FitForSchool({ readOnly = false }: { readOnly?: boolean }) {
             <FieldContent>
               <Input
                 placeholder="Enter student ID"
-                className="h-11 bg-background"
+                className="h-12 bg-background text-base"
                 value={field.value || ""}
                 onChange={field.onChange}
                 disabled={readOnly}

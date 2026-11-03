@@ -100,7 +100,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldContent>
                   <Input
                     placeholder="Enter mountain or trail name"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -125,7 +125,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldContent>
                   <Input
                     placeholder="City, province, or region"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -150,7 +150,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldContent>
                   <Input
                     placeholder="e.g., Mountaineering Club, Hiking Group"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -175,7 +175,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldContent>
                   <Input
                     placeholder="e.g., Easy, Moderate, Hard, Expert"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -201,7 +201,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                   <Input
                     type="number"
                     placeholder="Enter elevation in meters"
-                    className="h-11 bg-background"
+                    className="h-12 bg-background text-base"
                     value={field.value || ""}
                     onChange={field.onChange}
                     disabled={readOnly}
@@ -385,7 +385,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 </FieldLabel>
                 <Input
                   placeholder="Full name"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}
@@ -405,7 +405,7 @@ export function FitForClimb({ readOnly = false }: { readOnly?: boolean }) {
                 <FieldLabel>Phone Number</FieldLabel>
                 <Input
                   placeholder="Contact number"
-                  className="h-11 bg-background"
+                  className="h-12 bg-background text-base"
                   value={field.value || ""}
                   onChange={field.onChange}
                   disabled={readOnly}

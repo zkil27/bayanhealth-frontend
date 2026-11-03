@@ -33,7 +33,11 @@
 
   --teal-900: #0a4a3e;
   --teal-800: #0f7a66;
-  --teal-700: #18a58c;   /* Brand Teal — primary CTA (Figma action/primary-default) */
+  /* AA-safe Brand Teal for fills that carry white text (CTAs). White on
+     --teal-700 is only 3.09:1; white on --teal-750 is 4.61:1. Added after the
+     clinical pilot (2026-11) flagged unreadable buttons. */
+  --teal-750: #13846f;
+  --teal-700: #18a58c;   /* Brand Teal — accents, icons, borders (Figma action/primary-default) */
   --teal-600: #1eba9e;
   --teal-500: #20a38b;   /* Calmed clinical teal */
   --teal-400: #3eb49e;   /* Calmed clinical sage-teal */
@@ -128,12 +132,15 @@
   --text-heading: var(--navy-700);
   --text-body: var(--ink-800);
   --text-muted: var(--ink-600);
-  --text-subtle: var(--ink-400);
+  /* Was --ink-400 (#98a5ad, 2.52:1 on white — failed AA even for large text).
+     #626e76 is 4.74:1 on the cream page and 5.24:1 on white. Hierarchy against
+     --text-muted now comes from size and weight, not from fading the text. */
+  --text-subtle: #626e76;
   --text-on-brand: var(--white);
   --text-on-accent: var(--white);
   --text-inverse: var(--white);
   --text-link: var(--navy-700);
-  --text-link-hover: var(--teal-700);
+  --text-link-hover: var(--teal-800);
 
   /* Borders / lines */
   --border-subtle: var(--ink-150);
@@ -142,16 +149,26 @@
   --border-brand: var(--navy-700);
   --border-focus: var(--teal-600);
 
-  /* Interactive — primary (teal pill, inset press shadow) */
-  --action-primary: var(--teal-700);
-  --action-primary-hover: var(--teal-600);
-  --action-primary-active: var(--teal-800);
+  /* Interactive — primary (teal pill, inset press shadow). Fill is --teal-750
+     so the white label clears 4.5:1; hover and press go darker, never lighter. */
+  --action-primary: var(--teal-750);
+  --action-primary-hover: var(--teal-800);
+  --action-primary-active: var(--teal-900);
   --action-primary-text: var(--white);
 
   /* Interactive — secondary (navy outline) */
   --action-secondary-border: var(--navy-700);
   --action-secondary-text: var(--navy-700);
   --action-secondary-hover-surface: var(--navy-100);
+
+  /* Disabled controls — a flat grey fill with a readable grey label. Replaces
+     the old 50% opacity, which dropped labels to ~2.3:1 so doctors could not
+     read what a held button said (pilot feedback 2026-11). The label is
+     5.37:1 on the fill; "disabled" is carried by the flat fill and the lost
+     brand colour, not by fading the text. */
+  --disabled-bg: #edf2f6;
+  --disabled-fg: #5a646b;
+  --disabled-border: #d1dde6;
 
   /* Focus ring */
   --focus-ring: var(--teal-600);
@@ -299,7 +316,8 @@
   --text-heading: #f8f4e3;
   --text-body: #e1e7ef;
   --text-muted: #9aabb8;
-  --text-subtle: #6f8290;
+  /* Was #6f8290 (3.89:1 on raised). #8193a1 is 4.88:1 on raised, 5.35:1 on card. */
+  --text-subtle: #8193a1;
   --text-on-brand: var(--white);
   --text-on-accent: #0b1117;
   --text-inverse: var(--ink-900);
@@ -313,10 +331,11 @@
   --border-brand: #18a58c;
   --border-focus: #18a58c;
 
-  /* Primary action — authentic BayanHealth Brand Teal, calm, authoritative, non-neon */
-  --action-primary: #18a58c;
-  --action-primary-hover: #16937c;
-  --action-primary-active: #127a67;
+  /* Primary action — the same AA-safe teal as light mode (white label 4.61:1;
+     the old #18a58c fill was 3.09:1). Hover and press go darker. */
+  --action-primary: #13846f;
+  --action-primary-hover: #0f7a66;
+  --action-primary-active: #106e5c;
   --action-primary-text: var(--white);
 
   /* Secondary */
@@ -326,6 +345,11 @@
 
   --focus-ring: #18a58c;
   --focus-ring-offset: var(--surface-page);
+
+  /* Disabled — label 6.43:1 on the fill. */
+  --disabled-bg: #1b2732;
+  --disabled-fg: #9aabb8;
+  --disabled-border: #2a3844;
 
   /* Status */
   --status-available-fg: #3eb49e;
@@ -392,6 +416,49 @@
   --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.6);
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* =========================================================
+   PAPER — printed clinical documents (Rx, med cert, referral…)
+   The sheet is always white paper, in both themes, because that is what the
+   patient and the pharmacy receive. The dark block above inverts the raw
+   ramps (--navy-700 → #97c0d8), which left sheet headings at ~1.9:1 on the
+   white paper. This scope pins the ramps the sheets read back to their light
+   values. Teal text on paper uses the AA-safe --teal-750 (4.61:1).
+   ========================================================= */
+.bh-paper {
+  --navy-900: #032a44;
+  --navy-800: #053a5b;
+  --navy-700: #074972;
+  --navy-600: #135d8b;
+  --navy-500: #2a75a3;
+  --navy-400: #5a98be;
+  --navy-300: #97c0d8;
+  --navy-200: #c7deea;
+  --navy-100: #e5f0f7;
+  --teal-900: #0a4a3e;
+  --teal-800: #0f7a66;
+  --teal-700: #13846f;
+  --teal-100: #e6faf5;
+  --ink-900: #1f1f1f;
+  --ink-800: #323232;
+  --ink-700: #454c52;
+  --ink-600: #5a646b;
+  --ink-500: #75828a;
+  --ink-400: #98a5ad;
+  --ink-300: #b9c6ce;
+  --ink-200: #d1dde6;
+  --ink-100: #edf2f6;
+  --white: #ffffff;
+  --text-heading: #074972;
+  --text-body: #323232;
+  --text-muted: #5a646b;
+  --text-subtle: #626e76;
+  --border-default: #d1dde6;
+  --border-subtle: #dfe8ee;
+  --danger-fg: #9e3838;
+  --danger-bg: #f7e4e4;
+  color-scheme: light;
 }
 
 

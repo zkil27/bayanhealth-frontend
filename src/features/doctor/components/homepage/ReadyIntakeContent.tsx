@@ -302,9 +302,9 @@ function StructuredHistory({
   const conditions = history?.knownConditions ?? [];
   return (
     <div className="flex flex-col gap-2">
-      <Field label="Known conditions">
+      <Field label="Past medical history / Comorbidities">
         {history?.noneReported ? (
-          "No known conditions reported"
+          "No past medical history reported"
         ) : conditions.length ? (
           conditions.map((condition) => CONDITION_LABELS[condition]).join(", ")
         ) : (

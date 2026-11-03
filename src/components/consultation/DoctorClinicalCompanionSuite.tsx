@@ -1,24 +1,29 @@
 "use client";
 
-import { ChevronsDown, ChevronsUp, ClipboardList, MessagesSquare } from "lucide-react";
+import { AlertCircle, ChevronsDown, ChevronsUp, ClipboardList, MessagesSquare, NotebookPen } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ChatUnreadBadge, useChatTabUnread } from "@/components/consultation/chatUnread";
 import { ConsultationChatPanel } from "@/features/consultation/components/session/ConsultationChatPanel";
 import { PatientIntakeReferenceTab } from "@/features/consultation/components/session/PatientIntakeReferenceTab";
+import { RoomNotesTab } from "@/features/consultation/components/session/RoomNotesTab";
 import { RoomSafetyStrip } from "@/features/consultation/components/session/RoomSafetyStrip";
+import type { ClinicalNotes } from "@/features/consultation/components/postConsultation/ClinicalNotesCard";
 
 /**
  * Doctor-facing companion for the active consultation room (dual-pane doctor
  * view) — the counterpart to `PatientCompanionSuite` on the patient side.
  *
- * Two tabs:
+ * Three tabs:
  * 1. Patient Intake: the real submitted intake (safety screen, vitals, complaint).
- * 2. Conversation: the encrypted in-consultation chat thread.
+ * 2. Notes: the doctor's own Subjective and Objective, written during the call
+ *    (pilot feedback 2026-11). Same record as the post-consult workspace; the
+ *    room owns the hook so End consultation can save them first.
+ * 3. Conversation: the encrypted in-consultation chat thread.
  *
- * {@link RoomSafetyStrip} sits above both tabs so allergies and red flags stay
- * in view on the Conversation tab too.
+ * {@link RoomSafetyStrip} sits above all three so allergies and red flags stay
+ * in view while the doctor types or chats.
  *
  * Below `lg` the suite is stacked under the video, so it can take over the
  * screen: `onToggleExpanded` flips the room between video-first and
@@ -30,11 +35,19 @@ export function DoctorClinicalCompanionSuite({
   sessionId,
   expanded = false,
   onToggleExpanded,
+  notes,
+  notesAvailable = false,
+  demo = false,
 }: {
   bookingId: string;
   sessionId?: string;
   expanded?: boolean;
   onToggleExpanded?: () => void;
+  /** The doctor's notes, owned by the room. Without it the Notes tab is not drawn. */
+  notes?: ClinicalNotes;
+  /** The consultation has started, so notes can be saved. */
+  notesAvailable?: boolean;
+  demo?: boolean;
 }) {
   const chatTabs = useChatTabUnread("intake");
   return (
@@ -59,6 +72,22 @@ export function DoctorClinicalCompanionSuite({
               <span className="sm:hidden">Intake</span>
               <span className="hidden sm:inline">Patient Intake</span>
             </TabsTrigger>
+            {notes ? (
+              <TabsTrigger
+                value="notes"
+                className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
+              >
+                <NotebookPen className="size-3.5" />
+                Notes
+                {/* Seen from any tab: a save that failed is never silent. */}
+                {notes.saveFailed && notes.dirty ? (
+                  <>
+                    <AlertCircle className="size-3.5 text-(--attention-fg)" aria-hidden />
+                    <span className="sr-only">(not saved)</span>
+                  </>
+                ) : null}
+              </TabsTrigger>
+            ) : null}
             <TabsTrigger
               value="chat"
               className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
@@ -94,6 +123,13 @@ export function DoctorClinicalCompanionSuite({
         <TabsContent value="intake" className="min-h-0 flex-1 flex flex-col overflow-y-auto overscroll-contain">
           <PatientIntakeReferenceTab bookingId={bookingId} />
         </TabsContent>
+
+        {/* Kept mounted so a half-typed note survives switching tabs. */}
+        {notes ? (
+          <TabsContent value="notes" keepMounted className="min-h-0 flex-1 flex flex-col overflow-y-auto overscroll-contain">
+            <RoomNotesTab notes={notes} available={notesAvailable} demo={demo} />
+          </TabsContent>
+        ) : null}
 
         {/* Kept mounted so the conversation stays connected and can count
             unread messages while the intake tab is open. */}

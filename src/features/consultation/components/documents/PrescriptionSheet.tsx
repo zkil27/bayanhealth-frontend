@@ -126,6 +126,19 @@ export function PrescriptionSheet({
             <span className="text-slate-600 font-medium">Rx ID:</span>
             <span className="font-mono font-medium text-slate-900">{rxId}</span>
           </div>
+
+          {/* A PH Rx pad carries the patient's address (pilot feedback 2026-11:
+              the preview did not match the paper pad doctors know). Intake does
+              not collect an address yet, so the line says so instead of being
+              left off or filled with a guess. */}
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] sm:grid-cols-[90px_minmax(0,1fr)] items-baseline sm:col-span-2">
+            <span className="text-slate-600 font-medium">Address:</span>
+            {patient?.address ? (
+              <span className="font-medium text-slate-900">{patient.address}</span>
+            ) : (
+              <span className="italic text-slate-600">Not on file</span>
+            )}
+          </div>
         </div>
 
         <div className="h-[1px] w-full bg-(--navy-700)/30 mt-3 mb-4" />

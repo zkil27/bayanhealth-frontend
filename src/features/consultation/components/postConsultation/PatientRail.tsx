@@ -7,16 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
+import { LabResultsSection } from "./LabResultsSection";
 import { PatientDetails } from "./PatientDetails";
 
 /** Sticky, scan-first patient context for the post-consult doctor workspace. */
 export const PatientRail = memo(function PatientRail({
   bookingId,
   intake,
+  consultationId,
+  token,
   collapsed = false,
   onToggleCollapse,
 }: {
   bookingId?: string;
+  /** With a token, the rail also lists this consultation's lab requests and uploads. */
+  consultationId?: string;
+  token?: string;
   /** Intake already loaded by the workspace, to avoid fetching it twice. */
   intake?: BookingIntakeForm | null;
   collapsed?: boolean;
@@ -95,6 +101,7 @@ export const PatientRail = memo(function PatientRail({
       <div className="p-3">
         <PatientDetails bookingId={bookingId} form={intake} />
       </div>
+      <LabResultsSection consultationId={consultationId} token={token} />
     </aside>
   );
 });

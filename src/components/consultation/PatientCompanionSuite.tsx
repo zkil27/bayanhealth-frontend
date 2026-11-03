@@ -220,7 +220,7 @@ function IntakeSummary({
   return (
     <div className="flex flex-col gap-4 text-sm">
       <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3">
-        <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
           Your reported concern
         </span>
         <p className="text-sm text-(--text-body)">
@@ -229,7 +229,7 @@ function IntakeSummary({
       </div>
 
       <div>
-        <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
           Allergies declared
         </span>
         <div className="flex items-center gap-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5">
@@ -239,7 +239,7 @@ function IntakeSummary({
       </div>
 
       <div>
-        <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
           Current medications
         </span>
         <p className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5 text-(--text-body)">
@@ -255,7 +255,7 @@ function IntakeSummary({
 
       {baseline || historyRows.length > 0 ? (
         <div>
-          <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+          <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
             Baseline details
           </span>
           <div className="grid grid-cols-2 gap-2.5 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3 text-xs">
@@ -278,7 +278,7 @@ function IntakeSummary({
       ) : null}
 
       <div>
-        <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
           Home vitals submitted
         </span>
         {hasVitals ? (
@@ -309,12 +309,12 @@ function MedicalHistorySummary({ history }: { history?: IntakeStructuredMedicalH
 
   return (
     <div>
-      <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
-        Known medical conditions
+      <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
+        Past medical history / Comorbidities
       </span>
       <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5">
         {history.noneReported ? (
-          <span className="text-(--text-body)">No known medical conditions reported</span>
+          <span className="text-(--text-body)">No past medical history reported</span>
         ) : conditionLabels.length > 0 || history.other ? (
           <div className="flex flex-wrap gap-1.5">
             {conditionLabels.map((label) => (
@@ -351,7 +351,7 @@ function SymptomReviewSummary({ review }: { review?: IntakeSymptomReview }) {
 
   return (
     <div>
-      <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+      <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
         Symptom details
       </span>
       <div className="space-y-2 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5">
@@ -362,7 +362,7 @@ function SymptomReviewSummary({ review }: { review?: IntakeSymptomReview }) {
         ) : null}
         {rows.map(({ key, label }) => (
           <div key={key}>
-            <span className="block text-[10px] font-bold text-(--text-subtle) uppercase">{label}</span>
+            <span className="block text-xs font-bold text-(--text-subtle) uppercase">{label}</span>
             <span className="text-xs leading-relaxed text-(--text-body)">{review[key]}</span>
           </div>
         ))}
@@ -376,7 +376,7 @@ function ReproductiveHealthSummary({ health }: { health?: IntakeReproductiveHeal
 
   return (
     <div>
-      <span className="mb-1 block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+      <span className="mb-1 block text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
         Reproductive health
       </span>
       <div className="flex flex-wrap gap-1.5 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-2.5">
@@ -412,7 +412,7 @@ function NextStepsPanel({ doctorName }: { doctorName?: string }) {
   return (
     <div className="flex flex-col gap-4 text-sm">
       <div className="rounded-2xl border border-(--status-available-fg)/30 bg-(--status-available-bg) p-3">
-        <span className="mb-2 inline-flex items-center rounded-full border border-(--border-subtle) bg-(--surface-card) px-2.5 py-0.5 text-[10px] font-bold text-(--status-available-fg)">
+        <span className="mb-2 inline-flex items-center rounded-full border border-(--border-subtle) bg-(--surface-card) px-2.5 py-0.5 text-xs font-bold text-(--status-available-fg)">
           Step 2 of 3 · Live consultation
         </span>
         <p className="text-(--text-heading)">
@@ -422,7 +422,7 @@ function NextStepsPanel({ doctorName }: { doctorName?: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="text-xs font-bold tracking-wider text-(--text-subtle) uppercase">
           What may become available after review
         </span>
         <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-3">

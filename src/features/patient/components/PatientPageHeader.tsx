@@ -29,7 +29,7 @@ export function PatientPageHeader({
     <header
       data-slot="patient-page-header"
       className={cn(
-        "w-full m-0 p-0 border-0 border-none bg-(--teal-700) shadow-none dark:bg-(--surface-nav) pt-[env(safe-area-inset-top,0px)]",
+        "w-full m-0 p-0 border-0 border-none bg-(--teal-750) shadow-none dark:bg-(--surface-nav) pt-[env(safe-area-inset-top,0px)]",
         className,
       )}
     >
@@ -41,7 +41,7 @@ export function PatientPageHeader({
               <Link
                 href={backHref}
                 aria-label="Go back"
-                className="flex size-9 shrink-0 items-center justify-center rounded-(--radius-md) border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-white"
+                className="flex size-12 shrink-0 items-center justify-center rounded-(--radius-md) border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-white"
               >
                 <ArrowLeft className="size-4.5" strokeWidth={2} />
               </Link>

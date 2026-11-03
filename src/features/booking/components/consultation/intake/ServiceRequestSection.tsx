@@ -9,6 +9,7 @@ import { Teleconsult } from "./services/Teleconsult";
 import { DynamicIntakeFormValues } from "@/features/booking/schemas/intakeSchema";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
+import { Check, X } from "lucide-react";
 import { SERVICES } from "@/features/booking/constants/bookingConstants";
 
 type ServiceType =
@@ -170,17 +171,13 @@ export function ReadOnlyServiceRequestSection({
             <div>
               <span className="text-muted-foreground">Vaccine Verification:</span>
               <span className="ml-2 font-medium">
-                {data.requiresVaccineVerification
-                  ? "✅ Required"
-                  : "❌ Not Required"}
+                <YesNo value={data.requiresVaccineVerification} yes="Required" no="Not required" />
               </span>
             </div>
             <div>
               <span className="text-muted-foreground">Medication Supply:</span>
               <span className="ml-2 font-medium">
-                {data.medicationSupplyConfirmed
-                  ? "✅ Confirmed"
-                  : "❌ Not Confirmed"}
+                <YesNo value={data.medicationSupplyConfirmed} yes="Confirmed" no="Not confirmed" />
               </span>
             </div>
           </div>
@@ -196,13 +193,13 @@ export function ReadOnlyServiceRequestSection({
             <div>
               <span className="text-muted-foreground">Unable to Work:</span>
               <span className="ml-2 font-medium">
-                {data.unableToWork ? "✅ Yes" : "❌ No"}
+                <YesNo value={data.unableToWork} />
               </span>
             </div>
             <div>
               <span className="text-muted-foreground">Food Handler:</span>
               <span className="ml-2 font-medium">
-                {data.isFoodHandler ? "✅ Yes" : "❌ No"}
+                <YesNo value={data.isFoodHandler} />
               </span>
             </div>
           </div>
@@ -216,7 +213,7 @@ export function ReadOnlyServiceRequestSection({
             <div>
               <span className="text-muted-foreground">Altitude History:</span>
               <span className="ml-2 font-medium">
-                {data.hasAltitudeHistory ? "✅ Has History" : "❌ No History"}
+                <YesNo value={data.hasAltitudeHistory} yes="Has history" no="No history" />
               </span>
             </div>
             {data.peakElevation && (
@@ -237,5 +234,32 @@ export function ReadOnlyServiceRequestSection({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * A yes/no answer as an icon plus a word. Replaces the native ✅/❌ emoji,
+ * which render differently on every phone and are banned in this UI
+ * (AGENTS.md); the word carries the meaning, so colour is never the only signal.
+ */
+function YesNo({
+  value,
+  yes = "Yes",
+  no = "No",
+}: {
+  value: boolean | undefined;
+  yes?: string;
+  no?: string;
+}) {
+  return value ? (
+    <span className="inline-flex items-center gap-1 text-(--safe-fg)">
+      <Check className="size-4 shrink-0" aria-hidden />
+      {yes}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-(--text-muted)">
+      <X className="size-4 shrink-0" aria-hidden />
+      {no}
+    </span>
   );
 }

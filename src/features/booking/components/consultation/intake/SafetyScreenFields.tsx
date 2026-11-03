@@ -84,7 +84,7 @@ export function SafetyScreenFields({ readOnly = false }: { readOnly?: boolean })
                 min={0}
                 max={60}
                 placeholder="Enter 0 if you have no fever"
-                className="h-11 bg-background"
+                className="h-12 bg-background text-base"
                 value={
                   field.value === undefined || field.value === null
                     ? ""
@@ -180,7 +180,7 @@ function AnswerButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "min-h-11 min-w-20 rounded-md border px-4 text-sm font-medium transition-colors",
+        "min-h-12 min-w-20 rounded-md border px-4 text-base font-medium transition-colors",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "disabled:cursor-not-allowed disabled:opacity-60",
         selected && tone === "alert"

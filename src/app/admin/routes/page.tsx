@@ -372,7 +372,7 @@ export default function AdminRoutesPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/consultation/room/demo"
-              className={cn(buttonVariants(), "bg-(--teal-700) font-semibold text-white shadow-xs hover:bg-(--teal-700)/90")}
+              className={cn(buttonVariants(), "bg-(--action-primary) font-semibold text-white shadow-xs hover:bg-(--action-primary-hover)")}
             >
               <Video className="mr-1.5 size-4" />
               Live Room Demo
@@ -464,7 +464,7 @@ export default function AdminRoutesPage() {
               <div className="mt-5 flex items-center gap-2 pt-3 border-t border-(--border-subtle)">
                 <Link
                   href="/consultation/room/demo"
-                  className={cn(buttonVariants({ size: "sm" }), "flex-1 rounded-xl bg-(--teal-700) font-semibold text-white hover:bg-(--teal-700)/90")}
+                  className={cn(buttonVariants({ size: "sm" }), "flex-1 rounded-xl bg-(--action-primary) font-semibold text-white hover:bg-(--action-primary-hover)")}
                 >
                   <Video className="mr-1.5 size-4" />
                   Enter Consultation Room

@@ -189,7 +189,7 @@ function MedicalCertificateView({ payload }: { payload: CdsMedicalCertificatePay
         <Pair label="Valid through" value={formatDate(payload.validThrough)} />
       </dl>
       {payload.restrictions?.trim() ? (
-        <Field label="Restrictions">
+        <Field label="Recommendations / Remarks">
           <Prose>{payload.restrictions}</Prose>
         </Field>
       ) : null}

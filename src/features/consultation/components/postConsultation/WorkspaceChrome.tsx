@@ -55,11 +55,14 @@ export const WorkspaceStepper = memo(function WorkspaceStepper({
               data-step={step.id}
               data-state={unreachable ? "unreachable" : done ? "done" : isCurrent ? "current" : "pending"}
               aria-current={isCurrent ? "step" : undefined}
+              // Plain progress text, not a pill. Pilot doctors read the filled
+              // pill on the current step as a tab and clicked it; on desktop
+              // this is a status line, so nothing here looks pressable.
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-2 py-1 text-sm font-semibold",
-                done && "text-(--status-available-fg)",
-                isCurrent && "bg-(--surface-accent-soft) text-(--text-heading)",
-                !done && !isCurrent && "text-(--text-subtle)",
+                "flex cursor-default items-center gap-1.5 px-0.5 py-1 text-sm",
+                done && "font-medium text-(--status-available-fg)",
+                isCurrent && "font-bold text-(--text-heading)",
+                !done && !isCurrent && "font-medium text-(--text-muted)",
                 unreachable && "text-(--danger-fg)",
               )}
             >

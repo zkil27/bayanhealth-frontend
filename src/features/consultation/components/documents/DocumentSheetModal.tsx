@@ -192,7 +192,7 @@ export function DocumentSheetModal({
                 its own width, so a phone gets a readable column while print keeps the page. */}
             <div
               id="printable-document-sheet"
-              className="@container w-full bg-white text-slate-900 rounded-xs shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden"
+              className="bh-paper @container w-full bg-white text-slate-900 rounded-xs shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden"
             >
               <ClinicalDocumentSheet
                 artifact={artifact}

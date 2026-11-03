@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  * two. The booking steps underneath are unchanged — see `STOP_FOR_STEP`.
  */
 const STEPS = [
-  { id: "intake", label: "Form", system: false },
+  { id: "intake", label: "Your details", system: false },
   { id: "payment", label: "Payment", system: false },
   { id: "doctor", label: "Doctor", system: true },
   { id: "booked", label: "Consult", system: false },

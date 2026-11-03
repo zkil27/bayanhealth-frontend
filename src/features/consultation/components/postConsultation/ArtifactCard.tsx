@@ -96,6 +96,9 @@ export interface ArtifactCardProps {
   specimen?: DoctorSignatureSpecimen | undefined;
   /** Their profile name, used to seed the signer field when there is no specimen. */
   defaultSignerName?: string;
+  /** PRC license and specialty from the doctor profile, so the pre-sign preview shows the pad as it will print. */
+  doctorLicenseNumber?: string;
+  doctorSpecialty?: string;
   onAmend: (payload: CdsProtectedArtifactPayload) => Promise<void>;
   onFinalize: (signature: ArtifactSignatureInput) => Promise<void>;
   onRelease: () => void;
@@ -487,6 +490,8 @@ export function ArtifactCard(props: ArtifactCardProps) {
         artifact={artifact}
         intake={props.intake}
         doctorName={props.defaultSignerName}
+        doctorLicenseNumber={props.doctorLicenseNumber}
+        doctorSpecialty={props.doctorSpecialty}
       />
 
       {props.canDiscard && props.onDiscard ? (

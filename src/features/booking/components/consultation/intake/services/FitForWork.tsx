@@ -86,7 +86,7 @@ export function FitForWork({ readOnly = false }: { readOnly?: boolean }) {
             </FieldLabel>
             <Input
               placeholder="Enter company name"
-              className="h-11 bg-background"
+              className="h-12 bg-background text-base"
               value={field.value || ""}
               onChange={field.onChange}
               disabled={readOnly}
@@ -109,7 +109,7 @@ export function FitForWork({ readOnly = false }: { readOnly?: boolean }) {
             </FieldLabel>
             <Input
               placeholder="Enter your position"
-              className="h-11 bg-background"
+              className="h-12 bg-background text-base"
               value={field.value || ""}
               onChange={field.onChange}
               disabled={readOnly}
@@ -133,7 +133,7 @@ export function FitForWork({ readOnly = false }: { readOnly?: boolean }) {
             </FieldLabel>
             <Input
               placeholder="Company phone or email"
-              className="h-11 bg-background"
+              className="h-12 bg-background text-base"
               value={field.value || ""}
               onChange={field.onChange}
               disabled={readOnly}

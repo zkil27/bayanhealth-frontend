@@ -225,6 +225,8 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
   generating,
   specimen,
   defaultSignerName,
+  doctorLicenseNumber,
+  doctorSpecialty,
   draftingOpen,
   aiEligibleTypes,
   aiUnavailableReason,
@@ -257,6 +259,8 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
   generating: ReadonlySet<CdsProtectedOutputType>;
   specimen?: DoctorSignatureSpecimen | undefined;
   defaultSignerName?: string;
+  doctorLicenseNumber?: string;
+  doctorSpecialty?: string;
   /** No lock is holding drafting. */
   draftingOpen: boolean;
   /** Types the confirmed Assessment allows the AI to draft. */
@@ -583,6 +587,8 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
               regenerating={generating.has(selected)}
               specimen={specimen}
               defaultSignerName={defaultSignerName}
+              doctorLicenseNumber={doctorLicenseNumber}
+              doctorSpecialty={doctorSpecialty}
               canRegenerate={draftingOpen && aiEligibleTypes.has(selected)}
               onAmend={(payload) => onAmend(selectedEntry.artifact!, payload)}
               onFinalize={(signature) => handleFinalize(selectedEntry.artifact!, signature)}

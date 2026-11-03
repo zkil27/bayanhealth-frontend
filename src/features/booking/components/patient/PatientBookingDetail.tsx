@@ -740,7 +740,7 @@ function BookingError({
     >
       <Alert variant="destructive" className="max-w-md">
         <AlertCircleIcon className="h-4 w-4" />
-        <AlertTitle>Couldnt load booking</AlertTitle>
+        <AlertTitle>Couldn&rsquo;t load your booking</AlertTitle>
         <AlertDescription>{errorMessage}</AlertDescription>
       </Alert>
       <Button

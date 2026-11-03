@@ -42,6 +42,7 @@ import { ConsultationVideo } from "@/features/media/components/ConsultationVideo
 import { PatientCompanionSuite } from "@/components/consultation/PatientCompanionSuite";
 import { DoctorClinicalCompanionSuite } from "@/components/consultation/DoctorClinicalCompanionSuite";
 import { ConsultationRoomSkeleton } from "./ConsultationRoomSkeleton";
+import { useClinicalNotes } from "@/features/consultation/components/postConsultation/ClinicalNotesCard";
 import { formatDoctorName } from "@/lib/utils";
 
 import {
@@ -137,6 +138,35 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
 
   const [dismissedCompletionRedirect, setDismissedCompletionRedirect] = useState(false);
 
+  /*
+   * The doctor's own S and O, written during the call (pilot feedback 2026-11).
+   * The hook lives here, not in the Notes tab, so End consultation can save
+   * pending text before the call closes. Called before the early returns
+   * below; it reads nothing until this viewer is the assigned doctor and the
+   * consultation exists, because the endpoint is assigned-physician only.
+   */
+  const notesConsultationId = isDemo
+    ? ""
+    : (stateQuery.data?.session?.consultationId ?? bookingQuery.data?.consultationId ?? "");
+  const isDoctorViewer = !isDemo && !!userId && stateQuery.data?.booking?.doctorId === userId;
+  const notesIntakeQuery = useQuery({
+    queryKey: ["booking-intake", bookingId, idToken],
+    queryFn: () => fetchBookingIntake(idToken ?? "", bookingId),
+    enabled: !!idToken && isDoctorViewer,
+    staleTime: 1000 * 30,
+    retry: false,
+    throwOnError: false,
+  });
+  const notes = useClinicalNotes({
+    consultationId: notesConsultationId,
+    token: isDoctorViewer && notesConsultationId ? (idToken ?? "") : "",
+    intake: notesIntakeQuery.data,
+  });
+  const notesAvailable = isDoctorViewer && !!notesConsultationId;
+  /** Set when End consultation tried to save the notes first and could not. */
+  const [notesBlockedEnd, setNotesBlockedEnd] = useState(false);
+  const [savingBeforeEnd, setSavingBeforeEnd] = useState(false);
+
   // Synchronize active consultation session into client storage
   useEffect(() => {
     if (isDemo) return;
@@ -190,6 +220,26 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       toast.error(msg);
     },
   });
+
+  /**
+   * Save the doctor's notes, then end. A failed save does not end the call:
+   * the confirmation stays open and says so, and the doctor chooses to retry
+   * or end anyway. Ending is never blocked, only made a deliberate choice.
+   */
+  const endAfterSavingNotes = async () => {
+    if (notesAvailable && notes.dirty) {
+      setSavingBeforeEnd(true);
+      const ok = await notes.save();
+      setSavingBeforeEnd(false);
+      if (!ok) {
+        setNotesBlockedEnd(true);
+        return;
+      }
+    }
+    setNotesBlockedEnd(false);
+    setConfirmEndOpen(false);
+    handleComplete();
+  };
 
   const handleComplete = () => {
     if (isDemo) {
@@ -327,6 +377,9 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
               sessionId={session?.sessionId}
               expanded={isChatFocused}
               onToggleExpanded={() => setIsChatFocused((prev) => !prev)}
+              notes={notes}
+              notesAvailable={notesAvailable}
+              demo={isDemo}
             />
           ) : (
             <PatientCompanionSuite
@@ -340,25 +393,63 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       </main>
 
       {isAssignedDoctor ? (
-        <AlertDialog open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
+        <AlertDialog
+          open={confirmEndOpen}
+          onOpenChange={(open) => {
+            setConfirmEndOpen(open);
+            if (!open) setNotesBlockedEnd(false);
+          }}
+        >
           <AlertDialogContent data-slot="consultation-room-end-confirm">
             <AlertDialogHeader>
               <AlertDialogTitle>End this consultation?</AlertDialogTitle>
               <AlertDialogDescription>
                 The call ends for you and your patient and the booking is marked complete.
                 This can&apos;t be undone. Next, you&apos;ll write the assessment.
+                {notesAvailable && !notesBlockedEnd ? " Your notes are saved first and carry over." : null}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {notesBlockedEnd ? (
+              <p
+                role="alert"
+                data-slot="consultation-room-end-notes-unsaved"
+                className="rounded-xl border border-(--attention-border)/50 bg-(--attention-bg) px-3 py-2.5 text-sm font-medium text-(--attention-fg)"
+              >
+                Your notes didn&apos;t save. If you end now, the unsaved text is lost.
+              </p>
+            ) : null}
             <AlertDialogFooter>
               <AlertDialogCancel className="h-12 text-sm sm:h-8">Keep consulting</AlertDialogCancel>
+              {notesBlockedEnd ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 text-sm sm:h-8"
+                  disabled={savingBeforeEnd}
+                  onClick={() => void endAfterSavingNotes()}
+                >
+                  {savingBeforeEnd ? <Spinner className="size-4" /> : null}
+                  Try saving again
+                </Button>
+              ) : null}
               <AlertDialogAction
                 className="h-12 bg-(--danger-fg) text-sm font-semibold text-white hover:bg-(--danger-fg)/90 sm:h-8"
-                onClick={() => {
-                  setConfirmEndOpen(false);
-                  handleComplete();
+                disabled={savingBeforeEnd}
+                onClick={(event) => {
+                  if (notesBlockedEnd) {
+                    // The doctor has seen the warning and chose to end anyway.
+                    setNotesBlockedEnd(false);
+                    setConfirmEndOpen(false);
+                    handleComplete();
+                    return;
+                  }
+                  // Keep the dialog open while the notes save; it closes on success.
+                  event.preventDefault();
+                  void endAfterSavingNotes();
                 }}
               >
-                End consultation
+                {savingBeforeEnd ? <Spinner className="size-4" /> : null}
+                {notesBlockedEnd ? "End anyway" : "End consultation"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -704,7 +795,7 @@ function DemoVideoStage({
         className="flex h-full w-full items-center justify-between gap-2.5 bg-slate-950 px-3.5 py-1.5 text-white"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-700) text-xs font-black text-white">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-(--teal-750) text-xs font-black text-white">
             MS
           </div>
           <div className="min-w-0">

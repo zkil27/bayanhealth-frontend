@@ -114,7 +114,7 @@ export function SendToErControl({
               data-slot="send-to-er-confirm"
               shape="pill"
               disabled={pending}
-              className="bg-(--danger-fg) px-5 font-semibold text-white shadow-xs hover:bg-(--danger-fg)/90 active:bg-(--danger-fg)/95 disabled:opacity-50"
+              className="bg-(--danger-fg) px-5 font-semibold text-white shadow-xs hover:bg-(--danger-fg)/90 active:bg-(--danger-fg)/95"
               onClick={() => void send()}
             >
               {pending ? (

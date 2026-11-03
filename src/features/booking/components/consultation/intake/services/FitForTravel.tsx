@@ -61,7 +61,7 @@ export function FitForTravel({ readOnly = false }: { readOnly?: boolean }) {
             <FieldContent>
               <Input
                 placeholder="Enter country / place"
-                className="h-11 bg-background"
+                className="h-12 bg-background text-base"
                 value={field.value || ""}
                 onChange={field.onChange}
                 disabled={readOnly}
@@ -117,7 +117,7 @@ export function FitForTravel({ readOnly = false }: { readOnly?: boolean }) {
                 type="number"
                 min="1"
                 placeholder="Number of days"
-                className="h-11 bg-background"
+                className="h-12 bg-background text-base"
                 value={field.value || ""}
                 onChange={(e) => field.onChange(parseInt(e.target.value))}
                 disabled={readOnly}

@@ -285,7 +285,7 @@ function MedicalHistoryCard({ history }: { history?: IntakeStructuredMedicalHist
     <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 flex flex-col justify-between" data-slot="room-intake-medical-history">
       <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
         <ListChecks className="size-3 text-(--surface-nav)" />
-        <span>Conditions</span>
+        <span>Past medical history</span>
       </div>
       <div className="flex items-center gap-1.5 text-xs sm:text-[13px]">
         {history.noneReported ? (

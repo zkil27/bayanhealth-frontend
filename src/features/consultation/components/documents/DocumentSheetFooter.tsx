@@ -26,8 +26,10 @@ export function DocumentSheetFooter({
 }: DocumentSheetFooterProps) {
   const doctorName = physician?.name || "Attending Physician";
   const doctorTitle = physician?.title || "Licensed Physician";
-  const prcNumber = physician?.licenseNumber || "—";
-  const ptrNumber = physician?.ptrNumber || "—";
+  // "Not on file" rather than a bare dash, so a missing number reads as missing
+  // data, not as a field the doctor forgot (pilot feedback 2026-11).
+  const prcNumber = physician?.licenseNumber || "Not on file";
+  const ptrNumber = physician?.ptrNumber || "Not on file";
   const signedAt = physician?.signedAt || (physician?.signatureStrokes ? "Digital signature on file" : "—");
 
   const qrValue = verification?.qrValue || "https://bayanhealth.ph";
