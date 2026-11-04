@@ -3,12 +3,15 @@
 import { format, isValid, parse } from "date-fns";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { useId, useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { NONE_OPTION } from "@/features/booking/constants/bookingConstants";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
+import { useUserId } from "@/stores/useAuthStore";
 
 import { BlockLabel, COMPACT_INPUT, ChipButton, ChoiceCard, FieldError, FieldHint, Reveal } from "./IntakeChoice";
+import { useIntakeUiState } from "./intakeUiState";
 
 /**
  * The booking-mode "About you" fields: the original questions, labels and
@@ -36,18 +39,43 @@ const ALLERGY_PRESETS = ["Penicillin", "Sulfa Drugs", "Aspirin", "Latex", "Peanu
   (allergen) => [allergen, allergen] as const,
 );
 
-const DIET_PRESETS = [
-  ["vegetarian", "Vegetarian"],
-  ["vegan", "Vegan"],
-  ["gluten-free", "Gluten Free"],
-  ["dairy-free", "Dairy Free"],
-  ["keto", "Keto"],
-  ["halal", "Halal"],
-  ["kosher", "Kosher"],
-  ["low-sodium", "Low Sodium"],
-  ["diabetic", "Diabetic"],
-  ["low-fat", "Low Fat"],
-] as const;
+/** Intake UI-store key for "Save to my profile"; read on submit by the intake. */
+export const SAVE_ALLERGIES_KEY = "about.saveAllergies";
+
+/**
+ * Offers to keep this intake's allergy answer on the profile for the next
+ * consultation (pilot feedback). Ticked by default; only shown once the
+ * question is answered, since a blank answer is never written back.
+ */
+function SaveAllergiesToProfile() {
+  const { control } = useFormContext();
+  const allergens = useWatch({ control, name: `${P}.allergens` }) as string[] | undefined;
+  const forWhom = useWatch({ control, name: `${P}.forWhom` }) as string | undefined;
+  const { profile } = useProfile(useUserId());
+  const [checked, setChecked] = useIntakeUiState(SAVE_ALLERGIES_KEY, true);
+  const id = useId();
+
+  if (!allergens?.length || (forWhom ?? "self") !== "self") return null;
+  const hasName = Boolean(profile?.name?.trim());
+
+  return (
+    <div className="-mt-3">
+      <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center gap-3 text-base text-(--text-body)">
+        <input
+          id={id}
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => setChecked(event.target.checked)}
+          className="size-5 shrink-0 cursor-pointer rounded accent-(--surface-nav)"
+        />
+        Save to my profile for next time
+      </label>
+      {checked && !hasName ? (
+        <FieldHint className="mt-0">Add your full name on your Profile page first. Until then, this stays with this consultation only.</FieldHint>
+      ) : null}
+    </div>
+  );
+}
 
 export function AboutYouFields() {
   const { control } = useFormContext();
@@ -142,22 +170,14 @@ export function AboutYouFields() {
         )}
       />
 
-      <Controller
-        name={`${P}.diet`}
-        control={control}
-        render={({ field }) => (
-          <InlineMultiSelect
-            label="Dietary Preferences & Restrictions"
-            value={Array.isArray(field.value) ? field.value : []}
-            onChange={field.onChange}
-            presets={DIET_PRESETS}
-            noneLabel="None — I have no dietary restrictions"
-            addLabel="Add a preference"
-            addPlaceholder="Type a preference"
-            collapsible
-          />
-        )}
-      />
+      <SaveAllergiesToProfile />
+
+      {/*
+       * The dietary question is gone from the intake (pilot feedback: remove
+       * unnecessary dietary questions). A diet already saved on the profile is
+       * still pre-filled into `personalDetails.diet` and reaches the doctor
+       * unchanged; patients edit it on their profile page.
+       */}
     </section>
   );
 }

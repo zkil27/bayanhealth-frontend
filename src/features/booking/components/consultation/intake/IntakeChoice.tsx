@@ -314,6 +314,71 @@ export function Reveal({
   );
 }
 
+/**
+ * An optional question block with a Skip control (pilot feedback: "add a Skip
+ * button for optional questions"). Skip clears the block's answer through
+ * `onSkip` and folds it to one line, so a patient who has nothing to add
+ * scrolls past less. "Answer" reopens it. Never used on required questions or
+ * on the safety check.
+ */
+export function OptionalBlock({
+  id,
+  title,
+  hint,
+  skipped,
+  onSkip,
+  onResume,
+  className,
+  children,
+}: {
+  id: string;
+  title: ReactNode;
+  hint?: ReactNode;
+  skipped: boolean;
+  onSkip: () => void;
+  onResume: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const headingId = `${id}-heading`;
+  if (skipped) {
+    return (
+      <section aria-labelledby={headingId} className={cn("flex items-center justify-between gap-3", className)}>
+        <p className="min-w-0 text-base text-(--text-muted)">
+          <span id={headingId} className="font-semibold text-(--text-body)">{title}</span>
+          <span> · Skipped</span>
+        </p>
+        <button
+          type="button"
+          onClick={onResume}
+          className={cn("min-h-12 shrink-0 rounded-lg px-3 text-base font-semibold text-(--text-link) hover:bg-(--surface-canvas) hover:text-(--text-link-hover)", FOCUS)}
+        >
+          Answer
+        </button>
+      </section>
+    );
+  }
+  return (
+    <section aria-labelledby={headingId} className={cn("space-y-3", className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <BlockLabel id={headingId} optional>{title}</BlockLabel>
+          {hint ? <FieldHint>{hint}</FieldHint> : null}
+        </div>
+        <button
+          type="button"
+          onClick={onSkip}
+          aria-describedby={headingId}
+          className={cn("-mt-2.5 min-h-12 shrink-0 rounded-lg px-3 text-base font-semibold text-(--text-muted) hover:bg-(--surface-canvas) hover:text-(--text-body)", FOCUS)}
+        >
+          Skip
+        </button>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 /** Every intake input: 48px tall and 16px text on every breakpoint, not just phones. */
 export const COMPACT_INPUT =
   "w-full min-h-12 rounded-xl border border-(--border-default) bg-(--surface-raised) px-3.5 py-2.5 text-base text-(--text-body) outline-none placeholder:text-(--text-subtle) focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-(--surface-nav-accent) aria-invalid:border-(--danger-border)";

@@ -13,6 +13,185 @@ V4 opens with the response to the **clinical pilot feedback review** (deck "Clin
 
 ## Log Entries
 
+### [2026-11-04] Patient Home: Last Cards No Longer Hidden Behind the Bottom Nav
+
+- **Target route**: `/patient` (mobile).
+- **Files**: `src/app/patient/page.tsx`, `features/patient/components/homepage/PatientHome.tsx`.
+- **Problem**: the "Need a guide?" card and the bottom of the page sat under the floating `NavBar` and could not be scrolled into view.
+- **Cause**: the page `<section>` had `min-h-0` and `PatientHome` had `h-full min-h-0`, which sized both to the viewport. The content overflowed them, so `PatientShell`'s `<main>` scroll height ended at the last card and its `pb-[calc(6rem+safe-area)]` reserve never counted.
+- **Fix**: removed `min-h-0` from the section, and replaced `h-full min-h-0` with `flex-1` on `PatientHome`. Both now grow with their content, and `<main>` scrolls past the nav.
+- **Follow-up (same day)**: the fix above exposed three stacked bottom reserves, about 13rem on mobile (`<main>` `pb-6rem`, the `patientPageClass` column `pb-6rem`, and `PatientHome` `pb-4`). Kept only `<main>`'s reserve, since the shell owns nav clearance. Removed `PatientHome`'s outer `pb-4` and set the content column to `pb-4 sm:pb-4`. The gap above the nav is now about 36px. `lg` padding is unchanged.
+- **Not changed**: `PatientShell` padding, `NavBar` size and position. No logic, API, or contract change.
+
+### [2026-11-03] MVP Frontend Fixes From the Dr. Nhor / Dr. Myles Review
+
+Ten entries in one block, in priority order (clinical safety and data persistence first). Each part tagged **Logic change** changes behaviour, not only looks. It was approved for this fork on 2026-11-03 and needs a reviewer in the main repo. No API, contract, Zod schema, or payload shape changed anywhere.
+
+#### 1. Intake safety check is page 1 and "Yes" is a hard stop (**Logic change**)
+
+- **Target route**: `/patient/booking/getBooking/[bookingId]` (teleconsult intake).
+- **Files**:
+  - `intake/intakeGates.ts` (new, pure rules plus tests);
+  - `intake/SafetyCheckStep.tsx` (new);
+  - `emergency/EmergencyCareCard.tsx` (new, shared);
+  - `intake/ConcernSafetyStep.tsx` (gate removed);
+  - `intake/AuthenticatedIntakeForm.tsx`.
+- **What changed**:
+  - The teleconsult pages are now Safety Check, About You, Medical History, Your Concern, Review & Consent. Other services keep their four pages and have no safety page.
+  - "Yes" shows the emergency card and removes the action bar. The card has Call 911, Find nearest ER (opens a maps search) and "I selected this by mistake", which resets the answer.
+  - There is no override. Pages after the safety check are locked unless the answer is "No", both in the side rail and in `navigateTo`.
+  - On resume, a missing or "Yes" answer reopens the safety page. The old "Yes plus a chip lets you continue" path is gone.
+- **Saving**: the safety answer has no server save of its own. "No" writes `safetyScreen.chestPain/dyspnea = false` into `details`, which travels with About You's save. "Yes" writes nothing, so the "Which applies?" chips were removed.
+- **Page indices**: replaced by step keys (`IntakeStepKey`), including the ledger's `editStep`. This removes the hard-coded `2`/`3` indices.
+- **Device**: patient, mobile first. 56px answers and buttons.
+- **Tokens**: `--red-600`/`--red-700` with white text for the emergency fills. The dark theme's `--danger-border` (red-400) failed contrast with white.
+
+#### 2. Patient side of the doctor's "Send to ER"
+
+- **Files**: `PatientBookingDetail.tsx`, `ConsultationRoom.tsx`.
+- **What changed**: `booking.emergencyAdvisedAt` now renders `EmergencyCareCard` for the patient, with `emergencyNote` shown as "From your doctor".
+  - On the booking page it sits at the top. That page already polls every 30s.
+  - In the room it sits above the stage. The room polls every 4s.
+  - It cannot be dismissed. `SendToErControl` already promised this alert, but nothing rendered it.
+- **Needs IT confirmation**: that `GET /v1/bookings/{id}` returns `emergencyAdvisedAt` / `emergencyNote` to the patient. The fields are typed.
+
+#### 3. Home vitals show "Too low", "Too high" or "Invalid" (**Logic change**, for the gate only)
+
+- **Files**:
+  - `booking/lib/vitalStatus.ts` (new, plus tests);
+  - `ConcernSafetyStep.tsx` (inputs);
+  - `ReviewConsentStep.tsx` (ledger);
+  - `PatientIntakeReferenceTab.tsx`, `ReadyIntakeContent.tsx`, `TriageDetailsModal.tsx`, `SoapSummaryCards.tsx` (doctor read-backs).
+- **Patient inputs**:
+  - Range text ("40–300 mmHg") is replaced by "Too low. Check the reading and enter it again." and similar messages.
+  - BP with only one number, or with the top number not higher, is "Invalid".
+  - The concern page holds Continue on an unbelievable reading instead of sending it.
+- **Doctor read-backs**:
+  - A reading outside the contract bounds shows the status word instead of the number.
+  - `PatientIntakeReferenceTab` showed a typed `0` as "—". It now shows "Too low".
+  - `SoapSummaryCards` keeps its tighter clinical bounds and number display. Its sanity flag now reads "Too low", "Too high" or "Invalid" instead of "Unverified".
+- **Unchanged**: the bounds are the same as `vitalsSchema`. Clinical interpretation of believable values (for example SpO₂ 88) stays with the doctor, and nothing on the patient side warns about it.
+
+#### 4. Intake saves automatically, and Back keeps answers (**Logic change**)
+
+- **Files**:
+  - `src/lib/intakeDraft.ts` (new, plus tests);
+  - `intake/intakeUiState.tsx` (new);
+  - `AuthenticatedIntakeForm.tsx`;
+  - `src/hooks/use-sign-out.ts`;
+  - `PersonDataSection.tsx`;
+  - `PatientBookingDetail.tsx`.
+- **Device draft**:
+  - What it stores: form values, screen-only selections, the safety answer, and the current and furthest page.
+  - Where and when: written to `sessionStorage` 500ms after the last change, on `pagehide`, and on unmount. The key is `bh:intake-draft:v1:{userId}:{bookingId}`.
+  - Restore: only when it was written against the server's current intake revision. Otherwise it is discarded.
+  - Clearing: on submit and on sign-out.
+  - Header status: "Saved" once the server has the answers, "Saved on this device" while only the tab does.
+- **Back**: goes back at once and saves the page in the background through the existing `saveStep`. A failed save is swallowed, because the draft holds the answers. Continue waits for that save so two saves never claim the same revision.
+- **Bug fixed (`PersonDataSection.populateSelfData`)**: About You remounts on every page change. With a profile that has no name, it re-seeded from the profile each time and wiped a typed date of birth or weight. It now fills only blank fields, plus a sex at birth still at its untouched default.
+- **Bug fixed (pain and history choices)**: these lived in component `useState`, so they showed blank after Back and the next tap overwrote the saved string. They now live in `IntakeUiStateProvider` and are kept in the draft.
+- **Booking header back arrow**: uses `router.back()` when the previous entry is in-app, and falls back to `/patient/health`. It is labelled "Back".
+
+#### 5. Shorter intake, Skip, "Other", and Related Symptoms as a dropdown
+
+- **Files**:
+  - `PainAssessmentStep.tsx` (rewritten);
+  - `IntakeChoice.tsx` (new `OptionalBlock`);
+  - `SymptomSelect.tsx` (new);
+  - `MedicalHistoryStep.tsx`;
+  - `AboutYouFields.tsx`.
+- **Pain questions**: now an optional section at the end of the Concern page ("Are you in pain right now?" No/Yes) instead of a page of their own. Each detail block has **Skip**. Skip clears that block's fields and folds the block to "… · Skipped" with an "Answer" link to reopen it.
+- **"Other" with free text**: added to "When did it start?", "When does it usually flare up?" and "How often does it happen?" (capped at 120 characters).
+  - The text is composed into the same `symptomReview.onset` / `pattern` strings.
+  - `composePattern` / `composeOnset` are exported and tested. The output for chip-only answers is byte-identical to before.
+- **Related symptoms**: a searchable, grouped dropdown (a bottom sheet on phones, a popover from `md` up). Selected items are removable 48px chips. It writes the same `complaintTags` enum values.
+- **Medical history**: the paired title-and-description cards became one compact No / Yes per question, with shorter questions.
+- **About You**: the dietary question was removed from the intake. A diet already saved on the profile is still pre-filled and sent.
+
+#### 6. Allergies saved for the next consultation (**Logic change**)
+
+- **Files**: `booking/lib/profileWriteBack.ts` (new, plus tests), `AboutYouFields.tsx`, `AuthenticatedIntakeForm.tsx`.
+- **What changed**: a "Save to my profile for next time" checkbox, ticked by default, under Allergies.
+  - On submit, a changed, non-blank answer for the patient themselves is written through the existing `useProfile().updateProfile`. That calls `PUT /v1/patients/me/profile`.
+  - It is skipped when the profile has no name, because the endpoint requires one. A hint tells the patient to add their name first.
+  - A failure here never fails the submitted intake.
+
+#### 7. Consultation room readability and consistency
+
+- **Files**: `ConsultationRoom.tsx`, `ConsultationChatPanel.tsx`, `bayanhealth-tokens.css`.
+- **Text sizes**:
+  - Chat bubbles: 14px to 16px, relaxed leading, 85% max width.
+  - Pills and refs: 10–11px to 13px.
+  - Name: 16px.
+  - Helper copy: 14px.
+- **Colours**: hard-coded `slate`/`teal`/`rose`/`amber` palette classes above the video stage were replaced with tokens. They broke in dark mode. The video stages stay dark on purpose.
+- **Pre-consult helper**: shortened to "Chat is open. New messages appear within a few seconds."
+- **Patient leave button**: was "Iwanan / Pumunta sa Dashboard" before the call and "Leave Call" during it. It is now "Leave" on phones, and "Leave room" / "Leave call" on desktop. It is 44px.
+- **End consultation**: uses `--danger-fg`, and its desktop height went from 28px to 36px.
+- **Dark `--text-muted`**: `#9aabb8` to `#adbcc8` (app-wide, dark theme only).
+
+#### 8. Prescription availability
+
+- **Files**: `PrescriptionCard.tsx` (new optional prop `showPending`, default `false`), `PatientBookingDetail.tsx`.
+- **What changed**: after a completed consult, the patient sees "Prescription: not shared yet. If your doctor prescribes medicine, it will appear here." instead of nothing. It never promises that a prescription will come. Medication text was raised to 14–16px.
+- **Not done (needs backend)**: patient access to consultation (SOAP) notes. There is no patient endpoint.
+
+#### 9. Preferences rename, Forgot Password, English-only education
+
+- **Preferences**: "Doctor preferences" is now "Preferences" in the settings row, page title, heading, breadcrumb, toast and booking form.
+  - The settings card that was called "Preferences" is now "App settings".
+  - The "Language · Soon" row was removed.
+  - The route path is unchanged.
+  - Preferences are still session-only, because there is no endpoint.
+- **Forgot Password (Logic change)**:
+  - `src/lib/cognito.ts` gains `forgotPassword` and `confirmForgotPassword`. These are public-client Cognito actions sent through the existing `post()`.
+  - There is a new route `/(auth)/forgot-password` with `ForgotPasswordForm` and `AuthBox type="forgot password"`, and the route was added to `PUBLIC_PATHS` in `route-guard.ts`.
+  - Sign in links to it from below the password field and from the wrong-password notice, and shows a banner on `?reset=1`.
+  - An unknown email reads exactly like a sent code.
+  - The password rules match sign-up.
+  - **Needs IT**: email account recovery must be enabled on the user pool.
+- **English-only education**: the English/Taglish toggle was removed from `PatientEducationCard`. A section with no English falls back to the reviewed Filipino text, labelled. `PatientCareGuideSheet` no longer shows `titleFilipino`.
+- **Also fixed**:
+  - `PatientEducationCard`: the 4px left stripe became a 1px border.
+  - The `/confirm` page used a 📧 emoji; it is now the Lucide `MailCheck` icon.
+  - Sign-in footer text: 10–12px to 12–14px.
+
+#### 10. Test runner
+
+- `vitest` (dev only) was added, with `npm test` and `vitest.config.ts` (node environment, `src/**/*.test.ts`).
+- There are 51 tests across 6 files covering the safety gate, vitals, draft storage, allergy write-back, the pain timing strings and password reset.
+
+**Verification**:
+- `npm run typecheck` is clean.
+- `npm test` passes 51/51.
+- ESLint reports 0 errors on every changed file. The warnings are in lines that were already there.
+- The Impeccable `detect` command reported no findings.
+- Headless Chrome screenshots at 390px and 1440px, in light and dark, were reviewed for the safety check, the hard stop, the concern page with invalid vitals and Skip/Other, medical history, the ER banner and the prescription pending state. They were taken through a temporary harness, since deleted.
+- **Not verified**: a live run against the backend (signed-in intake, the Cognito reset email, the Send-to-ER fields).
+
+**Upstream porting order**:
+1. `vitalStatus.ts`, `intakeGates.ts`, `intakeDraft.ts`, `profileWriteBack.ts` (pure, with tests).
+2. `EmergencyCareCard`.
+3. `intakeUiState`, `IntakeChoice.OptionalBlock`, `SymptomSelect`.
+4. The step components.
+5. `AuthenticatedIntakeForm` (step keys replace page indices).
+6. Room and chat token swaps.
+7. Auth.
+
+### [2026-11-03] All-English Copy: Remove Tagalog and Taglish From Patient and Doctor Surfaces
+
+- **Product decision**: the app is all English. Copy-only change: string contents only, no logic, props, classNames, hrefs or data-* attributes touched.
+- **Files Modified**:
+  - `src/features/patient/components/homepage/PatientHome.tsx`: symptom chip labels, service tiles ("Consult", "Schedule", "Prescription", "Records", "All services"), search placeholder and dropdown, aria-labels, emergency note, "Services", "For you" card, trust list ("100% PRC-licensed doctors", "FDA-compliant e-prescriptions"), and every live/queued/unfinished/upcoming/finished/idle activity card string.
+  - `src/features/patient/components/ActiveConsultationBanner.tsx`: aria-label, both status lines, "Back to your consultation", dismiss title/aria-label.
+  - `src/features/booking/components/patient/BookingPathChooser.tsx`: comparison strip, both path card blurbs/points, CTAs "Start intake" and "Browse doctors".
+  - `src/features/booking/components/patient/OnDemandBooking.tsx`: header "Consult now", doctor-review note, submit button text.
+  - `src/features/consultation/components/documents/PatientCareGuideSheet.tsx`: document title/subtitle, demographic labels, empty state, warning-signs label, both callout cards, footer labels.
+  - `src/features/consultation/components/postConsultation/WorkspaceChrome.tsx`: reference `Consultation #${consultationId}`.
+  - `src/features/doctor/components/homepage/DoctorCommandBar.tsx`, `src/features/doctor/components/header.tsx`: greeting "Hello,".
+  - `src/features/doctor/components/PatientSafetyStrip.tsx`: doc comment example "Consultation #1042".
+- **Not changed**: `QUICK_SYMPTOMS[].query` slugs in `PatientHome.tsx` (internal keys, never rendered) and `payload.titleFilipino` in `PatientCareGuideSheet.tsx` (API data).
+
 ### [2026-11-03] Consult Room: Notes Tab (Write S and O During the Video Call)
 
 - **Target Route / Surface**: `/consultation/room/[bookingId]`, assigned doctor only. The patient's view is unchanged.

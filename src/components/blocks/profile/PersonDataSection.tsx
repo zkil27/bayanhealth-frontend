@@ -248,6 +248,7 @@ export function PersonDataSection({
     watch,
     setValue,
     getValues,
+    getFieldState,
   } = useFormContext();
   const prefix = mode === "booking" ? "personalDetails." : "";
 
@@ -257,7 +258,15 @@ export function PersonDataSection({
 
   const RELATIONSHIP_OPTIONS = userProfile?.relationships || [];
 
-  const populateSelfData = useCallback(() => {
+  /**
+   * Seeds the form from the saved profile. `fillBlanksOnly` (the default)
+   * never overwrites what the form already holds: About You remounts on every
+   * Back/Continue, and a profile without a name used to re-run this on each
+   * mount, wiping a typed date of birth or weight back to the profile's blanks
+   * (pilot feedback: Back must not lose data). Only empty fields, and a sex at
+   * birth still at its untouched default, are filled.
+   */
+  const populateSelfData = useCallback((fillBlanksOnly = true) => {
     if (!userProfile) return;
 
     const fields = [
@@ -275,12 +284,20 @@ export function PersonDataSection({
     ];
 
     fields.forEach((field) => {
+      const name = `${prefix}${field}`;
       const value = userProfile[field as keyof typeof userProfile];
-      setValue(`${prefix}${field}`, value ?? "");
+      if (fillBlanksOnly) {
+        const current = getValues(name);
+        const untouchedDefault = field === "genderAtBirth" && current === "prefer not to say" && !getFieldState(name).isDirty;
+        const blank = current == null || current === "" || (Array.isArray(current) && current.length === 0);
+        const profileBlank = value == null || value === "" || (Array.isArray(value) && value.length === 0);
+        if ((!blank && !untouchedDefault) || profileBlank) return;
+      }
+      setValue(name, value ?? "");
     });
 
-    setValue(`${prefix}relationship`, "");
-  }, [setValue, userProfile, prefix]);
+    if (!fillBlanksOnly) setValue(`${prefix}relationship`, "");
+  }, [getFieldState, getValues, setValue, userProfile, prefix]);
 
   // Initialize on mount
   useEffect(() => {

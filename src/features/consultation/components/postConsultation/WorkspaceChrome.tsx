@@ -236,7 +236,7 @@ export const WorkspaceHeader = memo(function WorkspaceHeader({
           fallbackTitle={chiefComplaint}
           age={age}
           sex={sex}
-          reference={`Konsulta #${consultationId}`}
+          reference={`Consultation #${consultationId}`}
           allergies={allergies}
           hideAvatarBelowLg
           allergiesClassName="max-lg:hidden"

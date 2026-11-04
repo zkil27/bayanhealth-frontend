@@ -58,7 +58,7 @@ export function ActiveConsultationBanner() {
   return (
     <aside
       role="banner"
-      aria-label="Aktibong Konsulta"
+      aria-label="Active consultation"
       data-slot="active-consultation-banner"
       className="sticky top-0 z-50 w-full shrink-0 border-b border-(--border-subtle) bg-(--surface-card) text-(--text-body) shadow-(--shadow-xs) transition-colors duration-200"
     >
@@ -70,13 +70,13 @@ export function ActiveConsultationBanner() {
 
           <div className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:gap-2">
             <span className="text-xs sm:text-sm font-bold text-(--text-heading) truncate">
-              {isLiveRoom ? "Bukas ang iyong consultation room" : "May aktibong konsulta"}
+              {isLiveRoom ? "Your consultation room is open" : "You have an active consultation"}
             </span>
             <span className="hidden sm:inline text-(--text-subtle)">•</span>
             <span className="text-[11px] sm:text-xs text-(--text-muted) truncate">
               {isLiveRoom
-                ? "Nandito ang doktor o naghihintay sa video call."
-                : "May naghihintay kang sesyon sa telemedisina."}
+                ? "Your doctor is here or waiting on the video call."
+                : "You have a telemedicine session waiting."}
             </span>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function ActiveConsultationBanner() {
             href={targetHref}
             className="inline-flex min-h-9 sm:min-h-8 items-center justify-center gap-1.5 rounded-(--radius-pill) bg-(--action-primary) px-3.5 py-1.5 text-xs font-bold text-(--action-primary-text) shadow-(--shadow-xs) hover:bg-(--action-primary-hover) active:scale-[0.98] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
           >
-            <span>Bumalik sa Konsulta</span>
+            <span>Back to your consultation</span>
             <ArrowRight className="size-3.5" />
           </Link>
 
@@ -94,8 +94,8 @@ export function ActiveConsultationBanner() {
             type="button"
             onClick={() => setDismissedBookingId(active.bookingId)}
             className="flex size-9 sm:size-8 items-center justify-center rounded-(--radius-md) text-(--text-muted) hover:bg-(--surface-warm) hover:text-(--text-heading) transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
-            title="Itago pansamantala"
-            aria-label="Itago ang paalala"
+            title="Hide for now"
+            aria-label="Hide this reminder"
           >
             <X className="size-4" />
           </button>

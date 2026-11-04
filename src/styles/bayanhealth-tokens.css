@@ -315,7 +315,9 @@
   /* Text */
   --text-heading: #f8f4e3;
   --text-body: #e1e7ef;
-  --text-muted: #9aabb8;
+  /* Was #9aabb8. Lifted for night-mode legibility (pilot feedback 2026-11-03):
+     secondary text in the consult room read as faint at arm's length. */
+  --text-muted: #adbcc8;
   /* Was #6f8290 (3.89:1 on raised). #8193a1 is 4.88:1 on raised, 5.35:1 on card. */
   --text-subtle: #8193a1;
   --text-on-brand: var(--white);

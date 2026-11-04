@@ -115,7 +115,7 @@ export function DoctorCommandBar() {
           <div className="flex min-w-0 flex-col">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold tracking-wider text-(--status-available-fg) uppercase">
-                Kumusta,
+                Hello,
               </span>
               <span className="text-[11px] font-medium text-(--text-subtle)">
                 {todayLabel ?? " "}

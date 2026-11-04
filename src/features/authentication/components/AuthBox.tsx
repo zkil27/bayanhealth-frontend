@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { AppLogo } from "@/components/primitives/Logo/AppLogo";
+import { ForgotPasswordForm } from "./forms/ForgotPasswordForm";
 import { SignInForm } from "./forms/SignInForm";
 import { SignUpFlow } from "./SignUpFlow";
 import { cn } from "@/lib/utils";
 
 interface AuthBoxProps {
-  type: "sign up" | "sign in";
+  type: "sign up" | "sign in" | "forgot password";
 }
 
 export function AuthBox({ type }: AuthBoxProps) {
   const isSignIn = type === "sign in";
+  const isReset = type === "forgot password";
 
   return (
     <div className="mx-auto flex w-full max-w-md sm:max-w-lg flex-1 flex-col justify-center min-h-0 py-1 sm:py-2 px-3 sm:px-0">
@@ -24,19 +26,23 @@ export function AuthBox({ type }: AuthBoxProps) {
       <div
         className={cn(
           "w-full rounded-2xl border border-(--border-subtle) bg-(--surface-card) px-5 py-4.5 sm:px-6 sm:py-5 shadow-(--shadow-card) flex flex-col justify-between overflow-hidden",
-          isSignIn
+          isSignIn || isReset
             ? "min-h-[480px] sm:min-h-[520px] max-h-[calc(100dvh-4rem)]"
             : "h-[660px] sm:h-[685px] max-h-[calc(100dvh-2.5rem)]",
         )}
       >
-        {isSignIn ? (
+        {isReset ? (
+          <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto">
+            <ForgotPasswordForm />
+          </div>
+        ) : isSignIn ? (
           <>
             <div className="flex-1 flex flex-col justify-center min-h-0 overflow-y-auto">
               <SignInForm />
             </div>
 
             <div className="mt-3 shrink-0 flex flex-col gap-1 border-t border-(--border-subtle) pt-2.5 text-center">
-              <p className="text-center text-xs text-(--text-muted)">
+              <p className="text-center text-sm text-(--text-muted)">
                 New to BayanHealth?{" "}
                 <Link
                   href="signUp"
@@ -46,7 +52,7 @@ export function AuthBox({ type }: AuthBoxProps) {
                 </Link>
               </p>
 
-              <p className="text-center text-[10px] text-(--text-subtle)">
+              <p className="text-center text-xs text-(--text-subtle)">
                 By signing in, you agree to our{" "}
                 <Link href="/privacy" className="underline hover:text-(--text-muted)">
                   Privacy Policy

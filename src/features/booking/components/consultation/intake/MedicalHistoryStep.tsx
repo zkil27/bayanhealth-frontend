@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
 
 import type { DynamicIntakeFormValues } from "../../../schemas/intakeSchema";
-import { BlockLabel, COMPACT_INPUT, ChoiceCard, ConditionTile, FieldHint, Reveal } from "./IntakeChoice";
+import { BlockLabel, COMPACT_INPUT, ConditionTile, FieldHint, Reveal, SegmentedToggle } from "./IntakeChoice";
+import { useIntakeUiState } from "./intakeUiState";
 
 /**
  * Labels stay faithful to the contract enum: `diabetes` is not narrowed to
@@ -39,6 +39,16 @@ export function conditionLabel(condition: string): string {
 
 const HISTORY = "personalDetails.structuredMedicalHistory" as const;
 
+/**
+ * Every yes/no on this page is the same compact No / Yes control, with the
+ * question as the label (pilot feedback: simplify the yes/no questions). The
+ * old paired cards each carried a title and a description line.
+ */
+const YES_NO = [
+  { value: "no", label: "No" },
+  { value: "yes", label: "Yes" },
+] as const;
+
 export function MedicalHistoryStep() {
   return (
     <div className="space-y-8">
@@ -59,8 +69,16 @@ function KnownConditions() {
   // "Do you have any?" gate: the list only appears on Yes. "No" is the same
   // stored answer the old "No pre-existing medical conditions" tile wrote
   // (`noneReported: true`); an existing answer opens the matching branch.
-  const [saidYes, setSaidYes] = useState(false);
+  const [saidYes, setSaidYes] = useIntakeUiState("history.conditionsYes", false);
   const answer = noneReported ? "no" : selected.length > 0 || saidYes ? "yes" : undefined;
+
+  const setNoneReported = (active: boolean) => {
+    setValue(`${HISTORY}.noneReported`, active, opts);
+    if (active) {
+      setValue(`${HISTORY}.knownConditions`, [], opts);
+      setValue(`${HISTORY}.other`, "", opts);
+    }
+  };
 
   const choose = (next: "no" | "yes") => {
     if (next === "no") {
@@ -69,14 +87,6 @@ function KnownConditions() {
     } else {
       setSaidYes(true);
       if (noneReported) setValue(`${HISTORY}.noneReported`, false, opts);
-    }
-  };
-
-  const setNoneReported = (active: boolean) => {
-    setValue(`${HISTORY}.noneReported`, active, opts);
-    if (active) {
-      setValue(`${HISTORY}.knownConditions`, [], opts);
-      setValue(`${HISTORY}.other`, "", opts);
     }
   };
 
@@ -96,17 +106,14 @@ function KnownConditions() {
     <section aria-labelledby="conditions-heading" className="space-y-3">
       <div>
         <BlockLabel id="conditions-heading">Do you have any known medical conditions?</BlockLabel>
-        <FieldHint>Diagnoses a doctor has given you. This is not a diagnosis tool.</FieldHint>
+        <FieldHint>Conditions a doctor has diagnosed.</FieldHint>
       </div>
 
-      <div role="radiogroup" aria-labelledby="conditions-heading" className="grid grid-cols-2 gap-2.5 sm:max-w-md">
-        <ChoiceCard selected={answer === "no"} onClick={() => choose("no")} title="No" />
-        <ChoiceCard selected={answer === "yes"} onClick={() => choose("yes")} title="Yes" />
-      </div>
+      <SegmentedToggle label="Do you have any known medical conditions?" value={answer} onChange={choose} options={YES_NO} />
 
       <Reveal open={answer === "yes"}>
         <div className="space-y-3 pt-2">
-          <p className="text-base font-medium text-(--text-body)">Tap all that apply</p>
+          <p className="text-base font-medium text-(--text-body)">Choose all that apply</p>
           <div
             role="group"
             aria-label="Known conditions"
@@ -119,7 +126,7 @@ function KnownConditions() {
                 onClick={() => toggle(value)}
                 className={value === "other" ? "col-span-2 sm:col-span-3" : undefined}
               >
-                {value === "other" ? "Other condition (please specify)" : label}
+                {value === "other" ? "Other condition" : label}
               </ConditionTile>
             ))}
           </div>
@@ -133,15 +140,14 @@ function KnownConditions() {
           render={({ field, fieldState }) => (
             <div className="space-y-1.5 pt-2">
               <label htmlFor="other-condition-input" className="block text-base font-medium text-(--text-body)">
-                Other condition specification
+                Which other condition?
               </label>
               <input
                 {...field}
                 id="other-condition-input"
                 value={field.value ?? ""}
-                aria-label="Other condition"
                 aria-invalid={fieldState.invalid || undefined}
-                placeholder="Specify any other diagnosed conditions..."
+                placeholder="e.g. Gout"
                 className={COMPACT_INPUT}
               />
               {fieldState.error ? (
@@ -158,7 +164,8 @@ function KnownConditions() {
 function MedicationsToggle() {
   const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
   const medications = useWatch({ control, name: `${HISTORY}.currentMedications` });
-  const [choice, setChoice] = useState<"no" | "yes" | undefined>(
+  // Held in the intake UI store so a "No" is still selected after Back or a reload.
+  const [choice, setChoice] = useIntakeUiState<"no" | "yes" | undefined>("history.meds", () =>
     medications?.trim() ? "yes" : undefined,
   );
 
@@ -170,28 +177,11 @@ function MedicationsToggle() {
   return (
     <section aria-labelledby="medications-heading" className="space-y-3 border-t border-(--border-subtle) pt-7">
       <div>
-        <BlockLabel id="medications-heading">Current medications</BlockLabel>
-        <FieldHint>Are you taking any maintenance medications or daily prescriptions?</FieldHint>
+        <BlockLabel id="medications-heading">Do you take any regular medicines?</BlockLabel>
+        <FieldHint>Daily or maintenance medicines.</FieldHint>
       </div>
 
-      <div
-        role="radiogroup"
-        aria-labelledby="medications-heading"
-        className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-      >
-        <ChoiceCard
-          selected={choice === "no"}
-          onClick={() => change("no")}
-          title="Not taking maintenance meds"
-          description="No regular daily prescription medications"
-        />
-        <ChoiceCard
-          selected={choice === "yes"}
-          onClick={() => change("yes")}
-          title="Taking maintenance medications"
-          description="Taking daily or ongoing prescription medications"
-        />
-      </div>
+      <SegmentedToggle label="Do you take any regular medicines?" value={choice} onChange={change} options={YES_NO} />
 
       <Reveal open={choice === "yes"} className="-mt-1">
         <Controller
@@ -200,14 +190,13 @@ function MedicationsToggle() {
           render={({ field }) => (
             <div className="pt-2">
               <label htmlFor="medications-input" className="mb-1.5 block text-base font-medium text-(--text-body)">
-                Medication name and daily dose
+                Medicine name and dose
               </label>
               <textarea
                 {...field}
                 id="medications-input"
                 value={field.value ?? ""}
                 rows={2}
-                aria-label="Drug name and dose"
                 placeholder="e.g. Amlodipine 5mg once daily, Metformin 500mg"
                 className={cn(COMPACT_INPUT, "block resize-y")}
               />
@@ -222,7 +211,7 @@ function MedicationsToggle() {
 function SurgeriesToggle() {
   const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
   const details = useWatch({ control, name: `${HISTORY}.details` });
-  const [choice, setChoice] = useState<"no" | "yes" | undefined>(
+  const [choice, setChoice] = useIntakeUiState<"no" | "yes" | undefined>("history.surgeries", () =>
     details?.trim() ? "yes" : undefined,
   );
 
@@ -233,29 +222,9 @@ function SurgeriesToggle() {
 
   return (
     <section aria-labelledby="surgeries-heading" className="space-y-3 border-t border-(--border-subtle) pt-7">
-      <div>
-        <BlockLabel id="surgeries-heading">Prior surgeries / hospitalizations</BlockLabel>
-        <FieldHint>Any hospitalizations or major surgeries in the past 2 years?</FieldHint>
-      </div>
+      <BlockLabel id="surgeries-heading">Any surgery or hospital stay in the last 2 years?</BlockLabel>
 
-      <div
-        role="radiogroup"
-        aria-labelledby="surgeries-heading"
-        className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-      >
-        <ChoiceCard
-          selected={choice === "no"}
-          onClick={() => change("no")}
-          title="No prior surgeries"
-          description="No surgeries or hospital admissions in last 2 years"
-        />
-        <ChoiceCard
-          selected={choice === "yes"}
-          onClick={() => change("yes")}
-          title="Yes, had surgery / hospitalization"
-          description="Underwent an operation or admitted to hospital"
-        />
-      </div>
+      <SegmentedToggle label="Any surgery or hospital stay in the last 2 years?" value={choice} onChange={change} options={YES_NO} />
 
       <Reveal open={choice === "yes"} className="-mt-1">
         <Controller
@@ -264,14 +233,13 @@ function SurgeriesToggle() {
           render={({ field }) => (
             <div className="pt-2">
               <label htmlFor="surgeries-input" className="mb-1.5 block text-base font-medium text-(--text-body)">
-                Procedure details and hospital
+                What was it, and when?
               </label>
               <textarea
                 {...field}
                 id="surgeries-input"
                 value={field.value ?? ""}
                 rows={2}
-                aria-label="Surgery or hospitalization details"
                 placeholder="e.g. Appendectomy, March 2025, PGH"
                 className={cn(COMPACT_INPUT, "block resize-y")}
               />

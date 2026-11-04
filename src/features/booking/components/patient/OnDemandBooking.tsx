@@ -105,7 +105,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
     <FormProvider {...form}>
       <div className="flex min-h-full w-full flex-col justify-start">
         <PatientPageHeader
-          title="Konsulta Ngayon (Consult Now)"
+          title="Consult now"
           backHref="/patient/booking"
         />
 
@@ -140,7 +140,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
           <div className="flex flex-col gap-3 border-t border-(--border-subtle) pt-4">
             <span className={groupLabel}>
               <UserCog className="size-5 text-(--status-available-fg)" />
-              Doctor preferences <span className="font-normal text-(--text-muted)">(optional)</span>
+              Preferences <span className="font-normal text-(--text-muted)">(optional)</span>
             </span>
             <DoctorPreferences compact />
           </div>
@@ -151,7 +151,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
             <Zap className="size-4 shrink-0 mt-0.5 text-(--status-available-fg)" />
             {/* No wait estimate: there is no queue or acceptance data to base one on. */}
             <span>
-              Susuriin muna ng doktor ang iyong profile at mga iniulat na sintomas bago ka papasukin sa consultation room.
+              The doctor will first review your profile and the symptoms you reported before letting you into the consultation room.
             </span>
           </div>
         </div>
@@ -175,7 +175,7 @@ export function OnDemandBooking({ defaultServiceType }: OnDemandBookingProps) {
               type="submit"
               disabled={!isValid || isSubmitting || isLoading}
             >
-              {isSubmitting ? "Pumapasok sa queue…" : "Kumpirmahin at pumasok sa queue"}
+              {isSubmitting ? "Joining the queue…" : "Confirm and join the queue"}
               <ArrowRight className="size-4.5" />
             </BrandCtaButton>
             {error && (

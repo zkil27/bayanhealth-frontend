@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { format, isValid, parse } from "date-fns";
 import { Check, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FormProvider,
   type FieldPath,
@@ -21,51 +21,78 @@ import { useProfile } from "@/hooks/useProfile";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  browserDraftStorage,
+  clearIntakeDraft,
+  intakeDraftKey,
+  isDraftCurrent,
+  readIntakeDraft,
+  writeIntakeDraft,
+} from "@/lib/intakeDraft";
 import { useIdToken, useUserId } from "@/stores/useAuthStore";
 
-import { useQuestionnaireV2Intake, type QuestionnaireV2UiStep } from "../../../hooks/useSubmitIntake";
+import {
+  effectiveIntakeRevision,
+  useQuestionnaireV2Intake,
+  type QuestionnaireV2UiStep,
+} from "../../../hooks/useSubmitIntake";
 import { fetchPatientIntake } from "../../../lib/api/patientIntake";
 import { mapSectionsToIntakeForm } from "../../../lib/intakeMapper";
+import { allergyWriteBack } from "../../../lib/profileWriteBack";
 import {
   dynamicIntakeMasterSchema,
   getDefaultValues,
   type DynamicIntakeFormValues,
 } from "../../../schemas/intakeSchema";
 import type { Booking } from "../../../types/booking.types";
+import { SAVE_ALLERGIES_KEY } from "./AboutYouFields";
+import { ConcernSafetyStep, complaintTagLabel } from "./ConcernSafetyStep";
 import {
-  ConcernSafetyStep,
-  complaintTagLabel,
+  canEnterStep,
+  clampResumeStep,
   concernBlockedReason,
+  isSafetyHardStop,
   redFlagFromScreen,
+  safetyBlockedReason,
+  type IntakeStepKey,
   type RedFlagState,
-} from "./ConcernSafetyStep";
+} from "./intakeGates";
+import { IntakeUiStateProvider, type IntakeUiState } from "./intakeUiState";
 import { IntakeReceipt } from "../IntakeReceipt";
 import { IntakeNavFooter } from "./IntakeNavFooter";
 import { MedicalHistoryStep } from "./MedicalHistoryStep";
 import { PainAssessmentStep } from "./PainAssessmentStep";
 import { conditionLabel } from "./MedicalHistoryStep";
 import { ReviewConsentStep } from "./ReviewConsentStep";
+import { SafetyCheckStep } from "./SafetyCheckStep";
 import { ServiceRequestSection } from "./ServiceRequestSection";
 
+interface StepDef {
+  key: IntakeStepKey;
+  title: string;
+  short: string;
+}
+
 /**
- * Pain Assessment (PQRST) only applies to teleconsult: it writes into
- * `requestDetails.symptomReview`, a field that exists only on that branch of
- * the `requestDetails` discriminated union. Other service types keep the
- * original four-step shape.
+ * Teleconsult opens on the emergency safety check (pilot feedback: "make the
+ * clinical safety check the first question"). Pain questions are now an
+ * optional section of the Concern page, so the wizard stays at five pages.
+ * Other service types keep their original four pages and have no safety page,
+ * because `safetyScreen` exists only on the teleconsult branch.
  */
-const TELECONSULT_STEPS = [
-  { title: "About You", short: "About you" },
-  { title: "Medical History", short: "History" },
-  { title: "Current Concern & Safety", short: "Concern" },
-  { title: "Pain Assessment", short: "Pain" },
-  { title: "Symptom Review & Consent", short: "Review" },
-] as const;
-const OTHER_STEPS = [
-  { title: "About You", short: "About you" },
-  { title: "Medical History", short: "History" },
-  { title: "Current Concern & Safety", short: "Concern" },
-  { title: "Symptom Review & Consent", short: "Review" },
-] as const;
+const TELECONSULT_STEPS: readonly StepDef[] = [
+  { key: "safety", title: "Safety Check", short: "Safety" },
+  { key: "about", title: "About You", short: "About you" },
+  { key: "history", title: "Medical History", short: "History" },
+  { key: "concern", title: "Your Concern", short: "Concern" },
+  { key: "review", title: "Review & Consent", short: "Review" },
+];
+const OTHER_STEPS: readonly StepDef[] = [
+  { key: "about", title: "About You", short: "About you" },
+  { key: "history", title: "Medical History", short: "History" },
+  { key: "service", title: "Current Concern & Safety", short: "Concern" },
+  { key: "review", title: "Symptom Review & Consent", short: "Review" },
+];
 
 /** A UI page index — distinct from {@link QuestionnaireV2UiStep}, the transport-save slot index, which stays fixed at four regardless of how many pages the wizard shows. */
 type IntakePage = number;
@@ -76,30 +103,27 @@ interface AuthenticatedIntakeFormProps {
   onComplete?: () => void;
 }
 
+const DRAFT_DEBOUNCE_MS = 500;
+
 /**
- * Resume only questionnaire-v2 drafts. The two UI pages persisted as `details`
- * are distinguished by the structured-history object written by page two.
- *
- * A saved draft cannot distinguish "reached Concern & Safety" from "reached
- * Pain Assessment" — both write into the same `purpose` transport bucket — so
- * a returning patient always resumes on Concern & Safety, one page earlier
- * than they may have gotten to. That is an existing granularity limit of this
- * heuristic, not something Pain Assessment made worse.
+ * Where a server-saved questionnaire-v2 draft resumes. The two pages saved as
+ * `details` are told apart by the structured-history object page two writes.
+ * Teleconsult results are then clamped by the safety rule in `intakeGates`.
  */
-function questionnaireV2ResumeStep(
+function serverResumeStep(
   form: Awaited<ReturnType<typeof fetchPatientIntake>>,
-  reviewPage: IntakePage,
-): IntakePage {
-  if (!form || form.questionnaireVersion !== 2) return 0;
+  isTeleconsult: boolean,
+): IntakeStepKey {
+  if (!form || form.questionnaireVersion !== 2) return "about";
   if (
     form.status === "submitted" ||
     form.status === "acknowledged" ||
     form.completedSteps.includes("review") ||
     form.completedSteps.includes("purpose")
-  ) return reviewPage;
-  if (form.sections.details?.structuredMedicalHistory !== undefined) return 2;
-  if (form.currentStep === "details" || form.completedSteps.includes("details")) return 1;
-  return 0;
+  ) return "review";
+  if (form.sections.details?.structuredMedicalHistory !== undefined) return isTeleconsult ? "concern" : "service";
+  if (form.currentStep === "details" || form.completedSteps.includes("details")) return "history";
+  return "about";
 }
 
 export function AuthenticatedIntakeForm({
@@ -109,18 +133,22 @@ export function AuthenticatedIntakeForm({
 }: AuthenticatedIntakeFormProps) {
   const idToken = useIdToken();
   const userId = useUserId();
-  const { profile } = useProfile(userId);
+  const { profile, updateProfile } = useProfile(userId);
   const isTeleconsult = booking.serviceRequested === "teleconsult";
   const STEPS = isTeleconsult ? TELECONSULT_STEPS : OTHER_STEPS;
-  const painPage = isTeleconsult ? 3 : -1;
   const reviewPage = STEPS.length - 1;
+  const pageOf = (key: string): IntakePage => STEPS.findIndex((step) => step.key === key);
   const [currentStep, setCurrentStep] = useState<IntakePage>(0);
   const [furthestStep, setFurthestStep] = useState<IntakePage>(0);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [redFlag, setRedFlag] = useState<RedFlagState>({ answer: undefined, bleeding: false });
+  const [uiState, setUiState] = useState<IntakeUiState>({});
+  const [hydrated, setHydrated] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "device" | "server">("idle");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const hydratedBookingRef = useRef<string | null>(null);
+  const backSaveRef = useRef<Promise<unknown> | null>(null);
 
   const methods = useForm<DynamicIntakeFormValues>({
     resolver: readOnly
@@ -142,29 +170,120 @@ export function AuthenticatedIntakeForm({
   const serverForm = intakeQuery.data ?? null;
   const intake = useQuestionnaireV2Intake(booking.id, serverForm);
 
+  const draftStorage = useMemo(() => (readOnly ? null : browserDraftStorage()), [readOnly]);
+  const draftKey = userId ? intakeDraftKey(userId, booking.id) : null;
+
   const dirtyFields = methods.formState.dirtyFields;
   const watchedRequest = useWatch({ control: methods.control, name: "requestDetails" });
   const watchedAdditional = useWatch({ control: methods.control, name: "additionalInfo" });
 
   useEffect(() => {
-    if (!serverForm || hydratedBookingRef.current === booking.id) return;
+    if (!intakeQuery.isSuccess || hydratedBookingRef.current === booking.id) return;
     hydratedBookingRef.current = booking.id;
-    methods.reset(
-      mapSectionsToIntakeForm(serverForm, booking.serviceRequested, methods.getValues()),
-      { keepDirtyValues: true },
-    );
-    const hydrated = methods.getValues().requestDetails;
-    setRedFlag({
-      answer: hydrated.type === "teleconsult" ? redFlagFromScreen(hydrated.safetyScreen) : undefined,
-      bleeding: false,
-    });
-    const resumeStep = questionnaireV2ResumeStep(serverForm, reviewPage);
+    if (serverForm) {
+      methods.reset(
+        mapSectionsToIntakeForm(serverForm, booking.serviceRequested, methods.getValues()),
+        { keepDirtyValues: true },
+      );
+    }
+    const hydratedRequest = methods.getValues().requestDetails;
+    let safetyAnswer = hydratedRequest.type === "teleconsult" ? redFlagFromScreen(hydratedRequest.safetyScreen) : undefined;
+    let target: IntakeStepKey = serverResumeStep(serverForm, isTeleconsult);
+    let furthest: IntakeStepKey = target;
+
+    // The device copy wins only when it was written against the revision the
+    // server holds now; anything newer on the server came from elsewhere.
+    const draft = draftKey ? readIntakeDraft<DynamicIntakeFormValues>(draftStorage, draftKey) : null;
+    if (isDraftCurrent(draft, effectiveIntakeRevision(serverForm))) {
+      methods.reset(draft.values as DynamicIntakeFormValues);
+      // The draft is an external source (sessionStorage) read once, after the server copy.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUiState(draft.ui ?? {});
+      safetyAnswer = draft.safetyAnswer;
+      if (STEPS.some((step) => step.key === draft.step)) target = draft.step as IntakeStepKey;
+      if (STEPS.some((step) => step.key === draft.furthestStep)) furthest = draft.furthestStep as IntakeStepKey;
+    } else if (draft && draftKey) {
+      clearIntakeDraft(draftStorage, draftKey);
+    }
+
+    const flag: RedFlagState = { answer: safetyAnswer, bleeding: false };
+    const resume = clampResumeStep(target, isTeleconsult, flag);
+    const resumePage = Math.max(0, pageOf(resume));
     // The persisted draft arrives asynchronously after the initial render.
-    setCurrentStep(resumeStep);
-    setFurthestStep(resumeStep);
+    setRedFlag(flag);
+    setCurrentStep(resumePage);
+    setFurthestStep(resume === target ? Math.max(resumePage, pageOf(furthest)) : resumePage);
     methods.clearErrors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reviewPage is derived from booking.serviceRequested, already a dep.
-  }, [booking.id, booking.serviceRequested, dirtyFields, methods, serverForm]);
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- STEPS/pageOf derive from booking.serviceRequested, already a dep.
+  }, [booking.id, booking.serviceRequested, dirtyFields, draftKey, draftStorage, intakeQuery.isSuccess, isTeleconsult, methods, serverForm]);
+
+  /*
+   * Device draft. Every form edit, screen-only selection, safety answer and
+   * page change is written to this tab's sessionStorage 500ms after it stops
+   * changing, and once more when the intake unmounts. Writes start only after
+   * hydration, so the defaults never overwrite a draft that is about to load.
+   */
+  const latestRef = useRef({ uiState, redFlag, currentStep, furthestStep, revision: intake.revision });
+  useEffect(() => {
+    latestRef.current = { uiState, redFlag, currentStep, furthestStep, revision: intake.revision };
+  });
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formEditedRef = useRef(false);
+
+  const flushDraft = useCallback(() => {
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = null;
+    if (!draftKey || !draftStorage) return;
+    const latest = latestRef.current;
+    const written = writeIntakeDraft(draftStorage, draftKey, {
+      version: 1,
+      savedAt: Date.now(),
+      baseRevision: latest.revision,
+      values: methods.getValues(),
+      ui: latest.uiState,
+      safetyAnswer: latest.redFlag.answer,
+      step: STEPS[latest.currentStep]?.key ?? "about",
+      furthestStep: STEPS[latest.furthestStep]?.key ?? "about",
+    });
+    if (written && formEditedRef.current) {
+      formEditedRef.current = false;
+      setSaveStatus("device");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- STEPS derives from booking.serviceRequested.
+  }, [draftKey, draftStorage, methods]);
+
+  const scheduleDraft = useCallback(() => {
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(flushDraft, DRAFT_DEBOUNCE_MS);
+  }, [flushDraft]);
+
+  useEffect(() => {
+    if (!hydrated || readOnly) return;
+    return methods.subscribe({
+      formState: { values: true },
+      callback: () => {
+        formEditedRef.current = true;
+        scheduleDraft();
+      },
+    });
+  }, [hydrated, methods, readOnly, scheduleDraft]);
+
+  useEffect(() => {
+    if (hydrated && !readOnly) scheduleDraft();
+  }, [uiState, redFlag, currentStep, furthestStep, intake.revision, hydrated, readOnly, scheduleDraft]);
+
+  useEffect(() => {
+    if (!hydrated || readOnly) return;
+    const flushIfPending = () => {
+      if (draftTimerRef.current) flushDraft();
+    };
+    window.addEventListener("pagehide", flushIfPending);
+    return () => {
+      window.removeEventListener("pagehide", flushIfPending);
+      flushIfPending();
+    };
+  }, [flushDraft, hydrated, readOnly]);
 
   const reviewValues = useMemo(
     () => serverForm
@@ -197,86 +316,131 @@ export function AuthenticatedIntakeForm({
       shouldDirty: true,
       shouldValidate: true,
     });
-  }, [isOnDemand, methods, readOnly, serverForm]);
+  }, [isOnDemand, methods, readOnly, serverForm, hydrated]);
 
   const focusHeading = () => requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
 
   const navigateTo = (step: IntakePage) => {
-    if (step > furthestStep || step === currentStep) return;
+    if (step < 0 || step > furthestStep || step === currentStep) return;
+    if (!canEnterStep(STEPS[step].key, isTeleconsult, redFlag)) return;
     setSaveError(null);
     setCurrentStep(step);
     focusHeading();
   };
 
-  const validationFields = (step: IntakePage): FieldPath<DynamicIntakeFormValues>[] => {
-    if (step === 0) return [
-      "personalDetails.forWhom",
-      "personalDetails.relationship",
-      "personalDetails.name",
-      "personalDetails.preferredName",
-      "personalDetails.preferredPronoun",
-      "personalDetails.dateOfBirth",
-      "personalDetails.genderAtBirth",
-      "personalDetails.weight",
-      "personalDetails.height",
-      "personalDetails.bloodType",
-      "personalDetails.allergens",
-      "personalDetails.otherAllergens",
-      "personalDetails.diet",
-    ];
-    if (step === 1) return ["personalDetails.structuredMedicalHistory"];
-    if (step === 2) {
-      return isTeleconsult
-        ? ["requestDetails.chiefComplaint", "requestDetails.safetyScreen", "requestDetails.vitals"]
-        : ["requestDetails"];
+  const validationFields = (key: IntakeStepKey): FieldPath<DynamicIntakeFormValues>[] => {
+    switch (key) {
+      case "safety":
+        return [];
+      case "about":
+        return [
+          "personalDetails.forWhom",
+          "personalDetails.relationship",
+          "personalDetails.name",
+          "personalDetails.preferredName",
+          "personalDetails.preferredPronoun",
+          "personalDetails.dateOfBirth",
+          "personalDetails.genderAtBirth",
+          "personalDetails.weight",
+          "personalDetails.height",
+          "personalDetails.bloodType",
+          "personalDetails.allergens",
+          "personalDetails.otherAllergens",
+          "personalDetails.diet",
+        ];
+      case "history":
+        return ["personalDetails.structuredMedicalHistory"];
+      case "concern":
+        return [
+          "requestDetails.chiefComplaint",
+          "requestDetails.safetyScreen",
+          "requestDetails.vitals",
+          "requestDetails.symptomReview",
+        ] as FieldPath<DynamicIntakeFormValues>[];
+      case "service":
+        return ["requestDetails"];
+      case "review":
+        return ["additionalInfo"];
     }
-    if (step === painPage) return ["requestDetails.symptomReview"];
-    return ["additionalInfo"];
   };
 
+  /**
+   * Server save for one page. Page-to-transport mapping: About You and Medical
+   * History write `details`; the concern page writes `purpose` (chief
+   * complaint, tags) and `details` (safety screen, vitals, pain answers). The
+   * safety page has no save of its own: its answer is part of `details` and
+   * travels with About You, and the device draft holds it until then.
+   */
+  const saveStepFor = async (key: IntakeStepKey, values: DynamicIntakeFormValues) => {
+    if (key === "about") await intake.saveStep.mutateAsync({ uiStep: 0 as QuestionnaireV2UiStep, values });
+    else if (key === "history") await intake.saveStep.mutateAsync({ uiStep: 2, values });
+    else if (key === "concern" || key === "service") {
+      await intake.saveStep.mutateAsync({ uiStep: 1, values });
+      await intake.saveStep.mutateAsync({ uiStep: 2, values });
+    }
+  };
+
+  const currentKey = STEPS[currentStep].key;
+  const hardStop = isTeleconsult && currentKey === "safety" && isSafetyHardStop(redFlag);
+
   const blockedReason =
-    currentStep === 2 && isTeleconsult
-      ? concernBlockedReason(watchedRequest, redFlag)
-      : currentStep === reviewPage
-        ? !watchedAdditional?.dateOfConsultation
-          ? "Choose a preferred date to submit."
-          : watchedAdditional.consent !== true
-            ? "Confirm the consent statement to submit."
-            : null
-        : null;
+    currentKey === "safety"
+      ? safetyBlockedReason(redFlag)
+      : isTeleconsult && redFlag.answer !== "no"
+        ? "Answer the safety check first."
+        : currentKey === "concern" && watchedRequest?.type === "teleconsult"
+          ? concernBlockedReason(watchedRequest.chiefComplaint, watchedRequest.vitals)
+          : currentKey === "review"
+            ? !watchedAdditional?.dateOfConsultation
+              ? "Choose a preferred date to submit."
+              : watchedAdditional.consent !== true
+                ? "Confirm the consent statement to submit."
+                : null
+            : null;
+
+  /**
+   * Back never blocks and never validates. It goes back at once and, for a
+   * page with a server save, saves what is on screen in the background; a
+   * failed save is fine, because the device draft still holds the answers.
+   */
+  const handleBack = () => {
+    const key = currentKey;
+    const values = methods.getValues();
+    navigateTo(currentStep - 1);
+    if (key === "about" || key === "history" || key === "concern" || key === "service") {
+      backSaveRef.current = saveStepFor(key, values)
+        .then(() => setSaveStatus("server"))
+        .catch(() => undefined)
+        .finally(() => {
+          backSaveRef.current = null;
+        });
+    }
+  };
 
   const handleContinue = async () => {
-    if (blockedReason) return;
+    if (blockedReason || hardStop) return;
     setSaveError(null);
-    const valid = await methods.trigger(validationFields(currentStep), { shouldFocus: true });
+    const fields = validationFields(currentKey);
+    const valid = fields.length === 0 || (await methods.trigger(fields, { shouldFocus: true }));
     if (!valid) {
       setSaveError("Please review the highlighted fields before continuing.");
       return;
     }
 
     try {
-      if (currentStep === reviewPage) {
-        await intake.submit.mutateAsync(methods.getValues());
+      // A background save from Back must land first, or both would claim the same revision.
+      await backSaveRef.current;
+      const values = methods.getValues();
+      if (currentKey === "review") {
+        await intake.submit.mutateAsync(values);
+        await saveAllergiesToProfile(values);
+        if (draftKey) clearIntakeDraft(draftStorage, draftKey);
         toast.success("Intake submitted successfully.");
         onComplete?.();
         return;
       }
-      const values = methods.getValues();
-      if (currentStep === 1) {
-        // Medical history belongs to the transport `details` section.
-        await intake.saveStep.mutateAsync({ uiStep: 2, values });
-      } else if (currentStep === 2) {
-        // Request purpose and supporting clinical/certificate details share this
-        // visual page but are separate transport sections for every service.
-        await intake.saveStep.mutateAsync({ uiStep: 1, values });
-        await intake.saveStep.mutateAsync({ uiStep: 2, values });
-      } else if (currentStep === painPage) {
-        // Pain Assessment also writes into `requestDetails`, the `purpose` bucket.
-        await intake.saveStep.mutateAsync({ uiStep: 1, values });
-      } else {
-        // Only About You (page 0) reaches here; its transport slot index matches its page index.
-        await intake.saveStep.mutateAsync({ uiStep: currentStep as QuestionnaireV2UiStep, values });
-      }
+      await saveStepFor(currentKey, values);
+      if (currentKey !== "safety") setSaveStatus("server");
       const next = currentStep + 1;
       setFurthestStep((previous) => Math.max(previous, next));
       setCurrentStep(next);
@@ -285,6 +449,17 @@ export function AuthenticatedIntakeForm({
       const msg = errorMessage(error);
       setSaveError(msg);
       toast.error(msg);
+    }
+  };
+
+  /** Copies new allergy answers to the saved profile. A failure never fails the submitted intake. */
+  const saveAllergiesToProfile = async (values: DynamicIntakeFormValues) => {
+    const update = allergyWriteBack(values.personalDetails, profile, uiState[SAVE_ALLERGIES_KEY] !== false);
+    if (!update) return;
+    try {
+      await updateProfile(update);
+    } catch {
+      toast.message("Your intake was sent, but your allergies were not saved to your profile.");
     }
   };
 
@@ -298,7 +473,7 @@ export function AuthenticatedIntakeForm({
   }
 
   if (intakeQuery.isLoading) {
-    return <p className="p-4 text-sm text-muted-foreground">Loading your intake…</p>;
+    return <p className="p-4 text-base text-muted-foreground">Loading your intake…</p>;
   }
 
   if (intakeQuery.isError) {
@@ -325,9 +500,11 @@ export function AuthenticatedIntakeForm({
   }
 
   const pending = intake.saveStep.isPending || intake.submit.isPending;
+  const statusText = saveStatus === "server" ? "Saved" : saveStatus === "device" ? "Saved on this device" : null;
 
   return (
     <FormProvider {...methods}>
+      <IntakeUiStateProvider value={uiState} onChange={setUiState}>
       {/*
        * Fixed-height sheet: the header and action bar never move; only the
        * body between them scrolls, so a field expanding mid-step can't push
@@ -339,9 +516,9 @@ export function AuthenticatedIntakeForm({
         className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden"
       >
         {/*
-         * One title, one plain step count, one thin bar. The uppercase step pill
-         * and the "Encrypted & Autosaved" badge competed with the title, and
-         * "Autosaved" overstated it: answers save when Continue is tapped.
+         * One title, one plain step count, one thin bar. The save status says
+         * exactly where the answers are: "Saved" once the server has them,
+         * "Saved on this device" while only this tab does.
          */}
         <header className="shrink-0 border-b border-(--border-subtle) px-4 pt-3 pb-3 sm:px-8 sm:pt-4">
           <div className="flex items-baseline justify-between gap-3">
@@ -352,7 +529,15 @@ export function AuthenticatedIntakeForm({
               Step {currentStep + 1} of {STEPS.length}
             </span>
           </div>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
+          <p aria-live="polite" className="mt-1 flex min-h-5 items-center gap-1.5 text-sm text-(--text-muted)">
+            {statusText ? (
+              <>
+                <Check aria-hidden className="size-4 text-(--safe-fg)" />
+                {statusText}
+              </>
+            ) : null}
+          </p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
             <div className="h-full rounded-full bg-(--action-primary) transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
           </div>
         </header>
@@ -363,9 +548,9 @@ export function AuthenticatedIntakeForm({
               {STEPS.map((step, index) => {
                 const complete = index < furthestStep;
                 const current = index === currentStep;
-                const locked = index > furthestStep;
+                const locked = index > furthestStep || !canEnterStep(step.key, isTeleconsult, redFlag);
                 return (
-                  <li key={step.title}>
+                  <li key={step.key}>
                     <button
                       type="button"
                       disabled={locked}
@@ -376,7 +561,7 @@ export function AuthenticatedIntakeForm({
                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                         current
                           ? "bg-(--surface-brand-soft) font-semibold text-(--text-heading)"
-                          : complete
+                          : complete && !locked
                             ? "text-(--text-body) hover:bg-(--surface-canvas)"
                             : "cursor-not-allowed text-(--text-muted)",
                       )}
@@ -386,7 +571,7 @@ export function AuthenticatedIntakeForm({
                         className={cn(
                           "flex size-6 shrink-0 items-center justify-center rounded-full border text-[13px] font-semibold tabular-nums",
                           complete
-                            ? "border-transparent bg-(--action-primary) text-(--text-inverse)"
+                            ? "border-transparent bg-(--action-primary) text-(--action-primary-text)"
                             : current
                               ? "border-(--action-primary) text-(--action-primary)"
                               : "border-(--border-strong)",
@@ -410,44 +595,54 @@ export function AuthenticatedIntakeForm({
             // continues below the fold, and older patients rely on it.
             className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-color:var(--border-strong)_transparent] [scrollbar-width:thin] sm:px-8 sm:py-6"
           >
-            {currentStep === 0 ? <AboutYouSection profile={profile} /> : null}
-            {currentStep === 1 ? <MedicalHistoryStep /> : null}
-            {currentStep === 2 ? (
-              isTeleconsult
-                ? <ConcernSafetyStep redFlag={redFlag} onRedFlagChange={setRedFlag} />
-                : <ServiceRequestSection serviceType={booking.serviceRequested} />
+            {currentKey === "safety" ? <SafetyCheckStep redFlag={redFlag} onRedFlagChange={setRedFlag} /> : null}
+            {currentKey === "about" ? <AboutYouSection profile={profile} /> : null}
+            {currentKey === "history" ? <MedicalHistoryStep /> : null}
+            {currentKey === "concern" ? (
+              <div className="space-y-9">
+                <ConcernSafetyStep />
+                <PainAssessmentStep className="border-t border-(--border-subtle) pt-7" />
+              </div>
             ) : null}
-            {currentStep === painPage ? <PainAssessmentStep /> : null}
-            {currentStep === reviewPage ? (
-              <ReviewConsentStep onEdit={navigateTo} isOnDemand={isOnDemand} />
+            {currentKey === "service" ? <ServiceRequestSection serviceType={booking.serviceRequested} /> : null}
+            {currentKey === "review" ? (
+              <ReviewConsentStep onEdit={(key) => navigateTo(pageOf(key))} isOnDemand={isOnDemand} />
             ) : null}
           </main>
         </div>
 
-        <IntakeNavFooter
-          placement="pinned"
-          backTo={currentStep > 0 ? STEPS[currentStep - 1].title : undefined}
-          onBack={() => navigateTo(currentStep - 1)}
-          continueTo={currentStep < reviewPage ? STEPS[currentStep + 1].title : undefined}
-          onContinue={() => void handleContinue()}
-          isFinal={currentStep === reviewPage}
-          pending={pending}
-          blockedReason={blockedReason}
-        >
-          {/*
-           * In the pinned bar, so a save error is visible without scrolling —
-           * a single line rather than a full destructive Alert card. It used to
-           * be screen-reader-only text plus a toast that vanished in seconds,
-           * which left sighted patients with no lasting explanation.
-           */}
-          {saveError ? (
-            <p role="alert" className="mb-2.5 flex items-start gap-2 text-[15px] leading-snug font-semibold text-(--danger-fg)">
-              <TriangleAlert aria-hidden className="mt-0.5 size-4.5 shrink-0" />
-              {saveError}
-            </p>
-          ) : null}
-        </IntakeNavFooter>
+        {/*
+         * The hard stop has no action bar at all: no Continue to tap, no
+         * blocked-reason to argue with. The emergency card's own controls are
+         * the only way forward.
+         */}
+        {hardStop ? null : (
+          <IntakeNavFooter
+            placement="pinned"
+            backTo={currentStep > 0 ? STEPS[currentStep - 1].title : undefined}
+            onBack={handleBack}
+            continueTo={currentStep < reviewPage ? STEPS[currentStep + 1].title : undefined}
+            onContinue={() => void handleContinue()}
+            isFinal={currentStep === reviewPage}
+            pending={pending}
+            blockedReason={blockedReason}
+          >
+            {/*
+             * In the pinned bar, so a save error is visible without scrolling —
+             * a single line rather than a full destructive Alert card. It used to
+             * be screen-reader-only text plus a toast that vanished in seconds,
+             * which left sighted patients with no lasting explanation.
+             */}
+            {saveError ? (
+              <p role="alert" className="mb-2.5 flex items-start gap-2 text-[15px] leading-snug font-semibold text-(--danger-fg)">
+                <TriangleAlert aria-hidden className="mt-0.5 size-4.5 shrink-0" />
+                {saveError}
+              </p>
+            ) : null}
+          </IntakeNavFooter>
+        )}
       </form>
+      </IntakeUiStateProvider>
     </FormProvider>
   );
 }

@@ -250,6 +250,17 @@ function outOfRange(value: number, bounds: { min: number; max: number }): boolea
   return value < bounds.min || value > bounds.max;
 }
 
+/**
+ * Which way a reading fails its sanity check, in the words the pilot doctors
+ * asked for ("Too low", "Invalid") instead of the vaguer "Unverified".
+ */
+function rangeFlag(value: number, bounds: { min: number; max: number }): string | undefined {
+  if (!Number.isFinite(value)) return "Invalid";
+  if (value < bounds.min) return "Too low";
+  if (value > bounds.max) return "Too high";
+  return undefined;
+}
+
 /** The four vitals from the design, each with its icon, format, sanity check, and clinical triage. */
 const VITALS: ReadonlyArray<{
   key: string;
@@ -268,9 +279,7 @@ const VITALS: ReadonlyArray<{
     format: (v) =>
       typeof v.temperatureC === "number" ? `${v.temperatureC}°C` : NOT_RECORDED,
     sanityCheck: (v) =>
-      typeof v.temperatureC === "number" && outOfRange(v.temperatureC, VITAL_BOUNDS.temperatureC)
-        ? "Unverified"
-        : undefined,
+      typeof v.temperatureC === "number" ? rangeFlag(v.temperatureC, VITAL_BOUNDS.temperatureC) : undefined,
     clinicalTriage: (v) => {
       if (typeof v.temperatureC !== "number") return undefined;
       if (v.temperatureC >= 38.0) {
@@ -293,10 +302,11 @@ const VITALS: ReadonlyArray<{
     sanityCheck: (v) => {
       const hasSys = typeof v.systolicBp === "number";
       const hasDia = typeof v.diastolicBp === "number";
-      if (hasSys && outOfRange(v.systolicBp!, VITAL_BOUNDS.systolicBp)) return "Unverified";
-      if (hasDia && outOfRange(v.diastolicBp!, VITAL_BOUNDS.diastolicBp)) return "Unverified";
+      if (hasSys !== hasDia) return "Invalid";
+      if (hasSys && outOfRange(v.systolicBp!, VITAL_BOUNDS.systolicBp)) return rangeFlag(v.systolicBp!, VITAL_BOUNDS.systolicBp);
+      if (hasDia && outOfRange(v.diastolicBp!, VITAL_BOUNDS.diastolicBp)) return rangeFlag(v.diastolicBp!, VITAL_BOUNDS.diastolicBp);
       // Pulse pressure inversion: systolic must be greater than diastolic
-      if (hasSys && hasDia && v.systolicBp! <= v.diastolicBp!) return "Unverified";
+      if (hasSys && hasDia && v.systolicBp! <= v.diastolicBp!) return "Invalid";
       return undefined;
     },
     clinicalTriage: (v) => {
@@ -318,9 +328,7 @@ const VITALS: ReadonlyArray<{
     format: (v) =>
       typeof v.heartRateBpm === "number" ? `${v.heartRateBpm} bpm` : NOT_RECORDED,
     sanityCheck: (v) =>
-      typeof v.heartRateBpm === "number" && outOfRange(v.heartRateBpm, VITAL_BOUNDS.heartRateBpm)
-        ? "Unverified"
-        : undefined,
+      typeof v.heartRateBpm === "number" ? rangeFlag(v.heartRateBpm, VITAL_BOUNDS.heartRateBpm) : undefined,
     clinicalTriage: (v) => {
       if (typeof v.heartRateBpm !== "number") return undefined;
       if (v.heartRateBpm > 100) {
@@ -339,9 +347,7 @@ const VITALS: ReadonlyArray<{
     format: (v) =>
       typeof v.spo2Percent === "number" ? `${v.spo2Percent}%` : NOT_RECORDED,
     sanityCheck: (v) =>
-      typeof v.spo2Percent === "number" && outOfRange(v.spo2Percent, VITAL_BOUNDS.spo2Percent)
-        ? "Unverified"
-        : undefined,
+      typeof v.spo2Percent === "number" ? rangeFlag(v.spo2Percent, VITAL_BOUNDS.spo2Percent) : undefined,
     clinicalTriage: (v) => {
       if (typeof v.spo2Percent !== "number") return undefined;
       if (v.spo2Percent < 92) {

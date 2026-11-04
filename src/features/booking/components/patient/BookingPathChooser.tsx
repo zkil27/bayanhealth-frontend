@@ -108,7 +108,7 @@ export function BookingPathChooser() {
         <div className="flex items-center gap-2 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[15px] leading-snug text-(--status-available-fg)">
           <Zap className="size-4 shrink-0" aria-hidden />
           <span>
-            <strong>Parehong daan, parehong presyo ({fee}) at parehong kalidad ng doktor</strong> — bilis lang ang pinagkaiba.
+            <strong>Same price ({fee}) and the same quality of doctor either way.</strong> The only difference is speed.
           </span>
         </div>
 
@@ -118,9 +118,9 @@ export function BookingPathChooser() {
             icon={<Zap />}
             illustration="patient/consult-now"
             title="Consult Now"
-            blurb="Ikokonekta ka namin sa unang available na doktor. Walang appointment na kailangan."
-            points={["I-fill up ang intake form, tapos maghintay"]}
-            cta="Simulan ang intake (Start intake)"
+            blurb="We'll connect you with the first available doctor. No appointment needed."
+            points={["Fill out the intake form, then wait"]}
+            cta="Start intake"
             emphasis
           />
 
@@ -129,7 +129,7 @@ export function BookingPathChooser() {
             icon={<CalendarClock />}
             illustration="patient/book-later"
             title="Book for later"
-            blurb="Maghanap ayon sa pangalan o specialty, suriin ang kalendaryo, at pumili ng oras."
+            blurb="Search by name or specialty, check the calendar, and pick a time."
             points={[
               isLoading
                 ? "Checking availability…"
@@ -141,7 +141,7 @@ export function BookingPathChooser() {
                     ? "No open slots published right now"
                     : "Doctor directory",
             ]}
-            cta="Pumili ng doktor (Browse doctors)"
+            cta="Browse doctors"
             loading={isLoading}
           />
         </div>

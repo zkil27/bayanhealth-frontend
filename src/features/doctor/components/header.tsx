@@ -59,7 +59,7 @@ export function DoctorHeader() {
       <div className="flex items-center gap-2">
         <div className="flex flex-col">
           <h1 className="font-display text-xl leading-tight font-bold text-(--text-heading) md:text-2xl">
-            Kumusta, Dr. {greetingName}
+            Hello, Dr. {greetingName}
           </h1>
           <p className="text-sm text-(--text-muted) capitalize">
             {weekday} · {longDate}

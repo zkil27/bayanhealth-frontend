@@ -39,26 +39,26 @@ import { BrandLinkButton } from "@/features/patient/components/redesign/primitiv
 import { patientPageClass } from "@/features/patient/components/PatientPage";
 import { getActiveConsultation } from "@/lib/patient/activeConsultationStorage";
 
-/** Quick triage symptoms tailored for Taglish elderly and family users (text-only, no emojis). */
+/** Quick triage symptoms tailored for elderly and family users (text-only, no emojis). */
 const QUICK_SYMPTOMS = [
-  { label: "Lagnat", query: "lagnat" },
-  { label: "Ubo't Sipon", query: "ubo-sipon" },
-  { label: "Sakit ng Ulo", query: "sakit-ng-ulo" },
-  { label: "Sakit ng Tiyan", query: "sakit-ng-tiyan" },
-  { label: "Pangangati", query: "pangangati" },
-  { label: "Sakit ng Katawan", query: "sakit-ng-katawan" },
+  { label: "Fever", query: "lagnat" },
+  { label: "Cough and colds", query: "ubo-sipon" },
+  { label: "Headache", query: "sakit-ng-ulo" },
+  { label: "Stomach ache", query: "sakit-ng-tiyan" },
+  { label: "Itching", query: "pangangati" },
+  { label: "Body aches", query: "sakit-ng-katawan" },
 ] as const;
 
 /** 8-tile 4×2 Grab-inspired services grid with single scannable labels (zero truncation). */
 const SERVICE_TILES = [
   {
-    title: "Konsulta",
+    title: "Consult",
     href: "/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult",
     icon: Video,
     tone: "teal",
   },
   {
-    title: "Pa-schedule",
+    title: "Schedule",
     href: "/patient/booking/search",
     icon: CalendarClock,
     tone: "navy",
@@ -76,7 +76,7 @@ const SERVICE_TILES = [
     tone: "navy",
   },
   {
-    title: "Reseta",
+    title: "Prescription",
     href: "/patient/booking/createBooking?mode=on-demand&serviceRequested=teleconsult",
     icon: Pill,
     tone: "teal",
@@ -88,13 +88,13 @@ const SERVICE_TILES = [
     tone: "teal",
   },
   {
-    title: "Talaan",
+    title: "Records",
     href: "/patient/health",
     icon: HeartPulse,
     tone: "teal",
   },
   {
-    title: "Lahat",
+    title: "All services",
     href: "/patient/booking",
     icon: LayoutGrid,
     tone: "neutral",
@@ -110,7 +110,7 @@ const SERVICE_TILES = [
  * - Quick symptom chips
  * - State-driven Live Activity card (Live Room, Scheduled, Post-Consult, Idle)
  * - 4×2 service grid with single scannable labels and 48px+ touch targets
- * - "Para sa'yo" curated clinical health guidance
+ * - "For you" curated clinical health guidance
  *
  * Scales responsively on desktop (`lg+`) with a spacious two-column
  * layout (`lg:max-w-6xl xl:max-w-7xl`) while preserving mobile ergonomic
@@ -195,7 +195,7 @@ export function PatientHome() {
   return (
     <div
       data-slot="patient-home"
-      className="flex h-full min-h-0 w-full flex-col justify-start pb-4"
+      className="flex w-full flex-1 flex-col justify-start"
     >
       {/* ----------------------------- 1. Top Bar: Search & Notification */}
       <header
@@ -232,7 +232,7 @@ export function PatientHome() {
                     searchInputRef.current?.blur();
                   }
                 }}
-                placeholder="Maghanap ng sintomas o doktor…"
+                placeholder="Search symptoms or doctors…"
                 role="combobox"
                 aria-expanded={isSearchOpen}
                 aria-haspopup="listbox"
@@ -246,7 +246,7 @@ export function PatientHome() {
                     setSearchQuery("");
                     searchInputRef.current?.focus();
                   }}
-                  aria-label="I-clear ang paghahanap"
+                  aria-label="Clear search"
                   className="absolute right-2.5 flex size-7 items-center justify-center rounded-full text-(--text-muted) hover:bg-(--surface-warm) hover:text-(--text-heading)"
                 >
                   <X className="size-3.5" />
@@ -256,7 +256,7 @@ export function PatientHome() {
 
             <Link
               href="/patient/health"
-              aria-label="Tingnan ang iyong mga abiso"
+              aria-label="View your notifications"
               onClick={() => setIsSearchOpen(false)}
               className="flex size-10 shrink-0 items-center justify-center rounded-(--radius-card) border border-white/25 bg-white/10 text-white shadow-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
@@ -279,7 +279,7 @@ export function PatientHome() {
                     >
                       <Search className="size-4 shrink-0" aria-hidden />
                       <span className="truncate">
-                        Hanapin ang doktor: <strong className="font-bold underline decoration-(--action-primary)/40 decoration-2 underline-offset-2">&ldquo;{searchQuery}&rdquo;</strong>
+                        Search doctors for: <strong className="font-bold underline decoration-(--action-primary)/40 decoration-2 underline-offset-2">&ldquo;{searchQuery}&rdquo;</strong>
                       </span>
                     </button>
 
@@ -289,12 +289,12 @@ export function PatientHome() {
                       className="flex min-h-11 items-center gap-2.5 rounded-(--radius-md) border border-(--border-subtle) px-3 py-2.5 text-[13px] font-semibold text-(--text-heading) hover:bg-(--surface-warm) transition-colors"
                     >
                       <Video className="size-4 shrink-0 text-(--status-available-fg)" aria-hidden />
-                      <span>Kumonsulta agad (On-Demand)</span>
+                      <span>Consult now (on-demand)</span>
                     </Link>
 
                     <div className="pt-1">
                       <p className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wide">
-                        Mga kaugnay na sintomas
+                        Related symptoms
                       </p>
                       {filteredSymptoms.length > 0 ? (
                         <div className="mt-2 flex flex-col gap-1.5">
@@ -312,7 +312,7 @@ export function PatientHome() {
                         </div>
                       ) : (
                         <div className="mt-2 rounded-(--radius-md) bg-(--surface-warm)/60 p-3 text-center text-xs text-(--text-muted)">
-                          Walang tiyak na sintomas na tumugma para sa &ldquo;{searchQuery}&rdquo;.
+                          No symptoms match &ldquo;{searchQuery}&rdquo;.
                         </div>
                       )}
                     </div>
@@ -322,10 +322,10 @@ export function PatientHome() {
                     <div className="flex items-center justify-between gap-2 border-b border-(--border-subtle) pb-2">
                       <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-(--status-available-fg) uppercase">
                         <Stethoscope className="size-3.5" aria-hidden />
-                        Mabilisang Sintomas
+                        Common symptoms
                       </span>
                       <span className="text-[11px] font-medium text-(--text-muted)">
-                        Pumili bago mag-konsulta
+                        Pick one before you consult
                       </span>
                     </div>
 
@@ -351,7 +351,7 @@ export function PatientHome() {
                       >
                         <span className="flex items-center gap-2.5">
                           <Search className="size-4 text-(--action-primary)" aria-hidden />
-                          Tingnan ang lahat ng doktor
+                          See all doctors
                         </span>
                         <ChevronRight className="size-4 text-(--text-muted)" aria-hidden />
                       </Link>
@@ -378,24 +378,24 @@ export function PatientHome() {
       <div
         className={patientPageClass(
           "wide",
-          "min-h-full justify-start gap-4 pt-4",
+          "min-h-full justify-start gap-4 pt-4 pb-4 sm:pb-4",
         )}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 lg:max-w-none lg:mx-0 lg:gap-5">
           {/* --------------------------------------- 2. Emergency Interceptor Strip */}
         <aside
           role="note"
-          aria-label="Paalala sa emergency"
+          aria-label="Emergency notice"
           className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-(--danger-border) bg-(--danger-bg) p-3 text-(--danger-fg) shadow-(--shadow-xs)"
         >
           <div className="flex min-w-0 items-start gap-2.5">
             <ShieldAlert className="mt-0.5 size-4.5 shrink-0 text-(--danger-fg)" aria-hidden />
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-(--danger-fg)">
-                Hindi para sa emergency
+                Not for emergencies
               </p>
               <p className="text-[11.5px] leading-tight text-(--danger-fg)/85">
-                Kung kagyat, tumawag agad sa 911 o pumunta sa ospital.
+                If it&apos;s urgent, call 911 or go to a hospital right away.
               </p>
             </div>
           </div>
@@ -428,7 +428,7 @@ export function PatientHome() {
             ) : (
               <section
                 data-slot="patient-home-activity"
-                aria-label="Aktibong Konsulta"
+                aria-label="Active consultation"
               >
                 <LiveActivityCard derivation={derivation} bookings={bookings} />
               </section>
@@ -437,11 +437,11 @@ export function PatientHome() {
             {/* --------------------------------------- 4. Grab-Style 4x2 Service Grid */}
             <section
               data-slot="patient-home-services"
-              aria-label="Mga Serbisyo"
+              aria-label="Services"
               className="flex flex-col gap-2.5 sm:gap-3"
             >
               <h2 className="text-[17px] font-bold tracking-tight text-(--text-heading)">
-                Mga Serbisyo
+                Services
               </h2>
 
               <div className="grid grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
@@ -476,15 +476,15 @@ export function PatientHome() {
             </section>
           </div>
 
-          {/* Right Sidebar Column: "Para sa'yo" Curated Advice Card & Clinical Assurance */}
+          {/* Right Sidebar Column: "For you" Curated Advice Card & Clinical Assurance */}
           <div className="flex flex-col gap-4 lg:col-span-4 lg:gap-5">
             <section
-              aria-label="Pang-araw-araw na payong pangkalusugan"
+              aria-label="Daily health tips"
               className="flex flex-col gap-2.5"
             >
               <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-(--text-heading)">
                 <HeartPulse className="size-4 text-(--status-available-fg)" aria-hidden />
-                Para sa&apos;yo
+                For you
               </h2>
 
               <Link
@@ -497,10 +497,10 @@ export function PatientHome() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <span className="inline-block text-[11px] font-semibold text-(--status-available-fg) uppercase tracking-wide">
-                      Pangangalaga sa Kalusugan
+                      Health care
                     </span>
                     <h3 className="mt-0.5 text-[14px] font-bold text-(--text-heading) group-hover:text-(--action-primary) line-clamp-2">
-                      Tamang Pag-inom ng Tubig at Pahinga
+                      Drinking enough water and getting rest
                     </h3>
                     <p className="mt-1 text-[12px] text-(--text-muted)">
                       2 min read • BayanHealth Clinical Team
@@ -513,20 +513,20 @@ export function PatientHome() {
               {/* Trust & Clinical Assurance Card */}
               <div className="rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-4 shadow-(--shadow-card)">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                  Garantiyang BayanHealth
+                  The BayanHealth guarantee
                 </h3>
                 <ul className="mt-3 flex flex-col gap-2.5 text-[12.5px] text-(--text-body)">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 shrink-0 text-(--status-available-fg)" />
-                    <span>100% PRC-Licensed mga Doktor</span>
+                    <span>100% PRC-licensed doctors</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 shrink-0 text-(--status-available-fg)" />
-                    <span>FDA-Compliant Electronic Reseta</span>
+                    <span>FDA-compliant e-prescriptions</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 shrink-0 text-(--status-available-fg)" />
-                    <span>Ligtas at Pribadong Medikal Records</span>
+                    <span>Safe and private medical records</span>
                   </li>
                 </ul>
               </div>
@@ -538,15 +538,15 @@ export function PatientHome() {
                     <BriefcaseMedical className="size-5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-(--text-heading) truncate">Kailangan ng gabay?</p>
-                    <p className="text-[11.5px] text-(--text-muted) truncate">Alamin ang proseso ng telekonsulta</p>
+                    <p className="text-[13px] font-bold text-(--text-heading) truncate">Need a guide?</p>
+                    <p className="text-[11.5px] text-(--text-muted) truncate">Learn how teleconsultation works</p>
                   </div>
                 </div>
                 <Link
                   href="/patient/health?tab=medhub"
                   className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-(--radius-pill) border border-(--border-subtle) px-3 text-xs font-semibold text-(--text-heading) hover:bg-(--surface-warm)"
                 >
-                  Basahin
+                  Read
                 </Link>
               </div>
             </section>
@@ -598,15 +598,15 @@ function LiveActivityCard({
               Live Consultation
             </span>
             <span className="text-xs font-semibold text-(--status-available-fg)">
-              Bukas na ang silid
+              Your room is open
             </span>
           </div>
 
           <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-(--text-heading)">
-            Nagsimula na ang iyong konsulta
+            Your consultation has started
           </h3>
           <p className="mt-0.5 text-[14px] text-(--text-body)">
-            Naghihintay si {doctorName} sa consultation room. I-tap upang bumalik agad.
+            {doctorName} is waiting in the consultation room. Tap to go back now.
           </p>
         </div>
 
@@ -617,7 +617,7 @@ function LiveActivityCard({
             iconRight={<ArrowRight className="size-4" />}
             className="w-full sm:w-56 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm) font-bold"
           >
-            Bumalik sa Consultation Room
+            Back to your consultation
           </BrandLinkButton>
         </div>
       </div>
@@ -638,22 +638,22 @@ function LiveActivityCard({
           <div className="flex items-center gap-2.5">
             <span className="inline-flex items-center gap-1.5 rounded-(--radius-pill) border border-(--action-primary)/30 bg-(--action-primary)/10 px-2.5 py-1 text-[11px] font-bold text-(--status-available-fg) uppercase tracking-wide">
               <span className="size-2 rounded-full bg-(--action-primary)" />
-              {isRoomReady ? "Handa na ang Silid" : "Nasa Pila ng Konsulta"}
+              {isRoomReady ? "Room ready" : "In the queue"}
             </span>
             <span className="text-xs font-semibold text-(--status-available-fg)">
-              {isDoctorAssigned ? `Nakatalaga si ${doctorName}` : "Naghahanap ng available na doktor…"}
+              {isDoctorAssigned ? `Assigned to ${doctorName}` : "Finding an available doctor…"}
             </span>
           </div>
 
           <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-(--text-heading)">
             {isRoomReady
-              ? "Kasalukuyang bukas ang iyong telekonsulta"
-              : "Aktibo ang iyong request para sa telekonsulta"}
+              ? "Your teleconsultation is open"
+              : "Your teleconsultation request is active"}
           </h3>
           <p className="mt-0.5 text-[13.5px] text-(--text-body)">
             {isRoomReady
-              ? `Maaari ka nang pumasok sa consultation waiting room upang makausap si ${doctorName}.`
-              : "Manatili sa linya. Ikokonekta ka namin sa unang available na lisensyadong manggagamot."}
+              ? `You can now join the waiting room to talk with ${doctorName}.`
+              : "Please stay on the line. We'll connect you with the first available licensed doctor."}
           </p>
         </div>
 
@@ -664,7 +664,7 @@ function LiveActivityCard({
             iconRight={<ArrowRight className="size-4" />}
             className="w-full sm:w-56 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm) font-bold"
           >
-            {isRoomReady ? "Pumasok sa Waiting Room" : "Bumalik sa Status ng Konsulta"}
+            {isRoomReady ? "Join waiting room" : "Back to consultation status"}
           </BrandLinkButton>
         </div>
       </div>
@@ -682,15 +682,15 @@ function LiveActivityCard({
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 text-[11px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
               <Clock className="size-3 text-amber-700 dark:text-amber-400" />
-              Hindi Pa Natatapos na Konsulta
+              Unfinished consultation
             </span>
           </div>
 
           <h3 className="mt-2 text-[18px] sm:text-[20px] font-bold text-slate-900 dark:text-slate-100">
-            Kailangan pa ng iyong impormasyon
+            We still need a few details
           </h3>
           <p className="mt-0.5 text-[13.5px] text-slate-600 dark:text-slate-300">
-            May nasimulan kang booking. Kumpletuhin ang intake form o payment hold upang makapasok sa pila ng doktor.
+            You started a booking. Complete the intake form or payment hold to join the doctor&apos;s queue.
           </p>
         </div>
 
@@ -701,7 +701,7 @@ function LiveActivityCard({
             iconRight={<ArrowRight className="size-4" />}
             className="w-full sm:w-56 bg-amber-600 hover:bg-amber-700 text-white justify-center shadow-(--shadow-sm) font-bold"
           >
-            Ipagpatuloy ang Booking
+            Continue booking
           </BrandLinkButton>
         </div>
       </div>
@@ -718,10 +718,10 @@ function LiveActivityCard({
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-(--status-available-fg)">
             <CalendarClock className="size-4" aria-hidden />
-            Paparating na Konsulta
+            Upcoming consultation
           </span>
           <span className="rounded-full bg-(--surface-accent-soft) px-2 py-0.5 text-[11px] font-bold text-(--status-available-fg)">
-            Nakumpirma
+            Confirmed
           </span>
         </div>
 
@@ -738,14 +738,14 @@ function LiveActivityCard({
             href={`/patient/booking/getBooking/${active.bookingId}`}
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-(--radius-pill) border border-(--border-default) bg-(--surface-warm) px-3 py-1.5 text-xs font-bold text-(--text-heading) hover:bg-(--surface-card)"
           >
-            Tingnan
+            View
           </Link>
         </div>
 
         <p className="flex items-start gap-1.5 rounded-(--radius-md) bg-(--surface-warm) p-2.5 text-[12px] text-(--text-muted)">
           <Info className="mt-0.5 size-3.5 shrink-0 text-(--status-available-fg)" aria-hidden />
           <span>
-            <strong className="font-semibold text-(--text-heading)">Paalala:</strong> Ihanda ang mga larawan ng lumang reseta o laboratory results bago magsimula ang tawag.
+            <strong className="font-semibold text-(--text-heading)">Reminder:</strong> Have photos of past prescriptions or lab results ready before the call starts.
           </span>
         </p>
       </div>
@@ -762,17 +762,17 @@ function LiveActivityCard({
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-(--status-available-fg)">
             <CheckCircle2 className="size-4 text-(--status-available-fg)" />
-            Tapos na ang Konsulta
+            Consultation finished
           </span>
-          <span className="text-xs text-(--text-subtle)">Kamakailan</span>
+          <span className="text-xs text-(--text-subtle)">Recent</span>
         </div>
 
         <div>
           <h3 className="text-[16px] font-bold text-(--text-heading)">
-            Care Summary mula kay {doctorName}
+            Care summary from {doctorName}
           </h3>
           <p className="mt-0.5 text-[13px] text-(--text-muted)">
-            Maaari mo nang tingnan o i-download ang iyong digital prescription at medikal na payo.
+            You can now view or download your digital prescription and medical advice.
           </p>
         </div>
 
@@ -783,13 +783,13 @@ function LiveActivityCard({
             className="flex-1"
             iconRight={<ChevronRight className="size-4" />}
           >
-            Buksan ang Care Kit
+            Open care kit
           </BrandLinkButton>
           <Link
             href="/patient/booking/createBooking?mode=on-demand"
             className="inline-flex min-h-11 items-center justify-center rounded-(--radius-pill) border border-(--border-subtle) px-3 text-xs font-semibold text-(--text-heading) hover:bg-(--surface-warm)"
           >
-            Mag-book Ulit
+            Book again
           </Link>
         </div>
       </div>
@@ -805,10 +805,10 @@ function LiveActivityCard({
     >
       <div className="min-w-0 flex-1">
         <h3 className="text-[20px] sm:text-[22px] font-bold text-(--text-heading) leading-snug">
-          Kailangan mo ng doktor ngayon?
+          Need a doctor now?
         </h3>
         <p className="mt-1 text-[13px] sm:text-[13.5px] text-(--text-muted)">
-          Available ang PRC doctor sa loob ng 5–15 minuto para sa agarang telekonsulta.
+          A PRC doctor is available within 5–15 minutes for an immediate teleconsultation.
         </p>
       </div>
 
@@ -818,7 +818,7 @@ function LiveActivityCard({
           size="md"
           className="w-full sm:w-52 bg-(--action-primary) text-(--action-primary-text) justify-center shadow-(--shadow-sm)"
         >
-          Kumonsulta Agad
+          Consult now
         </BrandLinkButton>
       </div>
     </div>

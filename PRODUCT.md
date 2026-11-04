@@ -33,7 +33,7 @@ Success for doctors: triage, consult, and documentation are fast and safe, and t
 - This repository is a **UI/UX-only fork** (see `AGENTS.md`, `UI_UX_AGENT.md`). No business-logic, API, contract, or backend changes. Every UI change is logged in `CHANGELOG_UI_V2.md` and mirrored upstream (see `UI_HANDOFF.md`).
 - Stack: Next.js 16 App Router, React 19, Tailwind v4, shadcn (base-nova) + Radix, vaul drawers, lucide-react, TipTap, TanStack Query, Zustand.
 - Doctor mobile delivery confirmed as **responsive web only** (no PWA, no native shell, no push notifications in this fork).
-- Doctor copy: clinical **English**, with warm **Taglish** allowed only in helper and empty-state microcopy.
+- UI copy is **English only**, for patients and doctors (decided 2026-11-03 after the Dr. Nhor / Dr. Myles review). No Tagalog or Taglish in UI strings. Reviewed Filipino text inside backend-supplied clinical content is shown only as a fallback when no English exists.
 - Undecided: how mobile e-signature applies to S2 (dangerous drug) prescriptions under PH rules.
 
 ## Brand Commitments

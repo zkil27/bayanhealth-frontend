@@ -12,7 +12,7 @@ import { ProfileSubPage } from "@/features/patient/components/profile/ProfileSub
  */
 export default function DoctorPreferencesPage() {
   return (
-    <ProfileSubPage title="Doctor preferences">
+    <ProfileSubPage title="Preferences">
       <DoctorPreferencesContent />
     </ProfileSubPage>
   );

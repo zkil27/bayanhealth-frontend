@@ -7,6 +7,7 @@ import { AlertTriangle, Info, MessageSquare, Thermometer, X } from "lucide-react
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { bookingServices } from "@/types/booking.types";
+import { formatVital as vitalReadBack, type VitalKind } from "@/features/booking/lib/vitalStatus";
 import type { IntakeSafetyScreen } from "@/features/booking/lib/api/intake";
 
 import type { OnDemandRequest } from "../../lib/api/requestPool";
@@ -152,11 +153,11 @@ export function TriageDetailsModal({
             </span>
             {item.intakeSubmitted ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <VitalStat label="Temp" value={formatVital(item.vitals?.temperatureC, "°C")} />
-                <VitalStat label="Systolic" value={formatVital(item.vitals?.systolicBp, "mmHg")} />
-                <VitalStat label="Diastolic" value={formatVital(item.vitals?.diastolicBp, "mmHg")} />
-                <VitalStat label="Heart rate" value={formatVital(item.vitals?.heartRateBpm, "bpm")} />
-                <VitalStat label="SpO2" value={formatVital(item.vitals?.spo2Percent, "%")} />
+                <VitalStat label="Temp" value={formatReading("temperatureC", item.vitals?.temperatureC)} />
+                <VitalStat label="Systolic" value={formatReading("systolicBp", item.vitals?.systolicBp)} />
+                <VitalStat label="Diastolic" value={formatReading("diastolicBp", item.vitals?.diastolicBp)} />
+                <VitalStat label="Heart rate" value={formatReading("heartRateBpm", item.vitals?.heartRateBpm)} />
+                <VitalStat label="SpO2" value={formatReading("spo2Percent", item.vitals?.spo2Percent)} />
               </div>
             ) : (
               <p className="rounded-xl border border-dashed border-(--border-subtle) p-3 text-(--text-muted)">
@@ -237,10 +238,6 @@ function VitalStat({ label, value }: { label: string; value?: string }) {
   );
 }
 
-function formatVital(value: number | undefined, unit: string): string | undefined {
-  if (typeof value !== "number") return undefined;
-  return unit === "%" ? `${value}%` : `${value} ${unit}`;
-}
 
 function hasScreenAnswer(screen: IntakeSafetyScreen | undefined): boolean {
   return (
@@ -279,4 +276,14 @@ function FeverBadge({ feverDays }: { feverDays?: number }) {
       {feverDays === 0 ? "No fever" : `Fever ${feverDays} day${feverDays === 1 ? "" : "s"}`}
     </Badge>
   );
+}
+
+/**
+ * A home reading for the doctor's read-back. Not recorded stays undefined; a
+ * reading that is not believable as typed shows "Too low", "Too high" or
+ * "Invalid" instead of the number (pilot feedback).
+ */
+function formatReading(kind: VitalKind, value: number | undefined): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  return vitalReadBack(kind, value);
 }

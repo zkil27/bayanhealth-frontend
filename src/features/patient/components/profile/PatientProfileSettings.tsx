@@ -7,7 +7,6 @@ import {
   Bell,
   ChevronRight,
   CircleHelp,
-  Languages,
   Lock,
   LogOut,
   Moon,
@@ -130,24 +129,19 @@ export function PatientProfileSettings() {
           />
           <Row
             icon={<SlidersHorizontal />}
-            label="Doctor preferences"
+            label="Preferences"
             href="/patient/profile/doctor-preferences"
           />
           <Row icon={<Phone />} label="Emergency contact" soon />
           <Row icon={<Users />} label="Family members" soon />
         </SettingsCard>
 
-        <SettingsCard label="Preferences">
-          <Row
-            icon={<Languages />}
-            label="Language"
-            soon
-            trailing={
-              <span className="text-[14px] text-(--text-subtle)">
-                English (US)
-              </span>
-            }
-          />
+        {/*
+          Renamed from "Preferences" so it does not collide with the
+          Preferences row above. The "Language · Soon" row is gone: the app is
+          English-only (pilot decision 2026-11-03).
+        */}
+        <SettingsCard label="App settings">
           <DarkModeRow />
           <Row
             icon={<Lock />}

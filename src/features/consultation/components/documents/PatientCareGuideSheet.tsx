@@ -33,7 +33,7 @@ export function PatientCareGuideSheet({
   className,
 }: PatientCareGuideSheetProps) {
   const rawPatientName = patient?.name || "—";
-  const patientDisplayName = patient?.name ? `Mahal naming ${patient.name}` : "Gabay sa Pangangalaga";
+  const patientDisplayName = patient?.name ? `Dear ${patient.name}` : "Care guide";
   const patientAgeSex =
     [patient?.age ? `${patient.age} y/o` : null, patient?.sex || null]
       .filter(Boolean)
@@ -48,7 +48,7 @@ export function PatientCareGuideSheet({
   const caseId = patient?.caseId || "—";
   const docId = verification?.documentId || (patient?.caseId ? `CG-${patient.caseId}` : "—");
 
-  const diagnosisTitle = payload?.title || "Gabay sa Pangangalaga";
+  const diagnosisTitle = payload?.title || "Care guide";
 
   return (
     <article
@@ -60,8 +60,8 @@ export function PatientCareGuideSheet({
       )}
     >
       <DocumentSheetHeader
-        title="GABAY SA IYONG PAGPAPAGALING"
-        subtitle="Pagkatapos ng Online Check-up"
+        title="YOUR RECOVERY GUIDE"
+        subtitle="After your online check-up"
         isDraft={isDraft}
       />
 
@@ -69,15 +69,15 @@ export function PatientCareGuideSheet({
       <section className="mb-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-0 sm:divide-x sm:divide-slate-300 text-xs text-slate-700">
           <div className="col-span-2 sm:col-span-1 sm:pr-3">
-            <span className="text-slate-500 block text-[11px]">Pasyente:</span>
+            <span className="text-slate-500 block text-[11px]">Patient:</span>
             <span className="font-bold text-slate-900">{rawPatientName}</span>
           </div>
           <div className="sm:px-3">
-            <span className="text-slate-500 block text-[11px]">Edad / Kasarian:</span>
+            <span className="text-slate-500 block text-[11px]">Age / Sex:</span>
             <span className="font-medium text-slate-900">{patientAgeSex}</span>
           </div>
           <div className="sm:px-3">
-            <span className="text-slate-500 block text-[11px]">Petsa:</span>
+            <span className="text-slate-500 block text-[11px]">Date:</span>
             <span className="font-medium text-slate-900">{dateOfConsultation}</span>
           </div>
           <div className="col-span-2 sm:col-span-1 sm:pl-3">
@@ -99,11 +99,7 @@ export function PatientCareGuideSheet({
             <h2 className="font-bold text-sm text-(--navy-700)">
               Diagnosis: {diagnosisTitle}
             </h2>
-            {payload?.titleFilipino ? (
-              <p className="text-slate-600 text-xs italic font-medium">
-                {payload.titleFilipino}
-              </p>
-            ) : null}
+            {/* English-only app (2026-11-03): `payload.titleFilipino` is no longer shown to patients. */}
           </div>
         </div>
       </section>
@@ -127,7 +123,7 @@ export function PatientCareGuideSheet({
             </div>
           ))
         ) : (
-          <p className="py-4 text-center text-xs text-slate-500 italic">Walang partikular na gabay na nakasaad.</p>
+          <p className="py-4 text-center text-xs text-slate-500 italic">No specific guidance was given.</p>
         )}
 
         {/* Warning Signs from Payload */}
@@ -138,7 +134,7 @@ export function PatientCareGuideSheet({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[200px_minmax(0,1fr)] gap-2 items-start w-full pt-1">
               <span className="font-bold text-red-700 tracking-wider uppercase text-xs">
-                PUMUNTA AGAD SA ER KUNG MAY / WARNING SIGNS
+                WARNING SIGNS: GO TO THE ER RIGHT AWAY IF YOU HAVE
               </span>
               <ul className="list-disc pl-5 space-y-1 text-red-700 font-medium">
                 {payload.warningSigns.map((sign, i) => (
@@ -152,34 +148,34 @@ export function PatientCareGuideSheet({
 
       {/* Two Outlined Callout Cards */}
       <section className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Para Hindi Sayang Ang Gastos */}
+        {/* Make every peso count */}
         <div className="rounded-xl border border-(--teal-700) p-3 text-xs flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Wallet className="size-5" />
           </div>
           <div className="flex flex-col gap-1">
             <h3 className="font-bold text-xs text-(--navy-700) tracking-wider uppercase">
-              PARA HINDI SAYANG ANG GASTOS
+              MAKE EVERY PESO COUNT
             </h3>
             <ul className="list-disc pl-4 space-y-0.5 text-slate-700 text-[11px]">
-              <li>Puwede magtanong kung may mas murang generic na gamot.</li>
-              <li>Huwag basta bumili ng maraming gamot kung hindi nireseta.</li>
-              <li>Dalhin ang lumang reseta at mga test results sa susunod na check-up.</li>
+              <li>You can ask if a cheaper generic medicine is available.</li>
+              <li>Don&apos;t buy extra medicines that weren&apos;t prescribed.</li>
+              <li>Bring your old prescriptions and test results to your next check-up.</li>
             </ul>
           </div>
         </div>
 
-        {/* Nahihirapan Sumunod Sa Plano? */}
+        {/* Finding the plan hard to follow? */}
         <div className="rounded-xl border border-(--teal-700) p-3 text-xs flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-(--teal-700) bg-(--teal-100)/30 text-(--teal-700)">
             <Users className="size-5" />
           </div>
           <div className="flex flex-col gap-1">
             <h3 className="font-bold text-xs text-(--navy-700) tracking-wider uppercase">
-              NAHIHIRAPAN SUMUNOD SA PLANO?
+              FINDING THE PLAN HARD TO FOLLOW?
             </h3>
             <p className="text-slate-700 text-[11px] leading-relaxed">
-              Ipakita ang gabay na ito sa anak, kapamilya, caregiver, o barangay health worker na pinagkakatiwalaan ninyo para matulungan kayong masubaybayan ang tamang gamutan.
+              Show this guide to a child, family member, caregiver, or barangay health worker you trust so they can help you stay on track with your treatment.
             </p>
           </div>
         </div>
@@ -193,9 +189,9 @@ export function PatientCareGuideSheet({
           documentId: docId,
           status: isDraft ? "DRAFT" : "CARE PLAN AVAILABLE",
         }}
-        physicianRoleLabel="IMPORMASYON NG DOKTOR"
-        verificationTitle="SCAN PARA BUMALIK SA CARE PLAN"
-        scanInstruction="Makikita rito ang reseta at follow-up schedule"
+        physicianRoleLabel="DOCTOR INFORMATION"
+        verificationTitle="SCAN TO RETURN TO YOUR CARE PLAN"
+        scanInstruction="See your prescription and follow-up schedule here"
       />
     </article>
   );

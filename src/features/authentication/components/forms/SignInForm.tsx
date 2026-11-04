@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
+  CheckCircle2,
   Clock,
   Eye,
   EyeOff,
@@ -157,6 +159,13 @@ export function SignInForm() {
         </p>
       </div>
 
+      {searchParams.get("reset") === "1" && !errorState ? (
+        <p role="status" className="flex items-center gap-2 rounded-2xl bg-(--safe-bg) px-4 py-3 text-sm font-medium text-(--safe-fg)">
+          <CheckCircle2 aria-hidden className="size-4 shrink-0" />
+          Your password was changed. Sign in with your new password.
+        </p>
+      ) : null}
+
       {errorState?.kind === "not-authorized" && (
         <div className="space-y-1 rounded-2xl border border-(--danger-border) bg-(--danger-bg) p-4 text-xs text-(--danger-fg)">
           <div className="flex items-center gap-1.5 font-bold">
@@ -165,7 +174,10 @@ export function SignInForm() {
           </div>
           <p className="pl-5.5">
             Please double-check your credentials. For your protection, we
-            don&apos;t specify which one was incorrect.
+            don&apos;t specify which one was incorrect.{" "}
+            <Link href="/forgot-password" className="font-semibold underline underline-offset-2">
+              Reset your password
+            </Link>
           </p>
         </div>
       )}
@@ -282,6 +294,13 @@ export function SignInForm() {
           </button>
         </span>
       </label>
+
+      <Link
+        href="/forgot-password"
+        className="-mt-2 inline-flex min-h-11 items-center self-end text-sm font-semibold text-(--text-link) hover:text-(--text-link-hover) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+      >
+        Forgot password?
+      </Link>
 
       <button
         type="submit"

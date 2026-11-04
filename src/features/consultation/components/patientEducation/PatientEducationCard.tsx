@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BookOpen, ShieldCheck } from "lucide-react";
 
@@ -8,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
 import { useIdToken } from "@/stores/useAuthStore";
 import { RELEASED_ARTIFACT_POLL_MS } from "../../lib/releasedArtifacts";
 
@@ -35,10 +33,12 @@ type Language = "english" | "filipino";
  * saying "your doctor has not shared anything" invites a patient to chase a
  * clinician over a step that may never apply to their consultation.
  *
- * Two things are shown that the older placeholder generation could not provide:
- * a language toggle over reviewed English and Taglish text — not a machine
- * translation — and the citation, which is mandatory for corpus-backed content
- * (ADR-20260804-01) so a patient can see what the advice rests on.
+ * It shows the reviewed English text and the citation, which is mandatory for
+ * corpus-backed content (ADR-20260804-01) so a patient can see what the advice
+ * rests on. The English/Taglish reading toggle was removed: the app is
+ * English-only (pilot decision 2026-11-03). A section with no English text
+ * still falls back to the reviewed Filipino text, labelled, rather than
+ * hiding health guidance.
  */
 
 export function PatientEducationCard({
@@ -55,7 +55,7 @@ export function PatientEducationCard({
   poll?: boolean;
 }) {
   const idToken = useIdToken();
-  const [language, setLanguage] = useState<Language>("english");
+  const language: Language = "english";
 
   const { data, isLoading } = useQuery({
     queryKey: ["patient-education", consultationId, idToken],
@@ -80,7 +80,7 @@ export function PatientEducationCard({
     return (
       <div
         data-slot="patient-education-loading"
-        className="flex items-center gap-2 rounded-xl border p-4 text-sm text-muted-foreground"
+        className="flex items-center gap-2 rounded-xl border p-4 text-base text-muted-foreground"
       >
         <Spinner className="size-4" />
         Checking for guidance from your doctor…
@@ -93,29 +93,21 @@ export function PatientEducationCard({
 
   const payload = data.payload;
   const bilingual = payload.language === "bilingual";
-  const title =
-    language === "filipino" && payload.titleFilipino
-      ? payload.titleFilipino
-      : payload.title;
+  const title = payload.title;
 
   return (
-    <Card data-slot="patient-education" className="border-l-4 border-l-primary">
+    <Card data-slot="patient-education" className="border-primary/40">
       <CardHeader className="gap-2">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BookOpen className="size-4 shrink-0 text-primary" />
-            {title}
-          </CardTitle>
-          {bilingual ? (
-            <LanguageToggle value={language} onChange={setLanguage} />
-          ) : null}
-        </div>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <BookOpen aria-hidden className="size-5 shrink-0 text-primary" />
+          {title}
+        </CardTitle>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="flex items-center gap-1">
             <ShieldCheck className="size-3 shrink-0" />
             Reviewed by your doctor
           </Badge>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             Shared {new Date(data.releasedAt).toLocaleString()}
           </span>
         </div>
@@ -142,40 +134,6 @@ export function PatientEducationCard({
   );
 }
 
-function LanguageToggle({
-  value,
-  onChange,
-}: {
-  value: Language;
-  onChange: (next: Language) => void;
-}) {
-  return (
-    <div
-      className="flex items-center gap-1"
-      role="group"
-      aria-label="Reading language"
-    >
-      {(["english", "filipino"] as const).map((option) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={value === option}
-          onClick={() => onChange(option)}
-          className={cn(
-            "min-h-9 rounded-md border px-3 text-xs font-medium capitalize transition-colors",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-            value === option
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-background text-foreground hover:bg-accent",
-          )}
-        >
-          {option === "filipino" ? "Taglish" : "English"}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function Sections({
   payload,
   language,
@@ -197,11 +155,11 @@ function Sections({
 
         return (
           <section key={group.heading} className="flex flex-col gap-0.5">
-            <h3 className="text-sm font-semibold text-foreground">{group.heading}</h3>
-            <p className="text-sm whitespace-pre-wrap text-muted-foreground">{body}</p>
+            <h3 className="text-base font-semibold text-foreground">{group.heading}</h3>
+            <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground">{body}</p>
             {preferred === undefined && fallback !== undefined ? (
-              <span className="text-[11px] text-muted-foreground italic">
-                Not available in {language === "filipino" ? "Taglish" : "English"} yet
+              <span className="text-sm text-muted-foreground">
+                Shown in Filipino: an English version is not available yet.
               </span>
             ) : null}
           </section>

@@ -7,6 +7,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { NONE_OPTION } from "@/features/booking/constants/bookingConstants";
 import { cn } from "@/lib/utils";
 
+import { formatBloodPressure, formatVital } from "../../../lib/vitalStatus";
 import type { DynamicIntakeFormValues } from "../../../schemas/intakeSchema";
 import { DatePicker } from "../../DateTimePicker";
 import {
@@ -26,8 +27,8 @@ interface LedgerRow {
   label: string;
   primary: string;
   secondary?: string;
-  /** A UI page index — see `IntakePage` in `AuthenticatedIntakeForm.tsx`. */
-  editStep: number;
+  /** The page that holds this answer. */
+  editStep: "about" | "history" | "concern";
   editLabel: string;
 }
 
@@ -71,7 +72,7 @@ export function buildLedger(values: Values): LedgerRow[] {
       label: "Chief concern",
       primary: joinParts([tags.join(", "), teleconsult.chiefComplaint?.trim()]) || "Not answered",
       secondary: safety,
-      editStep: 2,
+      editStep: "concern",
       editLabel: "Edit chief concern",
     });
   }
@@ -83,7 +84,7 @@ export function buildLedger(values: Values): LedgerRow[] {
       personal.height && `${personal.height} cm`,
       personal.weight && `${personal.weight} kg`,
     ]) || undefined,
-    editStep: 0,
+    editStep: "about",
     editLabel: "Edit baseline profile",
   });
 
@@ -101,26 +102,27 @@ export function buildLedger(values: Values): LedgerRow[] {
       history?.currentMedications?.trim() && `Meds: ${history.currentMedications.trim()}`,
       history?.details?.trim() && `Surgeries: ${history.details.trim()}`,
     ]) || undefined,
-    editStep: 1,
+    editStep: "history",
     editLabel: "Edit medical history",
   });
 
   if (teleconsult) {
     const vitals = teleconsult.vitals;
+    // Status words ("Too low", "Invalid") instead of a mistyped number.
     const bp =
       vitals?.systolicBp != null || vitals?.diastolicBp != null
-        ? `BP: ${vitals?.systolicBp ?? "—"}/${vitals?.diastolicBp ?? "—"} mmHg`
+        ? `BP: ${formatBloodPressure(vitals?.systolicBp, vitals?.diastolicBp)}`
         : null;
     rows.push({
       label: "Home vitals",
       primary:
         joinParts([
-          vitals?.temperatureC != null && `Temp: ${vitals.temperatureC}°C`,
+          vitals?.temperatureC != null && `Temp: ${formatVital("temperatureC", vitals.temperatureC)}`,
           bp,
-          vitals?.heartRateBpm != null && `Pulse: ${vitals.heartRateBpm} bpm`,
-          vitals?.spo2Percent != null && `SpO₂: ${vitals.spo2Percent}%`,
+          vitals?.heartRateBpm != null && `Pulse: ${formatVital("heartRateBpm", vitals.heartRateBpm)}`,
+          vitals?.spo2Percent != null && `SpO₂: ${formatVital("spo2Percent", vitals.spo2Percent)}`,
         ]) || "None recorded",
-      editStep: 2,
+      editStep: "concern",
       editLabel: "Edit home vitals",
     });
 
@@ -139,7 +141,7 @@ export function buildLedger(values: Values): LedgerRow[] {
         review?.onset && `Started: ${review.onset}`,
         review?.pattern,
       ]) || undefined,
-      editStep: 3,
+      editStep: "concern",
       editLabel: "Edit pain assessment",
     });
   }
@@ -152,8 +154,8 @@ export function ReviewConsentStep({
   isOnDemand = false,
   children,
 }: {
-  /** A UI page index — see `IntakePage` in `AuthenticatedIntakeForm.tsx`. */
-  onEdit: (step: number) => void;
+  /** Opens the page that holds a row's answer. */
+  onEdit: (step: LedgerRow["editStep"]) => void;
   /**
    * On-demand bookings are matched to the next available doctor immediately,
    * like an on-demand ride — there is no appointment slot to state a

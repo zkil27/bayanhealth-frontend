@@ -19,6 +19,8 @@ export const PUBLIC_PATHS = [
   "/signIn",
   "/signUp",
   "/confirm",
+  // Password reset is for people who cannot sign in (pilot feedback).
+  "/forgot-password",
   "/intake",
   "/verify",
   "/medical-hub",

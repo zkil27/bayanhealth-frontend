@@ -127,6 +127,33 @@ export async function resendCode(email: string): Promise<void> {
   });
 }
 
+/**
+ * Start a password reset: Cognito emails a code to the account's verified
+ * address. Logic change (pilot feedback: Forgot Password), public-client
+ * action, no backend involved. Needs email account recovery enabled on the
+ * user pool.
+ */
+export async function forgotPassword(email: string): Promise<void> {
+  await post("ForgotPassword", {
+    ClientId: CLIENT_ID,
+    Username: email,
+  });
+}
+
+/** Finish a password reset with the emailed code and the new password. */
+export async function confirmForgotPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+): Promise<void> {
+  await post("ConfirmForgotPassword", {
+    ClientId: CLIENT_ID,
+    Username: email,
+    ConfirmationCode: code,
+    Password: newPassword,
+  });
+}
+
 export async function refreshSession(
   currentRefreshToken: string,
 ): Promise<Omit<AuthTokens, "refreshToken"> & { refreshToken: string }> {

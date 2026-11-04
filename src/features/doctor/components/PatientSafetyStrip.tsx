@@ -40,7 +40,7 @@ export function PatientSafetyStrip({
   age?: number;
   /** Human-readable sex, e.g. "Female". */
   sex?: string;
-  /** A short consultation reference, e.g. "Konsulta #1042". */
+  /** A short consultation reference, e.g. "Consultation #1042". */
   reference?: string;
   /** Recorded allergies worth warning about; omitted for an asserted "none". */
   allergies?: string;

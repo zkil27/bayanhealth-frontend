@@ -88,12 +88,12 @@ export function ConsultationChatPanel({
             // through the pane's overflow-hidden. The message list shrinks
             // instead, so the composer is always reachable.
             "flex h-full min-h-0 flex-1 flex-col gap-2 p-3 sm:gap-3 sm:p-4"
-          : "flex h-full min-h-72 flex-col gap-3 rounded-2xl border border-slate-200/70 bg-(--surface-card) p-4"
+          : "flex h-full min-h-72 flex-col gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4"
       }
       aria-label="Consultation chat"
     >
       <header className="flex shrink-0 items-center justify-between gap-2">
-        {embedded ? <span /> : <span className="text-sm font-semibold text-slate-900">Conversation</span>}
+        {embedded ? <span /> : <span className="text-base font-semibold text-(--text-heading)">Conversation</span>}
         <TransportBadge transport={transport} />
       </header>
 
@@ -127,7 +127,7 @@ function TransportBadge({
       <span
         data-slot="chat-transport"
         data-tone="success"
-        className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-teal-200/60 bg-teal-50 px-2 text-xs font-medium text-teal-800"
+        className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-(--surface-nav-accent)/40 bg-(--safe-bg) px-2.5 text-[13px] font-medium text-(--safe-fg)"
       >
         <Wifi className="h-3.5 w-3.5" />
         Realtime
@@ -139,7 +139,7 @@ function TransportBadge({
       <span
         data-slot="chat-transport"
         data-tone="warning"
-        className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-amber-200/60 bg-amber-50 px-2 text-xs font-medium text-amber-900"
+        className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-(--attention-border)/40 bg-(--attention-bg) px-2.5 text-[13px] font-medium text-(--attention-fg)"
       >
         <WifiOff className="h-3.5 w-3.5" />
         Offline mode
@@ -149,7 +149,7 @@ function TransportBadge({
   return (
     <span
       data-slot="chat-transport"
-      className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-500"
+      className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-(--border-default) bg-(--surface-canvas) px-2.5 text-[13px] font-medium text-(--text-muted)"
     >
       <Spinner className="size-3.5" />
       Connecting…
@@ -235,7 +235,7 @@ function MessageList({
     return (
       <div
         data-slot="chat-loading"
-        className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-slate-500"
+        className="flex min-h-0 flex-1 items-center justify-center gap-2 text-base text-(--text-muted)"
         role="status"
         aria-live="polite"
       >
@@ -249,7 +249,7 @@ function MessageList({
     return (
       <div
         data-slot="chat-empty"
-        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-sm text-slate-500"
+        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-base text-(--text-muted)"
       >
         <Illustration name="shared/no-conversations" size="sm" />
         <p>No messages yet. Say hello to start the consultation.</p>
@@ -270,8 +270,8 @@ function MessageList({
           data-pending={m.pending ? "true" : "false"}
           className={
             m.isOwn
-              ? "max-w-[80%] self-end rounded-2xl rounded-br-md bg-(--surface-nav) px-3 py-2 text-sm text-white"
-              : "max-w-[80%] self-start rounded-2xl rounded-bl-md bg-slate-100 px-3 py-2 text-sm text-slate-900"
+              ? "max-w-[85%] self-end rounded-2xl rounded-br-md bg-(--surface-nav) px-3.5 py-2.5 text-base leading-relaxed text-white"
+              : "max-w-[85%] self-start rounded-2xl rounded-bl-md border border-(--border-subtle) bg-(--surface-canvas) px-3.5 py-2.5 text-base leading-relaxed text-(--text-heading)"
           }
         >
           <span className="whitespace-pre-wrap break-words">{m.content}</span>
@@ -322,7 +322,7 @@ function ChatComposer({
           aria-label="Message to doctor"
           aria-invalid={validationError ? true : undefined}
           rows={2}
-          className="min-h-12 flex-1 resize-none rounded-2xl border-slate-200 bg-(--surface-card) text-base text-(--text-heading) placeholder:text-(--text-muted) focus-visible:border-(--surface-nav-accent) focus-visible:ring-(--surface-nav-accent)/30"
+          className="min-h-12 flex-1 resize-none rounded-2xl border-(--border-default) bg-(--surface-card) text-base text-(--text-heading) placeholder:text-(--text-muted) focus-visible:border-(--surface-nav-accent) focus-visible:ring-(--surface-nav-accent)/30"
         />
         <Button
           type="submit"
@@ -337,14 +337,14 @@ function ChatComposer({
         <p
           data-slot="chat-length-error"
           role="alert"
-          className="text-xs text-destructive"
+          className="text-sm text-destructive"
         >
           {validationError}
         </p>
       ) : input.length > MAX_CHAT_MESSAGE_LENGTH * 0.8 ? (
         // Only near the limit, as in `PatientChatRoom`: a permanent "0/4096"
         // row cost the composer a line it could not spare on a phone.
-        <p className="text-right text-xs text-slate-400">
+        <p className="text-right text-sm text-(--text-muted)">
           {input.length}/{MAX_CHAT_MESSAGE_LENGTH}
         </p>
       ) : null}

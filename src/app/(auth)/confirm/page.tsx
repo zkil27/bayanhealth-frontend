@@ -4,6 +4,8 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { MailCheck } from "lucide-react";
+
 import AppButton from "@/components/primitives/AppButton";
 import { parseSignUpRole } from "@/features/authentication/signup-handoff";
 import { CognitoError, confirmSignUp, resendCode } from "@/lib/cognito";
@@ -58,7 +60,9 @@ function ConfirmForm() {
     <div className="flex w-full items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 w-fit rounded-full bg-primary/10 p-4 text-3xl">📧</div>
+          <div className="mx-auto mb-3 w-fit rounded-full bg-primary/10 p-4 text-primary">
+            <MailCheck aria-hidden className="size-8" />
+          </div>
           <h2 className="text-xl font-semibold">Verify your email</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             We sent a 6-digit code to <span className="font-medium">{email || "your email"}</span>.

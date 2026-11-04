@@ -31,6 +31,7 @@ import {
   type IntakeVitals,
 } from "@/features/doctor/lib/api/bookingIntake";
 import { parseMedicalHistoryLines } from "@/features/consultation/components/postConsultation/PatientDetails";
+import { classifyVital, formatBloodPressure, formatVital } from "@/features/booking/lib/vitalStatus";
 import {
   CYCLE_PATTERN_LABELS,
   PREGNANCY_POSSIBILITY_LABELS,
@@ -306,33 +307,33 @@ function MedicalHistoryCard({ history }: { history?: IntakeStructuredMedicalHist
 }
 
 function VitalsCard({ vitals }: { vitals?: IntakeVitals }) {
-  const hasVitals = Boolean(
-    vitals?.temperatureC || vitals?.systolicBp || vitals?.heartRateBpm || vitals?.spo2Percent,
+  // `!= null`, not truthiness: a typed 0 is a (bad) reading, not "nothing logged".
+  const hasVitals = [vitals?.temperatureC, vitals?.systolicBp, vitals?.diastolicBp, vitals?.heartRateBpm, vitals?.spo2Percent].some(
+    (value) => value != null,
   );
+  // Readings that are not believable as typed show "Too low", "Too high" or
+  // "Invalid" instead of the number (pilot feedback).
+  const show = (text: string) => (text === "Not recorded" ? "—" : text);
 
   return (
     <div className="rounded-xl border border-(--border-subtle) bg-(--surface-card) p-3 sm:p-3.5 shadow-2xs flex-1 min-h-fit flex flex-col justify-center" data-slot="room-intake-vitals">
-      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
-        <Activity className="size-3 text-(--surface-nav)" />
-        <span>Self-Reported Vitals</span>
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-(--text-muted)">
+        <Activity aria-hidden className="size-3.5 text-(--surface-nav)" />
+        <span>Self-reported vitals</span>
       </div>
       {hasVitals ? (
         <div className="grid grid-cols-4 gap-2 text-center">
           <VitalTile
             label="Temp"
-            value={vitals?.temperatureC ? `${vitals.temperatureC}°C` : "—"}
-            isElevated={typeof vitals?.temperatureC === "number" && vitals.temperatureC >= 38.0}
+            value={show(formatVital("temperatureC", vitals?.temperatureC))}
+            isElevated={classifyVital("temperatureC", vitals?.temperatureC) === "ok" && (vitals?.temperatureC ?? 0) >= 38.0}
           />
           <VitalTile
             label="BP"
-            value={
-              vitals?.systolicBp
-                ? `${vitals.systolicBp}/${vitals.diastolicBp ?? "—"}`
-                : "—"
-            }
+            value={show(formatBloodPressure(vitals?.systolicBp, vitals?.diastolicBp)).replace(" mmHg", "")}
           />
-          <VitalTile label="Pulse" value={vitals?.heartRateBpm ? `${vitals.heartRateBpm} bpm` : "—"} />
-          <VitalTile label="SpO₂" value={vitals?.spo2Percent ? `${vitals.spo2Percent}%` : "—"} />
+          <VitalTile label="Pulse" value={show(formatVital("heartRateBpm", vitals?.heartRateBpm))} />
+          <VitalTile label="SpO₂" value={show(formatVital("spo2Percent", vitals?.spo2Percent))} />
         </div>
       ) : (
         <p className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-2 text-(--text-muted) italic text-xs">

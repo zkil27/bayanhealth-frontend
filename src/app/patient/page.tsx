@@ -13,7 +13,7 @@ import { PatientHome } from "@/features/patient/components/homepage/PatientHome"
  */
 export default function Page() {
   return (
-    <section className="flex w-full min-h-0 flex-1 flex-col">
+    <section className="flex w-full flex-1 flex-col">
       <PatientHome />
     </section>
   );

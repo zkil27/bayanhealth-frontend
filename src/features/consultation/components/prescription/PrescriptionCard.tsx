@@ -22,7 +22,9 @@ import {
 /**
  * The patient's view of their released prescription (ADR-20260809-01).
  *
- * Renders nothing until a physician releases one, for the same reason the
+ * Before release it renders nothing during the consult, and a neutral "not
+ * shared yet" row once the consult has ended (`showPending`). Otherwise silent
+ * until a physician releases one, for the same reason the
  * education card does: a prescription before release does not exist as far as the
  * patient is concerned, and a card saying "your doctor has not prescribed
  * anything" invites a patient to chase a clinician over a step that may never
@@ -47,10 +49,17 @@ import {
 export function PrescriptionCard({
   consultationId,
   poll = false,
+  showPending = false,
 }: {
   consultationId?: string;
   /** See {@link PatientEducationCard}: polls only while a release is possible. */
   poll?: boolean;
+  /**
+   * After the consultation has ended, say plainly that nothing has been shared
+   * yet instead of rendering nothing (pilot feedback: "make prescription
+   * availability clear"). Worded so it never promises a prescription will come.
+   */
+  showPending?: boolean;
 }) {
   const idToken = useIdToken();
 
@@ -71,7 +80,7 @@ export function PrescriptionCard({
     return (
       <div
         data-slot="prescription-loading"
-        className="flex items-center gap-2 rounded-xl border p-4 text-sm text-muted-foreground"
+        className="flex items-center gap-2 rounded-xl border p-4 text-base text-muted-foreground"
       >
         <Spinner className="size-4" />
         Checking for a prescription from your doctor…
@@ -79,8 +88,26 @@ export function PrescriptionCard({
     );
   }
 
-  // Nothing released. Render nothing rather than an empty state.
-  if (!data) return null;
+  if (!data) {
+    if (!showPending) return null;
+    return (
+      <section
+        data-slot="prescription-pending"
+        aria-labelledby="prescription-pending-heading"
+        className="flex items-start gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-card) p-4 sm:p-5"
+      >
+        <Pill aria-hidden className="mt-0.5 size-5 shrink-0 text-(--text-muted)" />
+        <div className="min-w-0 space-y-0.5">
+          <h2 id="prescription-pending-heading" className="text-base font-semibold text-(--text-heading)">
+            Prescription: not shared yet
+          </h2>
+          <p className="text-[15px] leading-relaxed text-(--text-muted)">
+            If your doctor prescribes medicine, it will appear here. This page checks for it automatically.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const payload = data.payload;
   const incomplete = isPlaceholderPrescription(payload);
@@ -96,7 +123,7 @@ export function PrescriptionCard({
             Released by your doctor
           </Badge>
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Shared {formatConsultationDateTime(data.releasedAt)}
         </p>
       </CardHeader>
@@ -106,7 +133,7 @@ export function PrescriptionCard({
           <Alert variant="destructive" data-slot="prescription-incomplete">
             <AlertTriangle className="size-4" />
             <AlertTitle>Your doctor has not finished this yet</AlertTitle>
-            <AlertDescription className="text-xs">
+            <AlertDescription className="text-sm">
               No medicine has been selected on this prescription. Please message
               your doctor in the consultation chat before acting on it, and do not
               take anything based on this page.
@@ -127,10 +154,10 @@ export function PrescriptionCard({
           <>
             <Separator />
             <div>
-              <p className="text-xs font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 Notes from your doctor
               </p>
-              <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">
+              <p className="mt-1 text-base leading-relaxed whitespace-pre-line text-foreground">
                 {payload.notes}
               </p>
             </div>
@@ -139,7 +166,7 @@ export function PrescriptionCard({
 
         <Alert>
           <Info className="size-4" />
-          <AlertDescription className="text-xs">
+          <AlertDescription className="text-sm">
             This is your record of what your doctor prescribed during the
             consultation. It is not a signed prescription document and cannot be
             presented at a pharmacy on its own — ask your doctor in the chat if
@@ -166,7 +193,7 @@ export function PrescriptionCard({
 function MedicationRow({ medication }: { medication: PrescriptionMedication }) {
   if (isPlaceholderMedication(medication)) {
     return (
-      <li className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-muted-foreground">
+      <li className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-muted-foreground">
         <span className="font-semibold text-foreground">Incomplete entry.</span>{" "}
         Your doctor has not selected a medicine for this line. Ask them about it
         in the consultation chat.
@@ -176,17 +203,17 @@ function MedicationRow({ medication }: { medication: PrescriptionMedication }) {
 
   return (
     <li className="rounded-lg border bg-muted/40 p-3">
-      <p className="text-sm font-semibold text-foreground">
+      <p className="text-base font-semibold text-foreground">
         {medication.genericName}
       </p>
-      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
         <Field label="Dose" value={medication.dose} />
         <Field label="How to take it" value={medication.route} />
         <Field label="How often" value={medication.frequency} />
         <Field label="For how long" value={medication.duration} />
       </dl>
       {medication.instructions ? (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-sm text-foreground">
           {medication.instructions}
         </p>
       ) : null}

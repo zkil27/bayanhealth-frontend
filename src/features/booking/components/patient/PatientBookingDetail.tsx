@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertCircleIcon,
   ArrowLeft,
@@ -21,6 +22,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { EmergencyCareCard } from "@/features/consultation/components/emergency/EmergencyCareCard";
 import { PatientEducationCard } from "@/features/consultation/components/patientEducation/PatientEducationCard";
 import { PrescriptionCard } from "@/features/consultation/components/prescription/PrescriptionCard";
 import { shouldPollReleasedArtifacts } from "@/features/consultation/lib/releasedArtifacts";
@@ -280,6 +282,18 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
         }
       />
       {/*
+        The doctor's "Send to ER" (SendToErControl) promised the patient this
+        alert; nothing rendered it. It leads the page, cannot be dismissed, and
+        arrives on the 30s poll above.
+      */}
+      {booking.emergencyAdvisedAt ? (
+        <EmergencyCareCard
+          title="Your doctor says: go to the emergency room now"
+          description="Do not wait for this consultation. Go to the nearest emergency room, or call 911 if you can't get there safely."
+          doctorNote={booking.emergencyNote}
+        />
+      ) : null}
+      {/*
         Chat opens once a doctor is assigned, not only once the consultation has
         started (ADR-20260809-05) — so the patient needs an entry from `confirmed`
         onward. Gating this on `in_progress` was why the patient had no way into the
@@ -326,6 +340,7 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
       <PrescriptionCard
         consultationId={booking.consultationId}
         poll={shouldPollReleasedArtifacts(booking.status)}
+        showPending={booking.status === "completed"}
       />
       {isFinished && booking.doctorId ? (
         // Read-only history (ADR-20260909-01). `CompletedStep` tells the
@@ -499,6 +514,21 @@ function PageFrame({ bookingId, children }: { bookingId: string; children: React
 }
 
 /**
+ * True when the previous history entry is very likely a page of this app: there
+ * is one, and the tab did not arrive from another site. Client-side navigation
+ * keeps the original referrer, so an empty or same-origin referrer is the signal.
+ */
+function canGoBackInApp(): boolean {
+  if (typeof window === "undefined" || window.history.length <= 1) return false;
+  if (!document.referrer) return true;
+  try {
+    return new URL(document.referrer).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The page's single header: back, encounter title, one status badge, and the
  * booking reference, which appears nowhere else on the page.
  *
@@ -507,6 +537,7 @@ function PageFrame({ bookingId, children }: { bookingId: string; children: React
  * doctor-matching states are withheld until they are actually true.
  */
 export function BookingContextBar({ bookingId, context }: { bookingId: string; context: BarContext }) {
+  const router = useRouter();
   const intake = context.kind === "intake";
   // The step tracker below already says where an active booking is, and an
   // "info" badge beside it contradicted it ("CONFIRMED" while the tracker sat
@@ -546,9 +577,19 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
       className="flex w-full shrink-0 items-center justify-between gap-2.5 border-b border-(--border-subtle) py-1 sm:py-2"
     >
       <div className="flex min-w-0 items-center gap-2.5">
+        {/*
+          Back returns to the page the patient came from (pilot feedback),
+          falling back to Health when this page was opened directly. Intake
+          answers are kept by the intake's draft either way.
+        */}
         <Link
           href="/patient/health"
-          aria-label={intake ? "Exit intake" : "Back to Health"}
+          onClick={(event) => {
+            if (!canGoBackInApp()) return;
+            event.preventDefault();
+            router.back();
+          }}
+          aria-label="Back"
           className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-(--border-default) bg-(--surface-card) text-(--text-muted) shadow-sm transition-colors hover:bg-(--surface-canvas) hover:text-(--text-heading) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
         >
           <ArrowLeft aria-hidden className="size-4" />
@@ -579,10 +620,10 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
       </div>
 
       <div className="hidden shrink-0 text-right sm:block">
-        <span className="block text-[10px] font-bold tracking-wider text-(--text-subtle) uppercase">
+        <span className="block text-[13px] font-medium text-(--text-muted)">
           Booking reference
         </span>
-        <span className="font-mono text-xs font-semibold text-(--text-body)">{bookingId}</span>
+        <span className="font-mono text-sm font-semibold text-(--text-body)">{bookingId}</span>
       </div>
     </header>
   );

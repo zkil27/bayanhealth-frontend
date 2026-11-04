@@ -36,7 +36,7 @@ const SEGMENTS: Record<string, { label: string; href?: string }> = {
   profile: { label: "Profile", href: "/patient/profile" },
   details: { label: "Personal details", href: "/patient/profile/details" },
   "doctor-preferences": {
-    label: "Doctor preferences",
+    label: "Preferences",
     href: "/patient/profile/doctor-preferences",
   },
   booking: { label: "Book", href: "/patient/booking" },

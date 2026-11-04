@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { performSignOut, SIGN_OUT_ERROR_MESSAGE } from "@/lib/sign-out";
 import { discardRefreshToken } from "@/lib/session-restore";
+import { clearAllIntakeDrafts } from "@/lib/intakeDraft";
 
 /**
  * Return shape of {@link useSignOut}.
@@ -49,6 +50,8 @@ export function useSignOut(): UseSignOut {
         // happily use to sign the user straight back in.
         await discardRefreshToken();
         clearSession();
+        // Intake drafts hold health details; they never outlive a sign-out.
+        clearAllIntakeDrafts();
       },
       navigate: (path) => router.push(path),
     });

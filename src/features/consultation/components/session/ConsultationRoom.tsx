@@ -42,6 +42,7 @@ import { ConsultationVideo } from "@/features/media/components/ConsultationVideo
 import { PatientCompanionSuite } from "@/components/consultation/PatientCompanionSuite";
 import { DoctorClinicalCompanionSuite } from "@/components/consultation/DoctorClinicalCompanionSuite";
 import { ConsultationRoomSkeleton } from "./ConsultationRoomSkeleton";
+import { EmergencyCareCard } from "../emergency/EmergencyCareCard";
 import { useClinicalNotes } from "@/features/consultation/components/postConsultation/ClinicalNotesCard";
 import { formatDoctorName } from "@/lib/utils";
 
@@ -258,9 +259,9 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       <CenteredRoomPanel>
         <div
           data-slot="consultation-room-error"
-          className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200/70 bg-(--surface-card) p-6 shadow-xs"
+          className="flex flex-col items-center gap-3 rounded-3xl border border-(--border-subtle) bg-(--surface-card) p-6 shadow-xs"
         >
-          <Alert variant="destructive" className="max-w-md rounded-2xl border-rose-200 bg-rose-50">
+          <Alert variant="destructive" className="max-w-md rounded-2xl">
             <AlertCircleIcon className="h-4 w-4" />
             <AlertTitle>Couldn&apos;t open the consultation</AlertTitle>
             <AlertDescription>
@@ -301,7 +302,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
   return (
     <div
       data-slot="consultation-room"
-      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-2 overflow-hidden p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] px-[max(0.5rem,env(safe-area-inset-left))] text-slate-900 antialiased sm:p-2.5 md:gap-3 md:p-3.5 lg:gap-3 lg:p-4"
+      className="bg-satin flex h-dvh max-h-dvh w-full flex-col gap-2 overflow-hidden p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] px-[max(0.5rem,env(safe-area-inset-left))] text-(--text-body) antialiased sm:p-2.5 md:gap-3 md:p-3.5 lg:gap-3 lg:p-4"
     >
       <header className="min-h-12 shrink-0 rounded-xl border border-(--border-subtle) bg-(--surface-card) px-3 py-2 shadow-2xs md:min-h-14 md:rounded-2xl md:border md:px-5 md:py-2.5">
         {session ? (
@@ -317,6 +318,19 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
           <PreConsultHeader bookingId={bookingId} booking={booking} isAssignedDoctor={isAssignedDoctor} />
         )}
       </header>
+
+      {/*
+        The doctor's "Send to ER" reaches the patient here as well as on the
+        booking page: the room already polls the booking every 4s.
+      */}
+      {!isAssignedDoctor && bookingQuery.data?.emergencyAdvisedAt ? (
+        <EmergencyCareCard
+          className="shrink-0"
+          title="Your doctor says: go to the emergency room now"
+          description="Leave this call and go to the nearest emergency room, or call 911 if you can't get there safely."
+          doctorNote={bookingQuery.data.emergencyNote}
+        />
+      ) : null}
 
       {completionError ? (
         <span data-slot="consultation-room-complete-error" className="sr-only">
@@ -336,7 +350,7 @@ export function ConsultationRoom({ bookingId }: { bookingId: string }) {
       <main className="flex flex-col lg:flex-row min-h-0 flex-1 h-full w-full gap-2.5 md:gap-3.5 lg:gap-4 overflow-hidden">
         <div
           className={cn(
-            "flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950 shadow-sm md:rounded-3xl lg:h-full lg:flex-[7] min-w-0 shrink-0 lg:shrink transition-all duration-300",
+            "flex min-h-0 flex-col overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--ink-900) shadow-sm md:rounded-3xl lg:h-full lg:flex-[7] min-w-0 shrink-0 lg:shrink transition-all duration-300",
             isChatFocused ? "h-[74px] shrink-0" : "h-[38dvh] sm:h-[42dvh]",
           )}
         >
@@ -528,21 +542,21 @@ function RoomHeaderIdentity({
       </div>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2">
-          <h1 className="max-w-32 truncate text-sm font-bold text-slate-900 sm:max-w-none">{displayName ?? refLabel}</h1>
+          <h1 className="max-w-40 truncate text-base font-bold text-(--text-heading) sm:max-w-none">{displayName ?? refLabel}</h1>
           {live ? (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-teal-200/60 bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800 sm:px-2.5">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--surface-nav-accent)/40 bg-(--safe-bg) px-2.5 py-0.5 text-[13px] font-semibold text-(--safe-fg)">
               <span className="size-1.5 rounded-full bg-(--surface-nav-accent)" />
               <span className="sm:hidden">Live</span>
               <span className="hidden sm:inline">Live Consultation</span>
             </span>
           ) : (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200/60 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900 sm:px-2.5">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--attention-border)/40 bg-(--attention-bg) px-2.5 py-0.5 text-[13px] font-semibold text-(--attention-fg)">
               <span className="sm:hidden">Waiting</span>
               <span className="hidden sm:inline">Before the consultation</span>
             </span>
           )}
         </div>
-        <span className="hidden font-mono text-[11px] text-slate-400 sm:inline">{refLabel}</span>
+        <span className="hidden font-mono text-[13px] text-(--text-muted) sm:inline">{refLabel}</span>
       </div>
     </div>
   );
@@ -575,8 +589,8 @@ function InProgressHeader({
 
       <div className="flex items-center gap-3">
         {session.startedAt ? (
-          <span className="hidden items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 font-mono text-xs font-bold text-slate-700 sm:flex">
-            <Clock className="size-3.5 text-slate-500" />
+          <span className="hidden items-center gap-1.5 rounded-xl bg-(--surface-canvas) px-3 py-1.5 font-mono text-sm font-semibold text-(--text-body) tabular-nums sm:flex">
+            <Clock aria-hidden className="size-4 text-(--text-muted)" />
             <CallDurationTimer startedAt={session.startedAt} />
           </span>
         ) : null}
@@ -586,7 +600,7 @@ function InProgressHeader({
             size="sm"
             onClick={onComplete}
             disabled={completing}
-            className="h-11 rounded-xl bg-rose-600 px-3.5 text-sm font-bold text-white hover:bg-rose-700 active:bg-rose-800 sm:h-7 sm:px-2.5 sm:text-[0.8rem]"
+            className="h-11 rounded-xl bg-(--danger-fg) px-3.5 text-sm font-bold text-white hover:bg-(--danger-fg)/90 active:bg-(--danger-fg)/80 sm:h-9 sm:px-3"
           >
             {completing ? (
               <>
@@ -603,9 +617,9 @@ function InProgressHeader({
           </Button>
         ) : (
           <Link href={`/patient/booking/getBooking/${encodeURIComponent(bookingId)}`}>
-            <Button size="sm" variant="outline" className="rounded-xl border-slate-200 font-bold text-slate-700">
+            <Button size="sm" variant="outline" className="h-11 rounded-xl px-4 text-base font-semibold sm:h-9 sm:text-sm">
               <span className="sm:hidden">Leave</span>
-              <span className="hidden sm:inline">Leave Call</span>
+              <span className="hidden sm:inline">Leave call</span>
             </Button>
           </Link>
         )}
@@ -689,19 +703,19 @@ function PreConsultHeader({
           </Button>
         ) : (
           <Link href={`/patient/booking/getBooking/${encodeURIComponent(bookingId)}`}>
-            <Button size="sm" variant="outline" className="rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100">
-              <span className="sm:hidden">Iwanan</span>
-              <span className="hidden sm:inline">Pumunta sa Dashboard</span>
+            <Button size="sm" variant="outline" className="h-11 rounded-xl px-4 text-base font-semibold sm:h-9 sm:text-sm">
+              <span className="sm:hidden">Leave</span>
+              <span className="hidden sm:inline">Leave room</span>
             </Button>
           </Link>
         )}
       </div>
 
-      <div className="hidden items-center gap-1.5 pl-13 text-xs text-slate-500 sm:flex">
-        <MessagesSquare className="size-3.5 shrink-0 text-slate-400" />
+      <div className="hidden items-center gap-1.5 pl-13 text-sm text-(--text-muted) sm:flex">
+        <MessagesSquare aria-hidden className="size-4 shrink-0" />
         {isAssignedDoctor
-          ? "Chat is open — you can message your patient now. New messages appear within a few seconds."
-          : "Chat is open — you can message your doctor now. New messages appear within a few seconds."}
+          ? "Chat is open. New messages appear within a few seconds."
+          : "Chat is open. New messages appear within a few seconds."}
       </div>
     </div>
   );
@@ -728,14 +742,14 @@ function RedirectToBookingPanel({ bookingId }: { bookingId: string }) {
   return (
     <section
       data-slot="consultation-room-completed"
-      className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200/70 bg-(--surface-card) p-8 text-center shadow-xs"
+      className="flex flex-col items-center gap-3 rounded-3xl border border-(--border-subtle) bg-(--surface-card) p-8 text-center shadow-xs"
     >
       <CheckCircle2 className="size-6 text-(--surface-nav-accent)" />
       <div>
-        <h2 className="text-base font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-(--text-heading)">
           This consultation has ended
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-(--text-muted)">
           Taking you back to your booking, where anything your doctor shares will
           appear.
         </p>
@@ -753,20 +767,20 @@ function NotStartedPanel({ isFetching }: { isFetching: boolean }) {
   return (
     <section
       data-slot="consultation-room-not-started"
-      className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-slate-200 bg-(--surface-card) p-8 text-center shadow-xs"
+      className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-(--border-default) bg-(--surface-card) p-8 text-center shadow-xs"
     >
-      <Hourglass className="size-6 text-slate-400" />
+      <Hourglass aria-hidden className="size-6 text-(--text-muted)" />
       <div>
-        <h2 className="text-base font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-(--text-heading)">
           Consultation hasn&apos;t started yet
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-(--text-muted)">
           This page will open the conversation automatically once your doctor
           starts the consultation.
         </p>
       </div>
       {isFetching ? (
-        <span className="flex items-center gap-1.5 text-xs text-slate-400">
+        <span className="flex items-center gap-1.5 text-sm text-(--text-muted)">
           <Spinner className="size-3" />
           Checking…
         </span>

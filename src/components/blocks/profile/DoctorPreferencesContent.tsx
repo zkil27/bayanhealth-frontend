@@ -57,7 +57,7 @@ export function DoctorPreferencesContent() {
   const onSubmit = async (data: UserDoctorPreferencesValues) => {
     try {
       await updateDoctorPreferences(data);
-      toast.success("Doctor preferences updated.");
+      toast.success("Preferences updated.");
       setIsEditing(false);
     } catch (err) {
       toast.error(
@@ -84,7 +84,7 @@ export function DoctorPreferencesContent() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-6 flex items-center justify-between border-b pb-4 ">
           <div>
-            <h1 className="text-2xl font-semibold">Doctor Preferences</h1>
+            <h1 className="text-2xl font-semibold">Preferences</h1>
             {/*
              * The old subtitle was "This will be used to prefill booking forms",
              * next to a Save button whose mutation stored nothing at all. The

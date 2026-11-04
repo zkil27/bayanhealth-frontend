@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { formatVital as vitalReadBack, type VitalKind } from "@/features/booking/lib/vitalStatus";
 
 import {
   fetchBookingIntake,
@@ -265,23 +266,23 @@ function VitalsGroup({ title, vitals }: { title: string; vitals?: IntakeVitals }
       <div className="grid gap-2 sm:grid-cols-2">
         <MeasurementField
           label="Temperature"
-          value={formatMeasurement(vitals?.temperatureC, "°C")}
+          value={formatReading("temperatureC", vitals?.temperatureC)}
         />
         <MeasurementField
           label="Systolic blood pressure"
-          value={formatMeasurement(vitals?.systolicBp, "mmHg")}
+          value={formatReading("systolicBp", vitals?.systolicBp)}
         />
         <MeasurementField
           label="Diastolic blood pressure"
-          value={formatMeasurement(vitals?.diastolicBp, "mmHg")}
+          value={formatReading("diastolicBp", vitals?.diastolicBp)}
         />
         <MeasurementField
           label="Heart rate"
-          value={formatMeasurement(vitals?.heartRateBpm, "bpm")}
+          value={formatReading("heartRateBpm", vitals?.heartRateBpm)}
         />
         <MeasurementField
           label="Oxygen saturation"
-          value={formatMeasurement(vitals?.spo2Percent, "%")}
+          value={formatReading("spo2Percent", vitals?.spo2Percent)}
         />
       </div>
     </div>
@@ -587,3 +588,13 @@ const CYCLE_LABELS: Record<
   unsure: "Unsure",
   prefer_not_to_say: "Prefer not to say",
 };
+
+/**
+ * A home reading for the doctor's read-back. Not recorded stays undefined; a
+ * reading that is not believable as typed shows "Too low", "Too high" or
+ * "Invalid" instead of the number (pilot feedback).
+ */
+function formatReading(kind: VitalKind, value: number | undefined): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  return vitalReadBack(kind, value);
+}

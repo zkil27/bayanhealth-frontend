@@ -1,7 +1,5 @@
 "use client";
 
-import { CheckCircle2, Info } from "lucide-react";
-import { useState } from "react";
 import {
   type FieldPath,
   useFormContext,
@@ -13,14 +11,29 @@ import type { z } from "zod";
 import { cn } from "@/lib/utils";
 
 import type { DynamicIntakeFormValues, symptomReviewSchema } from "../../../schemas/intakeSchema";
-import { BlockLabel, ChipButton, ChoiceCard, COMPACT_INPUT, Reveal, SegmentedToggle } from "./IntakeChoice";
+import { BlockLabel, ChipButton, COMPACT_INPUT, OptionalBlock, Reveal, SegmentedToggle } from "./IntakeChoice";
+import { useClearIntakeUiState, useIntakeUiState } from "./intakeUiState";
 
 type SymptomReviewValues = z.infer<typeof symptomReviewSchema>;
 
 const REVIEW = "requestDetails.symptomReview";
+const FIELD_OPTS = { shouldDirty: true, shouldValidate: true } as const;
 
-export function PainAssessmentStep() {
+/** Longest free-text "Other" entry; keeps every composed string far under the 1000-character contract cap. */
+const OTHER_MAX = 120;
+
+/**
+ * Pain questions (PQRST), now an optional section at the end of the Concern
+ * page instead of a page of their own (pilot feedback: shorten the form).
+ *
+ * A plain No / Yes opens the detail. Every detail block is optional and has a
+ * Skip. Chip selections live in the intake UI store, so they are still lit
+ * after Back, Continue, or a reload. Each control still composes the same
+ * `symptomReview` strings as before.
+ */
+export function PainAssessmentStep({ className }: { className?: string }) {
   const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
+  const clearUi = useClearIntakeUiState();
   const review = useWatch({ control, name: REVIEW as FieldPath<DynamicIntakeFormValues> }) as
     | SymptomReviewValues
     | undefined;
@@ -35,76 +48,43 @@ export function PainAssessmentStep() {
     review?.pattern?.trim()
   );
 
-  const [hasPain, setHasPain] = useState<"no" | "yes" | undefined>(() =>
+  const [hasPain, setHasPain] = useIntakeUiState<"no" | "yes" | undefined>("pain.hasPain", () =>
     hasAnyPainData ? "yes" : undefined
   );
 
   const handlePainGate = (answer: "no" | "yes") => {
-    setHasPain(answer);
     if (answer === "no") {
-      setValue(REVIEW as FieldPath<DynamicIntakeFormValues>, undefined as never, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      clearUi("pain.");
+      setValue(REVIEW as FieldPath<DynamicIntakeFormValues>, undefined as never, FIELD_OPTS);
     }
+    setHasPain(answer);
   };
 
   return (
-    <div className="space-y-6 sm:space-y-7">
-      {/* Upfront Pain Gate */}
-      <section aria-labelledby="pain-gate-heading" className="space-y-3">
-        <div>
-          <BlockLabel id="pain-gate-heading">Pain assessment</BlockLabel>
-          <p className="mt-1 text-base leading-snug text-(--text-body)">
-            Are you currently experiencing physical pain or bodily discomfort?
-          </p>
-        </div>
+    <section aria-labelledby="pain-gate-heading" className={cn("space-y-6", className)}>
+      <div className="space-y-3">
+        <BlockLabel id="pain-gate-heading" optional>Are you in pain right now?</BlockLabel>
+        <SegmentedToggle
+          label="Are you in pain right now?"
+          value={hasPain}
+          onChange={handlePainGate}
+          options={[
+            { value: "no", label: "No" },
+            { value: "yes", label: "Yes" },
+          ]}
+        />
+      </div>
 
-        <div
-          role="radiogroup"
-          aria-labelledby="pain-gate-heading"
-          className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-        >
-          <ChoiceCard
-            selected={hasPain === "no"}
-            onClick={() => handlePainGate("no")}
-            title="No, I am not in pain"
-            description="Proceed directly to review without pain questions"
-          />
-          <ChoiceCard
-            selected={hasPain === "yes"}
-            onClick={() => handlePainGate("yes")}
-            title="Yes, I am experiencing pain"
-            description="Rate pain intensity and location for your doctor"
-          />
-        </div>
-      </section>
-
-      {hasPain === "no" ? (
-        <div className="rounded-xl border border-(--border-subtle) bg-(--surface-canvas) p-5 text-center">
-          <CheckCircle2 className="mx-auto size-8 text-(--action-primary)" />
-          <h3 className="mt-2 text-base font-bold text-(--text-heading)">No pain reported</h3>
-          <p className="mt-1 text-sm text-(--text-muted)">
-            Your response has been recorded. Tap <strong>Continue</strong> below to proceed to the final review and consent step.
-          </p>
-        </div>
-      ) : hasPain === "yes" ? (
-        <div className="space-y-8 animate-in duration-200 fade-in motion-reduce:animate-none">
+      <Reveal open={hasPain === "yes"}>
+        <div className="space-y-7 pt-1">
           <Severity />
           <Quality />
           <RegionRadiation />
           <ProvocationPalliation />
           <Timing />
         </div>
-      ) : (
-        <p className="flex items-start gap-2 text-[15px] leading-snug text-(--text-muted)">
-          <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <span>
-            Please select whether you are experiencing pain so we can tailor the intake questions to your condition.
-          </span>
-        </p>
-      )}
-    </div>
+      </Reveal>
+    </section>
   );
 }
 
@@ -118,10 +98,55 @@ const joinParts = (parts: (string | false | null | undefined)[], glue = "; ") =>
 function useSymptomField(field: string) {
   const { setValue } = useFormContext<DynamicIntakeFormValues>();
   return (value: string | number | undefined) =>
-    setValue(`${REVIEW}.${field}` as FieldPath<DynamicIntakeFormValues>, (value || undefined) as never, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    setValue(`${REVIEW}.${field}` as FieldPath<DynamicIntakeFormValues>, (value || undefined) as never, FIELD_OPTS);
+}
+
+/**
+ * Skip state for one pain block. Skipping clears that block's stored fields
+ * and its chips, then folds the block to a line.
+ */
+function useSkippableBlock(block: string, fields: readonly string[]) {
+  const { setValue } = useFormContext<DynamicIntakeFormValues>();
+  const clearUi = useClearIntakeUiState();
+  const [skipped, setSkipped] = useIntakeUiState(`pain.skip.${block}`, false);
+  return {
+    skipped,
+    onSkip: () => {
+      clearUi(`pain.${block}.`);
+      for (const field of fields) {
+        setValue(`${REVIEW}.${field}` as FieldPath<DynamicIntakeFormValues>, undefined as never, FIELD_OPTS);
+      }
+      setSkipped(true);
+    },
+    onResume: () => setSkipped(false),
+  };
+}
+
+function OtherInput({
+  open,
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+}: {
+  open: boolean;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+}) {
+  return (
+    <Reveal open={open}>
+      <input
+        value={value}
+        maxLength={OTHER_MAX}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className={cn(COMPACT_INPUT, "mt-1")}
+      />
+    </Reveal>
+  );
 }
 
 const WORSE_OPTIONS = new Map([
@@ -180,28 +205,21 @@ function ChipQuestion({
           Other
         </ChipButton>
       </div>
-      <Reveal open={otherEnabled}>
-        <input
-          value={otherValue}
-          onChange={(event) => onOtherChange(event.target.value)}
-          placeholder={otherPlaceholder}
-          aria-label={otherAriaLabel}
-          className={cn(COMPACT_INPUT, "mt-1")}
-        />
-      </Reveal>
+      <OtherInput open={otherEnabled} value={otherValue} onChange={onOtherChange} placeholder={otherPlaceholder} ariaLabel={otherAriaLabel} />
     </div>
   );
 }
 
 function ProvocationPalliation() {
-  const [worse, setWorse] = useState<string[]>([]);
-  const [worseOtherOn, setWorseOtherOn] = useState(false);
-  const [worseOther, setWorseOther] = useState("");
-  const [better, setBetter] = useState<string[]>([]);
-  const [betterOtherOn, setBetterOtherOn] = useState(false);
-  const [betterOther, setBetterOther] = useState("");
+  const [worse, setWorse] = useIntakeUiState<string[]>("pain.affects.worse", []);
+  const [worseOtherOn, setWorseOtherOn] = useIntakeUiState("pain.affects.worseOtherOn", false);
+  const [worseOther, setWorseOther] = useIntakeUiState("pain.affects.worseOther", "");
+  const [better, setBetter] = useIntakeUiState<string[]>("pain.affects.better", []);
+  const [betterOtherOn, setBetterOtherOn] = useIntakeUiState("pain.affects.betterOtherOn", false);
+  const [betterOther, setBetterOther] = useIntakeUiState("pain.affects.betterOther", "");
   const setAggravating = useSymptomField("aggravatingFactors");
   const setRelieving = useSymptomField("relievingFactors");
+  const skip = useSkippableBlock("affects", ["aggravatingFactors", "relievingFactors"]);
 
   const composeWorse = (chips: string[], otherOn: boolean, other: string) =>
     setAggravating(joinParts([chips.map((value) => WORSE_OPTIONS.get(value)).join(", "), otherOn ? other.trim() : undefined], ", "));
@@ -220,38 +238,35 @@ function ProvocationPalliation() {
   };
 
   return (
-    <section aria-labelledby="pqrst-p-heading" className="space-y-4">
-      <div>
-        <BlockLabel id="pqrst-p-heading">What affects the pain</BlockLabel>
-        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Provocation &amp; palliation — optional, select all that apply</p>
+    <OptionalBlock id="pqrst-p" title="What affects the pain" hint="Choose any that apply." {...skip}>
+      <div className="space-y-4">
+        <ChipQuestion
+          legend="What makes it worse?"
+          options={WORSE_OPTIONS}
+          selected={worse}
+          onToggle={toggleWorse}
+          otherEnabled={worseOtherOn}
+          onOtherEnabledChange={(next) => { setWorseOtherOn(next); composeWorse(worse, next, worseOther); }}
+          otherValue={worseOther}
+          onOtherChange={(next) => { setWorseOther(next); composeWorse(worse, worseOtherOn, next); }}
+          otherPlaceholder="What else makes it worse?"
+          otherAriaLabel="Other factor that makes it worse"
+        />
+
+        <ChipQuestion
+          legend="What makes it better?"
+          options={BETTER_OPTIONS}
+          selected={better}
+          onToggle={toggleBetter}
+          otherEnabled={betterOtherOn}
+          onOtherEnabledChange={(next) => { setBetterOtherOn(next); composeBetter(better, next, betterOther); }}
+          otherValue={betterOther}
+          onOtherChange={(next) => { setBetterOther(next); composeBetter(better, betterOtherOn, next); }}
+          otherPlaceholder="What else makes it better?"
+          otherAriaLabel="Other factor that makes it better"
+        />
       </div>
-
-      <ChipQuestion
-        legend="What makes it worse?"
-        options={WORSE_OPTIONS}
-        selected={worse}
-        onToggle={toggleWorse}
-        otherEnabled={worseOtherOn}
-        onOtherEnabledChange={(next) => { setWorseOtherOn(next); composeWorse(worse, next, worseOther); }}
-        otherValue={worseOther}
-        onOtherChange={(next) => { setWorseOther(next); composeWorse(worse, worseOtherOn, next); }}
-        otherPlaceholder="Describe what else makes it worse"
-        otherAriaLabel="Other factor that makes it worse"
-      />
-
-      <ChipQuestion
-        legend="What makes it better?"
-        options={BETTER_OPTIONS}
-        selected={better}
-        onToggle={toggleBetter}
-        otherEnabled={betterOtherOn}
-        onOtherEnabledChange={(next) => { setBetterOtherOn(next); composeBetter(better, next, betterOther); }}
-        otherValue={betterOther}
-        onOtherChange={(next) => { setBetterOther(next); composeBetter(better, betterOtherOn, next); }}
-        otherPlaceholder="Describe what else makes it better"
-        otherAriaLabel="Other factor that makes it better"
-      />
-    </section>
+    </OptionalBlock>
   );
 }
 
@@ -264,9 +279,10 @@ const QUALITY_OPTIONS = new Map([
 ]);
 
 function Quality() {
-  const [quality, setQuality] = useState<string[]>([]);
-  const [describe, setDescribe] = useState("");
+  const [quality, setQuality] = useIntakeUiState<string[]>("pain.quality.chips", []);
+  const [describe, setDescribe] = useIntakeUiState("pain.quality.describe", "");
   const setCharacteristics = useSymptomField("characteristics");
+  const skip = useSkippableBlock("quality", ["characteristics"]);
 
   const compose = (chips: string[], description: string) =>
     setCharacteristics(joinParts([chips.map((value) => QUALITY_OPTIONS.get(value)).join(", "), description.trim()]));
@@ -278,11 +294,7 @@ function Quality() {
   };
 
   return (
-    <section aria-labelledby="pqrst-q-heading" className="space-y-3 border-t border-(--border-subtle) pt-6">
-      <div>
-        <BlockLabel id="pqrst-q-heading">What it feels like</BlockLabel>
-        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Quality — optional, select all that apply</p>
-      </div>
+    <OptionalBlock id="pqrst-q" title="What it feels like" hint="Choose any that apply." {...skip}>
       <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
         {[...QUALITY_OPTIONS].map(([value, label]) => (
           <ChipButton key={value} selected={quality.includes(value)} onClick={() => toggle(value)} className={CHIP}>
@@ -294,19 +306,20 @@ function Quality() {
         value={describe}
         onChange={(event) => { setDescribe(event.target.value); compose(quality, event.target.value); }}
         rows={2}
-        placeholder="Describe further, in your own words (optional)"
+        placeholder="Describe it in your own words"
         aria-label="Describe the pain further"
         className={cn(COMPACT_INPUT, "block resize-y")}
       />
-    </section>
+    </OptionalBlock>
   );
 }
 
 function RegionRadiation() {
-  const [bodyPart, setBodyPart] = useState("");
-  const [radiates, setRadiates] = useState<"no" | "yes" | undefined>(undefined);
-  const [radiatesTo, setRadiatesTo] = useState("");
+  const [bodyPart, setBodyPart] = useIntakeUiState("pain.region.bodyPart", "");
+  const [radiates, setRadiates] = useIntakeUiState<"no" | "yes" | undefined>("pain.region.radiates", undefined);
+  const [radiatesTo, setRadiatesTo] = useIntakeUiState("pain.region.radiatesTo", "");
   const setLocation = useSymptomField("location");
+  const skip = useSkippableBlock("region", ["location"]);
 
   const compose = (part: string, spread: typeof radiates, spreadTarget: string) => {
     const spreadText =
@@ -321,43 +334,41 @@ function RegionRadiation() {
   };
 
   return (
-    <section aria-labelledby="pqrst-r-heading" className="space-y-4 border-t border-(--border-subtle) pt-6">
-      <div>
-        <BlockLabel id="pqrst-r-heading">Where it is</BlockLabel>
-        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Region &amp; radiation — optional</p>
-      </div>
-      <div className="space-y-1.5">
-        <label htmlFor="pain-body-part" className="block text-base font-medium text-(--text-body)">Where in the body?</label>
-        <input
-          id="pain-body-part"
-          value={bodyPart}
-          onChange={(event) => { setBodyPart(event.target.value); compose(event.target.value, radiates, radiatesTo); }}
-          placeholder="e.g. Throat, right side"
-          className={COMPACT_INPUT}
-        />
-      </div>
-      <div className="space-y-2">
-        <p className="text-base font-medium text-(--text-body)">Does it spread to other areas?</p>
-        <SegmentedToggle
-          label="Does the pain spread to other areas"
-          value={radiates}
-          onChange={(next) => { setRadiates(next); compose(bodyPart, next, radiatesTo); }}
-          options={[
-            { value: "no", label: "No" },
-            { value: "yes", label: "Yes" },
-          ]}
-        />
-        <Reveal open={radiates === "yes"} className="-mt-2">
+    <OptionalBlock id="pqrst-r" title="Where it is" {...skip}>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="pain-body-part" className="block text-base font-medium text-(--text-body)">Where in the body?</label>
           <input
-            value={radiatesTo}
-            onChange={(event) => { setRadiatesTo(event.target.value); compose(bodyPart, radiates, event.target.value); }}
-            placeholder="Where does it spread to?"
-            aria-label="Where the pain spreads to"
-            className={cn(COMPACT_INPUT, "mt-2")}
+            id="pain-body-part"
+            value={bodyPart}
+            onChange={(event) => { setBodyPart(event.target.value); compose(event.target.value, radiates, radiatesTo); }}
+            placeholder="e.g. Throat, right side"
+            className={COMPACT_INPUT}
           />
-        </Reveal>
+        </div>
+        <div className="space-y-2">
+          <p className="text-base font-medium text-(--text-body)">Does it spread to other areas?</p>
+          <SegmentedToggle
+            label="Does the pain spread to other areas"
+            value={radiates}
+            onChange={(next) => { setRadiates(next); compose(bodyPart, next, radiatesTo); }}
+            options={[
+              { value: "no", label: "No" },
+              { value: "yes", label: "Yes" },
+            ]}
+          />
+          <Reveal open={radiates === "yes"}>
+            <input
+              value={radiatesTo}
+              onChange={(event) => { setRadiatesTo(event.target.value); compose(bodyPart, radiates, event.target.value); }}
+              placeholder="Where does it spread to?"
+              aria-label="Where the pain spreads to"
+              className={cn(COMPACT_INPUT, "mt-1")}
+            />
+          </Reveal>
+        </div>
       </div>
-    </section>
+    </OptionalBlock>
   );
 }
 
@@ -373,53 +384,43 @@ export function severityLabel(value: number): string {
 function Severity() {
   const { control, setValue } = useFormContext<DynamicIntakeFormValues>();
   const severity = useWatch({ control, name: `${REVIEW}.painSeverity` as FieldPath<DynamicIntakeFormValues> }) as number | undefined;
+  const skip = useSkippableBlock("severity", ["painSeverity"]);
 
   return (
-    <section aria-labelledby="pqrst-s-heading" className="space-y-3.5 border-t border-(--border-subtle) pt-6">
-      <div>
-        <BlockLabel id="pqrst-s-heading">How intense is your pain? (0–10 scale)</BlockLabel>
-        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Severity — optional</p>
-      </div>
-      <div role="radiogroup" aria-labelledby="pqrst-s-heading" className="grid grid-cols-6 gap-2 sm:grid-cols-11">
+    <OptionalBlock
+      id="pqrst-s"
+      title="How bad is the pain?"
+      hint={typeof severity === "number" ? `${severity} out of 10 · ${severityLabel(severity)}` : "0 is no pain, 10 is the worst pain possible."}
+      {...skip}
+    >
+      <div role="radiogroup" aria-label="Pain from 0 to 10" className="grid grid-cols-6 gap-2 sm:grid-cols-11">
         {Array.from({ length: 11 }, (_, value) => (
           <button
             key={value}
             type="button"
             role="radio"
             aria-checked={severity === value}
+            aria-label={`${value}, ${severityLabel(value)}`}
             onClick={() =>
-              setValue(`${REVIEW}.painSeverity` as FieldPath<DynamicIntakeFormValues>, (severity === value ? undefined : value) as never, {
-                shouldDirty: true,
-                shouldValidate: true,
-              })
+              setValue(`${REVIEW}.painSeverity` as FieldPath<DynamicIntakeFormValues>, (severity === value ? undefined : value) as never, FIELD_OPTS)
             }
             className={cn(
               "min-h-12 rounded-xl border text-lg font-semibold tabular-nums transition-colors",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
               severity === value
                 ? "border-(--surface-nav-accent) bg-(--safe-bg) text-(--safe-fg) ring-1 ring-(--surface-nav-accent)"
-                : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:bg-(--surface-canvas)",
+                : "border-(--border-default) bg-(--surface-card) text-(--text-body) hover:border-(--border-strong) hover:bg-(--surface-canvas)",
             )}
           >
             {value}
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[15px] text-(--text-muted)">
-        <span>0 · No pain</span>
-        <span>1–3 · Mild</span>
-        <span>4–6 · Moderate</span>
-        <span>7–9 · Severe</span>
-        <span>10 · Worst possible</span>
+      <div aria-hidden className="flex justify-between text-[15px] text-(--text-muted)">
+        <span>No pain</span>
+        <span>Worst possible</span>
       </div>
-      {typeof severity === "number" ? (
-        <div className="rounded-xl border border-(--surface-nav-accent) bg-(--safe-bg) p-3 text-center">
-          <p className="text-sm sm:text-base font-bold text-(--safe-fg)">
-            Selected: {severity} / 10 · {severityLabel(severity)}
-          </p>
-        </div>
-      ) : null}
-    </section>
+    </OptionalBlock>
   );
 }
 
@@ -444,122 +445,168 @@ const FREQUENCY_OPTIONS = new Map([
 ]);
 const DURATION_UNITS = ["seconds", "minutes", "hours", "days"] as const;
 type DurationUnit = (typeof DURATION_UNITS)[number];
+const OTHER = "other";
+
+interface PatternParts {
+  frequency: string | undefined;
+  frequencyOther: string;
+  when: string[];
+  whenOther: string;
+  durationValue: string;
+  durationUnit: DurationUnit;
+}
+
+/**
+ * Composes `symptomReview.pattern`, e.g. "Daily; worse at night; about 20
+ * minutes each time". An "Other" answer replaces (frequency) or joins (flare
+ * times) the chip labels in the same sentence, so the contract field and the
+ * doctor's read-back are unchanged in shape.
+ */
+export function composePattern(parts: PatternParts): string {
+  const whenLabels = parts.when
+    .filter((value) => value !== OTHER)
+    .map((value) => WHEN_OPTIONS.get(value)?.toLowerCase());
+  if (parts.when.includes(OTHER) && parts.whenOther.trim()) whenLabels.push(parts.whenOther.trim());
+  const whenText = whenLabels.filter(Boolean).join(" and ");
+  const frequencyText =
+    parts.frequency === OTHER ? parts.frequencyOther.trim() || undefined : parts.frequency ? FREQUENCY_OPTIONS.get(parts.frequency) : undefined;
+  return joinParts([
+    frequencyText,
+    whenText ? `worse ${whenText}` : undefined,
+    parts.durationValue.trim() ? `about ${parts.durationValue.trim()} ${parts.durationUnit} each time` : undefined,
+  ]);
+}
+
+/** Composes `symptomReview.onset` from the chip, or from the patient's own words under "Other". */
+export function composeOnset(onset: string | undefined, onsetOther: string): string | undefined {
+  if (onset === OTHER) return onsetOther.trim() || undefined;
+  return onset ? ONSET_OPTIONS.get(onset) : undefined;
+}
 
 function Timing() {
-  const [onset, setOnset] = useState<string | undefined>(undefined);
-  const [when, setWhen] = useState<string[]>([]);
-  const [frequency, setFrequency] = useState<string | undefined>(undefined);
-  const [durationValue, setDurationValue] = useState("");
-  const [durationUnit, setDurationUnit] = useState<DurationUnit>("minutes");
+  const [onset, setOnset] = useIntakeUiState<string | undefined>("pain.timing.onset", undefined);
+  const [onsetOther, setOnsetOther] = useIntakeUiState("pain.timing.onsetOther", "");
+  const [when, setWhen] = useIntakeUiState<string[]>("pain.timing.when", []);
+  const [whenOther, setWhenOther] = useIntakeUiState("pain.timing.whenOther", "");
+  const [frequency, setFrequency] = useIntakeUiState<string | undefined>("pain.timing.frequency", undefined);
+  const [frequencyOther, setFrequencyOther] = useIntakeUiState("pain.timing.frequencyOther", "");
+  const [durationValue, setDurationValue] = useIntakeUiState("pain.timing.durationValue", "");
+  const [durationUnit, setDurationUnit] = useIntakeUiState<DurationUnit>("pain.timing.durationUnit", "minutes");
   const setOnsetField = useSymptomField("onset");
   const setPattern = useSymptomField("pattern");
+  const skip = useSkippableBlock("timing", ["onset", "pattern"]);
 
-  const composePattern = (nextFrequency: typeof frequency, nextWhen: string[], nextDurationValue: string, nextDurationUnit: DurationUnit) => {
-    const whenText = nextWhen.map((value) => WHEN_OPTIONS.get(value)).join(" and ").toLowerCase();
-    setPattern(
-      joinParts([
-        nextFrequency ? FREQUENCY_OPTIONS.get(nextFrequency) : undefined,
-        whenText ? `worse ${whenText}` : undefined,
-        nextDurationValue.trim() ? `about ${nextDurationValue.trim()} ${nextDurationUnit} each time` : undefined,
-      ]),
-    );
-  };
+  const current: PatternParts = { frequency, frequencyOther, when, whenOther, durationValue, durationUnit };
+  const updatePattern = (patch: Partial<PatternParts>) => setPattern(composePattern({ ...current, ...patch }));
 
   return (
-    <section aria-labelledby="pqrst-t-heading" className="space-y-4 border-t border-(--border-subtle) pt-6">
-      <div>
-        <BlockLabel id="pqrst-t-heading">When and how often</BlockLabel>
-        <p className="mt-1 text-[15px] leading-snug text-(--text-muted)">Timing — optional</p>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-base font-medium text-(--text-body)">When did it start?</p>
-        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
-          {[...ONSET_OPTIONS].map(([value, label]) => (
-            <ChipButton
-              className={CHIP}
-              key={value}
-              selected={onset === value}
-              onClick={() => {
-                const next = onset === value ? undefined : value;
-                setOnset(next);
-                setOnsetField(next ? ONSET_OPTIONS.get(next) : undefined);
-              }}
-            >
-              {label}
-            </ChipButton>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-base font-medium text-(--text-body)">When does it usually flare up?</p>
-        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
-          {[...WHEN_OPTIONS].map(([value, label]) => (
-            <ChipButton
-              className={CHIP}
-              key={value}
-              selected={when.includes(value)}
-              onClick={() => {
-                const next = when.includes(value) ? when.filter((item) => item !== value) : [...when, value];
-                setWhen(next);
-                composePattern(frequency, next, durationValue, durationUnit);
-              }}
-            >
-              {label}
-            </ChipButton>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-base font-medium text-(--text-body)">How often does it happen?</p>
-        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
-          {[...FREQUENCY_OPTIONS].map(([value, label]) => (
-            <ChipButton
-              className={CHIP}
-              key={value}
-              selected={frequency === value}
-              onClick={() => {
-                const next = frequency === value ? undefined : value;
-                setFrequency(next);
-                composePattern(next, when, durationValue, durationUnit);
-              }}
-            >
-              {label}
-            </ChipButton>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-base font-medium text-(--text-body)">How long does each episode last?</p>
+    <OptionalBlock id="pqrst-t" title="When and how often" {...skip}>
+      <div className="space-y-5">
         <div className="space-y-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={999}
-            value={durationValue}
-            onChange={(event) => { setDurationValue(event.target.value); composePattern(frequency, when, event.target.value, durationUnit); }}
-            placeholder="e.g. 20"
-            aria-label="Duration of each episode"
-            className={cn(COMPACT_INPUT, "w-28 tabular-nums")}
-          />
+          <p className="text-base font-medium text-(--text-body)">When did it start?</p>
           <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
-            {DURATION_UNITS.map((unit) => (
+            {[...ONSET_OPTIONS, [OTHER, "Other"] as const].map(([value, label]) => (
               <ChipButton
                 className={CHIP}
-                key={unit}
-                selected={durationUnit === unit}
-                onClick={() => { setDurationUnit(unit); composePattern(frequency, when, durationValue, unit); }}
+                key={value}
+                selected={onset === value}
+                onClick={() => {
+                  const next = onset === value ? undefined : value;
+                  setOnset(next);
+                  setOnsetField(composeOnset(next, onsetOther));
+                }}
               >
-                {unit}
+                {label}
               </ChipButton>
             ))}
           </div>
+          <OtherInput
+            open={onset === OTHER}
+            value={onsetOther}
+            onChange={(next) => { setOnsetOther(next); setOnsetField(composeOnset(onset, next)); }}
+            placeholder="e.g. After a fall last month"
+            ariaLabel="When the pain started, in your own words"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-base font-medium text-(--text-body)">When does it usually flare up?</p>
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
+            {[...WHEN_OPTIONS, [OTHER, "Other"] as const].map(([value, label]) => (
+              <ChipButton
+                className={CHIP}
+                key={value}
+                selected={when.includes(value)}
+                onClick={() => {
+                  const next = when.includes(value) ? when.filter((item) => item !== value) : [...when, value];
+                  setWhen(next);
+                  updatePattern({ when: next });
+                }}
+              >
+                {label}
+              </ChipButton>
+            ))}
+          </div>
+          <OtherInput
+            open={when.includes(OTHER)}
+            value={whenOther}
+            onChange={(next) => { setWhenOther(next); updatePattern({ whenOther: next }); }}
+            placeholder="e.g. After exercise"
+            ariaLabel="When the pain flares up, in your own words"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-base font-medium text-(--text-body)">How often does it happen?</p>
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3">
+            {[...FREQUENCY_OPTIONS, [OTHER, "Other"] as const].map(([value, label]) => (
+              <ChipButton
+                className={CHIP}
+                key={value}
+                selected={frequency === value}
+                onClick={() => {
+                  const next = frequency === value ? undefined : value;
+                  setFrequency(next);
+                  updatePattern({ frequency: next });
+                }}
+              >
+                {label}
+              </ChipButton>
+            ))}
+          </div>
+          <OtherInput
+            open={frequency === OTHER}
+            value={frequencyOther}
+            onChange={(next) => { setFrequencyOther(next); updatePattern({ frequencyOther: next }); }}
+            placeholder="e.g. Twice a month"
+            ariaLabel="How often the pain happens, in your own words"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-base font-medium text-(--text-body)">How long does each episode last?</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={999}
+              value={durationValue}
+              onChange={(event) => { setDurationValue(event.target.value); updatePattern({ durationValue: event.target.value }); }}
+              placeholder="e.g. 20"
+              aria-label="Duration of each episode"
+              className={cn(COMPACT_INPUT, "w-28 tabular-nums")}
+            />
+            <SegmentedToggle
+              label="Duration unit"
+              value={durationUnit}
+              onChange={(unit) => { setDurationUnit(unit); updatePattern({ durationUnit: unit }); }}
+              options={DURATION_UNITS.map((unit) => ({ value: unit, label: unit }))}
+              className="sm:w-auto [&>button]:px-3"
+            />
+          </div>
         </div>
       </div>
-    </section>
+    </OptionalBlock>
   );
 }
