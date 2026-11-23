@@ -133,7 +133,7 @@ export function HomePanel({
         */
         <div
           data-slot={`${slot}-empty`}
-          className="flex flex-col gap-2 rounded-(--radius-widget) border border-dashed border-(--border-default) px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-2.5 sm:gap-y-1"
+          className="flex animate-in flex-col gap-2 duration-150 ease-(--ease-out) fade-in rounded-(--radius-widget) border border-dashed border-(--border-default) px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-2.5 sm:gap-y-1"
         >
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {emptyIcon ? (
@@ -159,7 +159,11 @@ export function HomePanel({
           ) : null}
         </div>
       ) : (
-        children
+        // Takes over from the loading rows with a 150ms fade, no movement. The
+        // wrapper repeats the section's column and gap, so layout is unchanged.
+        <div className="flex min-h-0 flex-1 animate-in flex-col gap-3 duration-150 ease-(--ease-out) fade-in">
+          {children}
+        </div>
       )}
 
       {action}

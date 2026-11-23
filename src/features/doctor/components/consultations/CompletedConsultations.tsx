@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  MessageSquare,
   RotateCcw,
   Stethoscope,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { withReturnTo } from "@/lib/safeReturnTo";
 import { listAgendaInRange, type DoctorBooking } from "@/features/doctor/lib/api/agenda";
 import {
   defaultWindow,
@@ -378,6 +380,19 @@ function CompletedConsultationRow({ entry }: { entry: CompletedConsultation }) {
           >
             {status.label}
           </Badge>
+
+          {/* The read-only transcript, the doctor-side twin of the patient's
+              "View conversation" (clinical remarks Nov 16). */}
+          {entry.bookingId ? (
+            <Link
+              href={withReturnTo(`/doctor/chat/${encodeURIComponent(entry.bookingId)}`, "/doctor/history")}
+              data-slot="completed-consultation-chat-link"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-(--border-default) bg-(--surface-card) px-3 text-xs font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) hover:text-(--text-heading)"
+            >
+              <MessageSquare aria-hidden className="size-3.5" />
+              <span>Conversation</span>
+            </Link>
+          ) : null}
 
           {href ? (
             <Link

@@ -18,6 +18,16 @@ import type {
   CdsProtectedArtifactPayload,
   CdsProtectedOutputType,
 } from "@/types/cds-contract";
+import {
+  type MedCertSections,
+  parseMedCertRestrictions,
+  serializeMedCertRestrictions,
+} from "@/features/consultation/lib/medCertSections";
+import {
+  diagnosticTestValue,
+  moveTestToModality,
+  withDiagnosticTest,
+} from "@/features/consultation/lib/diagnosticTest";
 
 /**
  * The editable counterpart of {@link ArtifactPayloadView}.
@@ -176,6 +186,14 @@ const BLANK_MEDICATION = {
   instructions: "",
 };
 
+/** Examples only, never values: the fields start empty. */
+const PRESCRIPTION_PLACEHOLDERS = {
+  dose: "e.g. 500 mg",
+  route: "e.g. By mouth",
+  frequency: "e.g. Every 4 hours",
+  duration: "e.g. 3 days",
+} as const;
+
 function PrescriptionEditor({
   payload,
   onChange,
@@ -210,6 +228,7 @@ function PrescriptionEditor({
           >
             <TextField
               label="Generic name"
+              placeholder="e.g. Paracetamol"
               value={med.genericName}
               maxLength={255}
               disabled={disabled}
@@ -227,6 +246,7 @@ function PrescriptionEditor({
                 <TextField
                   key={field}
                   label={field === "dose" ? "Dose" : field === "route" ? "Route" : field === "frequency" ? "Frequency" : "Duration"}
+                  placeholder={PRESCRIPTION_PLACEHOLDERS[field]}
                   value={med[field]}
                   maxLength={120}
                   disabled={disabled}
@@ -238,6 +258,8 @@ function PrescriptionEditor({
             </div>
             <TextAreaField
               label="Instructions"
+              hint="Required. Printed on the prescription for the patient."
+              placeholder="e.g. Take after meals. Do not exceed 4 g a day."
               value={med.instructions}
               maxLength={1000}
               rows={2}
@@ -303,6 +325,14 @@ function FinalIcdEditor({
   );
 }
 
+/**
+ * Written the way it prints (clinical remarks Nov 16): the statement is the
+ * certificate's Assessment / Diagnosis, and Bed rest, Fit to work and Care plan
+ * are separate lines. The Valid from / Valid through dates are no longer asked
+ * for — doctors could not tell what they meant. The contract still requires
+ * them, so they stay in the payload, collapsed to one day on the first edit so
+ * the legacy date range stops feeding the Bed rest line.
+ */
 function MedicalCertificateEditor({
   payload,
   onChange,
@@ -312,42 +342,56 @@ function MedicalCertificateEditor({
   onChange: (next: CdsProtectedArtifactPayload) => void;
   disabled?: boolean;
 }) {
+  const sections = parseMedCertRestrictions(payload.restrictions, payload);
+  const setSection = (key: keyof MedCertSections, value: string) => {
+    const restrictions = serializeMedCertRestrictions({ ...sections, [key]: value });
+    onChange({
+      ...payload,
+      validThrough: payload.validFrom,
+      ...(restrictions ? { restrictions } : { restrictions: undefined }),
+    });
+  };
   return (
     <div className="flex flex-col gap-4">
       <TextAreaField
-        label="Statement"
+        label="Assessment / Diagnosis"
+        hint="Printed on the certificate exactly as written."
+        placeholder="This is to certify that the patient was evaluated and diagnosed with…"
         value={payload.statement}
         maxLength={4000}
-        rows={4}
+        rows={3}
         disabled={disabled}
         onChange={(statement) => onChange({ ...payload, statement })}
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <TextField
-          label="Valid from"
-          type="date"
-          value={payload.validFrom}
+          label="Bed rest recommendation"
+          optional
+          placeholder="e.g. 3 days, Nov 23 to Nov 25"
+          value={sections.bedRest}
+          maxLength={300}
           disabled={disabled}
-          onChange={(validFrom) => onChange({ ...payload, validFrom })}
+          onChange={(value) => setSection("bedRest", value)}
         />
         <TextField
-          label="Valid through"
-          type="date"
-          value={payload.validThrough}
+          label="Fit to work"
+          optional
+          placeholder="e.g. May return to work on Nov 26"
+          value={sections.fitToWork}
+          maxLength={300}
           disabled={disabled}
-          onChange={(validThrough) => onChange({ ...payload, validThrough })}
+          onChange={(value) => setSection("fitToWork", value)}
         />
       </div>
       <TextAreaField
-        label="Recommendations / Remarks"
+        label="Care plan"
         optional
-        value={payload.restrictions ?? ""}
-        maxLength={2000}
-        rows={2}
+        placeholder="e.g. Rest, oral fluids, take medicines as prescribed. Return if symptoms worsen."
+        value={sections.carePlan}
+        maxLength={1300}
+        rows={3}
         disabled={disabled}
-        onChange={(restrictions) =>
-          onChange({ ...payload, ...(restrictions.trim() ? { restrictions } : { restrictions: undefined }) })
-        }
+        onChange={(value) => setSection("carePlan", value)}
       />
     </div>
   );
@@ -364,6 +408,7 @@ function DiagnosticRequestEditor({
 }) {
   const items = payload.items;
   const setItems = (next: CdsDiagnosticRequestPayload["items"]) => onChange({ ...payload, items: next });
+  const imaging = payload.modality === "imaging";
 
   return (
     <div className="flex flex-col gap-4">
@@ -372,9 +417,11 @@ function DiagnosticRequestEditor({
         <select
           value={payload.modality}
           disabled={disabled}
-          onChange={(event) =>
-            onChange({ ...payload, modality: event.target.value as CdsDiagnosticRequestPayload["modality"] })
-          }
+          onChange={(event) => {
+            const modality = event.target.value as CdsDiagnosticRequestPayload["modality"];
+            // The one Test field follows the modality: move each value over.
+            onChange({ ...payload, modality, items: items.map((item) => moveTestToModality(item, modality)) });
+          }}
           className="h-10 max-lg:h-11 rounded-xl border border-(--border-default) bg-(--white) dark:bg-(--surface-card) px-3 text-base sm:text-sm font-medium text-(--text-heading) shadow-2xs focus:border-(--action-primary) focus:ring-2 focus:ring-(--teal-600)/20 disabled:opacity-50"
         >
           <option value="lab">Lab</option>
@@ -395,25 +442,36 @@ function DiagnosticRequestEditor({
         {items.map((item, index) => (
           <GroupItem
             key={index}
-            title={item.testName?.trim() || item.studyName?.trim() || `Item ${index + 1}`}
+            title={diagnosticTestValue(item, payload.modality).trim() || `Item ${index + 1}`}
             disabled={disabled}
             removable={items.length > 1}
             onRemove={() => setItems(items.filter((_, i) => i !== index))}
           >
+            {/*
+              One Test field (clinical remarks Nov 16: "Test name" and "Study
+              name" were redundant). It writes `studyName` for imaging and
+              `testName` otherwise, as the contract expects; Body region sits
+              where Study name was.
+            */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_9rem]">
               <TextField
-                label="Test name"
-                value={item.testName ?? ""}
+                label="Test"
+                placeholder={imaging ? "e.g. X-ray, Ultrasound" : "e.g. Complete blood count"}
+                value={diagnosticTestValue(item, payload.modality)}
                 maxLength={255}
                 disabled={disabled}
-                onChange={(testName) => setItems(items.map((it, i) => (i === index ? { ...it, testName } : it)))}
+                onChange={(value) =>
+                  setItems(items.map((it, i) => (i === index ? withDiagnosticTest(it, payload.modality, value) : it)))
+                }
               />
               <TextField
-                label="Study name"
-                value={item.studyName ?? ""}
+                label="Body region"
+                optional
+                placeholder={imaging ? "e.g. Chest PA" : "e.g. Blood, Urine"}
+                value={item.bodyRegion ?? ""}
                 maxLength={255}
                 disabled={disabled}
-                onChange={(studyName) => setItems(items.map((it, i) => (i === index ? { ...it, studyName } : it)))}
+                onChange={(bodyRegion) => setItems(items.map((it, i) => (i === index ? { ...it, bodyRegion } : it)))}
               />
               <PriorityField
                 value={item.priority}
@@ -421,16 +479,9 @@ function DiagnosticRequestEditor({
                 onChange={(priority) => setItems(items.map((it, i) => (i === index ? { ...it, priority } : it)))}
               />
             </div>
-            <TextField
-              label="Body region"
-              optional
-              value={item.bodyRegion ?? ""}
-              maxLength={255}
-              disabled={disabled}
-              onChange={(bodyRegion) => setItems(items.map((it, i) => (i === index ? { ...it, bodyRegion } : it)))}
-            />
             <TextAreaField
-              label="Rationale"
+              label="Impression / Diagnosis"
+              placeholder="e.g. Community-acquired pneumonia, to rule out"
               value={item.rationale}
               maxLength={1000}
               rows={2}

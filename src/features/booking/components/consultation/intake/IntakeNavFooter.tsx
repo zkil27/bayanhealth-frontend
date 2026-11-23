@@ -85,9 +85,11 @@ export function IntakeNavFooter({
       {children}
       {showReason ? (
         <p
+          key={blockedReason}
           id={reasonId}
           role="alert"
-          className="mb-2.5 flex items-start gap-2 text-[15px] leading-snug font-semibold text-(--danger-fg)"
+          // Settles in above Continue (150ms fade, 4px rise). Never a shake.
+          className="mb-2.5 flex animate-in items-start gap-2 text-[15px] leading-snug font-semibold text-(--danger-fg) duration-150 ease-(--ease-out) fade-in slide-in-from-bottom-1"
         >
           <CircleAlert aria-hidden className="mt-0.5 size-4.5 shrink-0" />
           {blockedReason}
@@ -101,7 +103,7 @@ export function IntakeNavFooter({
             disabled={pending}
             className={cn(
               "inline-flex min-h-12 min-w-12 items-center gap-2 rounded-xl border border-(--border-default) bg-(--surface-card) px-4 sm:px-5 text-base font-semibold text-(--text-body)",
-              "transition-colors hover:border-(--border-strong) hover:bg-(--action-secondary-hover-surface)",
+              "transition-[color,background-color,border-color,scale] duration-(--dur-fast) ease-(--ease-out) hover:border-(--border-strong) hover:bg-(--action-secondary-hover-surface) enabled:active:scale-[0.98] motion-reduce:enabled:active:scale-100",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}

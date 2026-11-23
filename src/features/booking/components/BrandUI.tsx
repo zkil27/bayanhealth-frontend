@@ -56,7 +56,9 @@ export function BrandCtaButton({
       className={cn(
         "relative inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-(--radius-pill) px-4 py-2 text-center",
         "bg-(--action-primary) text-[16px] font-bold text-(--action-primary-text) shadow-(--shadow-btn-inset)",
-        "transition-colors hover:bg-(--action-primary-hover)",
+        "transition-[background-color,box-shadow,translate] duration-(--dur-fast) ease-(--ease-out) hover:bg-(--action-primary-hover)",
+        // Pressed: the inset key edge collapses and the pill sinks 2px into it.
+        "enabled:active:translate-y-[2px] enabled:active:bg-(--action-primary-active) enabled:active:shadow-none motion-reduce:enabled:active:translate-y-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
         "disabled:cursor-not-allowed disabled:bg-(--gray-bg) disabled:text-(--text-subtle) disabled:shadow-none",
         className,

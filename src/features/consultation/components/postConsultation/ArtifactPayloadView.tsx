@@ -12,6 +12,8 @@ import type {
   CdsProtectedArtifactPayload,
   CdsProtectedOutputType,
 } from "@/types/cds-contract";
+import { MED_CERT_SECTION_LABELS, parseMedCertRestrictions } from "@/features/consultation/lib/medCertSections";
+import { diagnosticTestValue } from "@/features/consultation/lib/diagnosticTest";
 
 /**
  * Renders a protected artifact's payload as the clinical document it is.
@@ -180,19 +182,22 @@ function FinalIcdView({ payload }: { payload: CdsFinalIcdPayload }) {
   );
 }
 
+/** Laid out the way the certificate prints (clinical remarks Nov 16). */
 function MedicalCertificateView({ payload }: { payload: CdsMedicalCertificatePayload }) {
+  const sections = parseMedCertRestrictions(payload.restrictions, payload);
+  const rows = (Object.keys(MED_CERT_SECTION_LABELS) as (keyof typeof sections)[]).filter((key) =>
+    sections[key].trim(),
+  );
   return (
     <>
-      <Prose>{payload.statement}</Prose>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
-        <Pair label="Valid from" value={formatDate(payload.validFrom)} />
-        <Pair label="Valid through" value={formatDate(payload.validThrough)} />
-      </dl>
-      {payload.restrictions?.trim() ? (
-        <Field label="Recommendations / Remarks">
-          <Prose>{payload.restrictions}</Prose>
+      <Field label="Assessment / Diagnosis">
+        <Prose>{payload.statement}</Prose>
+      </Field>
+      {rows.map((key) => (
+        <Field key={key} label={MED_CERT_SECTION_LABELS[key]}>
+          <Prose>{sections[key].trim()}</Prose>
         </Field>
-      ) : null}
+      ))}
     </>
   );
 }
@@ -203,17 +208,20 @@ function DiagnosticRequestView({ payload }: { payload: CdsDiagnosticRequestPaylo
       <ul className="flex flex-col gap-2">
         {payload.items.map((item, index) => (
           <li
-            key={`${item.testName ?? item.studyName}-${index}`}
+            key={`${diagnosticTestValue(item, payload.modality)}-${index}`}
             className="rounded-[10px] border border-(--border-subtle) p-3"
           >
             <p className="flex flex-wrap items-center gap-2 font-bold text-(--text-heading)">
-              {item.testName || item.studyName}
+              {diagnosticTestValue(item, payload.modality)}
               {item.bodyRegion ? (
                 <span className="text-sm font-normal text-(--text-muted)">{item.bodyRegion}</span>
               ) : null}
               <PriorityChip priority={item.priority} />
             </p>
-            <p className="mt-1 text-(--text-muted)">{item.rationale}</p>
+            <p className="mt-1 text-(--text-muted)">
+              <span className="font-semibold text-(--text-body)">Impression / Diagnosis: </span>
+              {item.rationale}
+            </p>
           </li>
         ))}
       </ul>
@@ -362,12 +370,6 @@ function PriorityChip({ priority }: { priority: "routine" | "urgent" | "emergenc
       {priority === "emergency" ? "Emergency" : priority === "urgent" ? "Urgent" : "Routine"}
     </span>
   );
-}
-
-/** Render an ISO date as written when it cannot be parsed, rather than "Invalid Date". */
-function formatDate(value: string): string {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
 }
 
 /* ── Shape guards ──────────────────────────────────────────────────────────── */

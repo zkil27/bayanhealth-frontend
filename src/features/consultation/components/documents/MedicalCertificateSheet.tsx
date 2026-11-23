@@ -10,6 +10,7 @@ import type {
   DocumentVerificationInfo,
 } from "./types";
 import { cn } from "@/lib/utils";
+import { parseMedCertRestrictions } from "@/features/consultation/lib/medCertSections";
 
 interface MedicalCertificateSheetProps {
   payload: CdsMedicalCertificatePayload;
@@ -51,29 +52,15 @@ export function MedicalCertificateSheet({
   const caseId = patient?.caseId || "—";
   const docId = verification?.documentId || (patient?.caseId ? `MC-${patient.caseId}` : "—");
 
-  const validFromFormatted = payload.validFrom
-    ? new Date(payload.validFrom).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : dateOfConsultation;
-
-  const validThroughFormatted = payload.validThrough
-    ? new Date(payload.validThrough).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : validFromFormatted;
-
-  const fitToReturnDate = payload.validThrough
-    ? new Date(new Date(payload.validThrough).getTime() + 86400000).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Upon clinical recovery";
+  // Bed rest / Fit to work / Care plan, each printed as the doctor wrote it
+  // (clinical remarks Nov 16). No derived dates and no boilerplate fallback:
+  // a line the doctor left blank is left off the certificate.
+  const sections = parseMedCertRestrictions(payload.restrictions, payload);
+  const recommendations = [
+    { key: "bedRest", label: "Bed Rest", icon: Bed, value: sections.bedRest.trim() },
+    { key: "fitToWork", label: "Fit to Work", icon: PersonStanding, value: sections.fitToWork.trim() },
+    { key: "carePlan", label: "Care Plan", icon: ClipboardList, value: sections.carePlan.trim() },
+  ].filter((row) => row.value);
 
   const diagnosis = diagnosisTitle || payload.statement || "Clinical evaluation conducted";
 
@@ -152,55 +139,29 @@ export function MedicalCertificateSheet({
       </section>
 
       {/* Medical Recommendation Section */}
-      <section className="mb-4">
-        <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-3">
-          MEDICAL RECOMMENDATION
-        </h2>
+      {recommendations.length > 0 ? (
+        <section className="mb-4">
+          <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase mb-3">
+            MEDICAL RECOMMENDATION
+          </h2>
 
-        <div className="flex flex-col gap-3 text-xs">
-          {/* Rest / Suspension */}
-          <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
-              <Bed className="size-4" />
-            </div>
-            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
-              <span className="font-semibold text-slate-900">Rest / Work Suspension</span>
-              <span className="text-slate-800 font-medium">
-                {validFromFormatted} to {validThroughFormatted}
-              </span>
-            </div>
+          <div className="flex flex-col gap-3 text-xs">
+            {recommendations.map(({ key, label, icon: Icon, value }) => (
+              <div key={key} className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
+                  <Icon className="size-4" />
+                </div>
+                <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
+                  <span className="font-semibold text-slate-900">{label}</span>
+                  <span className="whitespace-pre-line text-slate-800 leading-relaxed">{value}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Fit to Return */}
-          <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
-              <PersonStanding className="size-4" />
-            </div>
-            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
-              <span className="font-semibold text-slate-900">Fit to Return</span>
-              <span className="text-slate-800">
-                {fitToReturnDate}, if symptoms improve and no red flags are present.
-              </span>
-            </div>
-          </div>
-
-          {/* Work / School Advice */}
-          <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-(--teal-700) text-(--teal-700) bg-(--teal-100)/30">
-              <ClipboardList className="size-4" />
-            </div>
-            <div className="flex flex-col sm:grid sm:grid-cols-[160px_minmax(0,1fr)] items-baseline gap-1 sm:gap-2 pt-1.5 min-w-0 flex-1">
-              <span className="font-semibold text-slate-900">Recommendations / Remarks</span>
-              <span className="text-slate-800 leading-relaxed">
-                {payload.restrictions ||
-                  "May return to usual duties if able to work comfortably. Avoid strenuous physical exertion and seek reassessment if symptoms worsen or red flags occur."}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-2" />
-      </section>
+          <div className="h-[1px] w-full bg-(--navy-700)/30 mt-4 mb-2" />
+        </section>
+      ) : null}
 
       {/* Sheet Footer */}
       <DocumentSheetFooter

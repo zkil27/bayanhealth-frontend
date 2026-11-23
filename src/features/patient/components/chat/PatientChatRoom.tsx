@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { MAX_CHAT_MESSAGE_LENGTH, isChatWritable } from "@/lib/chat";
+import { safeReturnTo, withReturnTo } from "@/lib/safeReturnTo";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { cn, initialsOf } from "@/lib/utils";
 import { Avatar, IconBadge } from "@/features/patient/components/redesign/primitives";
@@ -101,6 +102,10 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
   // whatever the patient has since typed.
   const searchParams = useSearchParams();
   const router = useRouter();
+  // Where the back arrow goes (clinical remarks Nov 16): the page that opened
+  // this thread, e.g. the completed booking, instead of the chat list the
+  // patient nav no longer shows.
+  const returnTo = safeReturnTo(searchParams.get("returnTo"), "/patient/");
   const seededRef = useRef(false);
   useEffect(() => {
     if (seededRef.current) return;
@@ -108,10 +113,12 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
     if (!draft) return;
     seededRef.current = true;
     chat.setInput(draft.slice(0, MAX_CHAT_MESSAGE_LENGTH));
-    router.replace(`/patient/chat/${encodeURIComponent(bookingId)}`, {
+    const base = `/patient/chat/${encodeURIComponent(bookingId)}`;
+    // Keeps returnTo so the back arrow still works after the draft is stripped.
+    router.replace(returnTo ? withReturnTo(base, returnTo) : base, {
       scroll: false,
     });
-  }, [searchParams, chat, router, bookingId]);
+  }, [searchParams, chat, router, bookingId, returnTo]);
 
   useEffect(() => {
     if (chat.sendError) {
@@ -140,8 +147,8 @@ export function PatientChatRoom({ bookingId }: { bookingId: string }) {
     >
       <header className="flex shrink-0 items-center gap-3 pb-3">
         <Link
-          href="/patient/chat"
-          aria-label="Back to conversations"
+          href={returnTo ?? "/patient/chat"}
+          aria-label={returnTo ? "Back" : "Back to conversations"}
           className="flex size-11 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border-default) bg-(--surface-card) text-(--text-heading) transition-transform duration-300 md:hover:-translate-x-0.5"
         >
           <ArrowLeft className="size-5" strokeWidth={1.75} />

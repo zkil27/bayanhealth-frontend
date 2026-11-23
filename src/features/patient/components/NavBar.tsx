@@ -32,6 +32,7 @@ import { PATIENT_NAV, isNavItemActive } from "@/components/layout/nav-items";
 export function NavBar() {
   const pathname = usePathname() ?? "";
   const navItems = PATIENT_NAV.filter((item) => !item.comingSoon);
+  const activeIndex = navItems.findIndex((item) => isNavItemActive(pathname, item.href));
 
   return (
     <nav
@@ -47,6 +48,23 @@ export function NavBar() {
         className="absolute inset-0 rounded-full border border-(--border-subtle) bg-(--surface-raised) shadow-(--shadow-md)"
       />
       <div className="relative flex h-full items-center gap-1 p-1">
+        {/*
+         * One active pill slides between tabs (250ms, transform only), so the
+         * bar shows where you went rather than repainting two tabs. It mounts
+         * at its tab, so it never slides in from the edge. Geometry: the row's
+         * 4px padding and 4px gaps. Reduced motion: it moves without sliding.
+         */}
+        {activeIndex >= 0 ? (
+          <span
+            aria-hidden
+            data-slot="patient-nav-indicator"
+            className="pointer-events-none absolute inset-y-1 left-1 rounded-full bg-(--surface-accent-soft) transition-[translate] duration-250 ease-(--ease-out) motion-reduce:transition-none"
+            style={{
+              width: `calc((100% - 0.5rem - ${navItems.length - 1} * 0.25rem) / ${navItems.length})`,
+              translate: `calc(${activeIndex} * (100% + 0.25rem)) 0`,
+            }}
+          />
+        ) : null}
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isNavItemActive(pathname, item.href);
@@ -58,14 +76,17 @@ export function NavBar() {
               title={item.title}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors",
+                "group/tab relative flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors duration-(--dur-base) ease-(--ease-out)",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                 active
-                  ? "bg-(--surface-accent-soft) text-(--action-primary)"
+                  ? "text-(--action-primary)"
                   : "text-(--text-muted) hover:bg-(--surface-canvas) hover:text-(--text-heading)",
               )}
             >
-              <Icon className="size-6 shrink-0" aria-hidden="true" />
+              <Icon
+                className="size-6 shrink-0 transition-[scale] duration-(--dur-fast) ease-(--ease-out) group-active/tab:scale-90 motion-reduce:group-active/tab:scale-100"
+                aria-hidden="true"
+              />
               <span
                 className={cn(
                   "max-w-full truncate text-[13px] leading-tight",

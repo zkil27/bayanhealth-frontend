@@ -261,7 +261,10 @@ export function NotesSaveState({ state, prefilled }: { state: ClinicalNotesSaveS
         state === "saved" ? "text-(--status-available-fg)" : "text-(--text-muted)",
       )}
     >
-      {text}
+      {/* Keyed so "Saving…" → "Saved" fades (150ms) instead of flickering. */}
+      <span key={text} className="animate-in duration-150 ease-(--ease-out) fade-in">
+        {text}
+      </span>
     </span>
   );
 }

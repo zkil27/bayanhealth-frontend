@@ -38,6 +38,7 @@ import {
 } from "./DeliverablesDeck";
 import { PatientDetails } from "./PatientDetails";
 import { PatientRail } from "./PatientRail";
+import { ConversationLink } from "./ConversationLink";
 import {
   ObjectiveIntake,
   ObjectiveSummary,
@@ -102,7 +103,13 @@ import {
   updateConfirmedAssessment,
   updateEditableAssessment,
 } from "../../lib/api/assessmentFirst";
-import { RECHECK_SAFETY_HINT, RECHECK_SAFETY_LABEL, lockReasonCopy, stepGuidance } from "../../lib/cdsCopy";
+import {
+  RECHECK_SAFETY_HINT,
+  RECHECK_SAFETY_LABEL,
+  isPatientReadableOutput,
+  lockReasonCopy,
+  stepGuidance,
+} from "../../lib/cdsCopy";
 
 const outputLabels = OUTPUT_LABELS;
 const terminalJobs = new Set([
@@ -1140,15 +1147,74 @@ export function AssessmentFirstWorkspace({
         setCurrent((known) =>
           known.map((item) => (item.artifactId === next.artifactId ? next : item)),
         );
-        toast.success("Signed. The patient cannot see it until you release it separately.", {
-          id: "finalize-signature",
-        });
+        toast.success(
+          isPatientReadableOutput(artifact.outputType)
+            ? "Signed. Release it to the patient when you're ready."
+            : "Signed and kept in your records.",
+          { id: "finalize-signature" },
+        );
       } catch (cause) {
         toast.error(physicianErrorMessage(cause));
         throw cause;
       }
     },
     [assessment, consultationId, physicianActorId, token],
+  );
+
+  /**
+   * Sign & lock and Release in one step, from the one sign dialog (clinical
+   * remarks Nov 16: "Place Sign&Lock and RELEASE in one pop up"). The two
+   * contract calls stay separate and in order; release uses the revisions the
+   * signature just returned. If release is refused, the signature stands and
+   * the card falls back to its Hold to release button.
+   */
+  const finalizeAndRelease = useCallback(
+    async (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => {
+      if (!assessment) return;
+      let signed: CdsProtectedArtifact;
+      try {
+        signed = await finalizeArtifact(consultationId, artifact.artifactId, token, {
+          consultationId,
+          physicianActorId,
+          assessmentVersion: assessment.assessmentVersion,
+          expectedArtifactRevision: artifact.artifactRevision,
+          expectedGateRevision: assessment.gateRevision,
+          reviewAcknowledged: true,
+          signature: {
+            signerName: signature.signerName,
+            acknowledged: true,
+            strokes: signature.strokes,
+          },
+        });
+        setCurrent((known) => known.map((item) => (item.artifactId === signed.artifactId ? signed : item)));
+      } catch (cause) {
+        toast.error(physicianErrorMessage(cause));
+        throw cause;
+      }
+      try {
+        const released = await releaseArtifact(consultationId, signed.artifactId, token, {
+          consultationId,
+          physicianActorId,
+          assessmentVersion: assessment.assessmentVersion,
+          expectedArtifactRevision: signed.artifactRevision,
+          expectedGateRevision: assessment.gateRevision,
+          expectedReleaseRevision: signed.releaseRevision,
+          releaseAcknowledged: true,
+        });
+        setCurrent((known) => known.map((item) => (item.artifactId === released.artifactId ? released : item)));
+        toast.success(`${outputLabels[artifact.outputType]} signed and released to the patient.`, {
+          id: "finalize-signature",
+        });
+      } catch (cause) {
+        // Signed is signed: the dialog closes and the card offers Release.
+        if (requiresAuthoritativeRefresh(cause)) await refreshAssessment().catch(() => undefined);
+        toast.warning(
+          `Signed, but the release didn't go through (${physicianErrorMessage(cause)}). Use Hold to release on the document.`,
+          { id: "finalize-signature" },
+        );
+      }
+    },
+    [assessment, consultationId, physicianActorId, token, refreshAssessment],
   );
 
   const release = (artifact: CdsProtectedArtifact) =>
@@ -1440,6 +1506,7 @@ export function AssessmentFirstWorkspace({
               <ClipboardList className="size-4 shrink-0" aria-hidden />
               <span className="max-[359px]:sr-only">Intake</span>
             </Button>
+            {bookingId ? <ConversationLink bookingId={bookingId} consultationId={consultationId} compact /> : null}
             {bookingId ? <SendToErControl bookingId={bookingId} urgent={safetyLock} /> : null}
           </>
         }
@@ -1457,6 +1524,7 @@ export function AssessmentFirstWorkspace({
             >
               <RefreshCw className="size-4 shrink-0" />
             </Button>
+            {bookingId ? <ConversationLink bookingId={bookingId} consultationId={consultationId} /> : null}
             {bookingId ? <SendToErControl bookingId={bookingId} urgent={safetyLock} /> : null}
           </div>
         }
@@ -1673,11 +1741,12 @@ export function AssessmentFirstWorkspace({
                 aiEligibleTypes={aiEligibleTypes}
                 aiUnavailableReason={
                   hasLocks
-                    ? "AI drafting is on hold until the notice above is cleared. You can still write it yourself."
+                    ? "Drafting resumes once the notice above is cleared."
                     : undefined
                 }
                 onAmend={amend}
                 onFinalize={finalize}
+                onFinalizeAndRelease={finalizeAndRelease}
                 onRelease={release}
                 onDraft={(outputType) => void generate(outputType)}
                 onAuthor={authorDocument}

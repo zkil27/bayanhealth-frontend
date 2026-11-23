@@ -47,11 +47,13 @@ import {
 import { BookingWizard } from "../consultation/BookingWizard";
 import type { Booking, BookingStep, Service } from "../../types/booking.types";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatConsultationDateTime } from "@/lib/consultation-time";
 import { cn } from "@/lib/utils";
+import { withReturnTo } from "@/lib/safeReturnTo";
 
 /**
  * Result of resolving a booking detail.
@@ -259,7 +261,9 @@ export function PatientBookingDetail({ bookingId }: { bookingId: string }) {
   return (
     <div
       className={cn(
-        "flex w-full flex-col select-none",
+        // Fades in over the skeleton's place (150ms, no movement). The element
+        // persists across the 30s poll, so it fades only once.
+        "flex w-full animate-in flex-col duration-150 ease-(--ease-out) select-none fade-in",
         // Only the editable intake is a fixed-height sheet. Every other step
         // must size to its content: with `flex-1 min-h-0` (basis 0) applied to
         // all steps, a long view (the intake review, the waiting screen) was
@@ -448,7 +452,13 @@ function ChatHistoryCard({ bookingId }: { bookingId: string }) {
           </p>
         </div>
       </div>
-      <Link href={`/patient/chat/${encodeURIComponent(bookingId)}`}>
+      {/* returnTo brings the back arrow here, not to the hidden chat list (remarks Nov 16). */}
+      <Link
+        href={withReturnTo(
+          `/patient/chat/${encodeURIComponent(bookingId)}`,
+          `/patient/booking/getBooking/${encodeURIComponent(bookingId)}`,
+        )}
+      >
         <Button size="sm" variant="outline">
           View conversation
         </Button>
@@ -555,10 +565,11 @@ export function BookingContextBar({ bookingId, context }: { bookingId: string; c
         ? serviceTitle(context.booking.serviceType)
         : "Booking";
 
+  // No subtitle during intake: the title, the Draft badge and the intake's own
+  // "Step X of Y" already say where the patient is, and on a phone the old line
+  // ("Complete intake to match with a PRC-licensed physician.") was cut mid-word.
   const subtitle =
-    context.kind === "intake"
-      ? "Complete intake to match with a PRC-licensed physician."
-      : context.kind === "booking"
+    context.kind === "booking"
         ? [
             // "Doctor matching in progress" repeated the waiting screen beneath it.
             context.doctor.kind === "unassigned" ? null : doctorSlotLabel(context.doctor),
@@ -713,26 +724,22 @@ function BookingLoadingSkeleton() {
   return (
     <div className="flex flex-col gap-4" data-slot="async-view-loading">
       <div className="rounded-xl border p-5">
+        {/* Shared <Skeleton>: token colours (was hard-coded bg-gray-400) and a
+            reduced-motion fallback. Same geometry as before. */}
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
-            <div className="h-6 w-48 animate-pulse rounded bg-gray-400" />
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-400" />
+            <Skeleton className="h-6 w-48 rounded" />
+            <Skeleton className="h-4 w-24 rounded" />
           </div>
-          <div className="h-6 w-20 animate-pulse rounded bg-gray-400" />
+          <Skeleton className="h-6 w-20 rounded" />
         </div>
         <div className="mt-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="h-4 w-20 animate-pulse rounded bg-gray-400" />
-            <div className="h-4 w-32 animate-pulse rounded bg-gray-400" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="h-4 w-20 animate-pulse rounded bg-gray-400" />
-            <div className="h-4 w-32 animate-pulse rounded bg-gray-400" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="h-4 w-20 animate-pulse rounded bg-gray-400" />
-            <div className="h-4 w-32 animate-pulse rounded bg-gray-400" />
-          </div>
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="flex items-center justify-between">
+              <Skeleton className="h-4 w-20 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

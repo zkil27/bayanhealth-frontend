@@ -17,6 +17,7 @@ import { PersonDataSection } from "@/components/blocks/profile/PersonDataSection
 import AppButton from "@/components/primitives/AppButton";
 import { NONE_OPTION } from "@/features/booking/constants/bookingConstants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DrawnCheck } from "@/components/ui/success-mark";
 import { useProfile } from "@/hooks/useProfile";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ import {
   type RedFlagState,
 } from "./intakeGates";
 import { IntakeUiStateProvider, type IntakeUiState } from "./intakeUiState";
+import { stepDirection, stepEnterClass, type StepDirection } from "./stepDirection";
 import { IntakeReceipt } from "../IntakeReceipt";
 import { IntakeNavFooter } from "./IntakeNavFooter";
 import { MedicalHistoryStep } from "./MedicalHistoryStep";
@@ -145,6 +147,15 @@ export function AuthenticatedIntakeForm({
   const [uiState, setUiState] = useState<IntakeUiState>({});
   const [hydrated, setHydrated] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "device" | "server">("idle");
+  // UI-only: remembers which way the last page change went, so the new page
+  // slides in from that side (CHANGELOG_UI_MI.md). Navigation is untouched.
+  const [stepMotion, setStepMotion] = useState<{ step: IntakePage; direction: StepDirection }>({
+    step: 0,
+    direction: "none",
+  });
+  if (stepMotion.step !== currentStep) {
+    setStepMotion({ step: currentStep, direction: stepDirection(stepMotion.step, currentStep) });
+  }
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const hydratedBookingRef = useRef<string | null>(null);
@@ -531,10 +542,15 @@ export function AuthenticatedIntakeForm({
           </div>
           <p aria-live="polite" className="mt-1 flex min-h-5 items-center gap-1.5 text-sm text-(--text-muted)">
             {statusText ? (
-              <>
-                <Check aria-hidden className="size-4 text-(--safe-fg)" />
+              // Keyed by the text so a change ("Saved on this device" → "Saved")
+              // fades in and redraws its check instead of swapping in place.
+              <span
+                key={statusText}
+                className="inline-flex animate-in items-center gap-1.5 duration-(--dur-base) ease-(--ease-out) fade-in"
+              >
+                <DrawnCheck className="size-4 text-(--safe-fg)" />
                 {statusText}
-              </>
+              </span>
             ) : null}
           </p>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-(--ink-100) xl:hidden" aria-hidden>
@@ -593,8 +609,10 @@ export function AuthenticatedIntakeForm({
             data-slot="intake-scroll-body"
             // The scrollbar stays visible: it is the only cue that a long step
             // continues below the fold, and older patients rely on it.
-            className="min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-color:var(--border-strong)_transparent] [scrollbar-width:thin] sm:px-8 sm:py-6"
+            className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-color:var(--border-strong)_transparent] [scrollbar-width:thin] sm:px-8 sm:py-6"
           >
+            {/* Keyed by page so each page enters from the side it came from (220ms). */}
+            <div key={currentKey} data-slot="intake-step-body" className={stepEnterClass(stepMotion.direction)}>
             {currentKey === "safety" ? <SafetyCheckStep redFlag={redFlag} onRedFlagChange={setRedFlag} /> : null}
             {currentKey === "about" ? <AboutYouSection profile={profile} /> : null}
             {currentKey === "history" ? <MedicalHistoryStep /> : null}
@@ -608,6 +626,7 @@ export function AuthenticatedIntakeForm({
             {currentKey === "review" ? (
               <ReviewConsentStep onEdit={(key) => navigateTo(pageOf(key))} isOnDemand={isOnDemand} />
             ) : null}
+            </div>
           </main>
         </div>
 

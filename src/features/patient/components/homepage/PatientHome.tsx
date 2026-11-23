@@ -429,6 +429,8 @@ export function PatientHome() {
               <section
                 data-slot="patient-home-activity"
                 aria-label="Active consultation"
+                // Takes over from the loading block with a 150ms fade, no movement.
+                className="animate-in duration-150 ease-(--ease-out) fade-in"
               >
                 <LiveActivityCard derivation={derivation} bookings={bookings} />
               </section>
@@ -451,7 +453,7 @@ export function PatientHome() {
                     <Link
                       key={tile.title}
                       href={tile.href}
-                      className="group flex min-h-[96px] flex-col items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-2.5 py-3.5 text-center shadow-(--shadow-card) transition-all duration-200 hover:-translate-y-0.5 hover:border-(--action-primary) hover:shadow-(--shadow-md) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) sm:min-h-[108px] sm:p-4 lg:min-h-[116px]"
+                      className="group flex min-h-[96px] flex-col items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--surface-card) p-2.5 py-3.5 text-center shadow-(--shadow-card) transition-all duration-200 hover:-translate-y-0.5 hover:border-(--action-primary) hover:shadow-(--shadow-md) active:translate-y-0 active:scale-[0.97] active:duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:min-h-[108px] sm:p-4 lg:min-h-[116px]"
                     >
                       <span
                         className={cn(

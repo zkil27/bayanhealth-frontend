@@ -132,3 +132,16 @@ Follow these strict rules from `UI_HANDOFF.md`:
 - **If the Main Repo Has New Backend Fields**: Wrap the new fields using the fork's input/card styling patterns instead of dropping them.
 - **If the Main Repo Uses Different State Selectors**: Bind the fork's new UI trigger to the main repo's existing selector.
 - **If Tests Fail on Hardcoded Colors**: Check for arbitrary hex strings (e.g., `#ffffff` instead of `bg-card` or `#333333` instead of `text-foreground`) and replace them with semantic tokens.
+
+---
+
+## 7. Open Backend Dependencies
+
+Some UI requests cannot be finished in this fork. Each one is logged with its exact files under **"Backend dependencies"** in the matching `CHANGELOG_UI_V4.md` entry. Current list, from the 2026-11-23 "Clinical Remarks Nov 16" entry:
+
+1. **Post-consult chat window**: messages accepted for a few minutes after the consult ends, plus a field the UI can read.
+2. **Download endpoint for patient-uploaded lab results.**
+3. **Real `bedRest` / `fitToWork` / `carePlan` medical certificate fields.** These replace the labeled lines this fork writes into `restrictions`, via `features/consultation/lib/medCertSections.ts`.
+4. **Optional: one sign-and-release endpoint.** Today the client chains finalize, then release.
+
+When porting, keep the fork's UI and point it at the new fields once they exist. Do not drop the UI because the backend is not ready.

@@ -9,15 +9,16 @@ import {
   ClipboardList,
   FileBadge,
   FileSignature,
+  FileText,
   Hash,
   History,
+  Info,
   PenLine,
   Pill,
   RefreshCw,
   TestTube2,
   Undo2,
   UserCheck,
-  FileText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -232,6 +233,7 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
   aiUnavailableReason,
   onAmend,
   onFinalize,
+  onFinalizeAndRelease,
   onRelease,
   onDraft,
   onAuthor,
@@ -269,6 +271,8 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
   aiUnavailableReason?: string;
   onAmend: (artifact: CdsProtectedArtifact, payload: CdsProtectedArtifactPayload) => Promise<void>;
   onFinalize: (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => Promise<void>;
+  /** Sign and release in one step, from the sign dialog (patient documents). */
+  onFinalizeAndRelease?: (artifact: CdsProtectedArtifact, signature: ArtifactSignatureInput) => Promise<void>;
   onRelease: (artifact: CdsProtectedArtifact) => void;
   /** Draft (or redraft) with AI. */
   onDraft: (outputType: CdsProtectedOutputType) => void;
@@ -573,6 +577,12 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
                 outputType={selected}
                 busy={busy}
                 onCancel={() => setAuthoring(null)}
+                preview={{
+                  intake,
+                  doctorName: defaultSignerName,
+                  doctorLicenseNumber,
+                  doctorSpecialty,
+                }}
                 onSave={async (type, payload) => {
                   await onAuthor(type, payload);
                   setAuthoring(null);
@@ -592,6 +602,11 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
               canRegenerate={draftingOpen && aiEligibleTypes.has(selected)}
               onAmend={(payload) => onAmend(selectedEntry.artifact!, payload)}
               onFinalize={(signature) => handleFinalize(selectedEntry.artifact!, signature)}
+              onFinalizeAndRelease={
+                onFinalizeAndRelease
+                  ? (signature) => onFinalizeAndRelease(selectedEntry.artifact!, signature)
+                  : undefined
+              }
               onRelease={() => onRelease(selectedEntry.artifact!)}
               onRegenerate={() => onDraft(selected)}
               onDiscard={() => handleDiscard(selected)}
@@ -613,10 +628,15 @@ export const DeliverablesDeck = memo(function DeliverablesDeck({
               outputType={selected}
               busy={busy}
               aiAvailable={draftingOpen && aiEligibleTypes.has(selected)}
+              aiUnavailableTitle={
+                !draftingOpen
+                  ? "AI drafting is on hold"
+                  : `No AI-drafted ${OUTPUT_LABELS[selected].toLowerCase()} for this diagnosis`
+              }
               aiUnavailableReason={
                 !draftingOpen
-                  ? aiUnavailableReason ?? "AI drafting is on hold. You can still write it yourself."
-                  : "AI drafting isn't available for this diagnosis. You can write it yourself."
+                  ? aiUnavailableReason ?? "Drafting paused while a safety check is open."
+                  : "The confirmed diagnosis has no AI draft for this document."
               }
               onDraft={() => onDraft(selected)}
               onWrite={() => setAuthoring(selected)}
@@ -811,6 +831,7 @@ function StartDocument({
   outputType,
   busy,
   aiAvailable,
+  aiUnavailableTitle,
   aiUnavailableReason,
   onDraft,
   onWrite,
@@ -819,6 +840,8 @@ function StartDocument({
   outputType: CdsProtectedOutputType;
   busy: boolean;
   aiAvailable: boolean;
+  /** The notice's heading when AI is unavailable: on hold, or not offered for this diagnosis. */
+  aiUnavailableTitle: string;
   aiUnavailableReason: string;
   onDraft: () => void;
   onWrite: () => void;
@@ -828,17 +851,38 @@ function StartDocument({
   const label = OUTPUT_LABELS[outputType].toLowerCase();
   return (
     <div data-slot="start-document" className="flex flex-col gap-4 p-4 sm:p-5">
+      {/*
+        Clinical remarks Nov 16: "No AI draft" sat as small print under a row
+        of options that still looked clickable. Said first and plainly now, and
+        the AI option below is grayed out rather than merely dashed.
+      */}
+      {!aiAvailable ? (
+        <div
+          role="status"
+          data-slot="no-ai-draft-notice"
+          className="flex items-start gap-3 rounded-xl border border-(--attention-border)/50 bg-(--attention-bg) p-3.5"
+        >
+          <Info className="mt-0.5 size-4.5 shrink-0 text-(--attention-fg)" aria-hidden />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="text-sm font-bold text-(--text-heading)">{aiUnavailableTitle}</p>
+            <p className="text-sm leading-snug text-(--text-body)">
+              {aiUnavailableReason} Use <strong className="font-semibold">Write it myself</strong> below.
+            </p>
+          </div>
+        </div>
+      ) : null}
       <p className="text-sm text-(--text-body)">{OUTPUT_DESCRIPTIONS[outputType]}</p>
       <div className="grid gap-2.5 sm:grid-cols-2">
         <StartOption
           icon={FileText}
-          title="Draft with AI"
+          title={aiAvailable ? "Draft with AI" : "AI draft unavailable"}
           description={
             aiAvailable
               ? `A first draft from your confirmed Assessment. You review, edit and sign it.`
-              : aiUnavailableReason
+              : "Not offered for this document right now."
           }
           disabled={busy || !aiAvailable}
+          unavailable={!aiAvailable}
           onClick={onDraft}
           tone="ai"
         />
@@ -847,6 +891,7 @@ function StartDocument({
           title="Write it myself"
           description={`Start from a blank ${label}. No AI involved.`}
           disabled={busy}
+          emphasized={!aiAvailable}
           onClick={onWrite}
         />
       </div>
@@ -910,6 +955,8 @@ function StartOption({
   title,
   description,
   disabled,
+  unavailable = false,
+  emphasized = false,
   onClick,
   tone = "neutral",
 }: {
@@ -917,6 +964,10 @@ function StartOption({
   title: string;
   description: string;
   disabled: boolean;
+  /** Not offered at all (vs. briefly disabled while busy): fully grayed out. */
+  unavailable?: boolean;
+  /** The one way forward, e.g. writing it yourself when AI is unavailable. */
+  emphasized?: boolean;
   onClick: () => void;
   tone?: "neutral" | "ai";
 }) {
@@ -924,21 +975,28 @@ function StartOption({
     <button
       type="button"
       disabled={disabled}
+      aria-disabled={disabled || undefined}
       onClick={onClick}
       className={cn(
-        "group flex min-h-24 items-start gap-3 rounded-xl border bg-(--surface-card) p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-(--focus-ring) focus-visible:outline-none disabled:cursor-not-allowed",
-        disabled
-          ? "border-dashed border-(--border-default)"
-          : tone === "ai"
-            ? "border-(--ai-border)/60 hover:bg-(--ai-bg)"
-            : "border-(--border-default) hover:border-(--action-primary)/60 hover:bg-(--surface-warm-soft)",
+        "group flex min-h-24 items-start gap-3 rounded-xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-(--focus-ring) focus-visible:outline-none disabled:cursor-not-allowed",
+        unavailable
+          ? "border-(--border-subtle) bg-(--gray-bg) opacity-70"
+          : disabled
+            ? "border-dashed border-(--border-default) bg-(--surface-card)"
+            : emphasized
+              ? "border-(--action-primary) bg-(--surface-accent-soft) hover:bg-(--surface-accent-soft)/70"
+              : tone === "ai"
+                ? "border-(--ai-border)/60 bg-(--surface-card) hover:bg-(--ai-bg)"
+                : "border-(--border-default) bg-(--surface-card) hover:border-(--action-primary)/60 hover:bg-(--surface-warm-soft)",
       )}
     >
       <span
         aria-hidden
         className={cn(
           "flex size-9 shrink-0 items-center justify-center rounded-lg",
-          disabled
+          unavailable
+            ? "bg-(--surface-card) text-(--text-subtle)"
+            : disabled
             ? "bg-(--gray-bg) text-(--text-subtle)"
             : tone === "ai"
               ? "bg-(--ai-bg) text-(--ai-fg)"

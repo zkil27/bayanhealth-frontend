@@ -21,6 +21,12 @@ import {
  * state in the same status vocabulary as the document checklist. Opening the
  * uploaded file itself needs a download endpoint (not in the contract yet), so
  * the row says when the result arrived rather than linking to it.
+ *
+ * Clinical remarks Nov 16 still listed "laboratories sent by patient" as not
+ * seen: the section sat under the whole intake. It now sits at the top of the
+ * rail, uploads waiting for review come first, and the heading says how many
+ * there are. Opening the file still needs the backend download endpoint
+ * (handoff item in CHANGELOG_UI_V4).
  */
 const STATUS_COPY: Record<
   LabOrderStatus,
@@ -30,6 +36,9 @@ const STATUS_COPY: Record<
   under_review: { label: "Uploaded, needs your review", tone: "attention", icon: Upload },
   completed: { label: "Reviewed", tone: "success", icon: CheckCircle2 },
 };
+
+/** Uploads waiting for review first, then outstanding requests, then reviewed. */
+const STATUS_ORDER: Record<LabOrderStatus, number> = { under_review: 0, pending_upload: 1, completed: 2 };
 
 export function LabResultsSection({
   consultationId,
@@ -58,18 +67,36 @@ export function LabResultsSection({
 
   if (!consultationId || !token) return null;
 
+  const toReview = orders?.filter((order) => order.status === "under_review").length ?? 0;
+  const sorted = orders
+    ? [...orders].sort((a, b) => (STATUS_ORDER[a.status] ?? 1) - (STATUS_ORDER[b.status] ?? 1))
+    : null;
+
   return (
     <section
       aria-labelledby="rail-lab-results-heading"
       data-slot="rail-lab-results"
-      className="border-t border-(--border-subtle) px-3.5 py-3"
+      data-needs-review={toReview > 0 ? "true" : undefined}
+      className={
+        toReview > 0
+          ? "border-b border-(--attention-border)/40 bg-(--attention-bg) px-3.5 py-3"
+          : "border-b border-(--border-subtle) px-3.5 py-3"
+      }
     >
       <h3
         id="rail-lab-results-heading"
-        className="flex items-center gap-1.5 text-sm font-bold text-(--text-heading)"
+        className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold text-(--text-heading)"
       >
-        <FlaskConical className="size-4 shrink-0 text-(--teal-700)" aria-hidden />
-        Lab results
+        <FlaskConical
+          className={toReview > 0 ? "size-4 shrink-0 text-(--attention-fg)" : "size-4 shrink-0 text-(--teal-700)"}
+          aria-hidden
+        />
+        Lab results from the patient
+        {toReview > 0 ? (
+          <span className="text-xs font-semibold text-(--attention-fg)">
+            · {toReview} uploaded, {toReview === 1 ? "needs" : "need"} your review
+          </span>
+        ) : null}
       </h3>
 
       {failed ? (
@@ -78,13 +105,13 @@ export function LabResultsSection({
         </p>
       ) : orders === null ? (
         <p className="mt-1.5 text-sm text-(--text-muted)">Loading…</p>
-      ) : orders.length === 0 ? (
+      ) : sorted === null || sorted.length === 0 ? (
         <p className="mt-1.5 text-sm text-(--text-muted)">
           No lab tests were requested in this consultation.
         </p>
       ) : (
         <ul className="mt-2 flex flex-col divide-y divide-(--border-subtle)">
-          {orders.map((order) => {
+          {sorted.map((order) => {
             const status = STATUS_COPY[order.status] ?? STATUS_COPY.pending_upload;
             return (
               <li key={order.labOrderId} className="flex flex-col gap-1 py-2 first:pt-0 last:pb-0">

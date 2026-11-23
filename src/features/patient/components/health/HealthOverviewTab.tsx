@@ -151,7 +151,7 @@ function HealthIdentityCard({
         </div>
       ) : (
         <>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-3 grid animate-in grid-cols-2 gap-3 duration-150 ease-(--ease-out) fade-in sm:grid-cols-4 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricStat label="Age" value={age} unit={age !== undefined ? "yrs" : undefined} />
             <MetricStat label="Blood type" value={bloodType} />
             <MetricStat label="Height" value={height} unit={height !== undefined ? "cm" : undefined} />
@@ -241,7 +241,7 @@ function MedicinesSummaryCard({
           Nothing on record yet — this fills in once a doctor prescribes something.
         </p>
       ) : (
-        <ul className="mt-3 flex flex-col gap-2">
+        <ul className="mt-3 flex animate-in flex-col gap-2 duration-150 ease-(--ease-out) fade-in">
           {top.map((line, index) => (
             <li
               key={`${line.consultationId}-${line.genericName}-${index}`}

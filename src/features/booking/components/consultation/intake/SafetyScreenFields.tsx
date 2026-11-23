@@ -180,7 +180,8 @@ function AnswerButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "min-h-12 min-w-20 rounded-md border px-4 text-base font-medium transition-colors",
+        // Press state only: the safety answers get no further motion.
+        "min-h-12 min-w-20 rounded-md border px-4 text-base font-medium transition-[color,background-color,border-color,scale] duration-(--dur-fast) ease-(--ease-out) enabled:active:scale-[0.98] motion-reduce:enabled:active:scale-100",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "disabled:cursor-not-allowed disabled:opacity-60",
         selected && tone === "alert"

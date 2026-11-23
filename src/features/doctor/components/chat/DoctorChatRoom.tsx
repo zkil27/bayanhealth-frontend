@@ -3,6 +3,7 @@
 import { Illustration } from "@/components/primitives/Illustration";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, SendHorizonal, Video } from "lucide-react";
 
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/chat";
 import { cn } from "@/lib/utils";
+import { safeReturnTo } from "@/lib/safeReturnTo";
 import { useIdToken } from "@/stores/useAuthStore";
 import {
   useConsultationChat,
@@ -32,6 +34,9 @@ import { formatDateGroup, formatMessageClock } from "./chatDateUtils";
  */
 export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
   const idToken = useIdToken();
+  // Opened from a completed consultation (chart or history row): back returns
+  // there, on every breakpoint, instead of to the chat list (remarks Nov 16).
+  const returnTo = safeReturnTo(useSearchParams().get("returnTo"), "/doctor/");
 
   const isDemo = bookingId === "demo" || bookingId === "preview";
 
@@ -95,9 +100,12 @@ export function DoctorChatRoom({ bookingId }: { bookingId: string }) {
       <header className="flex shrink-0 items-center justify-between border-b border-(--border-subtle) bg-(--surface-card) px-3.5 py-3 md:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <Link
-            href="/doctor/chat"
-            aria-label="Back to conversations"
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-warm) text-(--text-heading) shadow-2xs md:hidden"
+            href={returnTo ?? "/doctor/chat"}
+            aria-label={returnTo ? "Back to consultation" : "Back to conversations"}
+            className={cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-xl border border-(--border-subtle) bg-(--surface-warm) text-(--text-heading) shadow-2xs",
+              !returnTo && "md:hidden",
+            )}
           >
             <ArrowLeft className="size-4" strokeWidth={2} />
           </Link>

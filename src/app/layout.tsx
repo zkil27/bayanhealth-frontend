@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Geist_Mono, Inter } from "next/font/google";
-import TapFeedback from "@/components/blocks/TapFeedBack";
 import { SessionGuard } from "@/components/auth/SessionGuard";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -73,7 +72,9 @@ export default async function RootLayout({
     >
       <body className="bg-satin flex min-h-dvh w-full flex-col scroll-smooth">
         <SessionGuard />
-        <TapFeedback />
+        {/* The global tap ripple (`components/blocks/TapFeedBack.tsx`) is no
+            longer mounted: each control shows its own pressed state instead.
+            See CHANGELOG_UI_MI.md. */}
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

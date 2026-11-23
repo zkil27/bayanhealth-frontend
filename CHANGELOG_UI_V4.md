@@ -13,6 +13,167 @@ V4 opens with the response to the **clinical pilot feedback review** (deck "Clin
 
 ## Log Entries
 
+> **Micro-interaction pass**: see [`CHANGELOG_UI_MI.md`](./CHANGELOG_UI_MI.md) (branch `ui/micro-interactions`).
+
+### [2026-11-23] Clinical Remarks Nov 16: Doctor Documents, Booking Price, Conversation Navigation
+
+This entry answers the deck "BayanHealth Remarks nov 16" (12 slides, doctor and patient POV). Each part below names its slide.
+
+Some screenshots in the deck show UI that had already been replaced in `07d7bb0`: the "No clinical documents drafted yet" chips and the old sign dialog copy. For those slides, the reviewer's intent was applied to the current UI.
+
+Parts tagged **Logic change** were approved for this fork on 2026-11-23 and need a reviewer in the main repo. No API path, OpenAPI schema or generated type changed. Every payload still validates against the existing contract.
+
+New pure modules, all with vitest coverage:
+- `features/consultation/lib/medCertSections.ts`
+- `features/consultation/lib/diagnosticTest.ts`
+- `features/consultation/lib/requiredFields.ts`
+- `lib/safeReturnTo.ts`
+
+#### 1. Medical certificate: Assessment / Diagnosis, Bed rest, Fit to work, Care plan (slides 2–3, **Logic change**)
+
+- **Files**:
+  - `postConsultation/ArtifactPayloadEditor.tsx` (`MedicalCertificateEditor`)
+  - `postConsultation/ArtifactPayloadView.tsx` (`MedicalCertificateView`)
+  - `documents/MedicalCertificateSheet.tsx`
+  - `lib/medCertSections.ts` (new)
+- **Editor**:
+  - "Statement" is renamed **Assessment / Diagnosis**, with the hint "Printed on the certificate exactly as written."
+  - The **Valid from / Valid through inputs are removed**. Doctors could not tell what they meant.
+  - Three separate fields: **Bed rest recommendation**, **Fit to work**, **Care plan**.
+- **Storage**:
+  - The contract only has `statement`, an optional `restrictions`, and required `validFrom`/`validThrough`.
+  - The three fields are therefore written into `restrictions` as labeled lines (`Bed rest: …`, `Fit to work: …`, `Care plan: …`).
+  - The dates stay in the payload. On the first edit, `validThrough` is set equal to `validFrom`.
+- **Legacy drafts**: text in AI drafts and older certificates that has no labels reads as the Care plan. A date range longer than one day reads as the Bed rest line. Nothing an older draft said is lost.
+- **Print sheet**:
+  - The MEDICAL RECOMMENDATION rows are now **Bed Rest**, **Fit to Work** and **Care Plan** ("Work Suspension" and "Work / School Advice" are gone).
+  - Each row prints exactly as written, and a blank row is left off.
+  - The `validThrough + 1 day` "Fit to Return" date, the fixed fallback sentences and the `new Date("YYYY-MM-DD")` timezone shift are all removed.
+- **Inline view**: shows the same four labels and no dates.
+
+#### 2. Sign & release in one dialog, with the document shown first (slide 4, **Logic change**)
+
+- **Files**:
+  - `postConsultation/ArtifactCard.tsx` (sign `ResponsiveSheet`)
+  - `postConsultation/AssessmentFirstWorkspace.tsx` (`finalizeAndRelease`)
+  - `postConsultation/DeliverablesDeck.tsx` (passes the prop through)
+- **Flow**: Make → Preview → Sign & lock → Release.
+  - The sign dialog now opens with a scrollable preview of the document ("What the patient will get"), then the attestation and signature.
+- **Patient documents** (Prescription, Medical certificate, Diagnostic request, Clinical referral, Patient education):
+  - The primary button reads **Sign & release to patient**.
+  - A secondary button, **Sign only, release later**, keeps the old two-step path.
+- **Plan and Final ICD**: keep a single Sign button. They are never released.
+- **Contract calls**: unchanged and still sequential.
+  - `finalizeArtifact` runs first. `releaseArtifact` then runs with the revisions the signature returned and `releaseAcknowledged: true`.
+  - If release is refused, the signature stands. A warning toast appears, and the card shows its existing Hold to release button.
+  - If `requiresAuthoritativeRefresh`, the assessment is refetched.
+- **Unchanged**:
+  - Batch "Sign several" stays sign-only.
+  - The sign-only toast now reads "Signed. Release it to the patient when you're ready."
+
+#### 3. "No AI draft" stated first; the unavailable option is grayed (slide 5)
+
+- **File**: `postConsultation/DeliverablesDeck.tsx` (`StartDocument`, `StartOption`).
+- **Notice**: when AI drafting is unavailable for a document, a notice sits at the top of the pane.
+  - It has a 1px attention border and a Lucide `Info` icon.
+  - Its heading is "No AI-drafted {document} for this diagnosis", or "AI drafting is on hold" while a safety lock is open.
+- **AI option**:
+  - It is now grayed out: `--gray-bg`, 70% opacity, no AI tint, no hover.
+  - It is relabelled **AI draft unavailable**.
+  - "Write it myself" gets the primary border, so it reads as the way forward.
+- **Unchanged**: briefly disabled while busy still shows the old dashed border.
+
+#### 4. Required fields named before Save; Preview while writing (slide 6, **Logic change**)
+
+- **Files**:
+  - `postConsultation/PhysicianAuthoringPanel.tsx`
+  - `postConsultation/ArtifactCard.tsx` (edit mode)
+  - `postConsultation/ArtifactPayloadEditor.tsx` (`PrescriptionEditor`)
+  - `lib/requiredFields.ts` (new)
+- **Cause of the slide's error**: the contract requires every medication field, `instructions` included (minLength 1). A prescription saved with a blank Instructions box came back as "The server would not accept this action".
+- **Save checks**: Save now lists the missing fields in a danger-tone alert ("Fill in Instructions before saving.") and stops. The alert clears as fields are filled.
+  - **Prescription**: every medication field.
+  - **Certificate**: Assessment / Diagnosis.
+  - **Diagnostic request**: Test and Impression / Diagnosis.
+  - **Referral**: reason and summary.
+  - **Plan**: summary.
+  - **Education**: title.
+- **Prescription fields**: placeholder examples (`e.g. 500 mg`, `e.g. By mouth`…). Instructions gets the hint "Required. Printed on the prescription for the patient."
+- **Write it myself**: gains a **Preview** button. It opens `DocumentSheetModal` with the unsaved payload as a draft specimen, filled in with the patient's intake and the doctor's name, licence and specialty.
+
+#### 5. Diagnostic request: one Test field, Impression / Diagnosis (slide 7, **Logic change**)
+
+- **Files**:
+  - `postConsultation/ArtifactPayloadEditor.tsx` (`DiagnosticRequestEditor`)
+  - `postConsultation/ArtifactPayloadView.tsx`
+  - `documents/DiagnosticRequestSheet.tsx`
+  - `lib/diagnosticTest.ts` (new)
+- **Fields**:
+  - "Test name" and "Study name" are now a single **Test** field.
+  - **Body region** takes Study name's place in the row.
+  - "Rationale" is relabelled **Impression / Diagnosis**. The field is still `rationale`.
+- **Test field storage**:
+  - It writes `studyName` for imaging and `testName` otherwise, as the contract expects.
+  - If the value came from the other field, it moves over instead of being duplicated, and changing the modality moves it too.
+- **Print sheet**:
+  - Items are grouped by the request's `modality`. An older non-imaging request whose item carries only `studyName` still prints under Imaging.
+  - Lab rows now show Body region too.
+  - The request-level `instructions` section is relabelled **INSTRUCTIONS**. It was wrongly headed "CLINICAL DIAGNOSIS / INDICATION".
+
+#### 6. Doctor: the conversation from a completed consultation (slide 10)
+
+- **Files**:
+  - `postConsultation/ConversationLink.tsx` (new)
+  - `postConsultation/AssessmentFirstWorkspace.tsx` (header actions, desktop and phone)
+  - `doctor/components/consultations/CompletedConsultations.tsx`
+  - `doctor/components/chat/DoctorChatRoom.tsx`
+- **Workspace header**: gains a **Conversation** button, placed before Send to ER.
+  - It opens `/doctor/chat/{bookingId}` in a new tab, so documentation in progress stays put.
+  - On a phone it is a 44px icon-first button.
+- **History rows** (`/doctor/history`): gain **Conversation** beside "Chart →".
+- **Back arrow**: both links pass `returnTo`. `DoctorChatRoom`'s back arrow honours it and shows at every breakpoint when it is present. It was mobile-only before.
+
+#### 7. Patient: Back from a closed conversation returns to the booking (slide 11)
+
+- **Files**:
+  - `booking/components/patient/PatientBookingDetail.tsx` (`ChatHistoryCard`)
+  - `patient/components/chat/PatientChatRoom.tsx`
+  - `lib/safeReturnTo.ts` (new)
+- **Problem**: "View conversation" opened the thread, whose Back arrow went to `/patient/chat`. That chat list is hidden from the patient nav.
+- **Fix**: the link now carries `returnTo=/patient/booking/getBooking/{id}`, and Back goes there. `returnTo` survives the `draft` param `router.replace`.
+- **`safeReturnTo` rules**:
+  - It accepts only same-origin paths inside `/patient/` or `/doctor/`.
+  - It rejects `//host`, absolute URLs, backslashes, control characters, and `..` escapes.
+
+#### 8. Lab results from the patient: first in the rail (slide 12)
+
+- **Files**: `postConsultation/LabResultsSection.tsx`, `postConsultation/PatientRail.tsx`.
+- **Placement**: the section now sits at the top of the patient rail, above the intake.
+- **Pending uploads**: when uploads need review, the section takes the attention tone and its heading says so ("Lab results from the patient · 1 uploaded, needs your review"). Those rows sort first.
+
+#### 9. Booking chooser: no price until a path is picked (slide 9)
+
+- **File**: `booking/components/patient/BookingPathChooser.tsx`.
+- **Copy**:
+  - The banner reads "Same quality of doctor either way. The only difference is speed."
+  - The card "What's included · ₱500 flat" is renamed **Basic package inclusions**, on both mobile and desktop.
+- **Where the price appears now**: after the patient picks a path, in the intake fee panel (`BookingSummary.tsx`) and on the payment step. Those are unchanged.
+
+#### Backend dependencies (not doable in this UI fork)
+
+1. **Post-consult chat window** (slide 12, "chat box … open for 5–10 minutes while doing the documentation").
+   - Chat accepts messages only while the booking is `confirmed`/`in_progress`.
+   - The client hard-codes read-only on `completed`/`cancelled`: see `DoctorChatRoom.tsx` and `lib/conversationStatus.ts`.
+   - Needed: the backend accepts messages for N minutes after completion and exposes something like `chatWritableUntil`. The UI then reads it in both chat rooms.
+   - The new Conversation button already opens the thread from the workspace.
+2. **Opening a patient-uploaded lab file** (slide 12). `LabResultsSection` lists uploads but cannot link to them, because the contract has no download endpoint.
+3. **Real medical certificate fields**.
+   - Replace the labeled-lines encoding in `restrictions` with `bedRest`, `fitToWork` and `carePlan` contract fields.
+   - Make `validFrom`/`validThrough` optional or server-set.
+   - `medCertSections.ts` is the only reader and writer to change.
+   - The AI drafting prompt should also emit the three lines.
+4. **Sign and release, one call** (optional). The client chains two calls. A combined endpoint would make it atomic.
+
 ### [2026-11-04] Patient Home: Last Cards No Longer Hidden Behind the Bottom Nav
 
 - **Target route**: `/patient` (mobile).

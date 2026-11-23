@@ -27,19 +27,11 @@ import { useCancelBooking } from "../../hooks/useCancelBooking";
 import { assignedDoctorLabel } from "../../lib/doctorLabels";
 import { isUsableWaitStart } from "../../lib/waitElapsed";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
 import { Spinner } from "@/components/ui/spinner";
+import { DrawnCheck, SuccessMark } from "@/components/ui/success-mark";
+import { useChangedSinceMount } from "@/hooks/use-motion-moment";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -80,8 +72,18 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
   // Reviewing a completed step, or matching already resolved.
   if (isReview || hasAssignedDoctor) {
     return (
-      <div className="animate-in duration-300 fade-in">
-        <StepHeading>Your assigned doctor</StepHeading>
+      <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
+        <StepHeading
+          icon={
+            isReview ? undefined : (
+              // The accepted moment. Shares its key with ConfirmationStep's
+              // on-demand heading, so the mark draws once for this event.
+              <SuccessMark momentKey={`doctor-accepted:${booking.id}`} className="size-5" />
+            )
+          }
+        >
+          Your assigned doctor
+        </StepHeading>
         {preferencesApply ? <MatchPreferences booking={booking} /> : null}
         <div className="mt-2">
           <DoctorReviewCard booking={booking} />
@@ -94,7 +96,7 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
   // about matching progress is known, so nothing about it is shown.
   if (finding.status === "failed") {
     return (
-      <div className="animate-in duration-300 fade-in">
+      <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
         <StepHeading>Finding your doctor</StepHeading>
 
         {preferencesApply ? <MatchPreferences booking={booking} /> : null}
@@ -181,40 +183,9 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
         className="mt-6 space-y-0"
       >
         {stages.map((stage, index) => (
-          <li key={stage.label} className="relative flex gap-3.5 pb-5 last:pb-0">
-            {index < stages.length - 1 ? (
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute top-8 bottom-1 left-[15px] w-0.5 rounded-full",
-                  stage.state === "done" ? "bg-(--action-primary)" : "bg-(--border-default)",
-                )}
-              />
-            ) : null}
-            <span
-              aria-hidden
-              className={cn(
-                "relative flex size-8 shrink-0 items-center justify-center rounded-full border-2",
-                stage.state === "done" && "border-(--action-primary) bg-(--action-primary) text-(--text-inverse)",
-                stage.state === "current" && "border-(--action-primary) bg-(--surface-card)",
-                stage.state === "pending" && "border-(--border-default) bg-(--surface-card)",
-              )}
-            >
-              {stage.state === "done" ? <Check className="size-4.5 stroke-[3]" /> : null}
-              {stage.state === "current" ? <span className="size-3 rounded-full bg-(--action-primary)" /> : null}
-            </span>
-            <span
-              className={cn(
-                "pt-1 text-base leading-snug",
-                stage.state === "current" ? "font-semibold text-(--text-heading)" : stage.state === "done" ? "text-(--text-body)" : "text-(--text-muted)",
-              )}
-            >
-              {stage.label}
-              <span className="sr-only">
-                {stage.state === "done" ? " (done)" : stage.state === "current" ? " (now)" : " (next)"}
-              </span>
-            </span>
-          </li>
+          // Keyed by position, not label: a stage's label changes when it
+          // completes, and remounting it would skip the completion motion.
+          <FindingStage key={index} stage={stage} hasConnector={index < stages.length - 1} />
         ))}
       </ol>
       <p aria-live="polite" className="sr-only">{message}</p>
@@ -226,12 +197,71 @@ export function FindingStep({ booking, finding, isReview }: FindingStepProps) {
   );
 }
 
+type FindingStageState = "done" | "current" | "pending";
+
+/**
+ * One row of the waiting timeline. When a stage completes while the patient
+ * is watching, its dot fills and the check draws in, and the line below it
+ * fills downward (400ms, transform only) toward the next stage, like a trip
+ * tracker. A stage already done when the screen opened renders settled. No
+ * pulse anywhere: the current stage is a calm solid dot.
+ */
+function FindingStage({
+  stage,
+  hasConnector,
+}: {
+  stage: { label: string; state: FindingStageState };
+  hasConnector: boolean;
+}) {
+  const done = stage.state === "done";
+  const justCompleted = useChangedSinceMount(done) && done;
+  return (
+    <li className="relative flex gap-3.5 pb-5 last:pb-0">
+      {hasConnector ? (
+        <span aria-hidden className="absolute top-8 bottom-1 left-[15px] w-0.5 overflow-hidden rounded-full bg-(--border-default)">
+          {done ? (
+            <span
+              className={cn(
+                "absolute inset-0 origin-top rounded-full bg-(--action-primary)",
+                justCompleted && "animate-fill-down",
+              )}
+            />
+          ) : null}
+        </span>
+      ) : null}
+      <span
+        aria-hidden
+        className={cn(
+          "relative flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-(--dur-base) ease-(--ease-out)",
+          done && "border-(--action-primary) bg-(--action-primary) text-(--text-inverse)",
+          stage.state === "current" && "border-(--action-primary) bg-(--surface-card)",
+          stage.state === "pending" && "border-(--border-default) bg-(--surface-card)",
+        )}
+      >
+        {done ? <DrawnCheck animate={justCompleted} strokeWidth={3} className="size-4.5" /> : null}
+        {stage.state === "current" ? <span className="size-3 rounded-full bg-(--action-primary)" /> : null}
+      </span>
+      <span
+        className={cn(
+          "pt-1 text-base leading-snug",
+          stage.state === "current" ? "font-semibold text-(--text-heading)" : done ? "text-(--text-body)" : "text-(--text-muted)",
+        )}
+      >
+        {stage.label}
+        <span className="sr-only">
+          {done ? " (done)" : stage.state === "current" ? " (now)" : " (next)"}
+        </span>
+      </span>
+    </li>
+  );
+}
+
 /** Shared heading for the review / failed variants. */
-function StepHeading({ children }: { children: React.ReactNode }) {
+function StepHeading({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="mb-2 flex items-center gap-2.5">
       <span className="flex size-[38px] shrink-0 items-center justify-center rounded-[12px] bg-(--teal-100) text-(--teal-800)">
-        <UserSearch className="size-5" />
+        {icon ?? <UserSearch className="size-5" />}
       </span>
       <span className="text-[17px] font-bold text-(--text-heading)">
         {children}
@@ -327,6 +357,7 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
   const { cancel, isCancelling, isCancelled, errorMessage } = useCancelBooking(
     booking.id,
   );
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (isCancelled) {
     return (
@@ -363,38 +394,36 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
         </Alert>
       ) : null}
 
-      <AlertDialog>
-        <AlertDialogTrigger
-          data-slot="on-demand-wait-cancel"
-          disabled={isCancelling}
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 min-h-12 w-full shrink-0 rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
-            />
-          }
-        >
-          {isCancelling ? (
-            <>
-              <Spinner className="mr-2 size-4" />
-              Cancelling…
-            </>
-          ) : (
-            "Cancel request"
-          )}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
-            <AlertDialogDescription>
-              We&apos;ll stop searching for a doctor and release your payment
-              hold in full — nothing is deducted. You can book again at any
-              time.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep waiting</AlertDialogCancel>
+      <Button
+        type="button"
+        variant="outline"
+        data-slot="on-demand-wait-cancel"
+        disabled={isCancelling}
+        onClick={() => setConfirmOpen(true)}
+        className="h-12 min-h-12 w-full shrink-0 rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
+      >
+        {isCancelling ? (
+          <>
+            <Spinner className="mr-2 size-4" />
+            Cancelling…
+          </>
+        ) : (
+          "Cancel request"
+        )}
+      </Button>
+      {/*
+        The app's mobile confirmation: a bottom sheet below `lg` with the
+        actions stacked full width at 48px under the thumb, and a centred
+        dialog on desktop (ResponsiveSheet). It was a small centred
+        AlertDialog with 32px buttons on every screen size.
+      */}
+      <ResponsiveSheet
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Cancel this request?"
+        description="We'll stop searching for a doctor and release your payment hold in full — nothing is deducted. You can book again at any time."
+        footer={
+          <>
             {/*
               Deliberately not also labelled "Cancel request": with the trigger
               carrying that label, two controls one keypress apart would read
@@ -402,15 +431,25 @@ function OnDemandWaitPanel({ booking }: { booking: Booking }) {
               confirm-dialog trap where the destructive and the dismissive
               option are indistinguishable.
             */}
-            <AlertDialogAction
+            <Button
+              type="button"
+              variant="primary"
+              shape="pill"
+              size="lg"
               data-slot="on-demand-wait-cancel-confirm"
-              onClick={cancel}
+              onClick={() => {
+                setConfirmOpen(false);
+                cancel();
+              }}
             >
               Yes, cancel &amp; refund my hold
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+            <Button type="button" variant="outline" shape="pill" size="lg" onClick={() => setConfirmOpen(false)}>
+              Keep waiting
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 }

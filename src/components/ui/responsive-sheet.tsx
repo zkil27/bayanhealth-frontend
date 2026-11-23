@@ -69,7 +69,10 @@ export function ResponsiveSheet({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className={cn("max-h-[92dvh] bg-(--surface-card)", className)}>
-          <DrawerHeader className="gap-1 px-4 pt-2 pb-3 text-left">
+          {/* The drawer primitive centres header text on a vertical sheet; the
+              title is a left-aligned flex row, so the description is aligned
+              to match it. */}
+          <DrawerHeader className="gap-1 px-4 pt-2 pb-3 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
             <DrawerTitle className="flex items-center gap-2 text-lg font-bold text-(--text-heading)">
               {titleContent}
             </DrawerTitle>

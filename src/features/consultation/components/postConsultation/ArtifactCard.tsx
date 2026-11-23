@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
@@ -17,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SuccessMark } from "@/components/ui/success-mark";
+import { useChangedSinceMount } from "@/hooks/use-motion-moment";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +45,7 @@ import { SignaturePadDialog } from "./SignatureField";
 import { OUTPUT_LABELS } from "./workspacePhase";
 import { DocumentSheetModal } from "../documents/DocumentSheetModal";
 import { isPatientReadableOutput, staleReasonLabel } from "../../lib/cdsCopy";
+import { listMissing, missingRequiredFields } from "../../lib/requiredFields";
 
 /**
  * One drafted clinical document, with everything a physician does to it.
@@ -101,6 +105,11 @@ export interface ArtifactCardProps {
   doctorSpecialty?: string;
   onAmend: (payload: CdsProtectedArtifactPayload) => Promise<void>;
   onFinalize: (signature: ArtifactSignatureInput) => Promise<void>;
+  /**
+   * Sign and release in one go from the sign dialog (clinical remarks Nov 16).
+   * Patient documents only; without it the dialog signs, as before.
+   */
+  onFinalizeAndRelease?: (signature: ArtifactSignatureInput) => Promise<void>;
   onRelease: () => void;
   onRegenerate?: () => void;
   /** Whether re-drafting is currently permitted (gate open, type eligible). */
@@ -133,9 +142,14 @@ export function ArtifactCard(props: ArtifactCardProps) {
   const [attested, setAttested] = useState(false);
   const [drawn, setDrawn] = useState<CdsSignaturePoint[][]>([]);
   const [typedName, setTypedName] = useState(props.defaultSignerName ?? "");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<"sign" | "release" | null>(null);
+  // Only shown after a Save attempt, then kept live so it clears as fields fill.
+  const [showMissing, setShowMissing] = useState(false);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [handledNonce, setHandledNonce] = useState(props.command?.nonce ?? 0);
+  // UI-only: the signed / released mark draws only when that happened while
+  // this card was open, never when reopening an older document.
+  const statusChangedHere = useChangedSinceMount(artifact.lifecycleStatus);
 
   /*
     A regeneration — or the physician's own amendment — replaces the payload
@@ -170,7 +184,14 @@ export function ArtifactCard(props: ArtifactCardProps) {
   const canSign = attested && signatureStrokes.length > 0 && signerName.trim().length > 0;
   const actionsDisabled = props.busy || props.regenerating;
 
+  const missing = editing ? missingRequiredFields(artifact.outputType, draft) : [];
+  const canSignAndRelease = patientReadable && Boolean(props.onFinalizeAndRelease);
+
   const saveEdit = async () => {
+    if (missing.length > 0) {
+      setShowMissing(true);
+      return;
+    }
     setSaving(true);
     try {
       await props.onAmend(draft);
@@ -183,10 +204,12 @@ export function ArtifactCard(props: ArtifactCardProps) {
     }
   };
 
-  const sign = async () => {
-    setSubmitting(true);
+  const sign = async (andRelease: boolean) => {
+    setSubmitting(andRelease ? "release" : "sign");
     try {
-      await props.onFinalize({ signerName: signerName.trim(), strokes: signatureStrokes });
+      const signature = { signerName: signerName.trim(), strokes: signatureStrokes };
+      if (andRelease && props.onFinalizeAndRelease) await props.onFinalizeAndRelease(signature);
+      else await props.onFinalize(signature);
       setSigning(false);
       setAttested(false);
       setDrawn([]);
@@ -194,7 +217,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
       // The workspace already showed the error. Keep the sheet open, with the
       // attestation and any drawn signature intact, so signing can be retried.
     } finally {
-      setSubmitting(false);
+      setSubmitting(null);
     }
   };
 
@@ -288,6 +311,17 @@ export function ArtifactCard(props: ArtifactCardProps) {
               disabled={saving || props.busy}
               onChange={setDraft}
             />
+            {showMissing && missing.length > 0 ? (
+              <p
+                role="alert"
+                className="mt-4 flex items-start gap-2 rounded-xl border border-(--danger-fg)/30 bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+              >
+                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <span>
+                  <strong className="font-semibold">Fill in {listMissing(missing)}</strong> before saving.
+                </span>
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="min-w-0 rounded-xl bg-(--surface-warm-soft) p-3.5">
@@ -313,6 +347,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
               onClick={() => {
                 setDraft(artifact.payload);
                 setEditing(false);
+                setShowMissing(false);
               }}
             >
               <Undo2 className="size-4" /> Discard changes
@@ -400,14 +435,29 @@ export function ArtifactCard(props: ArtifactCardProps) {
               {patientReadable ? (
                 <HoldToReleaseButton disabled={props.busy} onConfirm={props.onRelease} />
               ) : (
-                <p className="text-sm text-(--text-muted)">Signed and kept in your records. Nothing to release.</p>
+                <p className="flex items-start gap-2 text-sm text-(--text-muted)">
+                  <SuccessMark
+                    size="sm"
+                    momentKey={`signed:${artifact.artifactId}`}
+                    animate={statusChangedHere}
+                    className="mt-0.5 text-(--status-available-fg)"
+                  />
+                  Signed and kept in your records. Nothing to release.
+                </p>
               )}
             </div>
           </>
         ) : artifact.lifecycleStatus === "released" ? (
           <>
             <p className="mr-auto flex items-start gap-2 text-sm text-(--text-body) max-sm:w-full">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-(--status-available-fg)" aria-hidden />
+              {/* Quiet confirmation of the one action that can't be undone: a
+                  320ms draw, once per document per tab. */}
+              <SuccessMark
+                size="sm"
+                momentKey={`released:${artifact.artifactId}`}
+                animate={statusChangedHere}
+                className="mt-0.5 text-(--status-available-fg)"
+              />
               <span>
                 {patientReadable ? "Released to the patient" : "Released to your records"}
                 {artifact.releasedAt
@@ -440,35 +490,80 @@ export function ArtifactCard(props: ArtifactCardProps) {
         ) : null}
       </footer>
 
+      {/*
+        Preview -> Sign & lock -> Release in one dialog (clinical remarks Nov 16).
+        The document is shown first so the doctor signs what they just read;
+        for a patient document the main button signs and releases together,
+        and "Sign only" keeps the two-step path for when release should wait.
+      */}
       <ResponsiveSheet
         open={signing}
         onOpenChange={(open) => {
           if (!open && !submitting) closeSignDialog();
         }}
         icon={FileSignature}
-        title={`Sign ${label.toLowerCase()}`}
-        description={`Signing locks this ${label.toLowerCase()}; it can no longer be edited.${
-          patientReadable ? " The patient sees it only after you release it, as a separate step." : ""
-        }`}
+        title={canSignAndRelease ? `Sign & release ${label.toLowerCase()}` : `Sign ${label.toLowerCase()}`}
+        description={
+          canSignAndRelease
+            ? `Check it, sign it, and it goes to the patient's booking page. Signing locks this ${label.toLowerCase()}; it can no longer be edited.`
+            : `Signing locks this ${label.toLowerCase()}; it can no longer be edited.${
+                patientReadable ? " The patient sees it only after you release it." : ""
+              }`
+        }
         footer={
           <>
-            <Button
-              type="button"
-              variant="primary"
-              shape="pill"
-              className="px-5"
-              disabled={!canSign || submitting}
-              onClick={sign}
-            >
-              {submitting ? <Spinner className="size-4" /> : <FileSignature className="size-4" />}
-              {hasSpecimen ? `Sign as ${props.specimen!.signerName}` : "Sign"}
-            </Button>
-            <Button type="button" variant="ghost" shape="pill" disabled={submitting} onClick={closeSignDialog}>
+            {canSignAndRelease ? (
+              <>
+                <Button
+                  type="button"
+                  variant="primary"
+                  shape="pill"
+                  className="px-5"
+                  disabled={!canSign || submitting !== null}
+                  onClick={() => void sign(true)}
+                >
+                  {submitting === "release" ? <Spinner className="size-4" /> : <Send className="size-4" />}
+                  Sign &amp; release to patient
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  shape="pill"
+                  className="border-(--border-default)"
+                  disabled={!canSign || submitting !== null}
+                  onClick={() => void sign(false)}
+                >
+                  {submitting === "sign" ? <Spinner className="size-4" /> : <FileSignature className="size-4" />}
+                  Sign only, release later
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                shape="pill"
+                className="px-5"
+                disabled={!canSign || submitting !== null}
+                onClick={() => void sign(false)}
+              >
+                {submitting ? <Spinner className="size-4" /> : <FileSignature className="size-4" />}
+                {hasSpecimen ? `Sign as ${props.specimen!.signerName}` : "Sign"}
+              </Button>
+            )}
+            <Button type="button" variant="ghost" shape="pill" disabled={submitting !== null} onClick={closeSignDialog}>
               Cancel
             </Button>
           </>
         }
       >
+        <section aria-label={`${label} preview`} className="mb-3 flex flex-col gap-1.5">
+          <p className="text-xs font-semibold tracking-wide text-(--text-muted) uppercase">
+            {patientReadable ? "What the patient will get" : "What you are signing"}
+          </p>
+          <div className="max-h-64 min-w-0 overflow-y-auto overscroll-contain rounded-xl border border-(--border-subtle) bg-(--surface-warm-soft) p-3.5">
+            <ArtifactPayloadView outputType={artifact.outputType} payload={artifact.payload} />
+          </div>
+        </section>
         <SignOffFields
           label={label}
           specimen={props.specimen}
@@ -479,7 +574,7 @@ export function ArtifactCard(props: ArtifactCardProps) {
           attested={attested}
           onAttested={setAttested}
         />
-        {props.hasNext ? (
+        {props.hasNext && !patientReadable ? (
           <p className="mt-3 text-sm text-(--text-muted)">After signing, the next document that needs you opens.</p>
         ) : null}
       </ResponsiveSheet>

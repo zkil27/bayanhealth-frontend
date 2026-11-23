@@ -11,6 +11,7 @@ import type {
 } from "./types";
 import { NOT_YET_ISSUED } from "./verification";
 import { cn } from "@/lib/utils";
+import { diagnosticTestValue } from "@/features/consultation/lib/diagnosticTest";
 
 interface DiagnosticRequestSheetProps {
   payload?: CdsDiagnosticRequestPayload;
@@ -56,12 +57,15 @@ export function DiagnosticRequestSheet({
       : "Routine";
   const modalityLabel = payload ? MODALITY_LABELS[payload.modality] : undefined;
 
-  // An item carries either `studyName` (imaging) or `testName`
-  // (lab/urinalysis/other) per the contract — grouped by which field is
-  // actually present rather than assumed from the document's own `modality`,
-  // since only the items the physician actually entered are ever shown.
-  const imagingItems = items.filter((item) => Boolean(item.studyName?.trim()));
-  const otherItems = items.filter((item) => !item.studyName?.trim());
+  // Grouped by the request's modality now that the form has one Test field
+  // (clinical remarks Nov 16), which writes `studyName` for imaging and
+  // `testName` otherwise. An older non-imaging request whose item carries only
+  // a `studyName` still prints under Imaging, as it did before.
+  const modality = payload?.modality ?? "lab";
+  const isImagingItem = (item: (typeof items)[number]) =>
+    modality === "imaging" || Boolean(item.studyName?.trim() && !item.testName?.trim());
+  const imagingItems = items.filter(isImagingItem);
+  const otherItems = items.filter((item) => !isImagingItem(item));
 
   return (
     <article
@@ -114,8 +118,10 @@ export function DiagnosticRequestSheet({
               <ClipboardPlus className="size-6" />
             </div>
             <div className="flex flex-col gap-1 text-xs">
+              {/* This is the request-level Instructions field; the diagnosis now
+                  prints per item as "Impression / Diagnosis". */}
               <h2 className="text-xs font-bold tracking-wider text-(--navy-700) uppercase">
-                CLINICAL DIAGNOSIS / INDICATION
+                INSTRUCTIONS
               </h2>
               <p className="text-slate-800 leading-relaxed font-medium">
                 {payload.instructions}
@@ -154,7 +160,10 @@ export function DiagnosticRequestSheet({
                 {otherItems.map((item, i) => (
                   <li key={i}>
                     <p className="font-medium">
-                      {item.testName}
+                      {diagnosticTestValue(item, modality)}
+                      {item.bodyRegion ? (
+                        <span className="ml-2 font-normal text-slate-600">{item.bodyRegion}</span>
+                      ) : null}
                       {item.priority === "urgent" ? (
                         <span className="ml-2 rounded-full bg-(--danger-bg) px-2 py-0.5 text-xs @xl:text-[10px] font-bold text-(--danger-fg) uppercase">
                           Urgent
@@ -162,7 +171,10 @@ export function DiagnosticRequestSheet({
                       ) : null}
                     </p>
                     {item.rationale ? (
-                      <p className="text-slate-600">{item.rationale}</p>
+                      <p className="text-slate-600">
+                        <span className="font-semibold text-slate-700">Impression / Diagnosis: </span>
+                        {item.rationale}
+                      </p>
                     ) : null}
                   </li>
                 ))}
@@ -189,7 +201,7 @@ export function DiagnosticRequestSheet({
                 {imagingItems.map((item, i) => (
                   <li key={i}>
                     <p className="font-medium">
-                      {item.studyName}
+                      {diagnosticTestValue(item, "imaging")}
                       {item.bodyRegion ? (
                         <span className="ml-2 font-normal text-slate-600">{item.bodyRegion}</span>
                       ) : null}
@@ -200,7 +212,10 @@ export function DiagnosticRequestSheet({
                       ) : null}
                     </p>
                     {item.rationale ? (
-                      <p className="text-slate-600">{item.rationale}</p>
+                      <p className="text-slate-600">
+                        <span className="font-semibold text-slate-700">Impression / Diagnosis: </span>
+                        {item.rationale}
+                      </p>
                     ) : null}
                   </li>
                 ))}

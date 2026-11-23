@@ -66,14 +66,14 @@ export function DoctorMobileNav() {
                 title={item.title}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors",
+                  "group/tab flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 transition-colors duration-(--dur-fast)",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
                   active
                     ? "bg-(--surface-accent-soft) text-(--action-primary)"
                     : "text-(--text-muted) hover:bg-(--surface-canvas) hover:text-(--text-heading)",
                 )}
               >
-                <span className="relative flex items-center justify-center">
+                <span className="relative flex items-center justify-center transition-[scale] duration-(--dur-fast) ease-(--ease-out) group-active/tab:scale-90 motion-reduce:group-active/tab:scale-100">
                   <Icon className="size-6 shrink-0" aria-hidden="true" />
                   {count > 0 ? (
                     <span

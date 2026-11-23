@@ -10,7 +10,6 @@ import { graceSecondsRemaining } from "../../lib/waitElapsed";
 import {
   AlertCircle,
   CalendarClock,
-  CheckCircle2,
   CreditCard,
   LinkIcon,
   ShieldCheck,
@@ -18,20 +17,16 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { IntakeReceipt } from "./IntakeReceipt";
+import { SuccessMark } from "@/components/ui/success-mark";
+import { usePlayOnce } from "@/hooks/use-motion-moment";
+import { cn } from "@/lib/utils";
+
+/** Summary reveal after the success mark: fade and a 4px rise, 250ms. */
+const REVEAL = "animate-in fade-in slide-in-from-bottom-1 duration-250 ease-(--ease-out) fill-mode-both";
 
 interface ConfirmationStepProps {
   booking: Booking;
@@ -93,6 +88,14 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
+  // On-demand: this heading is the "doctor accepted" moment, the same event
+  // FindingStep marks, so both share one key and it plays only once.
+  const momentKey =
+    booking.bookingType === "on-demand"
+      ? `doctor-accepted:${booking.id}`
+      : `booking-confirmed:${booking.id}`;
+  const play = usePlayOnce(isReview ? null : momentKey);
+
   return (
     <div className="animate-in duration-300 fade-in motion-reduce:animate-none">
       <Illustration
@@ -102,13 +105,19 @@ export function ConfirmationStep({ booking, isReview }: ConfirmationStepProps) {
         className="mb-3"
       />
       <h3 className="flex items-start gap-2.5 text-xl leading-snug font-bold text-(--text-heading)">
-        <CheckCircle2 aria-hidden className="mt-0.5 size-6 shrink-0 text-(--teal-800)" />
+        {/* The accepted / confirmed moment: drawn once per booking per tab. */}
+        <SuccessMark momentKey={momentKey} animate={!isReview} className="mt-0.5 text-(--teal-800)" />
         {heading}
       </h3>
-      <IntakeReceipt bookingId={booking.id} className="mt-3" />
+      <IntakeReceipt bookingId={booking.id} className={cn("mt-3", play && cn(REVEAL, "delay-120"))} />
 
       {/* One doctor card — the name used to appear here and again in the list below. */}
-      <div className="mt-4 flex items-center gap-3.5 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4">
+      <div
+        className={cn(
+          "mt-4 flex items-center gap-3.5 rounded-xl border border-(--border-subtle) bg-(--surface-card) p-4",
+          play && cn(REVEAL, "delay-180"),
+        )}
+      >
         <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-full bg-(--teal-100) text-base font-bold text-(--teal-800)">
           {initials || <Stethoscope className="size-5" />}
         </span>
@@ -208,6 +217,7 @@ function PostAcceptanceCancelPanel({ booking }: { booking: Booking }) {
   const { cancel, isCancelling, isCancelled, errorMessage } = useCancelBooking(
     booking.id,
   );
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), GRACE_TICK_MS);
@@ -297,55 +307,62 @@ function PostAcceptanceCancelPanel({ booking }: { booking: Booking }) {
       ) : null}
 
       <div className="flex justify-end pt-1">
-        <AlertDialog>
-          <AlertDialogTrigger
-            data-slot="post-acceptance-cancel-trigger"
-            disabled={isCancelling}
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                className="h-12 w-full rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
-              />
-            }
-          >
-            {isCancelling ? (
-              <>
-                <Spinner className="mr-2 size-3" />
-                Cancelling…
-              </>
-            ) : (
-              "Cancel booking"
-            )}
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {pastGrace
-                  ? `A partial charge applies: ${partialAmount ?? "50% of your payment"} is kept under our late-cancellation policy, and the rest is released.`
-                  : "We'll release your payment hold in full — nothing is deducted."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Keep booking</AlertDialogCancel>
+        <Button
+          type="button"
+          variant="outline"
+          data-slot="post-acceptance-cancel-trigger"
+          disabled={isCancelling}
+          onClick={() => setConfirmOpen(true)}
+          className="h-12 w-full rounded-full border-(--border-strong) px-6 text-base font-semibold text-(--text-body) hover:bg-(--surface-canvas) sm:w-auto"
+        >
+          {isCancelling ? (
+            <>
+              <Spinner className="mr-2 size-3" />
+              Cancelling…
+            </>
+          ) : (
+            "Cancel booking"
+          )}
+        </Button>
+        {/* Bottom sheet on phones, dialog on desktop: see FindingStep's cancel. */}
+        <ResponsiveSheet
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Cancel this booking?"
+          description={
+            pastGrace
+              ? `A partial charge applies: ${partialAmount ?? "50% of your payment"} is kept under our late-cancellation policy, and the rest is released.`
+              : "We'll release your payment hold in full — nothing is deducted."
+          }
+          footer={
+            <>
               {/*
                 Deliberately not also labelled "Cancel booking": see
                 `FindingStep`'s identical note on why the trigger and the
                 confirming action must not read identically in a confirm
                 dialog.
               */}
-              <AlertDialogAction
+              <Button
+                type="button"
+                variant="primary"
+                shape="pill"
+                size="lg"
                 data-slot="post-acceptance-cancel-confirm"
-                onClick={cancel}
+                onClick={() => {
+                  setConfirmOpen(false);
+                  cancel();
+                }}
               >
                 {pastGrace
                   ? "Yes, cancel with partial charge"
                   : "Yes, cancel & refund my hold"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+              <Button type="button" variant="outline" shape="pill" size="lg" onClick={() => setConfirmOpen(false)}>
+                Keep booking
+              </Button>
+            </>
+          }
+        />
       </div>
     </div>
   );

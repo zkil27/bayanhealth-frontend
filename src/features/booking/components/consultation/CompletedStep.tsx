@@ -4,7 +4,6 @@ import { Illustration } from "@/components/primitives/Illustration";
 import Link from "next/link";
 import {
   ArrowRight,
-  CheckCircle2,
   FileText,
   MessageSquareOff,
   ShieldCheck,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SuccessMark } from "@/components/ui/success-mark";
 
 import { buildRebookingUrl } from "../../lib/rebookingUrl";
 import { Booking } from "../../types/booking.types";
@@ -59,7 +59,7 @@ export function CompletedStep({ booking }: { booking: Booking }) {
   if (isDeclined) {
     return (
       <div
-        className="animate-in duration-300 fade-in"
+        className="animate-in duration-300 fade-in motion-reduce:animate-none"
         data-slot="wizard-declined"
       >
         <div className="mb-2 flex items-center gap-2 text-xl font-bold text-(--text-heading)">
@@ -107,7 +107,7 @@ export function CompletedStep({ booking }: { booking: Booking }) {
   if (isCancelled) {
     return (
       <div
-        className="animate-in duration-300 fade-in"
+        className="animate-in duration-300 fade-in motion-reduce:animate-none"
         data-slot="wizard-cancelled"
       >
         <div className="mb-2 flex items-center gap-2 text-xl font-bold text-(--text-heading)">
@@ -163,7 +163,8 @@ export function CompletedStep({ booking }: { booking: Booking }) {
         className="mb-3"
       />
       <h3 className="flex items-center gap-2.5 text-xl font-bold text-(--text-heading)">
-        <CheckCircle2 aria-hidden className="size-6 shrink-0 text-(--teal-800)" />
+        {/* Drawn once per booking per tab; static on later visits. */}
+        <SuccessMark momentKey={`consult-complete:${booking.id}`} className="text-(--teal-800)" />
         Consultation complete
       </h3>
 

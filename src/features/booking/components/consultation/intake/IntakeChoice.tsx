@@ -1,12 +1,21 @@
 "use client";
 
-import { Check } from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
+import type { CSSProperties, ComponentProps, ReactNode } from "react";
 
+import { DrawnCheck } from "@/components/ui/success-mark";
+import { useChangedSinceMount } from "@/hooks/use-motion-moment";
 import { cn } from "@/lib/utils";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)";
+
+/**
+ * Press feedback shared by every intake choice: colours ease over 120ms and
+ * the control sinks to 98% while pressed. Reduced motion keeps the colour
+ * change and drops the scale. (CHANGELOG_UI_MI.md)
+ */
+const PRESS =
+  "transition-[color,background-color,border-color,box-shadow,scale] duration-(--dur-fast) ease-(--ease-out) enabled:active:scale-[0.98] motion-reduce:enabled:active:scale-100";
 
 /**
  * Selectable pill chip. The active state uses the same green (`--safe-fg` on
@@ -20,12 +29,14 @@ export function ChipButton({
   children,
   ...props
 }: ComponentProps<"button"> & { selected: boolean }) {
+  const changed = useChangedSinceMount(selected);
   return (
     <button
       type="button"
       aria-pressed={selected}
       className={cn(
-        "inline-flex min-h-12 items-center gap-2 rounded-xl border px-4 py-2.5 text-base font-medium transition-colors",
+        "inline-flex min-h-12 items-center gap-2 rounded-xl border px-4 py-2.5 text-base font-medium",
+        PRESS,
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-45",
         selected
@@ -35,7 +46,7 @@ export function ChipButton({
       )}
       {...props}
     >
-      {selected ? <Check aria-hidden className="size-4 shrink-0" /> : null}
+      {selected ? <DrawnCheck animate={changed} className="size-4" /> : null}
       {children}
     </button>
   );
@@ -62,6 +73,7 @@ export function ConditionTile({
   description?: ReactNode;
   className?: string;
 }) {
+  const changed = useChangedSinceMount(selected);
   return (
     <button
       type="button"
@@ -69,7 +81,8 @@ export function ConditionTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "group relative flex min-h-13 w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-base font-medium transition-colors sm:px-4 sm:py-3",
+        "group relative flex min-h-13 w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-base font-medium sm:px-4 sm:py-3",
+        PRESS,
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-40",
         selected
@@ -87,7 +100,7 @@ export function ConditionTile({
             : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
         )}
       >
-        {selected ? <Check className="size-4 stroke-[3]" /> : null}
+        {selected ? <DrawnCheck animate={changed} strokeWidth={3} className="size-4" /> : null}
       </span>
       <span className="min-w-0 flex-1 leading-snug">
         {children}
@@ -119,6 +132,7 @@ export function ChoiceCard({
   description?: ReactNode;
   className?: string;
 }) {
+  const changed = useChangedSinceMount(selected);
   return (
     <button
       type="button"
@@ -127,7 +141,8 @@ export function ChoiceCard({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "group relative flex min-h-14 w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-colors",
+        "group relative flex min-h-14 w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left",
+        PRESS,
         FOCUS,
         "disabled:cursor-not-allowed disabled:opacity-45",
         selected
@@ -145,7 +160,14 @@ export function ChoiceCard({
             : "border-(--border-strong) bg-(--surface-canvas) group-hover:border-(--surface-nav-accent)",
         )}
       >
-        {selected ? <span className="size-2.5 rounded-full bg-white" /> : null}
+        {selected ? (
+          <span
+            className={cn(
+              "size-2.5 rounded-full bg-white",
+              changed && "animate-in fade-in zoom-in-40 duration-(--dur-select) ease-(--ease-out)",
+            )}
+          />
+        ) : null}
       </span>
       <div className="min-w-0 flex-1">
         <span
@@ -184,16 +206,37 @@ export function SegmentedToggle<T extends string>({
   onChange: (value: T) => void;
   className?: string;
 }) {
+  const selectedIndex = options.findIndex((option) => option.value === value);
+  const columns = options.length === 2 ? 2 : options.length === 3 ? 3 : 4;
   return (
     <div
       role="radiogroup"
       aria-label={label}
       className={cn(
-        "grid w-full gap-1 rounded-xl border border-(--border-default) bg-(--surface-canvas) p-1 sm:inline-grid sm:w-auto",
-        options.length === 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-4",
+        "relative grid w-full gap-1 rounded-xl border border-(--border-default) bg-(--surface-canvas) p-1 sm:inline-grid sm:w-auto",
+        columns === 2 ? "grid-cols-2" : columns === 3 ? "grid-cols-3" : "grid-cols-4",
         className,
       )}
     >
+      {/*
+       * One highlight slides to the chosen option (200ms) instead of each
+       * button repainting, so the answer visibly moves where the thumb went.
+       * It mounts at its position on the first answer, so it never slides in
+       * from the left. Geometry: the grid's 4px padding and 4px gaps.
+       */}
+      {selectedIndex >= 0 ? (
+        <span
+          aria-hidden
+          data-slot="segmented-indicator"
+          className="pointer-events-none absolute inset-y-1 left-1 animate-in rounded-lg bg-(--safe-bg) ring-1 ring-(--surface-nav-accent) transition-[translate] duration-(--dur-base) ease-(--ease-out) fade-in motion-reduce:transition-none"
+          style={
+            {
+              width: `calc((100% - 0.5rem - ${columns - 1} * 0.25rem) / ${columns})`,
+              translate: `calc(${selectedIndex} * (100% + 0.25rem)) 0`,
+            } as CSSProperties
+          }
+        />
+      ) : null}
       {options.map((option) => {
         const selected = value === option.value;
         return (
@@ -204,10 +247,11 @@ export function SegmentedToggle<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex min-h-12 items-center justify-center rounded-lg px-5 text-center text-base transition-colors",
+              "relative flex min-h-12 items-center justify-center rounded-lg px-5 text-center text-base",
+              PRESS,
               FOCUS,
               selected
-                ? "bg-(--safe-bg) font-semibold text-(--safe-fg) ring-1 ring-(--surface-nav-accent)"
+                ? "font-semibold text-(--safe-fg)"
                 : "font-medium text-(--text-body) hover:bg-(--surface-card)",
             )}
           >

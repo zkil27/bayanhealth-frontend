@@ -98,10 +98,11 @@ export const PatientRail = memo(function PatientRail({
           </Button>
         ) : null}
       </div>
+      {/* First in the rail so patient uploads are seen (clinical remarks Nov 16). */}
+      <LabResultsSection consultationId={consultationId} token={token} />
       <div className="p-3">
         <PatientDetails bookingId={bookingId} form={intake} />
       </div>
-      <LabResultsSection consultationId={consultationId} token={token} />
     </aside>
   );
 });

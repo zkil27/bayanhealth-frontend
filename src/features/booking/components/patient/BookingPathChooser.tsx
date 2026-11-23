@@ -27,11 +27,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { cn } from "@/lib/utils";
 import { patientPageClass } from "@/features/patient/components/PatientPage";
 import { PatientPageHeader } from "@/features/patient/components/PatientPageHeader";
-import {
-  CONSULTATION_FEE_CENTS,
-  CONSULTATION_FEE_CURRENCY,
-  EMERGENCY_DISCLAIMER,
-} from "../../constants/bookingConstants";
+import { EMERGENCY_DISCLAIMER } from "../../constants/bookingConstants";
 import { fetchDoctorSearch } from "../../lib/api/doctors";
 
 const INCLUDED_POINTS = [
@@ -58,9 +54,9 @@ const SCOPE_POINTS = [
  * `/patient/booking/search`.
  *
  * Both cards state only what the platform knows: no wait estimate (there is no
- * queue or acceptance data to base one on), the fee is
- * {@link CONSULTATION_FEE_CENTS} (identical on both paths, which is worth saying
- * so the choice reads as convenience rather than price), and the scheduled
+ * queue or acceptance data to base one on), no price (clinical remarks Nov 16:
+ * the fee shows once the patient picks a path — intake summary and payment —
+ * so this screen reads as "what you get", not "what it costs"), and the scheduled
  * card's availability line is counted from the real doctor directory — never a
  * fabricated "3 doctors near you".
  *
@@ -90,12 +86,6 @@ export function BookingPathChooser() {
     return { total: doctors.length, withSlots: withSlots.length };
   }, [data]);
 
-  const fee = new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: CONSULTATION_FEE_CURRENCY,
-    maximumFractionDigits: 0,
-  }).format(CONSULTATION_FEE_CENTS / 100);
-
   return (
     <div
       data-slot="booking-path-chooser"
@@ -108,7 +98,7 @@ export function BookingPathChooser() {
         <div className="flex items-center gap-2 rounded-(--radius-md) border border-(--status-available-fg)/20 bg-(--surface-accent-soft) p-3 text-[15px] leading-snug text-(--status-available-fg)">
           <Zap className="size-4 shrink-0" aria-hidden />
           <span>
-            <strong>Same price ({fee}) and the same quality of doctor either way.</strong> The only difference is speed.
+            <strong>Same quality of doctor either way.</strong> The only difference is speed.
           </span>
         </div>
 
@@ -154,7 +144,7 @@ export function BookingPathChooser() {
               <AccordionTrigger className="items-center py-2.5 text-[14px] font-bold text-(--text-heading) hover:no-underline [&_svg]:text-(--status-available-fg)">
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="size-4 shrink-0 text-(--status-available-fg)" />
-                  What&apos;s included · {fee} flat
+                  Basic package inclusions
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-2.5 pt-0.5 text-[15px] text-(--text-muted)">
@@ -194,7 +184,7 @@ export function BookingPathChooser() {
         <div className="hidden md:grid md:grid-cols-2 md:gap-4">
           <ContextCard
             icon={<CheckCircle2 />}
-            title={`What's included · ${fee} flat`}
+            title="Basic package inclusions"
             points={INCLUDED_POINTS}
           />
           <ContextCard
