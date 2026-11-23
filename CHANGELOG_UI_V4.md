@@ -15,6 +15,40 @@ V4 opens with the response to the **clinical pilot feedback review** (deck "Clin
 
 > **Micro-interaction pass**: see [`CHANGELOG_UI_MI.md`](./CHANGELOG_UI_MI.md) (branch `ui/micro-interactions`).
 
+### [2026-11-23] Post-consult Conversation: In-place Popup and 3-Minute Follow-up
+
+Follows part 6 of the entry below. In the post-consult workspace, the **Conversation** button used to open the chat in a new tab. Its real job is the question the doctor forgot to ask, mid-documentation. It now opens in place, and the doctor can start one bounded follow-up.
+
+- **Files**:
+  - `postConsultation/ConversationLink.tsx`: rewritten. It is now a button that owns the popup and the follow-up clock. Call sites are unchanged, and `consultationId` is now optional and unused.
+  - `postConsultation/ConversationPopup.tsx` (new)
+  - `postConsultation/useFollowUpCountdown.ts` (new): wall-clock countdown with phases `idle | active | ending | closed`. `ending` means 30 seconds or less.
+  - `consultation/lib/followUpChat.ts` (new): `FOLLOW_UP_WINDOW_MS` (3 minutes), `startFollowUpWindow` (the backend seam), `readFollowUpWindow`, `formatRemaining`.
+  - `doctor/components/chat/ChatParts.tsx` (new): `MessageList` and `Composer`, moved verbatim out of `DoctorChatRoom.tsx`. `Composer` gains optional `placeholder`, `inputClassName` and `inputRef`. `DoctorChatRoom` imports them back, and the `/doctor/chat/{id}` page is unchanged.
+- **Shell**:
+  - Desktop (1024px and up): a docked, **non-modal** panel at the bottom right, 380px wide, with a 1px border, no backdrop, and `role="dialog" aria-modal="false"`. The note stays editable while the doctor waits for a reply. Esc or the X closes it, focus goes into the panel on open and back to the button on close, and the panel fades and slides in only under `motion-safe`.
+  - Phone: a bottom drawer at 92dvh.
+  - Both stay mounted after the first open, so messages and the clock survive closing and reopening.
+- **Panel**:
+  - The header shows the patient name and ref.
+  - The transcript sits under the header.
+- **Footer states**:
+  - **Idle**: a 48px "Start 3-minute follow-up" button, with "The timer starts when you press this."
+  - **Active**:
+    - A countdown chip ("Patient can reply · 2:14", `tabular-nums`).
+    - Three quick-question chips that fill the composer: allergies, other medicines, pregnancy or breastfeeding.
+    - The composer, with 16px input text on a phone.
+  - **Ending** (30 seconds or less): the chip takes the attention tone and the label changes to "Closing soon", so color is not the only signal.
+  - **Closed**: the composer is removed, and the footer reads "Follow-up closed. The conversation is saved to the record." There is one window per consultation and no restart.
+  - **Unavailable**: the footer reads "Follow-up messages need a server update. You can still read the conversation." No Start button.
+- **Screen readers**: a polite live region announces the follow-up only at its start, at 1 minute, at 30 seconds and at the close.
+- **Trigger**: while a window runs, the button shows the time left, for example "Conversation 2:14". It takes the attention tone at 30 seconds or less, so the clock stays visible with the panel closed.
+- **History rows** (`/doctor/history`): unchanged. They still link to the full chat page.
+- **Where the follow-up runs today**:
+  - Demo and preview bookings run the whole flow on a client clock.
+  - A booking not yet `completed` already accepts messages, so the 3-minute limit there comes from the client clock alone.
+  - A `completed` booking shows Unavailable until backend dependency #1 below ships.
+
 ### [2026-11-23] Clinical Remarks Nov 16: Doctor Documents, Booking Price, Conversation Navigation
 
 This entry answers the deck "BayanHealth Remarks nov 16" (12 slides, doctor and patient POV). Each part below names its slide.
@@ -161,11 +195,13 @@ New pure modules, all with vitest coverage:
 
 #### Backend dependencies (not doable in this UI fork)
 
-1. **Post-consult chat window** (slide 12, "chat box … open for 5–10 minutes while doing the documentation").
-   - Chat accepts messages only while the booking is `confirmed`/`in_progress`.
-   - The client hard-codes read-only on `completed`/`cancelled`: see `DoctorChatRoom.tsx` and `lib/conversationStatus.ts`.
-   - Needed: the backend accepts messages for N minutes after completion and exposes something like `chatWritableUntil`. The UI then reads it in both chat rooms.
-   - The new Conversation button already opens the thread from the workspace.
+1. **Post-consult follow-up window** (slide 12). Revised 2026-11-23: the window is **doctor-started and lasts 3 minutes**.
+   - Today chat accepts messages only while the booking is `confirmed`/`in_progress`. The client hard-codes read-only on `completed`/`cancelled`: see `DoctorChatRoom.tsx` and `lib/conversationStatus.ts`.
+   - Needed:
+     - an endpoint the doctor calls to open the window, which returns `chatWritableUntil` (ISO 8601, now + 3 minutes);
+     - the chat write route accepting messages from both sides until then;
+     - `chatWritableUntil` exposed on the booking detail, so a reload restores the clock.
+   - UI wiring: replace the body of `startFollowUpWindow` in `consultation/lib/followUpChat.ts`. `readFollowUpWindow` already reads the field off the booking. The patient chat room should read the same field to unlock its composer.
 2. **Opening a patient-uploaded lab file** (slide 12). `LabResultsSection` lists uploads but cannot link to them, because the contract has no download endpoint.
 3. **Real medical certificate fields**.
    - Replace the labeled-lines encoding in `restrictions` with `bedRest`, `fitToWork` and `carePlan` contract fields.
