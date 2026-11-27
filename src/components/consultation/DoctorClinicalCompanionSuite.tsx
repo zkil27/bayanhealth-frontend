@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertCircle, ChevronsDown, ChevronsUp, ClipboardList, MessagesSquare, NotebookPen } from "lucide-react";
+import { AlertCircle, ChevronsDown, ChevronsUp, ClipboardList, History, MessagesSquare, NotebookPen } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ChatUnreadBadge, useChatTabUnread } from "@/components/consultation/chatUnread";
 import { ConsultationChatPanel } from "@/features/consultation/components/session/ConsultationChatPanel";
+import { PatientHistoryPanel } from "@/features/consultation/components/patientHistory/PatientHistoryPanel";
 import { PatientIntakeReferenceTab } from "@/features/consultation/components/session/PatientIntakeReferenceTab";
 import { RoomNotesTab } from "@/features/consultation/components/session/RoomNotesTab";
 import { RoomSafetyStrip } from "@/features/consultation/components/session/RoomSafetyStrip";
@@ -15,14 +16,17 @@ import type { ClinicalNotes } from "@/features/consultation/components/postConsu
  * Doctor-facing companion for the active consultation room (dual-pane doctor
  * view) — the counterpart to `PatientCompanionSuite` on the patient side.
  *
- * Three tabs:
+ * Four tabs:
  * 1. Patient Intake: the real submitted intake (safety screen, vitals, complaint).
- * 2. Notes: the doctor's own Subjective and Objective, written during the call
+ * 2. Past medical history: the versioned patient chart. Pre-filled from the
+ *    intake on a first consult, from the latest version afterwards; edits are
+ *    a draft on this device, saved as a version from the post-consult workspace.
+ * 3. Notes: the doctor's own Subjective and Objective, written during the call
  *    (pilot feedback 2026-11). Same record as the post-consult workspace; the
  *    room owns the hook so End consultation can save them first.
- * 3. Conversation: the encrypted in-consultation chat thread.
+ * 4. Conversation: the encrypted in-consultation chat thread.
  *
- * {@link RoomSafetyStrip} sits above all three so allergies and red flags stay
+ * {@link RoomSafetyStrip} sits above all four so allergies and red flags stay
  * in view while the doctor types or chats.
  *
  * Below `lg` the suite is stacked under the video, so it can take over the
@@ -67,17 +71,26 @@ export function DoctorClinicalCompanionSuite({
               value="intake"
               className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
             >
-              <ClipboardList className="size-3.5" />
+              <ClipboardList className="size-3.5 max-sm:hidden" aria-hidden />
               {/* Short labels on phones leave room for the Expand toggle beside the tabs. */}
               <span className="sm:hidden">Intake</span>
               <span className="hidden sm:inline">Patient Intake</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
+            >
+              <History className="size-3.5 max-sm:hidden" aria-hidden />
+              <span className="sm:hidden">History</span>
+              <span className="hidden sm:inline xl:hidden">Past history</span>
+              <span className="hidden xl:inline">Past medical history</span>
             </TabsTrigger>
             {notes ? (
               <TabsTrigger
                 value="notes"
                 className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
               >
-                <NotebookPen className="size-3.5" />
+                <NotebookPen className="size-3.5 max-sm:hidden" aria-hidden />
                 Notes
                 {/* Seen from any tab: a save that failed is never silent. */}
                 {notes.saveFailed && notes.dirty ? (
@@ -92,7 +105,7 @@ export function DoctorClinicalCompanionSuite({
               value="chat"
               className="flex-1 gap-1.5 rounded-lg py-1 text-sm font-semibold lg:text-xs text-(--text-muted) hover:text-(--text-body) data-active:bg-(--surface-card) data-active:text-(--surface-nav) data-active:shadow-2xs transition-all"
             >
-              <MessagesSquare className="size-3.5" />
+              <MessagesSquare className="size-3.5 max-sm:hidden" aria-hidden />
               <span className="sm:hidden">Chat</span>
               <span className="hidden sm:inline">Conversation</span>
               <ChatUnreadBadge count={chatTabs.unread} />
@@ -103,17 +116,18 @@ export function DoctorClinicalCompanionSuite({
               type="button"
               onClick={onToggleExpanded}
               aria-expanded={expanded}
-              className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl border border-(--border-default) bg-(--surface-card) px-3 text-xs font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) lg:hidden"
+              className="inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-xl border border-(--border-default) bg-(--surface-card) px-3 text-xs max-sm:px-0 font-semibold text-(--text-body) transition-colors hover:bg-(--action-secondary-hover-surface) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) lg:hidden"
             >
               {expanded ? (
                 <>
                   <ChevronsDown className="size-4" aria-hidden />
-                  Show video
+                  {/* Icon-only on phones: four tabs need the width. */}
+                  <span className="max-sm:sr-only">Show video</span>
                 </>
               ) : (
                 <>
                   <ChevronsUp className="size-4" aria-hidden />
-                  Expand
+                  <span className="max-sm:sr-only">Expand</span>
                 </>
               )}
             </button>
@@ -122,6 +136,11 @@ export function DoctorClinicalCompanionSuite({
 
         <TabsContent value="intake" className="min-h-0 flex-1 flex flex-col overflow-y-auto overscroll-contain">
           <PatientIntakeReferenceTab bookingId={bookingId} />
+        </TabsContent>
+
+        {/* Kept mounted so an open section editor survives switching tabs. */}
+        <TabsContent value="history" keepMounted className="min-h-0 flex-1 flex flex-col overflow-y-auto overscroll-contain">
+          <PatientHistoryPanel bookingId={bookingId} mode="edit" showTitle={false} />
         </TabsContent>
 
         {/* Kept mounted so a half-typed note survives switching tabs. */}

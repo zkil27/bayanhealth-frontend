@@ -48,7 +48,7 @@ When instructed to sync a component or surface, the main repo AI agent **MUST fo
 
 ```mermaid
 flowchart TD
-    A[Step 1: Read CHANGELOG_UI_V4.md in Fork] --> B[Step 2: Inspect Target Files in Main Repo]
+    A[Step 1: Read CHANGELOG_UI_V5.md in Fork] --> B[Step 2: Inspect Target Files in Main Repo]
     B --> C[Step 3: Add Missing shadcn Primitives]
     C --> D[Step 4: Surgical JSX & Style Porting]
     D --> E[Step 5: Run Verification Gates]
@@ -56,8 +56,8 @@ flowchart TD
     E -->|Fail| D
 ```
 
-### Step 1: Read `CHANGELOG_UI_V4.md`
-Before touching code, consult [`CHANGELOG_UI_V4.md`](./CHANGELOG_UI_V4.md) (or [`CHANGELOG_UI_V3.md`](./CHANGELOG_UI_V3.md) / [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) / [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) for historical entries) in this fork.  
+### Step 1: Read `CHANGELOG_UI_V5.md`
+Before touching code, consult [`CHANGELOG_UI_V5.md`](./CHANGELOG_UI_V5.md) (or [`CHANGELOG_UI_V4.md`](./CHANGELOG_UI_V4.md) / [`CHANGELOG_UI_V3.md`](./CHANGELOG_UI_V3.md) / [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) / [`CHANGELOG_UI.md`](./CHANGELOG_UI.md) for historical entries) in this fork.  
 Find the entry for the component or route being synced. Review:
 - Files modified.
 - Design intent and device optimizations applied.
@@ -117,7 +117,7 @@ You are updating the UI of the main BayanHealth repository based on the UI/UX fo
 I want you to port the UI changes for: <SPECIFY COMPONENT OR ROUTE, e.g. Patient Doctor Card & Booking Flow>.
 
 Follow these strict rules from `UI_HANDOFF.md`:
-1. Check `CHANGELOG_UI_V4.md` (or `CHANGELOG_UI_V3.md` / `CHANGELOG_UI_V2.md` / `CHANGELOG_UI.md` for historical entries) in the fork for the exact list of files modified and the design intent.
+1. Check `CHANGELOG_UI_V5.md` (or `CHANGELOG_UI_V4.md` / `CHANGELOG_UI_V3.md` / `CHANGELOG_UI_V2.md` / `CHANGELOG_UI.md` for historical entries) in the fork for the exact list of files modified and the design intent.
 2. Port ONLY the visual styling, JSX layout, and Tailwind CSS classes.
 3. PRESERVE all existing business logic, TanStack Query hooks, React Hook Form registrations, and API calls in the main repo.
 4. Do NOT introduce any arbitrary hex colors; ensure all colors use semantic tokens (Brand Teal `#18a58c`, Brand Navy `#074972`, Cream `#f3eac5`).
@@ -137,11 +137,12 @@ Follow these strict rules from `UI_HANDOFF.md`:
 
 ## 7. Open Backend Dependencies
 
-Some UI requests cannot be finished in this fork. Each one is logged with its exact files under **"Backend dependencies"** in the matching `CHANGELOG_UI_V4.md` entry. Current list, from the 2026-11-23 "Clinical Remarks Nov 16" entry:
+Some UI requests cannot be finished in this fork. Each one is logged with its exact files under **"Backend dependencies"** in the matching `CHANGELOG_UI_V5.md` / `CHANGELOG_UI_V4.md` entry. Current list, from the 2026-11-23 "Clinical Remarks Nov 16" entry (V4) and the 2026-11-27 "Patient Chart" entry (V5):
 
 1. **Post-consult chat window**: messages accepted for a few minutes after the consult ends, plus a field the UI can read.
 2. **Download endpoint for patient-uploaded lab results.**
 3. **Real `bedRest` / `fitToWork` / `carePlan` medical certificate fields.** These replace the labeled lines this fork writes into `restrictions`, via `features/consultation/lib/medCertSections.ts`.
 4. **Optional: one sign-and-release endpoint.** Today the client chains finalize, then release.
+5. **Versioned patient history (V5).** Append-only `GET/POST /v1/bookings/{bookingId}/patient-history[/versions]` and `GET /v1/patients/me/history`. Only `features/consultation/lib/patientHistory/api.ts` changes when it ships. A stale base version should return 409.
 
 When porting, keep the fork's UI and point it at the new fields once they exist. Do not drop the UI because the backend is not ready.

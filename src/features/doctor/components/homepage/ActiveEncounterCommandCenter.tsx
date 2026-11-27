@@ -6,7 +6,8 @@ import { ArrowRight, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyDoctorProfile } from "@/features/doctor/hooks/useMyDoctorProfile";
 import { useActiveEncounter } from "../../hooks/useActiveEncounter";
-import { NoShowControl, serviceLabel } from "./DoctorPatientQueue";
+import { HistoryStatusChip } from "@/features/consultation/components/patientHistory/HistoryStatusChip";
+import { NoShowControl, serviceLabel, ViewIntakeDrawer } from "./DoctorPatientQueue";
 
 /**
  * The Clinical Command Center — a permanently mounted rail card that anchors
@@ -125,7 +126,10 @@ export function ActiveEncounterCommandCenter() {
               {isLive ? "Call in progress" : "Ready to start"}
             </span>
           </div>
-          <h3 className="text-base font-bold text-white">{active.name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-bold text-white">{active.name}</h3>
+            <HistoryStatusChip bookingId={active.bookingId} />
+          </div>
           <p className="text-xs text-(--surface-card)/75">
             {serviceLabel(active.serviceType) ??
               (isLive ? "Consultation in progress" : "Accepted — waiting to start")}
@@ -135,6 +139,11 @@ export function ActiveEncounterCommandCenter() {
 
       <div className="flex w-full items-center gap-2 sm:w-auto sm:self-center">
         {!isLive ? <NoShowControl item={active} /> : null}
+        <ViewIntakeDrawer
+          bookingId={active.bookingId}
+          name={active.name}
+          triggerClassName="h-12 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white sm:h-9"
+        />
         <Link
           href={
             active.bookingId === "demo-active-encounter"

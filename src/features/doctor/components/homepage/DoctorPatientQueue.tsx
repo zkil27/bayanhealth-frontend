@@ -51,6 +51,9 @@ import {
   fetchRequestPool,
   type OnDemandRequest,
 } from "../../lib/api/requestPool";
+import { HistoryStatusChip } from "@/features/consultation/components/patientHistory/HistoryStatusChip";
+import { PatientHistoryPanel } from "@/features/consultation/components/patientHistory/PatientHistoryPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReadyIntakeContent } from "./ReadyIntakeContent";
 import { DoctorConsultationAccess } from "./DoctorConsultationAccess";
 import { DoctorDashboardDrawer } from "./DoctorDashboardDrawer";
@@ -408,6 +411,7 @@ function QueueRowShell({
   action,
   dataSlot,
   queueType,
+  meta,
 }: {
   avatarSrc?: string;
   initials: string;
@@ -417,6 +421,8 @@ function QueueRowShell({
   action: React.ReactNode;
   dataSlot: string;
   queueType: QueueRow["kind"];
+  /** Extra status beside the badge (the patient chart chip on ready rows). */
+  meta?: React.ReactNode;
 }) {
   const tone = ROW_BADGE[badge];
   // Below `sm` the row stacks: patient on top, actions in a full-width strip
@@ -447,6 +453,7 @@ function QueueRowShell({
             >
               {tone.label}
             </span>
+            {meta}
           </div>
           <p className="truncate text-[13px] text-(--text-muted) sm:text-[11.5px]">{subtitle}</p>
         </div>
@@ -469,6 +476,7 @@ function ReadyQueueRow({ item }: { item: ReadyToStartItem }) {
       badge="ready"
       initials={item.initials}
       name={item.name}
+      meta={<HistoryStatusChip bookingId={item.bookingId} />}
       subtitle={
         item.isInProgress
           ? `${label ?? "Consultation"} · already in progress`
@@ -577,7 +585,16 @@ function IncomingQueueRow({
  * it is not `DoctorDashboardDrawer`: that one also carries an incoming-request
  * accept/cancel flow that does not apply to an already-ready consultation).
  */
-function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string }) {
+export function ViewIntakeDrawer({
+  bookingId,
+  name,
+  triggerClassName,
+}: {
+  bookingId: string;
+  name: string;
+  /** Overrides the trigger's look where the host surface is dark (Active Encounter card). */
+  triggerClassName?: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -589,7 +606,7 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
         data-slot="ready-to-start-view-trigger"
         // Its own `data-slot` opts it out of the row's `h-11` phone rule, so the
         // phone sizing is spelled out here.
-        className="h-11 flex-auto px-2.5 text-sm font-semibold sm:h-7 sm:flex-none sm:text-xs"
+        className={cn("h-11 flex-auto px-2.5 text-sm font-semibold sm:h-7 sm:flex-none sm:text-xs", triggerClassName)}
       >
         <Eye className="size-3.5" aria-hidden />
         {/* Icon-only on desktop; spelled out on phones, where it shares a full-width strip. */}
@@ -617,10 +634,29 @@ function ViewIntakeDrawer({ bookingId, name }: { bookingId: string; name: string
             />
           </div>
         </DrawerHeader>
-        <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-[calc(1.5rem+var(--safe-bottom-max))] sm:pb-6">
-          <DoctorConsultationAccess bookingId={bookingId} />
-          <ReadyIntakeContent bookingId={bookingId} />
-        </div>
+        {/* Two views of one patient: today's intake, and the chart saved at
+            earlier visits (opens on "changes from the previous version"). */}
+        <Tabs defaultValue="intake" className="gap-0">
+          <div className="border-b border-(--border-subtle) px-5 py-2">
+            <TabsList className="h-12 w-full gap-1 rounded-xl bg-(--border-subtle)/35 p-1 sm:h-8.5 sm:w-auto">
+              <TabsTrigger value="intake" className="flex-1 rounded-lg px-3 text-sm font-semibold text-(--text-muted) data-active:bg-(--surface-card) data-active:text-(--surface-nav) sm:flex-none sm:text-xs">
+                Intake
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex-1 rounded-lg px-3 text-sm font-semibold text-(--text-muted) data-active:bg-(--surface-card) data-active:text-(--surface-nav) sm:flex-none sm:text-xs">
+                Past medical history
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="max-h-[65dvh] overflow-y-auto overscroll-contain pb-[calc(1.5rem+var(--safe-bottom-max))] sm:pb-6">
+            <TabsContent value="intake">
+              <DoctorConsultationAccess bookingId={bookingId} />
+              <ReadyIntakeContent bookingId={bookingId} />
+            </TabsContent>
+            <TabsContent value="history">
+              <PatientHistoryPanel bookingId={bookingId} mode="read" showTitle={false} />
+            </TabsContent>
+          </div>
+        </Tabs>
       </DrawerContent>
     </Drawer>
   );

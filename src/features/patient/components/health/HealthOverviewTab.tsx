@@ -21,6 +21,7 @@ import {
   fetchMyFollowUps,
   type FollowUpRecommendation,
 } from "@/features/patient/lib/api/patientFollowUps";
+import { MyMedicalHistoryCard } from "@/features/patient/components/health/MyMedicalHistoryCard";
 import { CarePlanPanel } from "@/features/patient/components/homepage/CarePlanPanel";
 import { DailyTipCard } from "@/features/patient/components/homepage/DailyTipCard";
 import { completedForDashboard } from "@/lib/patient/patientHomeState";
@@ -84,6 +85,7 @@ export function HealthOverviewTab() {
     >
       <div className="flex min-w-0 flex-col gap-4">
         <HealthIdentityCard profile={profile} isLoading={profileLoading} />
+        <MyMedicalHistoryCard />
         <NextFollowUpCard followUps={followUpsQuery.data} />
         <CarePlanPanel booking={latestCompleted} />
       </div>

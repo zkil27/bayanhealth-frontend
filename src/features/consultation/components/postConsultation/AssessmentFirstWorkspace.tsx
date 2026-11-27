@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardList,
+  History,
   RefreshCw,
   ShieldAlert,
   Trash2,
@@ -38,6 +39,8 @@ import {
 } from "./DeliverablesDeck";
 import { PatientDetails } from "./PatientDetails";
 import { PatientRail } from "./PatientRail";
+import { PatientHistoryPanel } from "../patientHistory/PatientHistoryPanel";
+import { useHasHistoryDraft } from "../../hooks/usePatientHistory";
 import { ConversationLink } from "./ConversationLink";
 import {
   ObjectiveIntake,
@@ -269,6 +272,8 @@ export function AssessmentFirstWorkspace({
    * the header instead (see `mobileIntakeOpen` usage below).
    */
   const [mobileIntakeOpen, setMobileIntakeOpen] = useState(false);
+  const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
+  const mobileHistoryHasDraft = useHasHistoryDraft(bookingId ?? undefined);
   const previewRequestRef = useRef(0);
   const candidateSearchRequestRef = useRef(0);
   /**
@@ -1506,6 +1511,22 @@ export function AssessmentFirstWorkspace({
               <ClipboardList className="size-4 shrink-0" aria-hidden />
               <span className="max-[359px]:sr-only">Intake</span>
             </Button>
+            {bookingId ? (
+              <Button
+                type="button"
+                variant="outline"
+                shape="pill"
+                aria-label={mobileHistoryHasDraft ? "Past medical history, draft not saved" : "Past medical history"}
+                className="relative h-11 gap-1.5 border-(--border-default) px-3"
+                onClick={() => setMobileHistoryOpen(true)}
+              >
+                <History className="size-4 shrink-0" aria-hidden />
+                <span className="max-[359px]:sr-only">History</span>
+                {mobileHistoryHasDraft ? (
+                  <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-(--surface-card) bg-(--attention-fg)" aria-hidden />
+                ) : null}
+              </Button>
+            ) : null}
             {bookingId ? <ConversationLink bookingId={bookingId} consultationId={consultationId} compact /> : null}
             {bookingId ? <SendToErControl bookingId={bookingId} urgent={safetyLock} /> : null}
           </>
@@ -1823,6 +1844,7 @@ export function AssessmentFirstWorkspace({
               token={token}
               collapsed={patientRailCollapsed}
               onToggleCollapse={() => setPatientRailCollapsed((c) => !c)}
+              doctorName={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
             />
           </div>
         ) : null}
@@ -1836,6 +1858,26 @@ export function AssessmentFirstWorkspace({
       >
         {mobileIntakeOpen ? <PatientDetails bookingId={bookingId} form={intake} /> : null}
       </CustomBottomModal>
+
+      {bookingId ? (
+        <CustomBottomModal
+          open={mobileHistoryOpen}
+          onOpenChange={setMobileHistoryOpen}
+          title="Past medical history"
+          description={intake?.patientName ?? undefined}
+        >
+          {mobileHistoryOpen ? (
+            <PatientHistoryPanel
+              bookingId={bookingId}
+              intake={intake}
+              mode="edit"
+              saveEnabled
+              showTitle={false}
+              savedBy={doctorProfile?.fullName || doctorProfile?.signature?.signerName || undefined}
+            />
+          ) : null}
+        </CustomBottomModal>
+      ) : null}
 
       {inspectingHistoricalArtifact ? (
         <DocumentSheetModal
@@ -2551,6 +2593,8 @@ function FinishDocumentationControl({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // The page carries `bookingId` in the URL; the chart draft is keyed by it.
+  const historyDraftUnsaved = useHasHistoryDraft(useSearchParams().get("bookingId") ?? undefined);
   const readiness = deriveFinishReadiness({ assessment, artifacts });
   const notNeededLabels = new Set([...notNeededTypes].map((type) => OUTPUT_LABELS[type]));
   const missing = readiness.missing.filter((label) => !notNeededLabels.has(label));
@@ -2616,6 +2660,19 @@ function FinishDocumentationControl({
         }
       >
         <FinalRecordReview assessment={assessment} artifacts={artifacts} notes={recordNotes} />
+        {/* A reminder, not a gate: the chart can be saved at a later visit too. */}
+        {historyDraftUnsaved ? (
+          <p
+            data-slot="finish-history-unsaved"
+            className="mb-3 flex gap-2 rounded-xl border border-(--attention-border)/40 bg-(--attention-bg) p-3 text-sm text-(--attention-fg)"
+          >
+            <History className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              <span className="font-semibold">Past medical history: draft not saved.</span> Save it as a version
+              from the patient panel, or it stays only on this device.
+            </span>
+          </p>
+        ) : null}
         {hasOutstanding ? (
           <ul className="flex flex-col gap-2.5">
             {readiness.unreviewed.length > 0 ? (

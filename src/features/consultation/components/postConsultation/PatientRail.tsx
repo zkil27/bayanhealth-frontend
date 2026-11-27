@@ -1,12 +1,14 @@
 "use client";
 
 import { memo } from "react";
-import { ClipboardCheck, FileText, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ClipboardCheck, FileText, History, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BookingIntakeForm } from "@/features/doctor/lib/api/bookingIntake";
 
+import { PatientHistoryRailSection } from "../patientHistory/PatientHistoryRailSection";
+import { useHasHistoryDraft } from "../../hooks/usePatientHistory";
 import { LabResultsSection } from "./LabResultsSection";
 import { PatientDetails } from "./PatientDetails";
 
@@ -18,6 +20,7 @@ export const PatientRail = memo(function PatientRail({
   token,
   collapsed = false,
   onToggleCollapse,
+  doctorName,
 }: {
   bookingId?: string;
   /** With a token, the rail also lists this consultation's lab requests and uploads. */
@@ -27,7 +30,10 @@ export const PatientRail = memo(function PatientRail({
   intake?: BookingIntakeForm | null;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  /** Stamped on a saved chart version. */
+  doctorName?: string;
 }) {
+  const hasHistoryDraft = useHasHistoryDraft(bookingId);
   if (collapsed) {
     return (
       <aside
@@ -60,6 +66,17 @@ export const PatientRail = memo(function PatientRail({
             className="size-2 rounded-full bg-(--teal-600)"
             title={`Intake: ${intake.status}`}
           />
+        ) : null}
+        <span className="mt-2 flex size-7 items-center justify-center rounded-md bg-(--surface-brand-soft) text-(--teal-800) dark:text-(--teal-300)">
+          <History className="size-4" />
+        </span>
+        <span className="text-xs font-semibold text-(--text-muted) [writing-mode:vertical-lr] rotate-180">
+          History
+        </span>
+        {hasHistoryDraft ? (
+          <span className="text-[10px] font-bold text-(--attention-fg)" title="Past medical history: draft not saved">
+            Draft
+          </span>
         ) : null}
       </aside>
     );
@@ -100,6 +117,10 @@ export const PatientRail = memo(function PatientRail({
       </div>
       {/* First in the rail so patient uploads are seen (clinical remarks Nov 16). */}
       <LabResultsSection consultationId={consultationId} token={token} />
+      {/* The chart is saved here, after the call (it was drafted in the room). */}
+      {bookingId ? (
+        <PatientHistoryRailSection bookingId={bookingId} intake={intake} doctorName={doctorName} />
+      ) : null}
       <div className="p-3">
         <PatientDetails bookingId={bookingId} form={intake} />
       </div>

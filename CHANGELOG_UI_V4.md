@@ -1,5 +1,7 @@
 # BayanHealth UI/UX Changelog (V4)
 
+> **Superseded by [`CHANGELOG_UI_V5.md`](./CHANGELOG_UI_V5.md) from 2026-11-27.** Log new UI work there.
+
 All design, layout, styling, and UX modifications made in this fork must be logged here.
 This document is the active single source of truth for the **upstream AI agent** that will synchronize and apply these UI improvements to the main repository. It supersedes [`CHANGELOG_UI_V3.md`](./CHANGELOG_UI_V3.md), [`CHANGELOG_UI_V2.md`](./CHANGELOG_UI_V2.md) and [`CHANGELOG_UI.md`](./CHANGELOG_UI.md).
 
