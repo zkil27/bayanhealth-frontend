@@ -39,6 +39,7 @@ import {
 } from "./DeliverablesDeck";
 import { PatientDetails } from "./PatientDetails";
 import { PatientRail } from "./PatientRail";
+import { RailResizeHandle, useResizableRail } from "./RailResizeHandle";
 import { PatientHistoryPanel } from "../patientHistory/PatientHistoryPanel";
 import { useHasHistoryDraft } from "../../hooks/usePatientHistory";
 import { ConversationLink } from "./ConversationLink";
@@ -265,6 +266,7 @@ export function AssessmentFirstWorkspace({
   const [sectionOverrides, setSectionOverrides] = useState<Partial<Record<"S" | "O" | "A", boolean>>>({});
   const [overridesPhase, setOverridesPhase] = useState<WorkspacePhase | null>(null);
   const [patientRailCollapsed, setPatientRailCollapsed] = useState(false);
+  const rail = useResizableRail();
   /**
    * Below `lg` the patient rail is not a column: stacked under the main
    * column it ended up past Care Continuity and the history list, a long
@@ -1552,11 +1554,14 @@ export function AssessmentFirstWorkspace({
       />
 
       <div
+        ref={rail.containerRef}
+        style={{ "--rail-w": `${rail.width}px` } as React.CSSProperties}
         className={cn(
           "grid flex-1 grid-cols-1 items-start gap-4 p-3 min-w-0 max-w-full sm:p-4",
           patientRailCollapsed
             ? "lg:grid-cols-[minmax(0,1fr)_3.5rem]"
-            : "lg:grid-cols-[minmax(0,1fr)_minmax(17rem,21rem)]",
+            : // The 16px resize handle takes the place of the column gap.
+              "lg:grid-cols-[minmax(0,1fr)_auto_var(--rail-w)] lg:gap-x-0",
         )}
       >
         <main className="order-1 flex min-w-0 flex-col gap-3">
@@ -1835,8 +1840,12 @@ export function AssessmentFirstWorkspace({
           />
         </main>
 
+        {!isPhone && !patientRailCollapsed ? (
+          <RailResizeHandle width={rail.width} min={rail.min} max={rail.max} onResize={rail.set} />
+        ) : null}
+
         {!isPhone ? (
-          <div className="order-2 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
+          <div className="order-3 hidden min-w-0 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-y-auto">
             <PatientRail
               bookingId={bookingId}
               intake={intake}
